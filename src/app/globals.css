@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
+/* Design tokens — palette and type sampled from notion.com (2026-09-02).
+   Notion's "tatami" grays are warm-tinted; blue is the single accent. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --gray-100: #f9f9f8;
+  --gray-200: #f6f5f4;
+  --gray-300: #dfdcd9;
+  --gray-400: #a39e98;
+  --gray-500: #78736f;
+  --gray-600: #615d59;
+  --gray-700: #494744;
+  --gray-800: #31302e;
+  --gray-900: #191918;
+
+  --blue-100: #f2f9ff;
+  --blue-200: #e6f3fe;
+  --blue-300: #93cdfe;
+  --blue-500: #097fe8;
+  --blue-600: #0075de;
+  --blue-700: #005bab;
+
+  --text: rgba(0, 0, 0, 0.898);
+  --text-strong: rgba(0, 0, 0, 0.95);
+  --text-muted: rgba(0, 0, 0, 0.54);
+  --text-hint: var(--gray-400);
+  --on-accent: #ffffff;
+
+  --page: #ffffff;
+  --sidebar: var(--gray-100);
+  --panel: var(--gray-200);
+  --card: #ffffff;
+  --line: var(--gray-300);
+  --line-soft: rgba(0, 0, 0, 0.06);
+  --hover: rgba(0, 0, 0, 0.04);
+  --active: rgba(0, 0, 0, 0.06);
+
+  --nav: #0f2a44;
+  --nav-2: #163a5c;
+  --nav-text: rgba(255, 255, 255, 0.72);
+  --nav-text-strong: #ffffff;
+  --nav-hover: rgba(255, 255, 255, 0.08);
+  --nav-active: rgba(255, 255, 255, 0.14);
+  --chart-1: #0075de;
+  --chart-2: #dd5b00;
+  --shadow-sm: 0 1px 2px rgba(15, 42, 68, 0.06), 0 1px 3px rgba(15, 42, 68, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 42, 68, 0.08), 0 1px 3px rgba(15, 42, 68, 0.06);
+
+  --accent: var(--blue-600);
+  --accent-hover: var(--blue-700);
+  --accent-soft: var(--blue-200);
+
+  --ok: #0a7b77;
+  --ok-soft: #f2fafa;
+  --warn: #c78600;
+  --warn-soft: #fff5e0;
+  --danger: #e32d14;
+  --danger-soft: #fef3f1;
+
+  --radius: 8px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+
+  --color-text: var(--text);
+  --color-text-strong: var(--text-strong);
+  --color-muted: var(--text-muted);
+  --color-hint: var(--text-hint);
+  --color-on-accent: var(--on-accent);
+
+  --color-page: var(--page);
+  --color-sidebar: var(--sidebar);
+  --color-panel: var(--panel);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+
+  --color-nav: var(--nav);
+  --color-nav-2: var(--nav-2);
+  --color-nav-text: var(--nav-text);
+  --color-nav-text-strong: var(--nav-text-strong);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --shadow-card: var(--shadow-sm);
+  --shadow-pop: var(--shadow-md);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --font-sans: var(--font-inter), -apple-system, "system-ui", "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-serif: "Lyon Text", Georgia, "Times New Roman", serif;
+
+  --radius-app: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text);
+  background: var(--gray-100);
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+h1, h2, h3 {
+  color: var(--text-strong);
+  font-weight: 700;
 }
+h1 { font-size: 28px; line-height: 34px; letter-spacing: -0.6px; }
+h2 { font-size: 20px; line-height: 26px; letter-spacing: -0.3px; }
+h3 { font-size: 14px; line-height: 20px; letter-spacing: 0; font-weight: 600; }
+
+/* Notion-style selection and quiet scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent; }
+
+::selection {
+  background: var(--blue-300);
+  color: var(--gray-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+}
+
+

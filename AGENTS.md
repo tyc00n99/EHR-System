@@ -1,9 +1,59 @@
-<!-- BEGIN:nextjs-agent-rules -->
+# 245D EHR
 
-# This is NOT the Next.js you know
+Electronic health record for Minnesota 245D-licensed providers (home and community-based services).
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+## Stack
+Next.js 16 (App Router, TypeScript) · Tailwind v4 · npm. Node lives at `/opt/homebrew/bin` (not on the non-interactive PATH).
 
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+## Design tokens
+Palette and type mimic notion.com (sampled 2026-09-02 from Notion's "tatami" CSS variables). All colors are defined once in `src/app/globals.css` and exposed as Tailwind classes (`bg-sidebar`, `text-muted`, `bg-accent`, `border-line`, `gray-100`…`gray-900`). Do not hardcode hex values in components.
 
-<!-- END:nextjs-agent-rules -->
+- White page, warm-gray surfaces: `sidebar` #f9f9f8, `panel` #f6f5f4, `line` #dfdcd9. Hover/active are black at 4%/6%.
+- Text is black at 0.898 opacity (`text`), 0.95 for headings (`text-strong`), 0.54 for secondary (`muted`).
+- `accent` blue #0075de is the only accent: primary buttons, links, selected states. `accent-soft` #e6f3fe for secondary buttons.
+- `ok` (teal) / `warn` (yellow) / `danger` (red), each with a `-soft` tint, for status.
+
+Type: Inter (Notion ships a custom Inter build called NotionInter). Base 14px/20px, UI labels weight 500, headings weight 700 with tight tracking (h1 32/40 -0.75px, h2 22/28 -0.25px). Serif (`font-serif`, Georgia stack standing in for Lyon Text) for editorial moments only.
+
+## UI primitives
+Build every screen from `src/components/ui.tsx`; do not hand-roll cards, tables, or form grids in pages.
+- `PageHeader` (eyebrow crumbs via `Crumb`/`CrumbSep`, optional `PageIcon`, `meta`, `actions`), `Card` (`padded` for prose/properties, unpadded for tables/lists), `StatTile`, `Empty`, `Notice`.
+- `Properties` is the Notion-style label/value list used on record pages (icons from `src/components/icons.tsx`).
+- Tables: `Table` + `Thead`/`Th`/`Tr`/`Td`. Cells are nowrap by default; pass `wrap` for long text and `align="right"` for numbers.
+- Forms: `FormSection` (title + description left, 6-column field grid right), `Field`, `Input`/`Select`/`Textarea`/`Checkbox`, `FormActions`, `FormError`. Use `md:col-span-N` on fields instead of empty spacer divs.
+- Frame: navy left sidebar (`src/components/sidebar.tsx`, grouped modules, collapsible, role-filtered) + top bar in `src/components/app-shell.tsx` (global search → `/search`, "+ New" menu, attention bell fed by `src/lib/attention.ts`, user menu). Mobile gets a bottom tab bar.
+- Record pages use `RecordHeader` + `Tabs` (`?tab=`); list pages use `Toolbar` (GET search + filter chips + count + right-side actions). KPI cards are `Kpi` with `Sparkline`; the only real chart is `src/components/trend-chart.tsx` (two series, blue billable / orange labor, validated for CVD).
+- Modules: Home, Owner insights (admin), Needs attention, Clients, Clock, Visits & EVV, Scheduling (roadmap page only), Billing (claim-line prep), Staff, Compliance (matrix), Reports (CSV routes under `/reports/*.csv`), Sites, 245D services, Settings (org form), Audit.
+- Record pages use the "workspace" shape: sticky 300px profile column on the left, activity on the right. See `src/app/(app)/clients/[id]/page.tsx`.
+- Visits are grouped by **pay period** (`src/lib/pay-period.ts`, biweekly Sun–Sat anchored 2026-08-23). The client timeline shows the current period and loads earlier ones with `?periods=N`; the visits list navigates periods with `?period=YYYY-MM-DD`.
+
+## Data layer
+Drizzle ORM, Postgres dialect, PGlite locally (`./data/pglite`, gitignored). Schema in `src/db/schema.ts`; after changing it run `npm run db:generate` and commit the new file under `drizzle/`. Migrations apply at startup in `src/db/index.ts`.
+
+**Every write to a PHI table goes through `audited(db, actor)` in `src/db/audited.ts`.** Never call `db.insert/update/delete` directly from actions. Reads live in `src/db/queries.ts`.
+
+Visits snapshot provider tax ID, MHCP ID, service code, modifiers, and rendering NPI/UMPI at creation. Manual entry and edits are first-class: edits go through `recordEdit` in `src/app/(app)/visits/actions.ts`, which writes the `visit_edits` row and flips `manual_entry` in one transaction.
+
+## Domain rules
+- The client identifier is the **PMI #** (`people.pmi`, 8 digits). Never label it MHCP ID in the UI.
+- Units are always 15 minutes (`unitMinutes` stays 15). Service codes and modifiers come from `src/lib/hcpcs.ts` (DHS-3945, April 2026); update that file when DHS republishes, do not hardcode codes in components.
+- Client signing code: `people.signatureCodeHash` (scrypt via `src/lib/password.ts`). Generated by `setClientCode`, shown once. Clock-out requires the code or an "unable to sign" reason; see `clockOut` in `src/app/(app)/visits/actions.ts`.
+- Service agreement PDFs are stored under `data/uploads/agreements/` (gitignored) and served through `/agreements/[id]/document` behind auth. AI extraction lives in `src/lib/ai/extract-agreement.ts` (Anthropic SDK, `messages.parse` with a Zod output format, model `claude-opus-5`).
+
+- Caregiver assignments live in `assignments` (staff ↔ person, `orientedOn` = 245D.09 subd. 4a). DSPs can only clock in with assigned, oriented people; enforced in `clockIn` and in the clock UI.
+- Staff credentials live in `staff_credentials`; compliance rules are pure functions in `src/lib/credentials.ts`. Add new requirement types there, not in components.
+- Service agreements no longer expose Program in the UI (`programId` column kept, unused).
+
+- Staff SSN: `ssnEncrypted` (AES-256-GCM via `src/lib/crypto.ts`, key `DATA_ENCRYPTION_KEY`) + `ssnLast4`. Never select `ssnEncrypted` into a page; use `revealSsn` (admin, audited "reveal" action). Pay rate renders only for admins.
+- Client files: `client_documents` rows + files under `data/uploads/clients/<personId>/`, served by `/clients/[id]/documents/[docId]` after `canViewPerson`. DSPs can view only assigned people (clients list, client page, files).
+
+- Owner view (`/owner`, admin only) prices completed visits as units × agreement `unitRate` for revenue and minutes/60 × staff `payRate` for labor. Both are snapshots of *current* rates, not the rate at the time of the visit; when rates change historically, add rate snapshots to visits.
+
+## Auth
+Cookie sessions (`ehr_session`), scrypt password hashes, roles admin / supervisor / dsp. Use `requireUser(roles?)` at the top of every page and action; `can(user, action)` for UI gating. Route group `(app)` is authenticated; `(auth)` is not.
+
+## Conventions
+- Preview server: `npm run dev -- -p 3245` (launch config `ehr-dev` lives in `~/Desktop/.claude/launch.json`). Restart it after changing `next.config.ts` or installing packages.
+- Scripts run with `tsx` (`npm run db:seed`, `npm run db:reset`).
+- Seed data is sample data. No real client information in the repo.
+- Dates shown in America/Chicago. Date-only columns are ISO strings; timestamps are `timestamptz`.

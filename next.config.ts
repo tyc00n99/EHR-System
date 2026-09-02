@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["@electric-sql/pglite"],
+  devIndicators: { position: "bottom-right" },
 };
 
 export default nextConfig;
