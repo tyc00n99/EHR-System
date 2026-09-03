@@ -26,7 +26,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     user.role === "dsp" ? [] : listClockableAgreements(),
     typeof sp.shift === "string" ? getShift(sp.shift) : null,
   ]);
-  const shiftsView: CalShift[] = rows.map((r) => ({ id: r.shift.id, date: chicagoDate(r.shift.startAt), start: r.shift.startAt.toISOString(), end: r.shift.endAt.toISOString(), status: r.shift.status, client: `${r.personFirst} ${r.personLast}`, staff: `${r.staffFirst} ${r.staffLast}`, service: labelForCode(r.serviceCode, r.modifiers), code: r.serviceCode }));
+  const shiftsView: CalShift[] = rows.map((r) => ({ id: r.shift.id, date: chicagoDate(r.shift.startAt), start: r.shift.startAt.toISOString(), end: r.shift.endAt.toISOString(), status: r.shift.status, client: `${r.personFirst} ${r.personLast}`, staff: `${r.staffFirst} ${r.staffLast}`, staffId: r.shift.staffId, service: labelForCode(r.serviceCode, r.modifiers), code: r.serviceCode }));
   const label = `${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(start + "T12:00:00Z"))} – ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(end + "T12:00:00Z"))}`;
   const q = (week: string, extra: Record<string, string> = {}) => `/scheduling?${new URLSearchParams({ week, ...(staffFilter && user.role !== "dsp" ? { staff: staffFilter } : {}), ...extra })}`;
   const office = user.role !== "dsp";
