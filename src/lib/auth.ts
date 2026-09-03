@@ -9,7 +9,7 @@ import { audited } from "@/db/audited";
 import { verifyPassword } from "./password";
 
 export const SESSION_COOKIE = "ehr_session";
-const SESSION_HOURS = 12;
+const SESSION_HOURS = 24 * 30; // 30 days; sessions are revocable server-side (users.active, sessions table)
 
 export type Role = (typeof schema.userRole.enumValues)[number];
 
