@@ -468,3 +468,54 @@ export async function listMedAdmins(personId: string, fromDate: string, toDate: 
   const db = await getDb();
   return db.select().from(medicationAdministrations).where(and(eq(medicationAdministrations.personId, personId), gte(medicationAdministrations.scheduledDate, fromDate), lte(medicationAdministrations.scheduledDate, toDate)));
 }
+
+/* ---------- client feed ---------- */
+
+export type FeedEvent =
+  | { kind: "visit"; at: Date; id: string; staff: string; service: string; modifiers: string[]; units: number; minutes: number | null; status: string; note: string | null; interaction: string | null; skills: string[]; signed: boolean; staffSigned: boolean; approved: boolean; manual: boolean; goalYes: number; goalNo: number }
+  | { kind: "med"; at: Date; id: string; name: string; dose: string; time: string; status: string; note: string | null; by: string | null }
+  | { kind: "shift"; at: Date; id: string; staff: string; service: string; status: string }
+  | { kind: "document"; at: Date; id: string; title: string; category: string; by: string }
+  | { kind: "agreement"; at: Date; id: string; number: string; service: string; modifiers: string[]; units: number; status: string }
+  | { kind: "goal"; at: Date; id: string; title: string; status: string };
+
+/** Everything that happened to a person in a window, newest first. */
+export async function personFeed(personId: string, from: Date, to: Date): Promise<FeedEvent[]> {
+  const db = await getDb();
+  const fromDate = from.toISOString().slice(0, 10), toDate = to.toISOString().slice(0, 10);
+  const [vs, resp, meds, shs, docs, ags, gs] = await Promise.all([
+    db.select({ v: visits, staffFirst: staff.firstName, staffLast: staff.lastName }).from(visits).innerJoin(staff, eq(visits.staffId, staff.id)).where(and(eq(visits.personId, personId), gte(visits.clockInAt, from), lte(visits.clockInAt, to))),
+    db.select({ visitId: goalResponses.visitId, response: goalResponses.response }).from(goalResponses).innerJoin(visits, eq(goalResponses.visitId, visits.id)).where(and(eq(visits.personId, personId), gte(visits.clockInAt, from), lte(visits.clockInAt, to))),
+    db.select({ a: medicationAdministrations, name: medications.name, dose: medications.dose, first: staff.firstName, last: staff.lastName }).from(medicationAdministrations).innerJoin(medications, eq(medicationAdministrations.medicationId, medications.id)).leftJoin(staff, eq(medicationAdministrations.staffId, staff.id)).where(and(eq(medicationAdministrations.personId, personId), gte(medicationAdministrations.scheduledDate, fromDate), lte(medicationAdministrations.scheduledDate, toDate))),
+    db.select({ s: shifts, first: staff.firstName, last: staff.lastName, code: serviceAgreements.serviceCode, mods: serviceAgreements.modifiers }).from(shifts).innerJoin(staff, eq(shifts.staffId, staff.id)).innerJoin(serviceAgreements, eq(shifts.serviceAgreementId, serviceAgreements.id)).where(and(eq(shifts.personId, personId), gte(shifts.startAt, from), lte(shifts.startAt, to), sql`${shifts.status} in ('missed', 'cancelled')`)),
+    db.select({ d: clientDocuments, by: users.email }).from(clientDocuments).innerJoin(users, eq(clientDocuments.uploadedBy, users.id)).where(and(eq(clientDocuments.personId, personId), gte(clientDocuments.createdAt, from), lte(clientDocuments.createdAt, to))),
+    db.select().from(serviceAgreements).where(and(eq(serviceAgreements.personId, personId), gte(serviceAgreements.createdAt, from), lte(serviceAgreements.createdAt, to))),
+    db.select().from(goals).where(and(eq(goals.personId, personId), gte(goals.createdAt, from), lte(goals.createdAt, to))),
+  ]);
+  const yes = new Map<string, number>(), no = new Map<string, number>();
+  for (const r of resp) { if (r.response === "yes") yes.set(r.visitId, (yes.get(r.visitId) ?? 0) + 1); if (r.response === "no") no.set(r.visitId, (no.get(r.visitId) ?? 0) + 1); }
+  const events: FeedEvent[] = [
+    ...vs.map(({ v, staffFirst, staffLast }): FeedEvent => ({ kind: "visit", at: v.clockInAt, id: v.id, staff: `${staffFirst} ${staffLast}`, service: v.serviceCode, modifiers: v.modifiers, units: v.units, minutes: v.clockOutAt ? Math.round((v.clockOutAt.getTime() - v.clockInAt.getTime()) / 60000) : null, status: v.status, note: v.shiftNote, interaction: v.interactionLevel, skills: v.skills, signed: Boolean(v.clientSignedAt), staffSigned: Boolean(v.staffSignedAt), approved: Boolean(v.approvedAt), manual: v.manualEntry, goalYes: yes.get(v.id) ?? 0, goalNo: no.get(v.id) ?? 0 })),
+    ...meds.map(({ a, name, dose, first, last }): FeedEvent => ({ kind: "med", at: a.givenAt ?? new Date(`${a.scheduledDate}T${a.scheduledTime}:00-05:00`), id: a.id, name, dose, time: a.scheduledTime, status: a.status, note: a.note, by: first ? `${first} ${last}` : null })),
+    ...shs.map(({ s, first, last, code, mods }): FeedEvent => ({ kind: "shift", at: s.startAt, id: s.id, staff: `${first} ${last}`, service: code, status: s.status, ...(mods.length ? {} : {}) })),
+    ...docs.map(({ d, by }): FeedEvent => ({ kind: "document", at: d.createdAt, id: d.id, title: d.title, category: d.category, by })),
+    ...ags.map((a): FeedEvent => ({ kind: "agreement", at: a.createdAt, id: a.id, number: a.agreementNumber, service: a.serviceCode, modifiers: a.modifiers, units: a.authorizedUnits, status: a.status })),
+    ...gs.map((g): FeedEvent => ({ kind: "goal", at: g.createdAt, id: g.id, title: g.title, status: g.status })),
+  ];
+  return events.sort((a, b) => b.at.getTime() - a.at.getTime());
+}
+
+/** Office review queue for the current pay period. */
+export async function reviewQueue(from: Date, to: Date) {
+  const rows = await listVisits({ from, to, limit: 2000 });
+  const completed = rows.filter((r) => r.visit.status === "completed");
+  return {
+    awaitingApproval: completed.filter((r) => r.visit.staffSignedAt && !r.visit.approvedAt),
+    unsigned: completed.filter((r) => !r.visit.clientSignedAt),
+    missingNote: completed.filter((r) => !r.visit.shiftNote),
+    notStaffSigned: completed.filter((r) => r.visit.shiftNote && !r.visit.staffSignedAt),
+    open: rows.filter((r) => r.visit.status === "in_progress"),
+    approved: completed.filter((r) => r.visit.approvedAt).length,
+    total: completed.length,
+  };
+}

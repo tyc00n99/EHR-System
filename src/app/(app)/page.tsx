@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Notice, StatTile, Table, Td, Th, Thead, Tr } from "@/components/kit";
-import { dashboardCounts, getOpenVisitForStaff, getStaff, listAssignmentsForStaff, listCredentials, listShifts, listVisits, staffPeriodTotals } from "@/db/queries";
+import { dashboardCounts, getOpenVisitForStaff, getStaff, listAssignmentsForStaff, listCredentials, listShifts, listVisits, reviewQueue, staffPeriodTotals } from "@/db/queries";
+import { ReviewQueue, type QueueRow } from "./review-queue";
 import { labelForCode } from "@/lib/hcpcs";
 import { requireUser } from "@/lib/auth";
 import { evaluateCompliance } from "@/lib/credentials";
@@ -122,7 +123,8 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
 
 async function OfficeHome({ user }: { user: { staffId: string | null; staffName: string | null; role: string } }) {
   const period = currentPayPeriod();
-  const [counts, visits, open] = await Promise.all([dashboardCounts(period), listVisits({ limit: 8 }), user.staffId ? getOpenVisitForStaff(user.staffId) : null]);
+  const [counts, visits, open, queue] = await Promise.all([dashboardCounts(period), listVisits({ limit: 8 }), user.staffId ? getOpenVisitForStaff(user.staffId) : null, reviewQueue(period.start, period.end)]);
+  const row = (r: (typeof queue.open)[number]): QueueRow => ({ id: r.visit.id, person: `${r.personFirst} ${r.personLast}`, staff: `${r.staffFirst} ${r.staffLast}`, when: fmtDateTime(r.visit.clockInAt), units: r.visit.units, note: r.visit.shiftNote });
   const first = user.staffName?.split(" ")[0];
   return (
     <div className="mx-auto max-w-5xl">
@@ -141,6 +143,8 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
         <StatTile label="Units this pay period" value={counts.periodUnits.toLocaleString()} note={`${counts.periodVisits} visits · ${period.label}${counts.open ? ` · ${counts.open} in progress` : ""}`} href="/visits" />
         <StatTile label="Manual visits pending EVV" value={counts.manualPending} note={counts.manualPending ? "Need evidence before export" : "Nothing waiting"} tone={counts.manualPending ? "warn" : undefined} href="/visits" />
       </div>
+      <div className="mb-6"><ReviewQueue data={{ awaitingApproval: queue.awaitingApproval.map(row), unsigned: queue.unsigned.map(row), missingNote: queue.missingNote.map(row), notStaffSigned: queue.notStaffSigned.map(row), open: queue.open.map(row), approved: queue.approved, total: queue.total }} /></div>
+
       <Card title="Recent visits" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All visits</Link>}>
         {visits.length === 0 ? <Empty icon="clock" title="No visits yet" /> : (
           <Table>

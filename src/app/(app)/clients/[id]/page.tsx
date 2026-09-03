@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx } from "@/components/kit";
-import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listAuditForRecord, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, listVisits } from "@/db/queries";
+import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listAuditForRecord, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, listVisits, personFeed } from "@/db/queries";
 import { LifePlan } from "./life-plan";
+import { Feed, type FeedItem } from "./feed";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { deadlinesFromServiceStart } from "@/lib/compliance";
@@ -63,6 +64,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const goalFrom = daysAgo(90);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
+  const feedDays = Math.min(365, Math.max(7, Number(sp.days) || 30));
+  const feed = tab === "feed" ? await personFeed(id, daysAgo(feedDays), new Date()) : [];
   const [agreements, visits, audit, documents, team, goals, meds, admins] = await Promise.all([
     listAgreementsForPerson(id),
     listVisits({ personId: id, from: oldest.start, to: current.end, limit: 500 }),
@@ -87,6 +90,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
   const tabs = [
     { key: "overview", label: "Overview" },
+    { key: "feed", label: "Feed" },
     { key: "lifeplan", label: "Life plan", count: goals.filter((g) => g.goal.status === "active").length },
     { key: "visits", label: "Visits", count: visits.length },
     { key: "authorizations", label: "Authorizations", count: active.length },
@@ -210,6 +214,22 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           )}
           {manage && <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">Upload a plan or file</div><DocumentUpload personId={id} /></div>}
         </Card>
+      )}
+
+      {tab === "feed" && (
+        <Feed personId={id} days={feedDays} olderHref={`/clients/${id}?tab=feed&days=${feedDays + 30}`} items={feed.map((e): FeedItem => {
+          const day = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/Chicago" }).format(e.at);
+          const time = new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/Chicago" }).format(e.at);
+          const common = { at: e.at.toISOString(), day, time };
+          switch (e.kind) {
+            case "visit": return { ...common, kind: "visit", id: e.id, staff: e.staff, service: e.service, units: e.units, minutes: e.minutes, status: e.status, note: e.note, interaction: e.interaction, skills: e.skills, signed: e.signed, staffSigned: e.staffSigned, approved: e.approved, manual: e.manual, goalYes: e.goalYes, goalNo: e.goalNo };
+            case "med": return { ...common, kind: "med", id: e.id, name: e.name, dose: e.dose, status: e.status, note: e.note, by: e.by };
+            case "shift": return { ...common, kind: "shift", id: e.id, staff: e.staff, service: e.service, status: e.status };
+            case "document": return { ...common, kind: "document", id: e.id, title: e.title, category: e.category, by: e.by };
+            case "agreement": return { ...common, kind: "agreement", id: e.id, number: e.number, service: e.service, units: e.units, status: e.status };
+            case "goal": return { ...common, kind: "goal", id: e.id, title: e.title, status: e.status };
+          }
+        })} />
       )}
 
       {tab === "lifeplan" && (
