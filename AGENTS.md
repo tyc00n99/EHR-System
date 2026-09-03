@@ -77,8 +77,8 @@ Cookie sessions (`ehr_session`), scrypt password hashes, roles admin / superviso
 - `npm run db:reset` refuses to wipe a hosted database unless `CONFIRM_RESET=yes`.
 - Vercel env vars: `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, `ANTHROPIC_API_KEY` (optional `ANTHROPIC_WORKSPACE_ID`). Vercel Authentication is off; the app has its own login.
 
-## Theme: Neon (default since Sept 3, 2026)
-- `data-theme="neon"` is the default (server-rendered on `<html>`, user choice stored in `localStorage["ehr.theme.v2"]`). Modeled on console.neon.tech: #0c0c0c ground, #111 cards, #262626 hairlines, signal green #00e599 with dark text on primary buttons, Inter for everything (`--font-display`), `--radius-btn` 6px. Hubble/Tide/Slate/Sage remain selectable.
-- In Neon the `gray-100…900` scale runs dark→light so existing utilities stay readable. Pair `bg-gray-800` with `text-gray-100`, never `text-white`. Use `text-primary-foreground` on `bg-primary`.
-- Shell: breadcrumb top bar (`topbar-crumbs.tsx`: org [245D] / section [role]), centered ⌘K search, status pill ("All OK" / "N to review" → /attention). Sidebar: WORKSPACE label + filled CTA (`nav-cta` tokens), PAY PERIOD switcher, hairline-separated groups, dismissible "Set up your agency" card.
-- Office dashboard: `GetStarted` row (dismissible), 4-up metric strip with ⓘ hints and a footnote, `ActivityChart` (units per day, green area) beside "Shifts today", then Documentation review and Recent notes. Calendar blocks are translucent tints with a solid left edge.
+## Layout: Neon console shape, Hubble palette (Sept 3, 2026)
+- The user wants console.neon.tech's *format* only. Palette and fonts stay Hubble (default `data-theme="hubble"`, choice stored in `localStorage["ehr.theme.v2"]`). There is no dark theme; do not add one.
+- Shell: breadcrumb top bar (`topbar-crumbs.tsx`: org [245D] / section [role]), centered ⌘K search, status pill ("All OK" / "N to review" → /attention). Sidebar: WORKSPACE label + filled CTA (`nav-cta` tokens), PAY PERIOD switcher, hairline-separated groups, dismissible "Set up your agency" card, "Collapse menu".
+- Office dashboard: `GetStarted` row (dismissible), 4-up metric strip with ⓘ hints and a footnote, `ActivityChart` (units per day) beside "Shifts today", then Documentation review and Recent notes. Calendar blocks are translucent tints with a solid left edge.
+- Pair `bg-gray-800` with `text-gray-100` and `bg-primary` with `text-primary-foreground` rather than `text-white`.

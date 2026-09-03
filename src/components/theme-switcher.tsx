@@ -4,11 +4,10 @@ import { useState } from "react";
 import { Check, Palette } from "lucide-react";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
-export const DEFAULT_THEME = "neon";
+export const DEFAULT_THEME = "hubble";
 const STORAGE_KEY = "ehr.theme.v2";
 
 export const THEMES = [
-  { key: "neon", label: "Neon", hint: "Dark, signal green" },
   { key: "hubble", label: "Hubble", hint: "Paper, ink, navy signal" },
   { key: "tide", label: "Tide", hint: "Light frame, teal" },
   { key: "slate", label: "Slate", hint: "Dark frame, indigo" },
