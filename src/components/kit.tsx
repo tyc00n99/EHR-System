@@ -17,7 +17,7 @@ const btn = {
 } as const;
 
 type Variant = keyof typeof btn;
-const btnBase = "inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors disabled:opacity-50";
+const btnBase = "inline-flex h-8 items-center justify-center gap-1.5 rounded-[var(--radius-btn)] px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors disabled:opacity-50";
 
 export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(btnBase, btn[variant], className)} {...props} />;
@@ -126,7 +126,7 @@ export function PageIcon({ text, tone = "neutral" }: { text: string; tone?: "neu
 
 export function Card({ title, description, actions, children, className, padded = false }: { title?: string; description?: string; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
   return (
-    <section className={cx("overflow-hidden rounded-xl border border-line bg-card shadow-[var(--shadow-sm)]", className)}>
+    <section className={cx("overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)]", className)}>
       {(title || actions) && (
         <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-3">
           <div>
@@ -238,7 +238,7 @@ export function Empty({ icon = "inbox", title, children, action }: { icon?: Icon
 }
 
 export function Notice({ tone = "accent", children, action }: { tone?: "accent" | "ok" | "warn"; children: ReactNode; action?: ReactNode }) {
-  const tones = { accent: "border-blue-300 bg-blue-100", ok: "border-ok/30 bg-ok-soft", warn: "border-warn/30 bg-warn-soft" };
+  const tones = { accent: "border-primary/30 bg-primary-soft", ok: "border-ok/30 bg-ok-soft", warn: "border-warn/30 bg-warn-soft" };
   return (
     <div className={cx("mb-6 flex items-center justify-between gap-4 rounded-lg border px-4 py-3", tones[tone])}>
       <div>{children}</div>
@@ -252,7 +252,7 @@ export function Notice({ tone = "accent", children, action }: { tone?: "accent" 
 export function Avatar({ name, size = 28 }: { name: string; size?: number }) {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase()).join("");
   return (
-    <span className="flex shrink-0 items-center justify-center rounded-full bg-gray-800 font-medium text-white" style={{ width: size, height: size, fontSize: size * 0.4 }}>
+    <span className="flex shrink-0 items-center justify-center rounded-full bg-gray-800 font-medium text-gray-100" style={{ width: size, height: size, fontSize: size * 0.4 }}>
       {initials || "?"}
     </span>
   );

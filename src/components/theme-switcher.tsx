@@ -4,7 +4,11 @@ import { useState } from "react";
 import { Check, Palette } from "lucide-react";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
+export const DEFAULT_THEME = "neon";
+const STORAGE_KEY = "ehr.theme.v2";
+
 export const THEMES = [
+  { key: "neon", label: "Neon", hint: "Dark, signal green" },
   { key: "hubble", label: "Hubble", hint: "Paper, ink, navy signal" },
   { key: "tide", label: "Tide", hint: "Light frame, teal" },
   { key: "slate", label: "Slate", hint: "Dark frame, indigo" },
@@ -13,8 +17,8 @@ export const THEMES = [
 
 export function ThemeMenuItems() {
   // The menu only mounts on the client after open, so reading the DOM in the initializer is safe.
-  const [theme, setTheme] = useState(() => (typeof document === "undefined" ? "hubble" : document.documentElement.getAttribute("data-theme") || "hubble"));
-  const pick = (t: string) => { document.documentElement.setAttribute("data-theme", t); try { localStorage.setItem("ehr.theme", t); } catch {} setTheme(t); };
+  const [theme, setTheme] = useState(() => (typeof document === "undefined" ? DEFAULT_THEME : document.documentElement.getAttribute("data-theme") || DEFAULT_THEME));
+  const pick = (t: string) => { document.documentElement.setAttribute("data-theme", t); try { localStorage.setItem(STORAGE_KEY, t); } catch {} setTheme(t); };
   return (
     <>
       <DropdownMenuSeparator />
@@ -30,4 +34,4 @@ export function ThemeMenuItems() {
 }
 
 /** Runs before hydration so the chosen theme paints on first frame. */
-export const THEME_BOOT = `try{var t=localStorage.getItem("ehr.theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}`;
+export const THEME_BOOT = `try{var t=localStorage.getItem("ehr.theme.v2");if(t)document.documentElement.dataset.theme=t;}catch(e){}`;

@@ -50,6 +50,8 @@
   --nav-active-text: #0b2672;
   --nav-group: #b0aaa0;
   --nav-badge: #b3261e;
+  --nav-cta: #e1e5f1;
+  --nav-cta-border: #aeb8da;
 
   --shadow-sm: 0 1px 2px rgba(27, 24, 24, 0.05), 0 1px 3px rgba(27, 24, 24, 0.04);
   --shadow-md: 0 8px 24px rgba(27, 24, 24, 0.10), 0 2px 6px rgba(27, 24, 24, 0.06);
@@ -62,6 +64,8 @@
   --danger-soft: #f7e3e1;
 
   --radius: 0.75rem;
+  --radius-btn: 9999px;
+  --font-display: var(--font-serif);
   --background: #ffffff;
   --foreground: var(--text);
   --card: #ffffff;
@@ -261,6 +265,104 @@
   --input: #e4e0d8;
 }
 
+/* ---- Neon: near-black ground, hairline borders, signal green. Modeled on console.neon.tech (2026-09-03). ---- */
+:root[data-theme="neon"] {
+  /* grays run dark→light so existing gray-N utilities stay readable */
+  --gray-100: #141414;
+  --gray-200: #1c1c1c;
+  --gray-300: #2a2a2a;
+  --gray-400: #5c5c5c;
+  --gray-500: #8a8a8a;
+  --gray-600: #a3a3a3;
+  --gray-700: #c4c4c4;
+  --gray-800: #e2e2e2;
+  --gray-900: #f5f5f5;
+
+  --blue-100: rgba(0, 229, 153, 0.10);
+  --blue-200: rgba(0, 229, 153, 0.16);
+  --blue-300: rgba(0, 229, 153, 0.35);
+  --blue-500: #00e599;
+  --blue-600: #00e599;
+  --blue-700: #00cc88;
+
+  --text: #d4d4d4;
+  --text-strong: #f5f5f5;
+  --text-muted: #8f8f8f;
+  --text-hint: #616161;
+
+  --page: #0c0c0c;
+  --page-bg: #0c0c0c;
+  --sidebar: #0c0c0c;
+  --panel: #161616;
+  --line: #262626;
+  --line-soft: #1f1f1f;
+  --hover: rgba(255, 255, 255, 0.05);
+  --active: rgba(255, 255, 255, 0.09);
+
+  --nav: #0c0c0c;
+  --nav-border: #1f1f1f;
+  --nav-text: #a3a3a3;
+  --nav-text-strong: #f5f5f5;
+  --nav-hover: rgba(255, 255, 255, 0.05);
+  --nav-active: rgba(255, 255, 255, 0.09);
+  --nav-active-text: #f5f5f5;
+  --nav-group: #6b6b6b;
+  --nav-badge: #e5484d;
+  --nav-cta: #10382b;
+  --nav-cta-border: #1f6b4f;
+
+  --shadow-sm: none;
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
+
+  --ok: #00e599;
+  --ok-soft: rgba(0, 229, 153, 0.14);
+  --warn: #f5a524;
+  --warn-soft: rgba(245, 165, 36, 0.16);
+  --danger: #ff6369;
+  --danger-soft: rgba(229, 72, 77, 0.18);
+
+  --radius: 0.5rem;
+  --radius-btn: 0.375rem;
+  --font-display: var(--font-inter), "Inter", system-ui, sans-serif;
+  --background: #0c0c0c;
+  --foreground: var(--text);
+  --card: #111111;
+  --card-foreground: var(--text);
+  --popover: #161616;
+  --popover-foreground: var(--text);
+  --primary: #00e599;
+  --primary-foreground: #0c0c0c;
+  --primary-hover: #00cc88;
+  --primary-soft: rgba(0, 229, 153, 0.14);
+  --secondary: #1c1c1c;
+  --secondary-foreground: var(--text-strong);
+  --muted: #1c1c1c;
+  --muted-foreground: var(--text-muted);
+  --accent: #1c1c1c;
+  --accent-foreground: var(--text-strong);
+  --destructive: var(--danger);
+  --border: #262626;
+  --input: #2a2a2a;
+  --ring: #00e599;
+  --chart-1: #00e599;
+  --chart-2: #f5a524;
+  --chart-3: #7c9cff;
+  --chart-4: #c084fc;
+  --chart-5: #8a8a8a;
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: #0c0c0c;
+  --sidebar-accent: #1c1c1c;
+  --sidebar-accent-foreground: var(--text-strong);
+  --sidebar-border: #1f1f1f;
+  --sidebar-ring: var(--ring);
+  color-scheme: dark;
+}
+:root[data-theme="neon"] h1, :root[data-theme="neon"] h2, :root[data-theme="neon"] .figure { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; font-variation-settings: normal; }
+:root[data-theme="neon"] body { font-family: var(--font-display); }
+:root[data-theme="neon"] ::selection { background: rgba(0, 229, 153, 0.35); color: #f5f5f5; }
+:root[data-theme="neon"] * { scrollbar-color: #2a2a2a transparent; }
+
 @theme inline {
   --color-gray-100: var(--gray-100);
   --color-gray-200: var(--gray-200);
@@ -316,6 +418,9 @@
   --font-mono: var(--font-inconsolata), "Inconsolata", ui-monospace, monospace;
 
   --radius-app: var(--radius);
+  --radius-btn: var(--radius-btn);
+  --color-nav-cta: var(--nav-cta);
+  --color-nav-cta-border: var(--nav-cta-border);
 
   --font-heading: var(--font-sans);
 
@@ -399,7 +504,7 @@ body {
 
 h1, h2 {
   color: var(--text-strong);
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-weight: 500;
   font-variation-settings: "SOFT" 50;
 }
@@ -409,7 +514,7 @@ h3 { color: var(--text-strong); font-size: 14px; line-height: 20px; font-weight:
 
 /* Data reads in mono, the Hubble way: numbers, codes, times. */
 .tabular-nums { font-family: var(--font-mono); letter-spacing: 0; }
-.figure { font-family: var(--font-serif); font-weight: 500; font-variation-settings: "SOFT" 30; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.figure { font-family: var(--font-display); font-weight: 500; font-variation-settings: "SOFT" 30; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 kbd { font-family: var(--font-mono); }
 
 /* Notion-style selection and quiet scrollbars */
