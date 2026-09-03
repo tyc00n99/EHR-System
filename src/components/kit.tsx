@@ -328,7 +328,7 @@ export function Kpi({ label, value, note, tone, spark, href }: { label: string; 
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
         <div className="text-[12.5px] font-medium text-muted-foreground">{label}</div>
-        <div className="mt-1.5 text-[26px] font-bold leading-none tracking-[-0.02em] text-text-strong tabular-nums">{value}</div>
+        <div className="figure mt-1.5 text-[28px] leading-none text-text-strong">{value}</div>
         {note && <div className={cx("mt-2 text-[12.5px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
       </div>
       {spark && <Sparkline values={spark} />}
