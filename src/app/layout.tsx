@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Geist } from "next/font/google";
 import "./globals.css";
+import { THEME_BOOT } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -28,7 +29,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={cn("h-full", inter.variable, "font-sans", geist.variable)}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        {children}
+      </body>
     </html>
   );
 }

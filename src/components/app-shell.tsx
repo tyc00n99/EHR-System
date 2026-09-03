@@ -8,6 +8,7 @@ import { Avatar } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeMenuItems } from "@/components/theme-switcher";
 import { signOut, type CurrentUser } from "@/lib/auth";
 
 async function logout() {
@@ -57,6 +58,7 @@ export function AppShell({ user, orgName, attention, palette, children }: { user
                 <DropdownMenuSeparator />
                 <DropdownMenuItem render={<Link href="/me" />}><User className="size-4" /> My profile</DropdownMenuItem>
                 <DropdownMenuItem render={<Link href="/services" />}><FileText className="size-4" /> 245D service types</DropdownMenuItem>
+                <ThemeMenuItems />
                 <DropdownMenuSeparator />
                 <form action={logout}><DropdownMenuItem render={<button type="submit" className="w-full" />}><LogOut className="size-4" /> Log out</DropdownMenuItem></form>
               </DropdownMenuContent>
