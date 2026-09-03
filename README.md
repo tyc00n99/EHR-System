@@ -66,3 +66,7 @@ Restart the dev server after editing `.env.local`. Without a key the upload stil
 - Password reset, account management UI (users are created by the seed script for now).
 - State holiday calendar for working-day deadlines.
 - A service worker for offline clock-in.
+
+## Deploying
+
+The app runs on Vercel with a Neon Postgres database. Set `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, and `ANTHROPIC_API_KEY` in the Vercel project, then push to `main`. The build applies migrations before compiling. Locally, leave `DATABASE_URL` unset to use the embedded PGlite database, or set it to work against the hosted one.

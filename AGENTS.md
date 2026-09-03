@@ -70,3 +70,9 @@ Cookie sessions (`ehr_session`), scrypt password hashes, roles admin / superviso
 - Authorizations are editable at `/clients/[id]/agreements/[agreementId]` (`updateAgreement`, audited). Units, dates, rate, status, code, and modifiers can change; history is shown beside the form.
 - `people.medicationSupport` gates the Medical tab; `people.status` is changed from the header `StatusControl` (`setPersonStatus`, sets `dischargedOn`).
 - Never truncate labels in `Properties`; labels wrap.
+
+## Hosting (Sept 2026)
+- Production: https://ehr-system-eight.vercel.app (Vercel project `ehr-system`, deploys from `main` on every push). Database: Neon Postgres project "245D EHR". `DATABASE_URL` selects Postgres; unset means local PGlite.
+- `npm run build` runs `scripts/migrate.ts` first, so schema changes ship with the deploy. Uploaded files live in `stored_files` (bytea), never on disk.
+- `npm run db:reset` refuses to wipe a hosted database unless `CONFIRM_RESET=yes`.
+- Vercel env vars: `DATABASE_URL`, `DATA_ENCRYPTION_KEY`, `ANTHROPIC_API_KEY` (optional `ANTHROPIC_WORKSPACE_ID`). Vercel Authentication is off; the app has its own login.
