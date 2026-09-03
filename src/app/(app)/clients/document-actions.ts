@@ -1,14 +1,12 @@
 "use server";
 
-import { mkdir, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { requireUser } from "@/lib/auth";
-import { UPLOAD_DIR } from "@/lib/uploads";
+import { deleteFile, putFile } from "@/lib/storage";
 import { clientDocumentSchema, fieldErrors, formToObject, type ActionState } from "@/lib/validation";
 
 const ALLOWED: Record<string, string> = {
@@ -31,9 +29,8 @@ export async function uploadClientDocument(personId: string, _prev: ActionState,
   if (!ext) return { errors: { file: "Use a PDF, image, Word document, or text file" } };
   if (file.size > 25 * 1024 * 1024) return { errors: { file: "Files must be under 25 MB" } };
 
-  const rel = path.join("clients", personId, `${randomUUID()}${ext}`);
-  await mkdir(path.dirname(path.join(UPLOAD_DIR, rel)), { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, rel), Buffer.from(await file.arrayBuffer()));
+  const rel = `clients/${personId}/${randomUUID()}${ext}`;
+  await putFile(rel, new Uint8Array(await file.arrayBuffer()), file.type || "application/pdf");
 
   const db = await getDb();
   await audited(db, { userId: user.id }).insert(schema.clientDocuments, {
@@ -55,6 +52,6 @@ export async function deleteClientDocument(id: string, personId: string): Promis
   const [doc] = await db.select().from(schema.clientDocuments).where(eq(schema.clientDocuments.id, id)).limit(1);
   if (!doc) return;
   await audited(db, { userId: user.id }).delete(schema.clientDocuments, id);
-  await unlink(path.join(UPLOAD_DIR, doc.filePath)).catch(() => {});
+  await deleteFile(doc.filePath);
   revalidatePath(`/clients/${personId}`);
 }

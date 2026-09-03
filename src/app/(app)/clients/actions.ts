@@ -1,7 +1,5 @@
 "use server";
 
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -12,7 +10,7 @@ import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAg
 import { requireUser } from "@/lib/auth";
 import { generateClientCode } from "@/lib/client-code";
 import { hashPassword } from "@/lib/password";
-import { UPLOAD_DIR } from "@/lib/uploads";
+import { putFile } from "@/lib/storage";
 import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState } from "@/lib/validation";
 
 export async function createPerson(_prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -94,9 +92,8 @@ export async function extractAgreement(personId: string, _prev: ExtractState, fd
   if (!person) return { message: "Client not found." };
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const relPath = path.join("agreements", `${randomUUID()}.pdf`);
-  await mkdir(path.dirname(path.join(UPLOAD_DIR, relPath)), { recursive: true });
-  await writeFile(path.join(UPLOAD_DIR, relPath), buffer);
+  const relPath = `agreements/${randomUUID()}.pdf`;
+  await putFile(relPath, new Uint8Array(buffer), "application/pdf");
 
   try {
     const extracted = await extractAgreementFromPdf(buffer);

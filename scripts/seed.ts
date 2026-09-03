@@ -1,5 +1,5 @@
 /**
- * Seeds a local development database. Run with `npm run db:seed`.
+ * Seeds sample data into the configured database (local PGlite, or DATABASE_URL). Run with `npm run db:seed`.
  * Sample data only. No real client information belongs in this file.
  */
 import { existsSync, readFileSync } from "node:fs";

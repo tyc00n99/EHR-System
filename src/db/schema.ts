@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   check,
+  customType,
   date,
   doublePrecision,
   index,
@@ -594,6 +595,23 @@ export const medicationAdministrations = pgTable(
 );
 
 // ---------- audit log ----------
+
+/** Postgres bytea. PGlite hands back Uint8Array, postgres-js hands back Buffer; storage.ts normalizes. */
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({ dataType: () => "bytea" });
+
+/** Uploaded files (service agreement letters, support plans). Stored in the database so every host is stateless and files are private behind login. */
+export const storedFiles = pgTable(
+  "stored_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    path: text("path").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    bytes: bytea("bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("stored_files_path_idx").on(t.path)],
+);
 
 export const auditLog = pgTable(
   "audit_log",
