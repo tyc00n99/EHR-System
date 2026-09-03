@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge, Card, Empty, PageHeader, PageIcon, Properties, type Tone } from "@/components/ui";
+import { Badge, Card, Empty, PageHeader, PageIcon, Properties, type Tone } from "@/components/kit";
 import { getStaff, listAssignmentsForStaff, listCredentials } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { credentialLabel, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
@@ -35,7 +35,7 @@ export default async function MePage() {
                 { icon: "mail", label: "Email", value: s.email },
                 { icon: "calendar", label: "Hired", value: fmtDate(s.hireDate) },
               ]} />
-              <p className="mt-3 text-xs text-muted">Ask an administrator to change these.</p>
+              <p className="mt-3 text-xs text-muted-foreground">Ask an administrator to change these.</p>
             </Card>
           )}
           <Card title="Change password" padded><PasswordForm /></Card>
@@ -48,8 +48,8 @@ export default async function MePage() {
                   {items.map((i) => (
                     <li key={i.type} className="flex items-start gap-3 px-5 py-3">
                       <Badge tone={TONE[i.status]}>{LABEL[i.status]}</Badge>
-                      <div className="min-w-0 flex-1"><div className="font-medium text-text-strong">{i.label}</div><div className="text-[13px] text-muted">{i.detail}</div></div>
-                      {i.due && <span className={`shrink-0 text-[13px] tabular-nums ${i.status === "overdue" ? "text-danger" : "text-muted"}`}>{fmtDate(i.due)}</span>}
+                      <div className="min-w-0 flex-1"><div className="font-medium text-text-strong">{i.label}</div><div className="text-[13px] text-muted-foreground">{i.detail}</div></div>
+                      {i.due && <span className={`shrink-0 text-[13px] tabular-nums ${i.status === "overdue" ? "text-danger" : "text-muted-foreground"}`}>{fmtDate(i.due)}</span>}
                     </li>
                   ))}
                 </ul>
@@ -59,7 +59,7 @@ export default async function MePage() {
                   <ul className="divide-y divide-line-soft">
                     {assignments.filter((a) => a.assignment.active).map((a) => (
                       <li key={a.assignment.id} className="flex items-center justify-between gap-3 px-5 py-3">
-                        <div><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link><div className="text-[13px] text-muted">{a.person.waiverProgram} · {a.person.county} County</div></div>
+                        <div><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link><div className="text-[13px] text-muted-foreground">{a.person.waiverProgram} · {a.person.county} County</div></div>
                         {a.assignment.orientedOn ? <Badge tone="ok">oriented {fmtDate(a.assignment.orientedOn)}</Badge> : <Badge tone="warn">orientation pending</Badge>}
                       </li>
                     ))}
@@ -70,14 +70,14 @@ export default async function MePage() {
                 {credentials.length === 0 ? <Empty icon="doc" title="Nothing recorded yet" /> : (
                   <ul className="divide-y divide-line-soft">
                     {credentials.map((c) => (
-                      <li key={c.id} className="flex items-center justify-between gap-3 px-5 py-3"><div><div className="font-medium text-text-strong">{c.title}</div><div className="text-[13px] text-muted">{credentialLabel(c.type)} · {fmtDate(c.completedOn)}{c.hours ? ` · ${c.hours} h` : ""}</div></div>{c.expiresOn && <span className="text-[13px] text-muted tabular-nums">expires {fmtDate(c.expiresOn)}</span>}</li>
+                      <li key={c.id} className="flex items-center justify-between gap-3 px-5 py-3"><div><div className="font-medium text-text-strong">{c.title}</div><div className="text-[13px] text-muted-foreground">{credentialLabel(c.type)} · {fmtDate(c.completedOn)}{c.hours ? ` · ${c.hours} h` : ""}</div></div>{c.expiresOn && <span className="text-[13px] text-muted-foreground tabular-nums">expires {fmtDate(c.expiresOn)}</span>}</li>
                     ))}
                   </ul>
                 )}
               </Card>
             </>
           ) : (
-            <Card padded><p className="text-muted">This login is not linked to a staff record.</p></Card>
+            <Card padded><p className="text-muted-foreground">This login is not linked to a staff record.</p></Card>
           )}
         </div>
       </div>

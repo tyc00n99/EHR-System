@@ -1,4 +1,4 @@
-import { Crumb, CrumbSep, PageHeader } from "@/components/ui";
+import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { requireUser } from "@/lib/auth";
 import { createPerson } from "../actions";
 import { PersonForm } from "../person-form";

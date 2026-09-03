@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select, Textarea } from "@/components/ui";
+import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select, Textarea } from "@/components/kit";
 import { PLACES_OF_SERVICE } from "@/lib/validation";
 import { createManualVisit } from "../actions";
 

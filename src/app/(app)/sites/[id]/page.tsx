@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Badge, Card, Crumb, CrumbSep, Empty, PageHeader, PageIcon, Properties, Table, Td, Th, Thead, Tr } from "@/components/ui";
+import { Badge, Card, Crumb, CrumbSep, Empty, PageHeader, PageIcon, Properties, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { getSite } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { getServiceType } from "@/lib/services";

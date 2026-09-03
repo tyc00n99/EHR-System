@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Crumb, CrumbSep, PageHeader } from "@/components/ui";
+import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { getPerson } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { fullName } from "@/lib/format";

@@ -44,6 +44,12 @@ export const gender = pgEnum("gender", ["female", "male", "nonbinary", "other", 
 
 export const documentCategory = pgEnum("document_category", ["support_plan", "iapp", "treatment_goals", "other"]);
 
+export const goalStatus = pgEnum("goal_status", ["active", "met", "discontinued"]);
+export const goalResponse = pgEnum("goal_response", ["yes", "no", "na"]);
+export const interactionLevel = pgEnum("interaction_level", ["low", "medium", "high"]);
+export const shiftStatus = pgEnum("shift_status", ["scheduled", "in_progress", "completed", "cancelled", "missed"]);
+export const medAdminStatus = pgEnum("med_admin_status", ["given", "refused", "held", "missed"]);
+
 export const credentialType = pgEnum("credential_type", [
   "background_study",
   "orientation",
@@ -324,6 +330,16 @@ export const visits = pgTable(
     tasks: jsonb("tasks").$type<VisitTask[]>().notNull().default([]),
     shiftNote: text("shift_note"),
 
+    /** Structured documentation captured with the note. */
+    interactionLevel: interactionLevel("interaction_level"),
+    skills: text("skills").array().notNull().default(sql`'{}'::text[]`),
+    /** Staff attestation and supervisor approval of the documentation. */
+    staffSignedAt: timestamp("staff_signed_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    /** Scheduled shift this visit fulfilled, when one existed. */
+    shiftId: uuid("shift_id"),
+
     /** Set when the person entered their signing code after reading the shift note. */
     clientSignedAt: timestamp("client_signed_at", { withTimezone: true }),
     /** Why the visit was closed without a client signature, when it was. */
@@ -436,6 +452,139 @@ export const staffCredentials = pgTable(
   (t) => [index("credentials_staff_idx").on(t.staffId), check("credentials_date_order", sql`${t.expiresOn} is null or ${t.expiresOn} >= ${t.completedOn}`)],
 );
 
+// ---------- life plan goals ----------
+
+/** Outcomes from the support plan, tracked with yes/no questions answered in every visit note. */
+export const goals = pgTable(
+  "goals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => people.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    /** Short category used for the icon: social, daily_living, health, community, employment, communication, other. */
+    category: text("category").notNull().default("other"),
+    status: goalStatus("status").notNull().default("active"),
+    startDate: date("start_date"),
+    targetDate: date("target_date"),
+    createdBy: uuid("created_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("goals_person_idx").on(t.personId)],
+);
+
+export const goalQuestions = pgTable(
+  "goal_questions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => goals.id, { onDelete: "cascade" }),
+    prompt: text("prompt").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("goal_questions_goal_idx").on(t.goalId)],
+);
+
+export const goalResponses = pgTable(
+  "goal_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    visitId: uuid("visit_id")
+      .notNull()
+      .references(() => visits.id, { onDelete: "cascade" }),
+    questionId: uuid("question_id")
+      .notNull()
+      .references(() => goalQuestions.id, { onDelete: "cascade" }),
+    response: goalResponse("response").notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("goal_responses_visit_question_idx").on(t.visitId, t.questionId), index("goal_responses_question_idx").on(t.questionId)],
+);
+
+// ---------- scheduling ----------
+
+export const shifts = pgTable(
+  "shifts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => people.id),
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id),
+    serviceAgreementId: uuid("service_agreement_id")
+      .notNull()
+      .references(() => serviceAgreements.id),
+    startAt: timestamp("start_at", { withTimezone: true }).notNull(),
+    endAt: timestamp("end_at", { withTimezone: true }).notNull(),
+    status: shiftStatus("status").notNull().default("scheduled"),
+    note: text("note"),
+    /** Shifts created together by "repeat weekly" share a series id. */
+    seriesId: uuid("series_id"),
+    createdBy: uuid("created_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("shifts_staff_start_idx").on(t.staffId, t.startAt), index("shifts_person_start_idx").on(t.personId, t.startAt), check("shifts_time_order", sql`${t.endAt} > ${t.startAt}`)],
+);
+
+// ---------- medications (245D.05) ----------
+
+export const medications = pgTable(
+  "medications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => people.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    dose: text("dose").notNull(),
+    route: text("route").notNull().default("oral"),
+    /** Human frequency, e.g. "Twice daily". */
+    frequency: text("frequency").notNull(),
+    /** Scheduled clock times, 24h "HH:MM", one administration expected per time per day. */
+    times: text("times").array().notNull().default(sql`'{}'::text[]`),
+    instructions: text("instructions"),
+    prescriber: text("prescriber"),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date"),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("medications_person_idx").on(t.personId)],
+);
+
+export const medicationAdministrations = pgTable(
+  "medication_administrations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    medicationId: uuid("medication_id")
+      .notNull()
+      .references(() => medications.id, { onDelete: "cascade" }),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => people.id),
+    scheduledDate: date("scheduled_date").notNull(),
+    scheduledTime: text("scheduled_time").notNull(),
+    status: medAdminStatus("status").notNull(),
+    givenAt: timestamp("given_at", { withTimezone: true }),
+    recordedBy: uuid("recorded_by")
+      .notNull()
+      .references(() => users.id),
+    staffId: uuid("staff_id").references(() => staff.id),
+    visitId: uuid("visit_id").references(() => visits.id),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("med_admin_slot_idx").on(t.medicationId, t.scheduledDate, t.scheduledTime), index("med_admin_person_date_idx").on(t.personId, t.scheduledDate)],
+);
+
 // ---------- audit log ----------
 
 export const auditLog = pgTable(
@@ -467,6 +616,12 @@ export type VisitEdit = typeof visitEdits.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type ClientDocument = typeof clientDocuments.$inferSelect;
+export type Goal = typeof goals.$inferSelect;
+export type GoalQuestion = typeof goalQuestions.$inferSelect;
+export type GoalResponse = typeof goalResponses.$inferSelect;
+export type Shift = typeof shifts.$inferSelect;
+export type Medication = typeof medications.$inferSelect;
+export type MedicationAdministration = typeof medicationAdministrations.$inferSelect;
 export type DocumentCategory = (typeof documentCategory.enumValues)[number];
 export type StaffCredential = typeof staffCredentials.$inferSelect;
 export type CredentialType = (typeof credentialType.enumValues)[number];

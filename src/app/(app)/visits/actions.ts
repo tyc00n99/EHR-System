@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { getAgreement, getOrganization, getPerson, getStaff, listAssignmentsForStaff } from "@/db/queries";
+import { findShiftForClockIn, getAgreement, getOrganization, getPerson, getStaff, listAssignmentsForStaff } from "@/db/queries";
 import { requireUser, type CurrentUser } from "@/lib/auth";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { computeUnits } from "@/lib/units";
@@ -79,7 +79,9 @@ export async function clockIn(_prev: ActionState, fd: FormData): Promise<ActionS
     const { person, agreement, snapshot } = await resolveSnapshot(d.personId, user.staffId, d.serviceAgreementId);
     if (person.status !== "active") return { message: "This client is not active." };
     if (!withinSpan(agreement, today())) return { message: "Today is outside the service agreement dates." };
+    const shift = await findShiftForClockIn(user.staffId, d.personId, new Date());
     await audited(db, { userId: user.id }).insert(visits, {
+      shiftId: shift?.id ?? null,
       personId: d.personId,
       staffId: user.staffId,
       serviceAgreementId: d.serviceAgreementId,
@@ -96,10 +98,12 @@ export async function clockIn(_prev: ActionState, fd: FormData): Promise<ActionS
       createdBy: user.id,
       updatedBy: user.id,
     });
+    if (shift) await audited(db, { userId: user.id }).update(schema.shifts, shift.id, { status: "in_progress" });
   } catch (e) {
     return { message: e instanceof Error ? e.message : "Could not clock in." };
   }
   revalidatePath("/clock");
+  revalidatePath("/scheduling");
   revalidatePath("/");
   redirect("/clock");
 }
@@ -139,9 +143,11 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
     status: "completed",
     updatedBy: user.id,
   });
+  if (v.shiftId) await audited(db, { userId: user.id }).update(schema.shifts, v.shiftId, { status: "completed" });
   revalidatePath("/clock");
   revalidatePath("/");
   revalidatePath("/visits");
+  revalidatePath("/scheduling");
   redirect(`/visits/${v.id}?done=1`);
 }
 

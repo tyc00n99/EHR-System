@@ -19,7 +19,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   return (
     <div className="relative">
-      <div className="mb-2 flex items-center gap-4 px-1 text-[12px] text-muted">
+      <div className="mb-2 flex items-center gap-4 px-1 text-[12px] text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-1)" }} />Billable</span>
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-2)" }} />Labor cost</span>
       </div>
@@ -48,7 +48,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
           <div className="font-medium text-text-strong">{h.label}</div>
           <div className="mt-1 flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-1)" }} />Billable {money(h.revenue)}</div>
           <div className="flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-2)" }} />Labor {money(h.labor)}</div>
-          <div className="mt-1 text-muted">Margin {money(h.revenue - h.labor)}</div>
+          <div className="mt-1 text-muted-foreground">Margin {money(h.revenue - h.labor)}</div>
         </div>
       )}
     </div>

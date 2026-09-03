@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { getPerson } from "@/db/queries";
-import { aiConfigured, extractAgreementFromPdf, type ExtractedAgreement } from "@/lib/ai/extract-agreement";
+import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAgreement } from "@/lib/ai/extract-agreement";
 import { requireUser } from "@/lib/auth";
 import { generateClientCode } from "@/lib/client-code";
 import { hashPassword } from "@/lib/password";
@@ -103,6 +103,6 @@ export async function extractAgreement(personId: string, _prev: ExtractState, fd
     const pmiMismatch = Boolean(extracted.pmi && extracted.pmi.replace(/\D/g, "") !== person.pmi);
     return { extracted, documentPath: relPath, documentName: file.name, pmiMismatch };
   } catch (e) {
-    return { message: e instanceof Error ? e.message : "Extraction failed.", documentPath: relPath, documentName: file.name };
+    return { message: explainAiError(e), documentPath: relPath, documentName: file.name };
   }
 }

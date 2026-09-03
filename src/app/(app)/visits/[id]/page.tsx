@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Badge, Card, Crumb, CrumbSep, Notice, PageHeader, PageIcon, Properties } from "@/components/ui";
+import { Badge, Card, Crumb, CrumbSep, Notice, PageHeader, PageIcon, Properties } from "@/components/kit";
 import { Icon } from "@/components/icons";
 import { getVisit } from "@/db/queries";
 import { can, requireUser } from "@/lib/auth";
@@ -7,14 +7,15 @@ import { fmtDateTime, fullName, toLocalInput } from "@/lib/format";
 import { minutesBetween } from "@/lib/units";
 import { PLACES_OF_SERVICE } from "@/lib/validation";
 import { VisitEditForm, VoidButton } from "./edit-form";
+import { VisitRecord } from "../record/visit-record";
 
 const evvTone = { pending: "neutral", exported: "accent", accepted: "ok", rejected: "danger" } as const;
 
 function gps(lat: number | null, lng: number | null, acc: number | null) {
   if (lat == null || lng == null) return null;
   return (
-    <a href={`https://www.google.com/maps?q=${lat},${lng}`} target="_blank" rel="noreferrer" className="tabular-nums text-accent hover:underline">
-      {lat.toFixed(5)}, {lng.toFixed(5)}{acc != null && <span className="text-muted"> · ±{Math.round(acc)} m</span>}
+    <a href={`https://www.google.com/maps?q=${lat},${lng}`} target="_blank" rel="noreferrer" className="tabular-nums text-primary hover:underline">
+      {lat.toFixed(5)}, {lng.toFixed(5)}{acc != null && <span className="text-muted-foreground"> · ±{Math.round(acc)} m</span>}
     </a>
   );
 }
@@ -50,15 +51,17 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
         </>}
       />
 
+      <div className="mb-4 overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]"><VisitRecord id={v.id} /></div>
+
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Card title="Aggregator record" description="Exactly what the EVV aggregator and the 837P claim line receive" padded>
           <Properties items={[
             { icon: "hash", label: "Provider tax ID", value: <span className="tabular-nums">{v.providerTaxId}</span> },
             { icon: "id", label: "PMI #", value: <span className="tabular-nums">{v.pmi}</span> },
-            { icon: "code", label: "Service code", value: <span className="tabular-nums">{v.serviceCode}{v.modifiers.length ? <span className="text-muted"> {v.modifiers.join(" ")}</span> : ""}</span> },
-            { icon: "units", label: "Units", value: <span className="tabular-nums">{v.units} <span className="text-muted">× {agreement.unitMinutes >= 1440 ? "1 day" : `${agreement.unitMinutes} min`}</span></span> },
-            { icon: "pin", label: "Place of service", value: <span><span className="tabular-nums">{v.placeOfService}</span>{pos && <span className="text-muted"> · {pos.label}</span>}</span> },
-            { icon: "user", label: "Rendering staff", value: <span>{s.firstName} {s.lastName}<span className="text-muted tabular-nums"> · {v.renderingIdType.toUpperCase()} {v.renderingId}</span></span> },
+            { icon: "code", label: "Service code", value: <span className="tabular-nums">{v.serviceCode}{v.modifiers.length ? <span className="text-muted-foreground"> {v.modifiers.join(" ")}</span> : ""}</span> },
+            { icon: "units", label: "Units", value: <span className="tabular-nums">{v.units} <span className="text-muted-foreground">× {agreement.unitMinutes >= 1440 ? "1 day" : `${agreement.unitMinutes} min`}</span></span> },
+            { icon: "pin", label: "Place of service", value: <span><span className="tabular-nums">{v.placeOfService}</span>{pos && <span className="text-muted-foreground"> · {pos.label}</span>}</span> },
+            { icon: "user", label: "Rendering staff", value: <span>{s.firstName} {s.lastName}<span className="text-muted-foreground tabular-nums"> · {v.renderingIdType.toUpperCase()} {v.renderingId}</span></span> },
             { icon: "doc", label: "Authorization", value: agreement.agreementNumber },
           ]} />
           <div className="my-2 border-t border-line-soft" />
@@ -74,12 +77,12 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
 
         <div className="grid content-start gap-4">
           <Card title="Tasks" description={v.tasks.length ? `${completedTasks} of ${v.tasks.length} completed` : undefined} padded>
-            {v.tasks.length === 0 ? <p className="text-[13px] text-muted">No tasks were planned for this visit.</p> : (
+            {v.tasks.length === 0 ? <p className="text-[13px] text-muted-foreground">No tasks were planned for this visit.</p> : (
               <ul className="space-y-1.5">
                 {v.tasks.map((t) => (
                   <li key={t.code} className="flex items-center gap-2.5">
                     <span className={`flex h-[18px] w-[18px] items-center justify-center rounded border ${t.completed ? "border-ok bg-ok-soft text-ok" : "border-line text-transparent"}`}><Icon.check size={12} /></span>
-                    <span className={t.completed ? "" : "text-muted"}>{t.label}</span>
+                    <span className={t.completed ? "" : "text-muted-foreground"}>{t.label}</span>
                   </li>
                 ))}
               </ul>
@@ -89,13 +92,13 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
             <p className="whitespace-pre-wrap leading-6">{v.shiftNote || <span className="text-hint">No shift note yet.</span>}</p>
           </Card>
           <Card title="Edit history" description="Kept with the visit and exported as EVV evidence">
-            {edits.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted">No edits since creation.</p> : (
+            {edits.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No edits since creation.</p> : (
               <ul className="divide-y divide-line-soft">
                 {edits.map(({ edit, editorEmail }) => (
                   <li key={edit.id} className="px-5 py-3">
-                    <div className="flex items-baseline justify-between gap-3 text-[13px] text-muted"><span>{editorEmail}</span><span className="tabular-nums">{fmtDateTime(edit.editedAt)}</span></div>
+                    <div className="flex items-baseline justify-between gap-3 text-[13px] text-muted-foreground"><span>{editorEmail}</span><span className="tabular-nums">{fmtDateTime(edit.editedAt)}</span></div>
                     <div className="mt-0.5 font-medium text-text-strong">{edit.reason}</div>
-                    <ul className="mt-1.5 space-y-0.5 text-xs text-muted">
+                    <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
                       {Object.entries(edit.changes).map(([k, c]) => (
                         <li key={k} className="tabular-nums"><span className="font-medium text-text">{k}</span> {fmtChange(c.from)} → {fmtChange(c.to)}</li>
                       ))}

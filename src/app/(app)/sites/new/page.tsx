@@ -1,4 +1,4 @@
-import { Crumb, CrumbSep, PageHeader } from "@/components/ui";
+import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { requireUser } from "@/lib/auth";
 import { createSite } from "../actions";
 import { SiteForm } from "../site-form";

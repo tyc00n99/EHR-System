@@ -15,7 +15,7 @@ import { encryptField } from "../src/lib/crypto";
 import { audited } from "../src/db/audited";
 import { hashPassword } from "../src/lib/password";
 
-const { organizations, staff, users, people, sites, programs, serviceAgreements, assignments, staffCredentials, visits } = schema;
+const { organizations, staff, users, people, sites, programs, serviceAgreements, assignments, staffCredentials, visits, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
 
 const PASSWORD = "changeme-245d";
 
@@ -267,11 +267,12 @@ async function main() {
   // Six pay periods of completed visits so the owner view has history.
   const [adminUser] = await db.select().from(users).where((await import("drizzle-orm")).eq(users.email, "admin@example.com"));
   const dspUser = (await db.select().from(users).where((await import("drizzle-orm")).eq(users.email, "dsp@example.com")))[0];
+  const seededVisits: { id: string; personId: string; start: Date; end: Date; n: number }[] = [];
   const seedVisit = async (opts: { person: typeof jordan; staffRow: typeof dsp1; sa: typeof saJordan; start: Date; minutes: number; note: string; signed?: boolean; manual?: boolean; createdBy: string }) => {
     const end = new Date(opts.start.getTime() + opts.minutes * 60000);
     const whole = Math.floor(opts.minutes / 15), rem = opts.minutes % 15;
     const units = whole + (rem >= 8 ? 1 : 0);
-    await w.insert(visits, {
+    const inserted = await w.insert(visits, {
       personId: opts.person.id,
       staffId: opts.staffRow.id,
       serviceAgreementId: opts.sa.id,
@@ -298,10 +299,16 @@ async function main() {
       shiftNote: opts.note,
       clientSignedAt: opts.signed === false ? null : new Date(end.getTime() + 60000),
       clientUnsignedReason: opts.signed === false ? "Asleep at end of shift" : null,
+      interactionLevel: (["low", "medium", "high"] as const)[n % 3],
+      skills: opts.person.id === casey.id ? ["Household tasks", "Medication support"] : n % 2 ? ["Communication", "Daily living", "Community integration"] : ["Daily living", "Money management"],
+      staffSignedAt: new Date(end.getTime() + 120000),
+      approvedAt: opts.start < new Date("2026-08-23T00:00:00-05:00") ? new Date(end.getTime() + 86_400_000) : null,
+      approvedBy: opts.start < new Date("2026-08-23T00:00:00-05:00") ? adminUser.id : null,
       status: "completed",
       createdBy: opts.createdBy,
       updatedBy: opts.createdBy,
     });
+    seededVisits.push({ id: inserted.id, personId: opts.person.id, start: opts.start, end, n });
   };
   const chicago = (iso: string, hour: number) => new Date(`${iso}T${String(hour).padStart(2, "0")}:00:00-05:00`);
   const days = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -319,6 +326,48 @@ async function main() {
       if (day >= "2026-05-01" && dow !== 6) await seedVisit({ person: casey, staffRow: dsp2, sa: saCasey, start: chicago(day, 13), minutes: 120, note: "Household tasks and medication reminder. No concerns.", createdBy: adminUser.id });
       n++;
     }
+  }
+
+  // Life plan goals with yes/no questions, and responses on the seeded visits
+  const mkGoal = async (personId: string, title: string, description: string, category: string, prompts: string[]) => {
+    const g = await w.insert(goals, { personId, title, description, category, status: "active", startDate: "2026-07-01", createdBy: adminUser.id });
+    const qs = [] as { id: string }[];
+    for (const [i, prompt] of prompts.entries()) qs.push(await w.insert(goalQuestions, { goalId: g.id, prompt, sortOrder: i }));
+    return qs;
+  };
+  const jq = await mkGoal(jordan.id, "Improve social skills", "Help Jordan build social skills by joining group activities and starting conversations.", "social", ["Did Jordan participate in a community outing?", "Did Jordan start a conversation with a peer or staff member today?"]);
+  const jq2 = await mkGoal(jordan.id, "Cook two meals a week", "Jordan plans and cooks with staff support, working toward doing it alone.", "daily_living", ["Did Jordan help plan or cook a meal today?"]);
+  const rq = await mkGoal(riley.id, "Bedtime routine", "Riley follows the bedtime routine with fewer prompts each week.", "daily_living", ["Did Riley complete the bedtime routine with two or fewer prompts?"]);
+  const cq = await mkGoal(casey.id, "Take medications on schedule", "Casey self-administers with a reminder only.", "health", ["Did Casey take scheduled medications with a reminder only?"]);
+  for (const v of seededVisits) {
+    const qs = v.personId === jordan.id ? [...jq, ...jq2] : v.personId === riley.id ? rq : cq;
+    for (const [i, q] of qs.entries()) await w.insert(goalResponses, { visitId: v.id, questionId: q.id, response: (v.n + i) % 5 === 0 ? "no" : (v.n + i) % 11 === 0 ? "na" : "yes" });
+  }
+
+  // Medications (245D.05) with a MAR history for the last 30 days
+  const metformin = await w.insert(medications, { personId: casey.id, name: "Metformin", dose: "500 mg", route: "oral", frequency: "Twice daily with food", times: ["08:00", "20:00"], instructions: "Give with breakfast and dinner.", prescriber: "Dr. Halvorsen", startDate: "2026-05-01" });
+  const lamictal = await w.insert(medications, { personId: casey.id, name: "Lamotrigine", dose: "100 mg", route: "oral", frequency: "Once daily", times: ["20:00"], prescriber: "Dr. Halvorsen", startDate: "2026-05-01" });
+  const prilosec = await w.insert(medications, { personId: jordan.id, name: "Omeprazole", dose: "20 mg", route: "oral", frequency: "Every morning", times: ["09:15"], instructions: "30 minutes before breakfast.", prescriber: "Dr. Okonkwo", startDate: "2026-07-01" });
+  for (let i = 30; i >= 1; i--) {
+    const date = days("2026-09-02", -i);
+    for (const [med, personId, staffRow] of [[metformin, casey.id, dsp2], [lamictal, casey.id, dsp2], [prilosec, jordan.id, dsp1]] as const) {
+      for (const [ti, t] of med.times.entries()) {
+        const k = i * 7 + ti;
+        const status = k % 17 === 0 ? "refused" : k % 23 === 0 ? "missed" : "given";
+        await w.insert(medicationAdministrations, { medicationId: med.id, personId, scheduledDate: date, scheduledTime: t, status, givenAt: status === "given" ? new Date(`${date}T${t}:00-05:00`) : null, recordedBy: dspUser.id, staffId: staffRow.id, note: status === "refused" ? "Refused, offered again 20 min later" : null });
+      }
+    }
+  }
+
+  // Shifts for this week and next (Sun–Sat), weekday mornings and afternoons
+  for (let d = 0; d < 14; d++) {
+    const date = days("2026-08-30", d);
+    const dow = new Date(date + "T12:00:00Z").getUTCDay();
+    if (dow === 0) continue;
+    const past = date < "2026-09-02";
+    if (dow !== 6) await w.insert(shifts, { personId: jordan.id, staffId: dsp1.id, serviceAgreementId: saJordan.id, startAt: chicago(date, 9), endAt: chicago(date, 12), status: past ? "completed" : "scheduled", createdBy: adminUser.id });
+    if (dow === 2 || dow === 4 || dow === 6) await w.insert(shifts, { personId: riley.id, staffId: dsp1.id, serviceAgreementId: saRileyRespite.id, startAt: chicago(date, 15), endAt: chicago(date, 19), status: past ? "completed" : "scheduled", createdBy: adminUser.id });
+    if (dow !== 6) await w.insert(shifts, { personId: casey.id, staffId: dsp2.id, serviceAgreementId: saCasey.id, startAt: chicago(date, 13), endAt: chicago(date, 15), status: past ? "completed" : "scheduled", createdBy: adminUser.id });
   }
 
   // Assignments (245D.09, subd. 4a orientation recorded where done)
@@ -348,7 +397,7 @@ async function main() {
   await cred(admin.id, "maltreatment_reporting", "Maltreatment reporting", "2025-09-10");
   await cred(admin.id, "annual_training", "Annual 245D training day", "2025-09-10", { hours: "8.0" });
 
-  console.log(`Seeded org "${org.name}" with 4 staff, 3 users, 3 sites, 4 programs, 4 people, 4 agreements, 6 assignments, 15 credentials, and six pay periods of visits.`);
+  console.log(`Seeded org "${org.name}" with 4 staff, 3 users, 3 sites, 4 programs, 4 people, 4 agreements, 6 assignments, 15 credentials, six pay periods of visits, 4 life-plan goals, 3 medications with a 30-day MAR, and two weeks of shifts.`);
   console.log(`Log in with admin@example.com, supervisor@example.com, or dsp@example.com. Password: ${PASSWORD}`);
   console.log("Client signing codes: Jordan Abelard 482113, Riley Bergstrom 730924. Casey Dahl and Taylor Frey have none yet.");
 }

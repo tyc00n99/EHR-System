@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge, Card, PageHeader, cx, type Tone } from "@/components/ui";
+import { Badge, Card, PageHeader, cx, type Tone } from "@/components/kit";
 import { listAllCredentials, listStaff } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { CREDENTIAL_TYPES, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
@@ -21,11 +21,11 @@ export default async function CompliancePage() {
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
-            <thead className="bg-sidebar"><tr><th className="sticky left-0 z-10 bg-sidebar px-5 py-2 text-left text-xs font-medium text-muted">Staff</th>{columns.map((c) => <th key={c.type} className="px-3 py-2 text-left text-xs font-medium text-muted"><span className="block max-w-28 leading-4">{c.label}</span></th>)}</tr></thead>
+            <thead className="bg-sidebar"><tr><th className="sticky left-0 z-10 bg-sidebar px-5 py-2 text-left text-xs font-medium text-muted-foreground">Staff</th>{columns.map((c) => <th key={c.type} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"><span className="block max-w-28 leading-4">{c.label}</span></th>)}</tr></thead>
             <tbody>
               {rows.map(({ s, items }) => (
                 <tr key={s.id} className="border-t border-line-soft">
-                  <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-5 py-2.5"><Link href={`/staff/${s.id}`} className="font-medium text-text-strong hover:underline">{s.lastName}, {s.firstName}</Link><div className="text-xs text-muted">{s.title}</div></td>
+                  <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-5 py-2.5"><Link href={`/staff/${s.id}`} className="font-medium text-text-strong hover:underline">{s.lastName}, {s.firstName}</Link><div className="text-xs text-muted-foreground">{s.title}</div></td>
                   {columns.map((c) => {
                     const i = items.find((x) => x.type === c.type);
                     if (!i) return <td key={c.type} className="px-3 py-2.5 text-xs text-hint">—</td>;

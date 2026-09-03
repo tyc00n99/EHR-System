@@ -9,8 +9,8 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 /* ---------- buttons ---------- */
 
 const btn = {
-  primary: "bg-accent text-on-accent hover:bg-accent-hover",
-  secondary: "bg-accent-soft text-accent hover:bg-blue-300/40",
+  primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+  secondary: "bg-primary-soft text-primary hover:bg-blue-300/40",
   ghost: "text-text hover:bg-hover",
   outline: "border border-line bg-page text-text hover:bg-hover",
   danger: "bg-danger-soft text-danger hover:bg-danger/15",
@@ -34,7 +34,7 @@ export function Field({ label, error, hint, children, className }: { label: stri
     <label className={cx("block min-w-0", className)}>
       <span className="mb-1.5 block text-[13px] font-medium text-text">{label}</span>
       {children}
-      {hint && !error && <span className="mt-1.5 block text-xs leading-4 text-muted">{hint}</span>}
+      {hint && !error && <span className="mt-1.5 block text-xs leading-4 text-muted-foreground">{hint}</span>}
       {error && <span className="mt-1.5 block text-xs leading-4 text-danger">{error}</span>}
     </label>
   );
@@ -57,7 +57,7 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
 export function Checkbox({ label, className, ...props }: ComponentProps<"input"> & { label: ReactNode }) {
   return (
     <label className={cx("flex cursor-pointer items-center gap-3 px-3 py-2.5", className)}>
-      <input type="checkbox" className="h-[18px] w-[18px] shrink-0 rounded border-line accent-[var(--accent)]" {...props} />
+      <input type="checkbox" className="h-[18px] w-[18px] shrink-0 rounded border-line accent-[var(--primary)]" {...props} />
       <span>{label}</span>
     </label>
   );
@@ -69,7 +69,7 @@ export function FormSection({ title, description, children }: { title: string; d
     <section className="grid gap-4 border-t border-line-soft py-7 first:border-t-0 first:pt-0 md:grid-cols-[200px_1fr] md:gap-10">
       <div>
         <h3 className="text-[15px]">{title}</h3>
-        {description && <p className="mt-1 text-[13px] leading-5 text-muted">{description}</p>}
+        {description && <p className="mt-1 text-[13px] leading-5 text-muted-foreground">{description}</p>}
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-6">{children}</div>
     </section>
@@ -95,13 +95,13 @@ export function FormError({ message }: { message?: string }) {
 export function PageHeader({ eyebrow, icon, title, meta, actions }: { eyebrow?: ReactNode; icon?: ReactNode; title: string; meta?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="mb-8">
-      {eyebrow && <div className="mb-3 flex items-center gap-1.5 text-[13px] text-muted">{eyebrow}</div>}
+      {eyebrow && <div className="mb-3 flex items-center gap-1.5 text-[13px] text-muted-foreground">{eyebrow}</div>}
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="flex min-w-0 items-center gap-3">
           {icon}
           <div className="min-w-0">
             <h1 className="truncate">{title}</h1>
-            {meta && <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted">{meta}</div>}
+            {meta && <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">{meta}</div>}
           </div>
         </div>
         {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
@@ -120,7 +120,7 @@ export function CrumbSep() {
 
 /** Notion-style page icon: initials on a tinted square. */
 export function PageIcon({ text, tone = "neutral" }: { text: string; tone?: "neutral" | "accent" | "ok" | "warn" }) {
-  const tones = { neutral: "bg-panel text-gray-700", accent: "bg-accent-soft text-accent", ok: "bg-ok-soft text-ok", warn: "bg-warn-soft text-warn" };
+  const tones = { neutral: "bg-panel text-gray-700", accent: "bg-primary-soft text-primary", ok: "bg-ok-soft text-ok", warn: "bg-warn-soft text-warn" };
   return <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-base font-semibold", tones[tone])}>{text}</span>;
 }
 
@@ -131,7 +131,7 @@ export function Card({ title, description, actions, children, className, padded 
         <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-3">
           <div>
             {title && <h3>{title}</h3>}
-            {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+            {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </div>
@@ -144,9 +144,9 @@ export function Card({ title, description, actions, children, className, padded 
 export function StatTile({ label, value, note, tone, href }: { label: string; value: ReactNode; note?: ReactNode; tone?: "warn" | "danger" | "ok"; href?: string }) {
   const body = (
     <>
-      <div className="text-[13px] font-medium text-muted">{label}</div>
+      <div className="text-[13px] font-medium text-muted-foreground">{label}</div>
       <div className="mt-2 text-[30px] font-bold leading-none tracking-[-0.02em] text-text-strong tabular-nums">{value}</div>
-      {note && <div className={cx("mt-2 text-[13px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted")}>{note}</div>}
+      {note && <div className={cx("mt-2 text-[13px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
     </>
   );
   const cls = "block rounded-lg border border-line bg-card px-5 py-4";
@@ -169,7 +169,7 @@ export function Properties({ items, labelWidth = 168 }: { items: Property[]; lab
         const empty = p.value === null || p.value === undefined || p.value === "";
         return (
           <div key={p.label} className="grid items-start gap-3 py-[7px]" style={{ gridTemplateColumns: `${labelWidth}px 1fr` }}>
-            <dt className="flex items-center gap-2 text-[13px] text-muted">
+            <dt className="flex items-center gap-2 text-[13px] text-muted-foreground">
               {Ic && <Ic size={15} className="shrink-0 text-gray-400" />}
               <span className="truncate">{p.label}</span>
             </dt>
@@ -187,7 +187,7 @@ const badges = {
   ok: "bg-ok-soft text-ok",
   warn: "bg-warn-soft text-warn",
   danger: "bg-danger-soft text-danger",
-  accent: "bg-accent-soft text-accent",
+  accent: "bg-primary-soft text-primary",
   neutral: "bg-panel text-gray-700",
 } as const;
 
@@ -208,7 +208,7 @@ export function Table({ children }: { children: ReactNode }) {
 }
 
 export function Th({ children, className, align = "left" }: { children?: ReactNode; className?: string; align?: "left" | "right" }) {
-  return <th className={cx("h-9 whitespace-nowrap px-4 text-xs font-medium text-muted first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
+  return <th className={cx("h-9 whitespace-nowrap px-4 text-xs font-medium text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
 }
 
 export function Td({ children, className, align = "left", strong, wrap }: { children?: ReactNode; className?: string; align?: "left" | "right"; strong?: boolean; wrap?: boolean }) {
@@ -216,7 +216,7 @@ export function Td({ children, className, align = "left", strong, wrap }: { chil
 }
 
 export function Tr({ children, muted }: { children: ReactNode; muted?: boolean }) {
-  return <tr className={cx("border-t border-line-soft transition-colors hover:bg-hover", muted && "text-muted")}>{children}</tr>;
+  return <tr className={cx("border-t border-line-soft transition-colors hover:bg-hover", muted && "text-muted-foreground")}>{children}</tr>;
 }
 
 export function Thead({ children }: { children: ReactNode }) {
@@ -231,7 +231,7 @@ export function Empty({ icon = "inbox", title, children, action }: { icon?: Icon
     <div className="flex flex-col items-center px-6 py-12 text-center">
       <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-panel text-gray-500"><Ic size={18} /></span>
       <div className="font-medium text-text-strong">{title}</div>
-      {children && <p className="mt-1 max-w-sm text-[13px] text-muted">{children}</p>}
+      {children && <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">{children}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -263,12 +263,12 @@ export function Avatar({ name, size = 28 }: { name: string; size?: number }) {
 export function RecordHeader({ avatar, title, subtitle, chips, actions, crumbs }: { avatar: ReactNode; title: string; subtitle?: ReactNode; chips?: ReactNode; actions?: ReactNode; crumbs?: ReactNode }) {
   return (
     <div className="-mx-4 -mt-5 mb-0 border-b border-line bg-page px-4 pt-4 md:-mx-8 md:-mt-6 md:px-8 md:pt-5">
-      {crumbs && <div className="mb-3 flex items-center gap-1.5 text-[13px] text-muted">{crumbs}</div>}
+      {crumbs && <div className="mb-3 flex items-center gap-1.5 text-[13px] text-muted-foreground">{crumbs}</div>}
       <div className="flex flex-wrap items-center gap-4 pb-4">
         {avatar}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-[24px] leading-8">{title}</h1>{chips}</div>
-          {subtitle && <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">{subtitle}</div>}
+          {subtitle && <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">{subtitle}</div>}
         </div>
         {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
       </div>
@@ -280,8 +280,8 @@ export function Tabs({ tabs, current, base }: { tabs: { key: string; label: stri
   return (
     <div className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-line bg-page px-4 md:-mx-8 md:px-8">
       {tabs.map((t) => (
-        <Link key={t.key} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("-mb-px flex h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 text-[13.5px] font-medium", current === t.key ? "border-accent text-text-strong" : "border-transparent text-muted hover:border-line-strong hover:text-text")}>
-          {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[11px] leading-[18px]", current === t.key ? "bg-accent-soft text-accent" : "bg-panel text-muted")}>{t.count}</span>}
+        <Link key={t.key} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("-mb-px flex h-11 shrink-0 items-center gap-1.5 border-b-2 px-3 text-[13.5px] font-medium", current === t.key ? "border-primary text-text-strong" : "border-transparent text-muted-foreground hover:border-line-strong hover:text-text")}>
+          {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[11px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}
         </Link>
       ))}
     </div>
@@ -299,10 +299,10 @@ export function Toolbar({ action, q, placeholder, chips, count, children, hidden
       </form>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
-          {chips.map((c) => <Link key={c.key} href={c.href} className={cx("inline-flex h-7 items-center rounded-full border px-2.5 text-xs font-medium", c.active ? "border-accent bg-accent-soft text-accent" : "border-line bg-page text-muted hover:bg-hover")}>{c.label}</Link>)}
+          {chips.map((c) => <Link key={c.key} href={c.href} className={cx("inline-flex h-7 items-center rounded-full border px-2.5 text-xs font-medium", c.active ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{c.label}</Link>)}
         </div>
       )}
-      {count && <span className="text-[13px] text-muted">{count}</span>}
+      {count && <span className="text-[13px] text-muted-foreground">{count}</span>}
       {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
     </div>
   );
@@ -327,9 +327,9 @@ export function Kpi({ label, value, note, tone, spark, href }: { label: string; 
   const body = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-[12.5px] font-medium text-muted">{label}</div>
+        <div className="text-[12.5px] font-medium text-muted-foreground">{label}</div>
         <div className="mt-1.5 text-[26px] font-bold leading-none tracking-[-0.02em] text-text-strong tabular-nums">{value}</div>
-        {note && <div className={cx("mt-2 text-[12.5px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted")}>{note}</div>}
+        {note && <div className={cx("mt-2 text-[12.5px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
       </div>
       {spark && <Sparkline values={spark} />}
     </div>

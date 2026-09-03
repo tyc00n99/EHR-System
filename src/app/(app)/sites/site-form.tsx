@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/ui";
+import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/kit";
 import { SITE_TYPES, type ActionState } from "@/lib/validation";
 
 const LABEL: Record<(typeof SITE_TYPES)[number], string> = { office: "Office", community_residential: "Community residential setting", day_services: "Day services facility", in_home: "In-home services" };

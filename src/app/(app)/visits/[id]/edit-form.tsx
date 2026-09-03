@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
+import { Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import { PLACES_OF_SERVICE } from "@/lib/validation";
 import { editVisit, voidVisit } from "../actions";
 

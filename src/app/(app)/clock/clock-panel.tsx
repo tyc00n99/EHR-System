@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Button, Checkbox, Field, FormError, Select, Textarea } from "@/components/ui";
+import { Button, Checkbox, Field, FormError, Select, Textarea } from "@/components/kit";
 import { clockIn, clockOut } from "../visits/actions";
 
 interface AgreementOption { id: string; personId: string; personName: string; label: string; unitsLeft: number | null; oriented: boolean }
@@ -56,14 +56,14 @@ function ClientSignature({ error, reasonError }: { error?: string; reasonError?:
   return (
     <div className="rounded-lg border border-line bg-sidebar p-4">
       <div className="font-medium text-text-strong">Client signature</div>
-      <p className="mt-0.5 text-[13px] text-muted">Read the note to the person, then hand them the phone to enter their signing code.</p>
+      <p className="mt-0.5 text-[13px] text-muted-foreground">Read the note to the person, then hand them the phone to enter their signing code.</p>
       {!unable && (
         <Field label="Client signing code" error={error} className="mt-3">
           <input name="clientCode" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" className="h-14 w-full rounded-md border border-line bg-page text-center text-[28px] font-bold tracking-[0.35em] tabular-nums focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300/50" />
         </Field>
       )}
       <label className="mt-3 flex items-center gap-3 text-[13px]">
-        <input type="checkbox" name="unableToSign" value="true" checked={unable} onChange={(ev) => setUnable(ev.target.checked)} className="h-[18px] w-[18px] accent-[var(--accent)]" />
+        <input type="checkbox" name="unableToSign" value="true" checked={unable} onChange={(ev) => setUnable(ev.target.checked)} className="h-[18px] w-[18px] accent-[var(--primary)]" />
         <span>The person is unable to sign right now</span>
       </label>
       {unable && (
@@ -89,13 +89,13 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
   const e = state.errors ?? {};
 
   if (agreements.length === 0) {
-    return <div className="rounded-lg border border-line bg-card p-5"><div className="font-medium text-text-strong">Nothing to clock against</div><p className="mt-1 text-[13px] text-muted">{isDsp ? "You have no assigned clients with an active service agreement today. Ask your supervisor to assign you." : "No client has an active service agreement today. A supervisor needs to add one first."}</p></div>;
+    return <div className="rounded-lg border border-line bg-card p-5"><div className="font-medium text-text-strong">Nothing to clock against</div><p className="mt-1 text-[13px] text-muted-foreground">{isDsp ? "You have no assigned clients with an active service agreement today. Ask your supervisor to assign you." : "No client has an active service agreement today. A supervisor needs to add one first."}</p></div>;
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <p className="text-muted">Clock in</p>
+        <p className="text-muted-foreground">Clock in</p>
         <h1>Start a visit</h1>
       </div>
       <FormError message={gpsError ?? state.message} />
@@ -115,7 +115,7 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
         </Select>
       </Field>
       <fieldset>
-        <legend className="mb-1 block text-xs font-medium text-muted">Planned tasks</legend>
+        <legend className="mb-1 block text-xs font-medium text-muted-foreground">Planned tasks</legend>
         <div className="divide-y divide-line-soft rounded-md border border-line">
           {tasks.map((t) => (
             <Checkbox key={t.code} name="tasks[]" value={t.code} label={t.label} className="py-3" />
@@ -131,7 +131,7 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
       <Button type="submit" className="h-12 w-full text-base" disabled={pending || locating || !oriented}>
         {locating ? "Getting your location…" : pending ? "Clocking in…" : "Clock in"}
       </Button>
-      <p className="text-center text-xs text-muted">Your location is recorded at clock-in and clock-out for electronic visit verification.</p>
+      <p className="text-center text-xs text-muted-foreground">Your location is recorded at clock-in and clock-out for electronic visit verification.</p>
     </form>
   );
 }
@@ -147,15 +147,15 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
     <form onSubmit={onSubmit} className="space-y-5">
       <input type="hidden" name="visitId" value={open.id} />
       <div className="rounded-lg border border-blue-300 bg-blue-100 px-4 py-3.5">
-        <p className="text-[13px] font-medium text-accent">Visit in progress</p>
+        <p className="text-[13px] font-medium text-primary">Visit in progress</p>
         <h2 className="mt-0.5">{open.personName}</h2>
-        <p className="mt-1 text-[13px] text-muted">{open.serviceCode} · since {since}</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">{open.serviceCode} · since {since}</p>
         <p className="mt-2 text-[28px] font-bold leading-none tracking-[-0.02em] text-text-strong tabular-nums">{elapsed}</p>
       </div>
       <FormError message={gpsError ?? state.message} />
       {open.tasks.length > 0 && (
         <fieldset>
-          <legend className="mb-1 block text-xs font-medium text-muted">Tasks completed</legend>
+          <legend className="mb-1 block text-xs font-medium text-muted-foreground">Tasks completed</legend>
           <div className="divide-y divide-line-soft rounded-md border border-line">
             {open.tasks.map((t) => (
               <Checkbox key={t.code} name="completedTasks[]" value={t.code} defaultChecked={t.completed} label={t.label} className="py-3" />

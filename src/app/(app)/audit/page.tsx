@@ -1,4 +1,4 @@
-import { Badge, Card, Empty, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/ui";
+import { Badge, Card, Empty, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { listAudit } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
@@ -24,12 +24,12 @@ export default async function AuditPage() {
                 const changed = a.action === "update" ? Object.keys(after).filter((k) => k !== "updatedAt" && JSON.stringify(before[k]) !== JSON.stringify(after[k])) : [];
                 return (
                   <Tr key={a.id}>
-                    <Td className="whitespace-nowrap tabular-nums text-muted">{fmtDateTime(a.at)}</Td>
+                    <Td className="whitespace-nowrap tabular-nums text-muted-foreground">{fmtDateTime(a.at)}</Td>
                     <Td>{actorEmail ?? <span className="text-hint">system</span>}</Td>
                     <Td><Badge tone={actionTone[a.action]}>{a.action}</Badge></Td>
                     <Td className="font-mono text-xs">{a.tableName}</Td>
-                    <Td className="font-mono text-xs text-muted">{a.recordId?.slice(0, 8)}</Td>
-                    <Td wrap className="text-[13px] text-muted">{changed.join(", ")}</Td>
+                    <Td className="font-mono text-xs text-muted-foreground">{a.recordId?.slice(0, 8)}</Td>
+                    <Td wrap className="text-[13px] text-muted-foreground">{changed.join(", ")}</Td>
                   </Tr>
                 );
               })}

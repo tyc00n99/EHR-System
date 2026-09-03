@@ -1,4 +1,4 @@
-import { Crumb, CrumbSep, PageHeader } from "@/components/ui";
+import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { listClockableAgreements, listStaff } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { ManualVisitForm } from "./manual-form";

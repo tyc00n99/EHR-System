@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import { Button, Field, FormError, Input, Select, Textarea } from "@/components/ui";
+import { Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import { DOCUMENT_CATEGORIES } from "@/lib/validation";
 import { deleteClientDocument, uploadClientDocument } from "../document-actions";
 

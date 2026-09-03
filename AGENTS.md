@@ -49,6 +49,12 @@ Visits snapshot provider tax ID, MHCP ID, service code, modifiers, and rendering
 
 - Owner view (`/owner`, admin only) prices completed visits as units × agreement `unitRate` for revenue and minutes/60 × staff `payRate` for labor. Both are snapshots of *current* rates, not the rate at the time of the visit; when rates change historically, add rate snapshots to visits.
 
+## Documentation, life plan, scheduling, medications
+- Service record = the slide-over at `src/app/(app)/visits/record/` (`VisitSheet` mounts on any page via `?visit=<id>`; `VisitRecord` is the server body, `RecordForm` the client form). Saves interaction level, skills (`src/lib/templates.ts` per service group), goal responses, progress review; staff sign → supervisor approve (`approvedAt`). AI draft via `draftProgressReview` uses only the marked facts.
+- Life plan: `goals` → `goal_questions` (yes/no prompts) → `goal_responses` per visit. Client tab "Life plan" shows 90-day tallies; caregivers answer in the service record.
+- Scheduling: `shifts` (weekly repeat = `seriesId`), eligibility check in `createShifts` (assigned + oriented + compliant + no overlap). Clock-in links the nearest scheduled shift (`findShiftForClockIn`) and moves it in_progress → completed. Scheduled shifts past their end with no visit surface in Needs attention as missed.
+- MAR: `medications` (scheduled `times`) and `medication_administrations` (one row per med/date/time; given/refused/held/missed). Client tab "Medical" is the month grid; the service record shows the day's slots.
+
 ## Auth
 Cookie sessions (`ehr_session`), scrypt password hashes, roles admin / supervisor / dsp. Use `requireUser(roles?)` at the top of every page and action; `can(user, action)` for UI gating. Route group `(app)` is authenticated; `(auth)` is not.
 

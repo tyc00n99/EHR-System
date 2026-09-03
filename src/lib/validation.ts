@@ -269,3 +269,57 @@ export const passwordChangeSchema = z
     confirm: z.string(),
   })
   .refine((p) => p.next === p.confirm, { message: "Passwords do not match", path: ["confirm"] });
+
+export const documentationSchema = z.object({
+  visitId: z.uuid(),
+  interactionLevel: z.enum(["low", "medium", "high"]).optional(),
+  skills: z.array(z.string().max(60)).max(20).default([]),
+  shiftNote: z.string().max(6000).default(""),
+  staffSign: z.coerce.boolean().default(false),
+});
+
+export const goalSchema = z.object({
+  title: z.string().min(1, "Required").max(200),
+  description: z.string().max(1000).optional(),
+  category: z.string().min(1).max(40).default("other"),
+  startDate: isoDate.optional(),
+  targetDate: isoDate.optional(),
+  questions: z.array(z.string().min(3).max(300)).min(1, "Add at least one yes/no question").max(8),
+});
+
+export const shiftSchema = z
+  .object({
+    personId: z.uuid(),
+    staffId: z.uuid(),
+    serviceAgreementId: z.uuid(),
+    date: isoDate,
+    start: z.string().regex(/^\d{2}:\d{2}$/, "Start time"),
+    end: z.string().regex(/^\d{2}:\d{2}$/, "End time"),
+    repeatWeeks: z.coerce.number().int().min(1).max(26).default(1),
+    note: z.string().max(500).optional(),
+  })
+  .refine((s) => s.end > s.start, { message: "End must be after start", path: ["end"] });
+
+export const medicationSchema = z
+  .object({
+    name: z.string().min(1, "Required").max(120),
+    dose: z.string().min(1, "Required").max(80),
+    route: z.string().min(1).max(40).default("oral"),
+    frequency: z.string().min(1, "Required").max(80),
+    times: z.array(z.string().regex(/^\d{2}:\d{2}$/)).min(1, "Add at least one time").max(6),
+    instructions: z.string().max(500).optional(),
+    prescriber: z.string().max(120).optional(),
+    startDate: isoDate,
+    endDate: isoDate.optional(),
+  })
+  .refine((m) => !m.endDate || m.endDate >= m.startDate, { message: "End must be after start", path: ["endDate"] });
+
+export const medAdminSchema = z.object({
+  medicationId: z.uuid(),
+  personId: z.uuid(),
+  scheduledDate: isoDate,
+  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/),
+  status: z.enum(["given", "refused", "held", "missed"]),
+  note: z.string().max(500).optional(),
+  visitId: z.uuid().optional(),
+});

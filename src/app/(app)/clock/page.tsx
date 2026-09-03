@@ -12,7 +12,7 @@ export default async function ClockPage() {
     return (
       <div className="mx-auto max-w-md rounded-lg border border-line bg-card p-5">
         <h2>Clock in / out</h2>
-        <p className="mt-2 text-[13px] text-muted">Your login is not linked to a staff record, so you cannot record visits. Ask an administrator to link it.</p>
+        <p className="mt-2 text-[13px] text-muted-foreground">Your login is not linked to a staff record, so you cannot record visits. Ask an administrator to link it.</p>
       </div>
     );
   }

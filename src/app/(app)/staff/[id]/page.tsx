@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/ui";
+import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
 import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { CREDENTIAL_TYPES, complianceSummary, credentialLabel, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
@@ -60,11 +60,11 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
             ]} />
           </Card>
           <div className="space-y-4">
-            <Card title="Compliance at a glance" actions={<Link href={`/staff/${id}?tab=compliance`} className="text-[13px] font-medium text-accent hover:underline">Details</Link>}>
+            <Card title="Compliance at a glance" actions={<Link href={`/staff/${id}?tab=compliance`} className="text-[13px] font-medium text-primary hover:underline">Details</Link>}>
               <ul className="grid gap-px sm:grid-cols-2">{items.map((i) => <li key={i.type} className="flex items-center justify-between gap-3 px-5 py-2.5"><span className="truncate text-[13px]">{i.label}</span><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge></li>)}</ul>
             </Card>
-            <Card title="Assigned clients" actions={<Link href={`/staff/${id}?tab=clients`} className="text-[13px] font-medium text-accent hover:underline">Manage</Link>}>
-              {activeAssignments.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted">No clients assigned.</p> : <ul className="divide-y divide-line-soft">{activeAssignments.map((a) => <li key={a.assignment.id} className="flex items-center justify-between px-5 py-2.5"><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}
+            <Card title="Assigned clients" actions={<Link href={`/staff/${id}?tab=clients`} className="text-[13px] font-medium text-primary hover:underline">Manage</Link>}>
+              {activeAssignments.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No clients assigned.</p> : <ul className="divide-y divide-line-soft">{activeAssignments.map((a) => <li key={a.assignment.id} className="flex items-center justify-between px-5 py-2.5"><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}
             </Card>
           </div>
         </div>
@@ -73,11 +73,11 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       {tab === "compliance" && (
         <div className="space-y-4">
           <Card title="Requirements" description="What 245D.09 and chapter 245C require before and during direct support work">
-            <ul className="divide-y divide-line-soft">{items.map((i) => <li key={i.type} className="flex items-start gap-3 px-5 py-3"><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge><div className="min-w-0 flex-1"><div className="font-medium text-text-strong">{i.label} {i.cite && <span className="text-xs font-normal text-muted">{i.cite}</span>}</div><div className="text-[13px] text-muted">{i.detail}</div></div>{i.due && <span className={`shrink-0 text-[13px] tabular-nums ${i.status === "overdue" ? "text-danger" : "text-muted"}`}>{fmtDate(i.due)}</span>}</li>)}</ul>
+            <ul className="divide-y divide-line-soft">{items.map((i) => <li key={i.type} className="flex items-start gap-3 px-5 py-3"><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge><div className="min-w-0 flex-1"><div className="font-medium text-text-strong">{i.label} {i.cite && <span className="text-xs font-normal text-muted-foreground">{i.cite}</span>}</div><div className="text-[13px] text-muted-foreground">{i.detail}</div></div>{i.due && <span className={`shrink-0 text-[13px] tabular-nums ${i.status === "overdue" ? "text-danger" : "text-muted-foreground"}`}>{fmtDate(i.due)}</span>}</li>)}</ul>
           </Card>
           <Card title="Training and credentials" description="Add each certificate, clearance, or training as it is completed">
             {credentials.length === 0 ? <Empty icon="doc" title="Nothing recorded yet" /> : (
-              <Table><Thead><Th>Item</Th><Th>Completed</Th><Th>Expires</Th><Th align="right">Hours</Th><Th>Note</Th><Th /></Thead><tbody>{credentials.map((c) => <Tr key={c.id}><Td strong>{c.title}<div className="text-xs font-normal text-muted">{credentialLabel(c.type)}</div></Td><Td className="text-muted">{fmtDate(c.completedOn)}</Td><Td className="text-muted">{c.expiresOn ? fmtDate(c.expiresOn) : "—"}</Td><Td align="right">{c.hours ?? ""}</Td><Td wrap className="text-[13px] text-muted">{c.note}</Td><Td align="right"><DeleteCredential id={c.id} staffId={id} /></Td></Tr>)}</tbody></Table>
+              <Table><Thead><Th>Item</Th><Th>Completed</Th><Th>Expires</Th><Th align="right">Hours</Th><Th>Note</Th><Th /></Thead><tbody>{credentials.map((c) => <Tr key={c.id}><Td strong>{c.title}<div className="text-xs font-normal text-muted-foreground">{credentialLabel(c.type)}</div></Td><Td className="text-muted-foreground">{fmtDate(c.completedOn)}</Td><Td className="text-muted-foreground">{c.expiresOn ? fmtDate(c.expiresOn) : "—"}</Td><Td align="right">{c.hours ?? ""}</Td><Td wrap className="text-[13px] text-muted-foreground">{c.note}</Td><Td align="right"><DeleteCredential id={c.id} staffId={id} /></Td></Tr>)}</tbody></Table>
             )}
             <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">Record a credential</div><CredentialForm staffId={id} types={CREDENTIAL_TYPES.map((t) => ({ type: t.type, label: t.label }))} /></div>
           </Card>
@@ -91,7 +91,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "visits" && (
-        <Card title="Recent visits" actions={<Link href="/visits" className="text-[13px] font-medium text-accent hover:underline">All visits</Link>}>
+        <Card title="Recent visits" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All visits</Link>}>
           {visits.length === 0 ? <Empty icon="clock" title="No visits yet" /> : (
             <Table><Thead><Th>Clock in</Th><Th>Client</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead><tbody>{visits.map(({ visit: v, personFirst, personLast }) => <Tr key={v.id}><Td strong><Link href={`/visits/${v.id}`} className="hover:underline">{fmtDateTime(v.clockInAt)}</Link></Td><Td>{personFirst} {personLast}</Td><Td className="tabular-nums">{v.serviceCode}</Td><Td align="right">{v.units}</Td><Td><span className="flex gap-1"><Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status.replace("_", " ")}</Badge>{v.status === "completed" && !v.clientSignedAt && <Badge tone="danger">unsigned</Badge>}</span></Td></Tr>)}</tbody></Table>
           )}

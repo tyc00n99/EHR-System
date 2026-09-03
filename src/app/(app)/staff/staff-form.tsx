@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button, Checkbox, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/ui";
+import { Button, Checkbox, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/kit";
 import { GENDERS, type ActionState } from "@/lib/validation";
 import type { Staff } from "@/db/schema";
 

@@ -15,7 +15,7 @@ export default async function LoginPage() {
         </div>
         <div className="rounded-xl border border-line bg-card p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <h2>Log in</h2>
-          <p className="mb-5 mt-1 text-[13px] text-muted">Use the email on your staff record.</p>
+          <p className="mb-5 mt-1 text-[13px] text-muted-foreground">Use the email on your staff record.</p>
           <LoginForm />
         </div>
       </div>

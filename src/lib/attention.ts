@@ -1,10 +1,10 @@
 import "server-only";
-import { countOpenVisits, listAgreementsWithUsage, listAllCredentials, listPeople, listStaff, listVisits, listAssignmentsForStaff } from "@/db/queries";
+import { countOpenVisits, listAgreementsWithUsage, listAllCredentials, listPeople, listShifts, listStaff, listVisits, listAssignmentsForStaff } from "@/db/queries";
 import { complianceSummary, evaluateCompliance } from "./credentials";
 import { currentPayPeriod } from "./pay-period";
 
 export interface AttentionItem {
-  kind: "unsigned" | "manual" | "compliance" | "code" | "authorization" | "orientation" | "open";
+  kind: "unsigned" | "manual" | "compliance" | "code" | "authorization" | "orientation" | "open" | "missed_shift";
   severity: "danger" | "warn" | "accent";
   title: string;
   detail: string;
@@ -16,13 +16,14 @@ export async function attentionItems(): Promise<AttentionItem[]> {
   const period = currentPayPeriod();
   const today = new Date().toISOString().slice(0, 10);
   const in60 = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
-  const [visits, people, staffRows, creds, agreements, open] = await Promise.all([
+  const [visits, people, staffRows, creds, agreements, open, recentShifts] = await Promise.all([
     listVisits({ from: period.start, to: period.end, limit: 1000 }),
     listPeople(),
     listStaff(true),
     listAllCredentials(),
     listAgreementsWithUsage(),
     countOpenVisits(),
+    listShifts(new Date(Date.now() - 14 * 86_400_000), new Date()),
   ]);
   const items: AttentionItem[] = [];
 
@@ -48,6 +49,9 @@ export async function attentionItems(): Promise<AttentionItem[]> {
   for (const o of open) {
     const hours = (Date.now() - o.visit.clockInAt.getTime()) / 3_600_000;
     if (hours > 12) items.push({ kind: "open", severity: "danger", title: `Visit open ${Math.round(hours)} hours · ${o.staffFirst} ${o.staffLast} with ${o.personFirst} ${o.personLast}`, detail: "Probably a missed clock-out. Have the caregiver close it or a supervisor correct it.", href: `/visits/${o.visit.id}` });
+  }
+  for (const sh of recentShifts) {
+    if ((sh.shift.status === "scheduled" && sh.shift.endAt < new Date()) || sh.shift.status === "missed") items.push({ kind: "missed_shift", severity: "danger", title: `Missed shift · ${sh.staffFirst} ${sh.staffLast} with ${sh.personFirst} ${sh.personLast}`, detail: `Scheduled ${sh.shift.startAt.toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" })}. No clock-in was recorded.`, href: `/scheduling?week=${sh.shift.startAt.toISOString().slice(0, 10)}&shift=${sh.shift.id}` });
   }
   const rank = { danger: 0, warn: 1, accent: 2 };
   return items.sort((a, b) => rank[a.severity] - rank[b.severity]);

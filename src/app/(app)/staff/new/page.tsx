@@ -1,4 +1,4 @@
-import { Crumb, CrumbSep, PageHeader } from "@/components/ui";
+import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { requireUser } from "@/lib/auth";
 import { createStaff } from "../actions";
 import { StaffForm } from "../staff-form";

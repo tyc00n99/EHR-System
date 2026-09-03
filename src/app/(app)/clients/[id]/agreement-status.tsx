@@ -13,5 +13,5 @@ export function AgreementStatusButton({ id, personId, status }: { id: string; pe
       </button>
     );
   }
-  return <button disabled={pending} className={`${cls} text-accent`} onClick={() => start(() => setAgreementStatus(id, personId, "active"))}>Reactivate</button>;
+  return <button disabled={pending} className={`${cls} text-primary`} onClick={() => start(() => setAgreementStatus(id, personId, "active"))}>Reactivate</button>;
 }

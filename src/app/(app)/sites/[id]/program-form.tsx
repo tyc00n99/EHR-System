@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import { Button, Field, FormError, Input, Select } from "@/components/ui";
+import { Button, Field, FormError, Input, Select } from "@/components/kit";
 import { SERVICE_TYPES } from "@/lib/services";
 import type { ActionState } from "@/lib/validation";
 import { toggleProgram } from "../actions";
@@ -30,7 +30,7 @@ export function ProgramForm({ action }: { action: (p: ActionState, fd: FormData)
 export function ProgramToggle({ id, siteId, active }: { id: string; siteId: string; active: boolean }) {
   const [pending, start] = useTransition();
   return (
-    <button disabled={pending} onClick={() => start(() => toggleProgram(id, siteId, !active))} className="text-xs font-medium text-accent hover:underline disabled:opacity-50">
+    <button disabled={pending} onClick={() => start(() => toggleProgram(id, siteId, !active))} className="text-xs font-medium text-primary hover:underline disabled:opacity-50">
       {active ? "Deactivate" : "Activate"}
     </button>
   );

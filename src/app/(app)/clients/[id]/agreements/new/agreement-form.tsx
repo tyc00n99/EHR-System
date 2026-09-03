@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
-import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select, cx } from "@/components/ui";
+import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select, cx } from "@/components/kit";
 import { MODIFIERS, SERVICE_CODES, serviceCodeKey } from "@/lib/hcpcs";
 import type { ActionState } from "@/lib/validation";
 import type { ExtractState } from "../../../actions";
@@ -27,25 +27,31 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
 
   // Prefill from the AI extraction once it lands (state derived from the action result).
   const [applied, setApplied] = useState<ExtractState["extracted"]>();
-  if (ex.extracted && ex.extracted !== applied) {
-    const x = ex.extracted;
-    setApplied(x);
+  const [lineIdx, setLineIdx] = useState(0);
+  const applyLine = (x: NonNullable<ExtractState["extracted"]>, idx: number) => {
+    const line = x.lines[idx];
     setFields((f) => ({
       agreementNumber: x.agreementNumber ?? f.agreementNumber,
-      authorizedUnits: x.authorizedUnits != null ? String(x.authorizedUnits) : f.authorizedUnits,
-      unitRate: x.unitRate != null ? x.unitRate.toFixed(2) : f.unitRate,
-      startDate: x.startDate ?? f.startDate,
-      endDate: x.endDate ?? f.endDate,
-      authorizingCounty: x.authorizingCounty ?? f.authorizingCounty,
+      authorizedUnits: line?.quantity != null ? String(line.quantity) : f.authorizedUnits,
+      unitRate: line?.ratePerUnit != null ? line.ratePerUnit.toFixed(2) : f.unitRate,
+      startDate: line?.startDate ?? x.effectiveDate ?? f.startDate,
+      endDate: line?.endDate ?? x.throughDate ?? f.endDate,
+      authorizingCounty: f.authorizingCounty,
     }));
-    if (x.serviceCode) {
-      const code = x.serviceCode.toUpperCase();
-      const mods = x.modifiers.map((m) => m.toUpperCase());
+    if (line?.procedureCode) {
+      const code = line.procedureCode.toUpperCase();
+      const mods = line.modifiers.map((m) => m.toUpperCase());
       const exact = SERVICE_CODES.find((s) => s.code === code && s.modifiers.join(" ") === mods.join(" "));
       const byCode = exact ?? SERVICE_CODES.find((s) => s.code === code);
       if (byCode) { setCodeKey(serviceCodeKey(byCode)); setModifiers(mods.length ? mods : byCode.modifiers); }
       else { setCodeKey(OTHER); setOtherCode(code); setModifiers(mods); }
     }
+  };
+  if (ex.extracted && ex.extracted !== applied) {
+    setApplied(ex.extracted);
+    const firstApproved = Math.max(0, ex.extracted.lines.findIndex((l) => /approved/i.test(l.status ?? "")));
+    setLineIdx(firstApproved);
+    applyLine(ex.extracted, firstApproved);
   }
 
   const pickCode = (key: string) => {
@@ -68,14 +74,36 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
               <Button type="submit" variant="secondary" disabled={extracting || !aiReady} className="ml-auto">{extracting ? "Reading the PDF…" : "Extract details"}</Button>
             </div>
             {ex.documentName && (
-              <div className={cx("mt-3 flex items-start gap-2 rounded-md px-3 py-2 text-[13px]", ex.extracted ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>
-                <Icon.check size={15} className="mt-0.5 shrink-0" />
-                <div>
-                  <div className="font-medium">{ex.extracted ? `Read ${ex.documentName}. Check the fields below.` : `Attached ${ex.documentName}.`}</div>
-                  {ex.pmiMismatch && <div className="mt-0.5 text-danger">The PMI on the document ({ex.extracted?.pmi}) does not match this client. Make sure you picked the right client.</div>}
-                  {ex.extracted?.clientName && <div className="mt-0.5">Document names: {ex.extracted.clientName}{ex.extracted.providerName ? ` · provider ${ex.extracted.providerName}` : ""}</div>}
-                  {ex.extracted?.notes && <div className="mt-0.5">Reviewer note: {ex.extracted.notes}</div>}
+              <div className={cx("mt-3 rounded-md px-3 py-2.5 text-[13px]", ex.extracted ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>
+                <div className="flex items-start gap-2">
+                  <Icon.check size={15} className="mt-0.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium">{ex.extracted ? `Read ${ex.documentName}. Check the fields below before saving.` : `Attached ${ex.documentName}.`}</div>
+                    {ex.pmiMismatch && <div className="mt-0.5 text-danger">The PMI on the letter ({ex.extracted?.pmi}) does not match this client. Make sure you picked the right client.</div>}
+                    {ex.extracted && (
+                      <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[12.5px] sm:grid-cols-2">
+                        {ex.extracted.recipientName && <span>Recipient: {ex.extracted.recipientName}</span>}
+                        {ex.extracted.effectiveDate && <span>Agreement dates: {ex.extracted.effectiveDate} to {ex.extracted.throughDate ?? "?"}</span>}
+                        {ex.extracted.caseManagerName && <span>Case manager: {ex.extracted.caseManagerName}{ex.extracted.caseManagerPhone ? ` · ${ex.extracted.caseManagerPhone}` : ""}</span>}
+                        {ex.extracted.icd10 && <span>Diagnosis: {ex.extracted.icd10}</span>}
+                        {ex.extracted.providerName && <span>Issued to: {ex.extracted.providerName}{ex.extracted.providerId ? ` (${ex.extracted.providerId})` : ""}</span>}
+                      </div>
+                    )}
+                    {ex.extracted?.notes && <div className="mt-1 text-[12.5px]">Reviewer note: {ex.extracted.notes}</div>}
+                  </div>
                 </div>
+                {ex.extracted && ex.extracted.lines.length > 1 && (
+                  <div className="mt-2 border-t border-ok/20 pt-2">
+                    <div className="mb-1 text-[12px] font-medium">This letter has {ex.extracted.lines.length} service lines. Choose the one to save as this agreement:</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ex.extracted.lines.map((l, i) => (
+                        <button key={i} type="button" onClick={() => { setLineIdx(i); applyLine(ex.extracted!, i); }} className={cx("rounded-md border px-2 py-1 text-[12px]", i === lineIdx ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
+                          Line {l.lineNumber ?? i + 1} · {l.procedureCode} {l.modifiers.join(" ")} · {l.quantity ?? "?"} units{l.status && !/approved/i.test(l.status) ? ` · ${l.status}` : ""}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -107,24 +135,24 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
             <Field label="HCPCS code" error={e.serviceCode} className="md:col-span-2"><Input value={otherCode} onChange={(ev) => setOtherCode(ev.target.value)} placeholder="T2016" className="uppercase" maxLength={5} /></Field>
           )}
           <div className="col-span-2 md:col-span-6">
-            <span className="mb-1.5 block text-[13px] font-medium text-text">Modifiers <span className="font-normal text-muted">· up to four</span></span>
+            <span className="mb-1.5 block text-[13px] font-medium text-text">Modifiers <span className="font-normal text-muted-foreground">· up to four</span></span>
             <details className="group relative">
               <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-line bg-page px-3 hover:border-gray-400 [&::-webkit-details-marker]:hidden">
                 {modifiers.length === 0 ? <span className="text-hint">No modifiers</span> : modifiers.map((m) => <span key={m} className="rounded bg-panel px-1.5 py-0.5 text-xs font-medium tabular-nums text-gray-700">{m}</span>)}
-                <span className="ml-auto text-muted">▾</span>
+                <span className="ml-auto text-muted-foreground">▾</span>
               </summary>
               <div className="absolute left-0 top-10 z-20 max-h-72 w-full overflow-y-auto rounded-lg border border-line bg-card p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] md:w-[28rem]">
                 {MODIFIERS.map((m) => (
                   <label key={m.code} className="flex cursor-pointer items-center gap-3 rounded-md px-2.5 py-1.5 hover:bg-hover">
-                    <input type="checkbox" checked={modifiers.includes(m.code)} onChange={() => toggleMod(m.code)} className="h-4 w-4 accent-[var(--accent)]" />
+                    <input type="checkbox" checked={modifiers.includes(m.code)} onChange={() => toggleMod(m.code)} className="h-4 w-4 accent-[var(--primary)]" />
                     <span className="w-8 font-medium tabular-nums text-text-strong">{m.code}</span>
-                    <span className="text-[13px] text-muted">{m.meaning}</span>
+                    <span className="text-[13px] text-muted-foreground">{m.meaning}</span>
                   </label>
                 ))}
               </div>
             </details>
             {e.modifiers && <span className="mt-1.5 block text-xs text-danger">{e.modifiers}</span>}
-            <div className="mt-2 text-[13px] text-muted">Claim line: <span className="font-medium tabular-nums text-text-strong">{serviceCode || "—"}{modifiers.length ? ` ${modifiers.join(" ")}` : ""}</span></div>
+            <div className="mt-2 text-[13px] text-muted-foreground">Claim line: <span className="font-medium tabular-nums text-text-strong">{serviceCode || "—"}{modifiers.length ? ` ${modifiers.join(" ")}` : ""}</span></div>
           </div>
         </FormSection>
 

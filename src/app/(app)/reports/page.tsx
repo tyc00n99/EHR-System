@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, PageHeader } from "@/components/ui";
+import { Card, PageHeader } from "@/components/kit";
 import { Icon } from "@/components/icons";
 import { requireUser } from "@/lib/auth";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
@@ -21,7 +21,7 @@ export default async function ReportsPage() {
           <Card key={r.key} title={r.title} description={r.desc}>
             <ul className="divide-y divide-line-soft">
               {periods.map((p, i) => (
-                <li key={p.index}><Link href={`/reports/${r.file}?period=${p.startDate}`} className="flex items-center justify-between px-5 py-2.5 hover:bg-hover"><span className="text-[13px]">{i === 0 ? "Current period" : "Pay period"} <span className="text-muted">· {p.label}</span></span><span className="flex items-center gap-1 text-[13px] font-medium text-accent"><Icon.download size={14} />CSV</span></Link></li>
+                <li key={p.index}><Link href={`/reports/${r.file}?period=${p.startDate}`} className="flex items-center justify-between px-5 py-2.5 hover:bg-hover"><span className="text-[13px]">{i === 0 ? "Current period" : "Pay period"} <span className="text-muted-foreground">· {p.label}</span></span><span className="flex items-center gap-1 text-[13px] font-medium text-primary"><Icon.download size={14} />CSV</span></Link></li>
               ))}
             </ul>
           </Card>

@@ -1,4 +1,4 @@
-import { Badge, Card, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/ui";
+import { Badge, Card, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { GROUP_LABELS, SERVICE_TYPES, WAIVER_NAMES, type ServiceCategory, type ServiceGroup } from "@/lib/services";
 
 export const metadata = { title: "245D service types" };
@@ -18,7 +18,7 @@ export default function ServicesPage() {
         {CATEGORIES.map((cat) => {
           const items = SERVICE_TYPES.filter((s) => s.category === cat.key);
           return (
-            <Card key={cat.key} title={cat.title} description={cat.blurb} actions={<span className="text-xs text-muted">{cat.cite} · {items.length} services</span>}>
+            <Card key={cat.key} title={cat.title} description={cat.blurb} actions={<span className="text-xs text-muted-foreground">{cat.cite} · {items.length} services</span>}>
               <Table>
                 <Thead><Th>Service</Th><Th>Waivers</Th><Th>Planning</Th><Th>Cite</Th></Thead>
                 <tbody>
@@ -31,15 +31,15 @@ export default function ServicesPage() {
                         <Tr key={s.id}>
                           <Td wrap>
                             <div className="font-medium text-text-strong">{s.name}</div>
-                            {s.note && <div className="mt-0.5 max-w-md text-xs leading-4 text-muted">{s.note}</div>}
+                            {s.note && <div className="mt-0.5 max-w-md text-xs leading-4 text-muted-foreground">{s.note}</div>}
                           </Td>
                           <Td wrap>
-                            {s.waivers.length === 0 ? <span className="text-muted">Non-waiver</span> : (
+                            {s.waivers.length === 0 ? <span className="text-muted-foreground">Non-waiver</span> : (
                               <span className="flex flex-wrap gap-1">{s.waivers.map((w) => <span key={w} title={WAIVER_NAMES[w]} className="rounded bg-panel px-1.5 py-0.5 text-xs font-medium text-gray-700">{w}</span>)}</span>
                             )}
                           </Td>
                           <Td><Badge tone={s.planningTrack === "245D.071" ? "accent" : "ok"}>{s.planningTrack}</Badge></Td>
-                          <Td className="whitespace-nowrap text-xs text-muted">{s.cite}</Td>
+                          <Td className="whitespace-nowrap text-xs text-muted-foreground">{s.cite}</Td>
                         </Tr>
                       )),
                     ];

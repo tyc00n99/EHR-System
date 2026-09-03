@@ -2,7 +2,7 @@ import "server-only";
 import { and, count, desc, eq, gte, isNull, lte, sql, sum } from "drizzle-orm";
 import { getDb, schema } from "./index";
 
-const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments } = schema;
+const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
 
 export async function getOrganization() {
   const db = await getDb();
@@ -376,4 +376,95 @@ export async function listAgreementsWithUsage() {
 export async function countOpenVisits() {
   const db = await getDb();
   return db.select({ visit: visits, personFirst: people.firstName, personLast: people.lastName, staffFirst: staff.firstName, staffLast: staff.lastName }).from(visits).innerJoin(people, eq(visits.personId, people.id)).innerJoin(staff, eq(visits.staffId, staff.id)).where(eq(visits.status, "in_progress"));
+}
+
+/* ---------- service record ---------- */
+
+/** Everything the service-record panel needs for one visit. */
+export async function getVisitRecord(id: string) {
+  const base = await getVisit(id);
+  if (!base) return null;
+  const db = await getDb();
+  const [questions, responses, meds, admins, program, approver] = await Promise.all([
+    db.select({ q: goalQuestions, goal: goals }).from(goalQuestions).innerJoin(goals, eq(goalQuestions.goalId, goals.id)).where(and(eq(goals.personId, base.person.id), eq(goals.status, "active"), eq(goalQuestions.active, true))).orderBy(goals.createdAt, goalQuestions.sortOrder),
+    db.select().from(goalResponses).where(eq(goalResponses.visitId, id)),
+    db.select().from(medications).where(and(eq(medications.personId, base.person.id), eq(medications.active, true))).orderBy(medications.name),
+    db.select().from(medicationAdministrations).where(and(eq(medicationAdministrations.personId, base.person.id), eq(medicationAdministrations.scheduledDate, base.visit.clockInAt.toISOString().slice(0, 10)))),
+    base.visit.programId ? db.select().from(programs).where(eq(programs.id, base.visit.programId)).limit(1).then((r) => r[0] ?? null) : Promise.resolve(null),
+    base.visit.approvedBy ? db.select({ email: users.email }).from(users).where(eq(users.id, base.visit.approvedBy)).limit(1).then((r) => r[0]?.email ?? null) : Promise.resolve(null),
+  ]);
+  return { ...base, questions, responses, meds, admins, program, approverEmail: approver };
+}
+
+/* ---------- life plan ---------- */
+
+export async function listGoalsWithStats(personId: string, from: Date, to: Date) {
+  const db = await getDb();
+  const gs = await db.select().from(goals).where(eq(goals.personId, personId)).orderBy(desc(goals.status), goals.createdAt);
+  if (gs.length === 0) return [];
+  const qs = await db.select().from(goalQuestions).where(sql`${goalQuestions.goalId} in ${gs.map((g) => g.id)}`).orderBy(goalQuestions.sortOrder);
+  const rs = qs.length
+    ? await db
+        .select({ questionId: goalResponses.questionId, response: goalResponses.response, at: visits.clockInAt })
+        .from(goalResponses)
+        .innerJoin(visits, eq(goalResponses.visitId, visits.id))
+        .where(and(sql`${goalResponses.questionId} in ${qs.map((q) => q.id)}`, gte(visits.clockInAt, from), lte(visits.clockInAt, to)))
+    : [];
+  return gs.map((g) => ({
+    goal: g,
+    questions: qs.filter((q) => q.goalId === g.id).map((q) => {
+      const mine = rs.filter((r) => r.questionId === q.id);
+      return { question: q, yes: mine.filter((r) => r.response === "yes").length, no: mine.filter((r) => r.response === "no").length, na: mine.filter((r) => r.response === "na").length };
+    }),
+  }));
+}
+
+/* ---------- scheduling ---------- */
+
+export async function listShifts(from: Date, to: Date, f: { staffId?: string; personId?: string } = {}) {
+  const db = await getDb();
+  const where = [gte(shifts.startAt, from), lte(shifts.startAt, to), f.staffId ? eq(shifts.staffId, f.staffId) : undefined, f.personId ? eq(shifts.personId, f.personId) : undefined].filter(Boolean);
+  return db
+    .select({ shift: shifts, personFirst: people.firstName, personLast: people.lastName, staffFirst: staff.firstName, staffLast: staff.lastName, serviceCode: serviceAgreements.serviceCode, modifiers: serviceAgreements.modifiers })
+    .from(shifts)
+    .innerJoin(people, eq(shifts.personId, people.id))
+    .innerJoin(staff, eq(shifts.staffId, staff.id))
+    .innerJoin(serviceAgreements, eq(shifts.serviceAgreementId, serviceAgreements.id))
+    .where(and(...where))
+    .orderBy(shifts.startAt);
+}
+
+export async function getShift(id: string) {
+  const db = await getDb();
+  const [row] = await db
+    .select({ shift: shifts, person: people, staff, agreement: serviceAgreements })
+    .from(shifts)
+    .innerJoin(people, eq(shifts.personId, people.id))
+    .innerJoin(staff, eq(shifts.staffId, staff.id))
+    .innerJoin(serviceAgreements, eq(shifts.serviceAgreementId, serviceAgreements.id))
+    .where(eq(shifts.id, id))
+    .limit(1);
+  if (!row) return null;
+  const [visit] = await db.select().from(visits).where(eq(visits.shiftId, id)).limit(1);
+  return { ...row, visit: visit ?? null };
+}
+
+/** The scheduled shift a clock-in most plausibly fulfils: same staff and person, starting within 2 hours of now. */
+export async function findShiftForClockIn(staffId: string, personId: string, at: Date) {
+  const db = await getDb();
+  const lo = new Date(at.getTime() - 2 * 3_600_000), hi = new Date(at.getTime() + 2 * 3_600_000);
+  const [row] = await db.select().from(shifts).where(and(eq(shifts.staffId, staffId), eq(shifts.personId, personId), eq(shifts.status, "scheduled"), gte(shifts.startAt, lo), lte(shifts.startAt, hi))).orderBy(shifts.startAt).limit(1);
+  return row ?? null;
+}
+
+/* ---------- medications ---------- */
+
+export async function listMedications(personId: string, activeOnly = false) {
+  const db = await getDb();
+  return db.select().from(medications).where(activeOnly ? and(eq(medications.personId, personId), eq(medications.active, true)) : eq(medications.personId, personId)).orderBy(desc(medications.active), medications.name);
+}
+
+export async function listMedAdmins(personId: string, fromDate: string, toDate: string) {
+  const db = await getDb();
+  return db.select().from(medicationAdministrations).where(and(eq(medicationAdministrations.personId, personId), gte(medicationAdministrations.scheduledDate, fromDate), lte(medicationAdministrations.scheduledDate, toDate)));
 }

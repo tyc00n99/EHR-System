@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "./icons";
-import { cx } from "./ui";
+import { cx } from "./kit";
 
 type Role = "admin" | "supervisor" | "dsp";
 interface Item { href: string; label: string; icon: IconName; roles?: Role[]; soon?: boolean; badge?: number }
@@ -32,7 +32,7 @@ export function Sidebar({ role, orgName, attention }: { role: Role; orgName: str
       { href: "/clients", label: role === "dsp" ? "My clients" : "Clients", icon: "clients" },
       { href: "/clock", label: "Clock in / out", icon: "clock" },
       { href: "/visits", label: "Visits & EVV", icon: "visits" },
-      { href: "/scheduling", label: "Scheduling", icon: "calendar", roles: ["admin", "supervisor"], soon: true },
+      { href: "/scheduling", label: "Scheduling", icon: "calendar" },
     ] },
     { label: "Operations", items: [
       { href: "/billing", label: "Billing", icon: "money", roles: ["admin", "supervisor"] },
@@ -52,7 +52,7 @@ export function Sidebar({ role, orgName, attention }: { role: Role; orgName: str
   return (
     <aside className={cx("sticky top-0 hidden h-screen shrink-0 flex-col bg-nav text-nav-text transition-[width] duration-200 md:flex", collapsed ? "w-16" : "w-60")}>
       <div className={cx("flex h-14 items-center gap-2.5 border-b border-white/10", collapsed ? "justify-center px-0" : "px-4")}>
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-accent text-[12px] font-bold text-white">D</span>
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-[12px] font-bold text-white">D</span>
         {!collapsed && <div className="min-w-0 leading-tight"><div className="truncate text-[13.5px] font-semibold text-nav-text-strong">{orgName}</div><div className="text-[11px] text-nav-text">245D EHR</div></div>}
       </div>
       <nav className="flex-1 overflow-y-auto px-2 py-3">

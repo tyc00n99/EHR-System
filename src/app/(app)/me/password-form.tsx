@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button, Field, FormError, Input } from "@/components/ui";
+import { Button, Field, FormError, Input } from "@/components/kit";
 import { changePassword } from "./actions";
 
 export function PasswordForm() {
