@@ -7,8 +7,97 @@
 /* Design tokens — palette and type sampled from notion.com (2026-09-02).
    Notion's "tatami" grays are warm-tinted; blue is the single accent. */
 /* Palette (Notion-derived warm neutrals, blue primary) and shadcn semantic tokens mapped onto it. */
-/* Base neutrals (cool slate). Themes below override brand + frame tokens. */
+/* Base theme "Hubble": paper background, ink text, navy signal, lilac, solar amber.
+   Sampled from hubble.ai (2026-09-03). Fonts: Public Sans / Fraunces / Inconsolata. */
 :root {
+  --gray-100: #f8f7f3;
+  --gray-200: #f0efeb;
+  --gray-300: #e3dfd6;
+  --gray-400: #b0aaa0;
+  --gray-500: #857f76;
+  --gray-600: #5e5952;
+  --gray-700: #3f3b37;
+  --gray-800: #2a2726;
+  --gray-900: #1b1818;
+
+  --blue-100: #eef0f7;
+  --blue-200: #e1e5f1;
+  --blue-300: #aeb8da;
+  --blue-500: #5656b9;
+  --blue-600: #0b2672;
+  --blue-700: #08205e;
+
+  --text: #1b1818;
+  --text-strong: #1b1818;
+  --text-muted: rgba(27, 24, 24, 0.66);
+  --text-hint: #b0aaa0;
+
+  --page: #ffffff;
+  --page-bg: #f0efeb;
+  --sidebar: #f8f7f3;
+  --panel: #f0efeb;
+  --line: #d6d1c7;
+  --line-soft: #e8e4dc;
+  --hover: rgba(27, 24, 24, 0.04);
+  --active: rgba(27, 24, 24, 0.07);
+
+  --nav: #f8f7f3;
+  --nav-border: #d6d1c7;
+  --nav-text: rgba(27, 24, 24, 0.72);
+  --nav-text-strong: #1b1818;
+  --nav-hover: rgba(27, 24, 24, 0.05);
+  --nav-active: rgba(11, 38, 114, 0.09);
+  --nav-active-text: #0b2672;
+  --nav-group: #b0aaa0;
+  --nav-badge: #b3261e;
+
+  --shadow-sm: 0 1px 2px rgba(27, 24, 24, 0.05), 0 1px 3px rgba(27, 24, 24, 0.04);
+  --shadow-md: 0 8px 24px rgba(27, 24, 24, 0.10), 0 2px 6px rgba(27, 24, 24, 0.06);
+
+  --ok: #1f6b4a;
+  --ok-soft: #e3efe8;
+  --warn: #9a5f06;
+  --warn-soft: rgba(218, 138, 20, 0.15);
+  --danger: #b3261e;
+  --danger-soft: #f7e3e1;
+
+  --radius: 0.75rem;
+  --background: #ffffff;
+  --foreground: var(--text);
+  --card: #ffffff;
+  --card-foreground: var(--text);
+  --popover: #ffffff;
+  --popover-foreground: var(--text);
+  --primary: #0b2672;
+  --primary-foreground: #ffffff;
+  --primary-hover: #08205e;
+  --primary-soft: #e1e5f1;
+  --secondary: var(--gray-200);
+  --secondary-foreground: var(--text-strong);
+  --muted: var(--gray-200);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--gray-200);
+  --accent-foreground: var(--text-strong);
+  --destructive: var(--danger);
+  --border: var(--gray-300);
+  --input: var(--gray-300);
+  --ring: #5656b9;
+  --chart-1: #0b2672;
+  --chart-2: #da8a14;
+  --chart-3: #5656b9;
+  --chart-4: #1f6b4a;
+  --chart-5: #9a5f06;
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--gray-200);
+  --sidebar-accent-foreground: var(--text-strong);
+  --sidebar-border: var(--gray-300);
+  --sidebar-ring: var(--ring);
+}
+
+/* ---- Tide: cool slate neutrals, white sidebar, teal ---- */
+:root[data-theme="tide"] {
   --gray-100: #f8fafc;
   --gray-200: #f1f5f9;
   --gray-300: #e2e8f0;
@@ -99,6 +188,10 @@
 
 /* ---- Slate: dark navy frame, indigo primary ---- */
 :root[data-theme="slate"] {
+  --gray-100: #f8fafc; --gray-200: #f1f5f9; --gray-300: #e2e8f0; --gray-400: #94a3b8; --gray-500: #64748b; --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+  --text: #0f172a; --text-strong: #0b1220; --text-muted: #64748b; --text-hint: #94a3b8;
+  --sidebar: #f8fafc; --panel: #f1f5f9; --line: #e2e8f0; --line-soft: #eef2f6; --border: #e2e8f0; --input: #e2e8f0;
+  --radius: 0.5rem;
   --page-bg: #f5f6f8;
   --nav: #111827;
   --nav-border: #111827;
@@ -218,8 +311,9 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-sans);
-  --font-serif: "Lyon Text", Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-public-sans), "Public Sans", system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), "Fraunces", Georgia, serif;
+  --font-mono: var(--font-inconsolata), "Inconsolata", ui-monospace, monospace;
 
   --radius-app: var(--radius);
 
@@ -303,13 +397,20 @@ body {
   background: var(--page-bg);
 }
 
-h1, h2, h3 {
+h1, h2 {
   color: var(--text-strong);
-  font-weight: 700;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-variation-settings: "SOFT" 50;
 }
-h1 { font-size: 28px; line-height: 34px; letter-spacing: -0.6px; }
-h2 { font-size: 20px; line-height: 26px; letter-spacing: -0.3px; }
-h3 { font-size: 14px; line-height: 20px; letter-spacing: 0; font-weight: 600; }
+h1 { font-size: 30px; line-height: 36px; letter-spacing: -0.02em; }
+h2 { font-size: 22px; line-height: 28px; letter-spacing: -0.015em; }
+h3 { color: var(--text-strong); font-size: 14px; line-height: 20px; font-weight: 600; }
+
+/* Data reads in mono, the Hubble way: numbers, codes, times. */
+.tabular-nums { font-family: var(--font-mono); letter-spacing: 0; }
+.figure { font-family: var(--font-serif); font-weight: 500; font-variation-settings: "SOFT" 30; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+kbd { font-family: var(--font-mono); }
 
 /* Notion-style selection and quiet scrollbars */
 * { scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent; }

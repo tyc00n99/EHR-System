@@ -5,6 +5,7 @@ import { Check, Palette } from "lucide-react";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 export const THEMES = [
+  { key: "hubble", label: "Hubble", hint: "Paper, ink, navy signal" },
   { key: "tide", label: "Tide", hint: "Light frame, teal" },
   { key: "slate", label: "Slate", hint: "Dark frame, indigo" },
   { key: "sage", label: "Sage", hint: "Cream, forest green" },
@@ -12,7 +13,7 @@ export const THEMES = [
 
 export function ThemeMenuItems() {
   // The menu only mounts on the client after open, so reading the DOM in the initializer is safe.
-  const [theme, setTheme] = useState(() => (typeof document === "undefined" ? "tide" : document.documentElement.getAttribute("data-theme") || "tide"));
+  const [theme, setTheme] = useState(() => (typeof document === "undefined" ? "hubble" : document.documentElement.getAttribute("data-theme") || "hubble"));
   const pick = (t: string) => { document.documentElement.setAttribute("data-theme", t); try { localStorage.setItem("ehr.theme", t); } catch {} setTheme(t); };
   return (
     <>

@@ -150,7 +150,7 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
         <p className="text-[13px] font-medium text-primary">Visit in progress</p>
         <h2 className="mt-0.5">{open.personName}</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">{open.serviceCode} · since {since}</p>
-        <p className="mt-2 text-[28px] font-bold leading-none tracking-[-0.02em] text-text-strong tabular-nums">{elapsed}</p>
+        <p className="figure mt-2 text-[30px] leading-none text-text-strong">{elapsed}</p>
       </div>
       <FormError message={gpsError ?? state.message} />
       {open.tasks.length > 0 && (

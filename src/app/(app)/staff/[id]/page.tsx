@@ -37,7 +37,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
     <div>
       <RecordHeader
         crumbs={<><Crumb href="/staff">Staff</Crumb><CrumbSep /><Crumb>{s.firstName} {s.lastName}</Crumb></>}
-        avatar={<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-nav text-lg font-semibold text-white">{s.firstName[0]}{s.lastName[0]}</span>}
+        avatar={<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">{s.firstName[0]}{s.lastName[0]}</span>}
         title={`${s.firstName} ${s.lastName}`}
         chips={<><Badge tone={s.active ? "ok" : "neutral"}>{s.active ? "active" : "inactive"}</Badge>{summary.overdue > 0 ? <Badge tone="danger">{summary.overdue} overdue</Badge> : summary.dueSoon > 0 ? <Badge tone="warn">{summary.dueSoon} due soon</Badge> : <Badge tone="ok">compliant</Badge>}</>}
         subtitle={<><span>{s.title}</span><span className="text-hint">·</span><span>Hired {fmtDate(s.hireDate)}</span><span className="text-hint">·</span><span className="tabular-nums">{s.npi ? `NPI ${s.npi}` : `UMPI ${s.umpi}`}</span>{login && <><span className="text-hint">·</span><span>{login.email}</span></>}</>}

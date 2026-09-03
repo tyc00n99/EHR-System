@@ -109,7 +109,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
         <Card title="Census" description="Who you serve and how much authorized work is on the books">
           <div className="grid grid-cols-3 divide-x divide-line-soft border-b border-line-soft">
             {[["Active", census.active, "ok"], ["Intake", census.intake, "accent"], ["Discharged", census.discharged, "neutral"]].map(([l, n]) => (
-              <div key={String(l)} className="px-5 py-3"><div className="text-[13px] text-muted-foreground">{l}</div><div className="text-[22px] font-bold tabular-nums text-text-strong">{n}</div></div>
+              <div key={String(l)} className="px-5 py-3"><div className="text-[13px] text-muted-foreground">{l}</div><div className="figure text-[24px] text-text-strong">{n}</div></div>
             ))}
           </div>
           <div className="px-5 py-3 text-[13px]">
@@ -149,9 +149,9 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
             </ul>
           )}
           <div className="grid grid-cols-3 divide-x divide-line-soft border-t border-line-soft bg-sidebar text-center">
-            <div className="px-3 py-2"><div className="text-[18px] font-bold tabular-nums text-text-strong">{nonCompliant.length}</div><div className="text-[11.5px] text-muted-foreground">staff out of compliance</div></div>
-            <div className="px-3 py-2"><div className="text-[18px] font-bold tabular-nums text-text-strong">{now.atRisk.filter((l) => !l.signed).length}</div><div className="text-[11.5px] text-muted-foreground">unsigned visits</div></div>
-            <div className="px-3 py-2"><div className="text-[18px] font-bold tabular-nums text-text-strong">{open.length}</div><div className="text-[11.5px] text-muted-foreground">clocked in now</div></div>
+            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{nonCompliant.length}</div><div className="text-[11.5px] text-muted-foreground">staff out of compliance</div></div>
+            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{now.atRisk.filter((l) => !l.signed).length}</div><div className="text-[11.5px] text-muted-foreground">unsigned visits</div></div>
+            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{open.length}</div><div className="text-[11.5px] text-muted-foreground">clocked in now</div></div>
           </div>
         </Card>
       </div>

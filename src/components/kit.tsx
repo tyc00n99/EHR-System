@@ -17,7 +17,7 @@ const btn = {
 } as const;
 
 type Variant = keyof typeof btn;
-const btnBase = "inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-3 text-[13px] font-medium whitespace-nowrap transition-colors disabled:opacity-50";
+const btnBase = "inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors disabled:opacity-50";
 
 export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(btnBase, btn[variant], className)} {...props} />;
@@ -40,7 +40,7 @@ export function Field({ label, error, hint, children, className }: { label: stri
   );
 }
 
-const control = "h-9 w-full rounded-md border border-line bg-page px-3 text-text placeholder:text-hint transition-colors hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300/50 disabled:bg-panel";
+const control = "h-9 w-full rounded-lg border border-line bg-page px-3 text-text placeholder:text-hint transition-colors hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300/50 disabled:bg-panel";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cx(control, className)} {...props} />;
@@ -126,7 +126,7 @@ export function PageIcon({ text, tone = "neutral" }: { text: string; tone?: "neu
 
 export function Card({ title, description, actions, children, className, padded = false }: { title?: string; description?: string; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
   return (
-    <section className={cx("overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]", className)}>
+    <section className={cx("overflow-hidden rounded-xl border border-line bg-card shadow-[var(--shadow-sm)]", className)}>
       {(title || actions) && (
         <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-3">
           <div>
@@ -145,7 +145,7 @@ export function StatTile({ label, value, note, tone, href }: { label: string; va
   const body = (
     <>
       <div className="text-[13px] font-medium text-muted-foreground">{label}</div>
-      <div className="mt-2 text-[30px] font-bold leading-none tracking-[-0.02em] text-text-strong tabular-nums">{value}</div>
+      <div className="figure mt-2 text-[30px] leading-none text-text-strong">{value}</div>
       {note && <div className={cx("mt-2 text-[13px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
     </>
   );
@@ -208,7 +208,7 @@ export function Table({ children }: { children: ReactNode }) {
 }
 
 export function Th({ children, className, align = "left" }: { children?: ReactNode; className?: string; align?: "left" | "right" }) {
-  return <th className={cx("h-9 whitespace-nowrap px-4 text-xs font-medium text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
+  return <th className={cx("h-9 whitespace-nowrap px-4 font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
 }
 
 export function Td({ children, className, align = "left", strong, wrap }: { children?: ReactNode; className?: string; align?: "left" | "right"; strong?: boolean; wrap?: boolean }) {
@@ -334,6 +334,6 @@ export function Kpi({ label, value, note, tone, spark, href }: { label: string; 
       {spark && <Sparkline values={spark} />}
     </div>
   );
-  const cls = "block rounded-lg border border-line bg-card px-4 py-3.5 shadow-[var(--shadow-sm)]";
+  const cls = "block rounded-xl border border-line bg-card px-4 py-3.5 shadow-[var(--shadow-sm)]";
   return href ? <Link href={href} className={cx(cls, "transition-colors hover:bg-hover")}>{body}</Link> : <div className={cls}>{body}</div>;
 }

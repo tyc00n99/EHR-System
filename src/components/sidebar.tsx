@@ -61,7 +61,7 @@ export function Sidebar({ role, orgName, attention }: { role: Role; orgName: str
           if (!items.length) return null;
           return (
             <div key={gi} className={cx(gi > 0 && "mt-4")}>
-              {g.label && !collapsed && <div className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-nav-group">{g.label}</div>}
+              {g.label && !collapsed && <div className="mb-1 px-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-nav-group">{g.label}</div>}
               {g.label && collapsed && <div className="mx-auto mb-2 h-px w-6 bg-nav-border" />}
               <ul className="space-y-px">
                 {items.map((it) => {

@@ -102,7 +102,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
                   const dir = h.column.getIsSorted();
                   const align = (h.column.columnDef.meta as { align?: string } | undefined)?.align;
                   return (
-                    <TableHead key={h.id} className={cn("h-9 whitespace-nowrap px-4 text-xs font-medium text-muted-foreground first:pl-5 last:pr-5", align === "right" && "text-right")} style={{ width: h.getSize() !== 150 ? h.getSize() : undefined }}>
+                    <TableHead key={h.id} className={cn("h-9 whitespace-nowrap px-4 font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground first:pl-5 last:pr-5", align === "right" && "text-right")} style={{ width: h.getSize() !== 150 ? h.getSize() : undefined }}>
                       {h.isPlaceholder ? null : sortable ? (
                         <button onClick={h.column.getToggleSortingHandler()} className={cn("inline-flex items-center gap-1 hover:text-text-strong", align === "right" && "flex-row-reverse")}>
                           {flexRender(h.column.columnDef.header, h.getContext())}
