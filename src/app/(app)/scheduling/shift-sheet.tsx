@@ -65,7 +65,7 @@ export function NewShiftSheet({ defaultDate, staff, agreements }: { defaultDate:
         <form action={submit} className="space-y-4 px-5 py-5">
           <FormError message={state.errors ? state.message : state.message} />
           <Field label="Client" error={e.personId}><Select name="personId" value={personId} onChange={(ev) => setPersonId(ev.target.value)}>{people.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</Select></Field>
-          <Field label="Service agreement" error={e.serviceAgreementId}><Select name="serviceAgreementId" key={personId} defaultValue={options[0]?.id ?? ""}>{options.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}</Select></Field>
+          <Field label="Service" error={e.serviceAgreementId} hint={options.length > 1 ? "This client is authorized for more than one service. Pick the one this shift delivers." : "From the client's active authorization."}><Select name="serviceAgreementId" key={personId} defaultValue={options[0]?.id ?? ""}>{options.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}</Select></Field>
           <Field label="Caregiver" error={e.staffId} hint="Must be assigned, oriented to this client, and current on compliance."><Select name="staffId" defaultValue="">{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           <div className="grid grid-cols-3 gap-3">
             <Field label="Date" error={e.date}><Input name="date" type="date" defaultValue={defaultDate} required /></Field>

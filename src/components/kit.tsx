@@ -161,7 +161,7 @@ export interface Property {
   value: ReactNode;
 }
 
-export function Properties({ items, labelWidth = 168 }: { items: Property[]; labelWidth?: number }) {
+export function Properties({ items, labelWidth = 136 }: { items: Property[]; labelWidth?: number }) {
   return (
     <dl>
       {items.map((p) => {
@@ -169,9 +169,9 @@ export function Properties({ items, labelWidth = 168 }: { items: Property[]; lab
         const empty = p.value === null || p.value === undefined || p.value === "";
         return (
           <div key={p.label} className="grid items-start gap-3 py-[7px]" style={{ gridTemplateColumns: `${labelWidth}px 1fr` }}>
-            <dt className="flex items-center gap-2 text-[13px] text-muted-foreground">
-              {Ic && <Ic size={15} className="shrink-0 text-gray-400" />}
-              <span className="truncate">{p.label}</span>
+            <dt className="flex items-start gap-2 text-[13px] leading-5 text-muted-foreground">
+              {Ic && <Ic size={15} className="mt-0.5 shrink-0 text-gray-400" />}
+              <span>{p.label}</span>
             </dt>
             <dd className={cx("min-w-0 break-words leading-5", empty ? "text-hint" : "text-text")}>{empty ? "Empty" : p.value}</dd>
           </div>

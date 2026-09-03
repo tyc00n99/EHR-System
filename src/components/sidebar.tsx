@@ -31,7 +31,7 @@ export function Sidebar({ role, orgName, attention }: { role: Role; orgName: str
     { label: "Care", items: [
       { href: "/clients", label: role === "dsp" ? "My clients" : "Clients", icon: "clients" },
       { href: "/clock", label: "Clock in / out", icon: "clock" },
-      { href: "/visits", label: "Visits & EVV", icon: "visits" },
+      { href: "/visits", label: "Notes & EVV", icon: "visits" },
       { href: "/scheduling", label: "Scheduling", icon: "calendar" },
     ] },
     { label: "Operations", items: [

@@ -37,9 +37,9 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
     <div>
       {sp.done && <Notice tone="ok"><span className="font-medium text-ok">Visit completed and saved.</span></Notice>}
       <PageHeader
-        eyebrow={<><Crumb href="/visits">Visits</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>{fmtDateTime(v.clockInAt)}</Crumb></>}
+        eyebrow={<><Crumb href="/visits">Notes</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>{fmtDateTime(v.clockInAt)}</Crumb></>}
         icon={<PageIcon text={`${person.firstName[0]}${person.lastName[0]}`} tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"} />}
-        title={`Visit with ${fullName(person)}`}
+        title={`Note · ${fullName(person)}`}
         meta={<>
           <Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status.replace("_", " ")}</Badge>
           <Badge tone={evvTone[v.evvStatus]}>EVV {v.evvStatus}</Badge>

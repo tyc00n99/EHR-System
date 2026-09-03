@@ -74,6 +74,7 @@ export const personSchema = z.object({
   email,
   status: z.enum(PERSON_STATUS).default("intake"),
   serviceStartDate: isoDate.optional(),
+  medicationSupport: z.coerce.boolean().default(false),
 });
 
 export const GENDERS = [

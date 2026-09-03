@@ -63,3 +63,10 @@ Cookie sessions (`ehr_session`), scrypt password hashes, roles admin / superviso
 - Scripts run with `tsx` (`npm run db:seed`, `npm run db:reset`).
 - Seed data is sample data. No real client information in the repo.
 - Dates shown in America/Chicago. Date-only columns are ISO strings; timestamps are `timestamptz`.
+
+## Notes, history, and authorizations (Sept 2026)
+- "Visits" are called **Notes** everywhere in the UI (`/notes` rewrites to `/visits`). The client Notes tab (`clients/[id]/notes-tab.tsx`) is document-style, filterable by service code and date range, and exports the same filter as a PDF at `/clients/[id]/notes.pdf` (@react-pdf/renderer).
+- Saving documentation records `noteSavedAt/By/Lat/Lng` (device geolocation, best effort). The client History tab lists only these note events via `listNoteEvents`; record edits stay in the audit log.
+- Authorizations are editable at `/clients/[id]/agreements/[agreementId]` (`updateAgreement`, audited). Units, dates, rate, status, code, and modifiers can change; history is shown beside the form.
+- `people.medicationSupport` gates the Medical tab; `people.status` is changed from the header `StatusControl` (`setPersonStatus`, sets `dischargedOn`).
+- Never truncate labels in `Properties`; labels wrap.

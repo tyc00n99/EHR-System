@@ -24,7 +24,7 @@ export function Feed({ items, personId, days, olderHref }: { items: FeedItem[]; 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <FilterChips value={kind} onChange={setKind} options={[{ key: "all", label: "Everything", count: items.length }, { key: "visit", label: "Visits", count: count("visit") }, { key: "med", label: "Medications", count: count("med") }, { key: "shift", label: "Schedule", count: count("shift") }, { key: "document", label: "Files", count: count("document") }, { key: "agreement", label: "Authorizations", count: count("agreement") }, { key: "goal", label: "Goals", count: count("goal") }]} />
+        <FilterChips value={kind} onChange={setKind} options={[{ key: "all", label: "Everything", count: items.length }, { key: "visit", label: "Notes", count: count("visit") }, { key: "med", label: "Medications", count: count("med") }, { key: "shift", label: "Schedule", count: count("shift") }, { key: "document", label: "Files", count: count("document") }, { key: "agreement", label: "Authorizations", count: count("agreement") }, { key: "goal", label: "Goals", count: count("goal") }]} />
         <span className="text-[12.5px] text-muted-foreground">Last {days} days</span>
       </div>
       {shown.length === 0 && <div className="rounded-lg border border-dashed border-line px-6 py-10 text-center text-[13px] text-muted-foreground">Nothing in this window.</div>}

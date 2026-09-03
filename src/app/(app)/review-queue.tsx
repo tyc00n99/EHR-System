@@ -48,7 +48,7 @@ export function ReviewQueue({ data }: { data: QueueData }) {
               <Link href={`/?visit=${r.id}`} scroll={false} aria-label="Open record" className="flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-hover"><ChevronRight className="size-4" /></Link>
             </li>
           ))}
-          {rows.length > 12 && <li className="px-5 py-2 text-[12.5px] text-muted-foreground">{rows.length - 12} more in <Link href="/visits" className="text-primary hover:underline">Visits</Link>.</li>}
+          {rows.length > 12 && <li className="px-5 py-2 text-[12.5px] text-muted-foreground">{rows.length - 12} more in <Link href="/visits" className="text-primary hover:underline">Notes</Link>.</li>}
         </ul>
       )}
       {tab === "unsigned" && rows.length > 0 && <div className="border-t border-line-soft px-5 py-2 text-[12px] text-muted-foreground"><Badge tone="danger">unsigned</Badge> visits are held from billing until signed.</div>}

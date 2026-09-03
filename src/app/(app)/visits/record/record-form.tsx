@@ -11,7 +11,16 @@ import { draftProgressReview, recordMedAdmin, saveDocumentation, setApproval, si
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
 export function RecordForm({ visitId, personFirst, locked, skillsOptions, defaults, tasks, questions }: { visitId: string; personFirst: string; locked: boolean; skillsOptions: string[]; defaults: { interactionLevel: string; skills: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
-  const [state, submit, pending] = useActionState(async (prev: ActionState, fd: FormData) => { const r = await saveDocumentation(prev, fd); if (r.message && !r.errors) toast.success(r.message); else if (r.message) toast.error(r.message); return r; }, {});
+  const [state, submit, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
+    // Best-effort device location for the note history; never blocks the save.
+    const fix = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+      if (typeof navigator === "undefined" || !navigator.geolocation) return resolve(null);
+      const t = setTimeout(() => resolve(null), 4000);
+      navigator.geolocation.getCurrentPosition((p) => { clearTimeout(t); resolve({ lat: p.coords.latitude, lng: p.coords.longitude }); }, () => { clearTimeout(t); resolve(null); }, { maximumAge: 300000, timeout: 3500 });
+    });
+    if (fix) { fd.set("lat", String(fix.lat)); fd.set("lng", String(fix.lng)); }
+    const r = await saveDocumentation(prev, fd); if (r.message && !r.errors) toast.success(r.message); else if (r.message) toast.error(r.message); return r;
+  }, {});
   const [interaction, setInteraction] = useState(defaults.interactionLevel);
   const [skills, setSkills] = useState<string[]>(defaults.skills);
   const [note, setNote] = useState(defaults.shiftNote);

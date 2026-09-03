@@ -519,3 +519,31 @@ export async function reviewQueue(from: Date, to: Date) {
     total: completed.length,
   };
 }
+
+export async function goalCountsForVisits(visitIds: string[]) {
+  const db = await getDb();
+  const rows = visitIds.length ? await db.select({ visitId: goalResponses.visitId, response: goalResponses.response }).from(goalResponses).where(sql`${goalResponses.visitId} in ${visitIds}`) : [];
+  const map = new Map<string, { yes: number; no: number }>();
+  for (const r of rows) { const m = map.get(r.visitId) ?? { yes: 0, no: 0 }; if (r.response === "yes") m.yes++; if (r.response === "no") m.no++; map.set(r.visitId, m); }
+  return map;
+}
+
+/** Note saves for a person: who, when, and where. */
+export async function countNotes(personId: string) {
+  const db = await getDb();
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(visits).where(and(eq(visits.personId, personId), sql`${visits.shiftNote} is not null`));
+  return row?.n ?? 0;
+}
+
+export async function listNoteEvents(personId: string) {
+  const db = await getDb();
+  const rows = await db
+    .select({ visitId: visits.id, visitAt: visits.clockInAt, savedAt: visits.noteSavedAt, lat: visits.noteSavedLat, lng: visits.noteSavedLng, by: sql<string | null>`coalesce(${staff.firstName} || ' ' || ${staff.lastName}, ${users.email})`, edits: sql<number>`(select count(*) from ${visitEdits} where ${visitEdits.visitId} = ${visits.id})::int` })
+    .from(visits)
+    .leftJoin(users, eq(visits.noteSavedBy, users.id))
+    .leftJoin(staff, eq(users.staffId, staff.id))
+    .where(and(eq(visits.personId, personId), sql`${visits.shiftNote} is not null`))
+    .orderBy(desc(visits.noteSavedAt), desc(visits.clockInAt))
+    .limit(300);
+  return rows;
+}

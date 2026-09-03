@@ -75,8 +75,8 @@ export function AppShell({ user, orgName, attention, palette, children }: { user
 
 function MobileNav({ role }: { role: CurrentUser["role"] }) {
   const items: [string, string, typeof Clock][] = role === "dsp"
-    ? [["/", "Home", Users], ["/clock", "Clock", Clock], ["/visits", "Visits", FileText], ["/me", "Me", User]]
-    : [["/", "Home", Users], ["/clients", "Clients", Users], ["/visits", "Visits", FileText], ["/attention", "Alerts", Bell]];
+    ? [["/", "Home", Users], ["/clock", "Clock", Clock], ["/visits", "Notes", FileText], ["/me", "Me", User]]
+    : [["/", "Home", Users], ["/clients", "Clients", Users], ["/visits", "Notes", FileText], ["/attention", "Alerts", Bell]];
   return (
     <nav className="sticky bottom-0 z-20 flex border-t border-line bg-page md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       {items.map(([href, label, Ic]) => <Link key={href} href={href} className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground hover:text-text-strong"><Ic className="size-5" />{label}</Link>)}

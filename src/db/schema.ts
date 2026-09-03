@@ -196,6 +196,9 @@ export const people = pgTable(
     email: text("email"),
     status: personStatus("status").notNull().default("intake"),
     serviceStartDate: date("service_start_date"),
+    /** Staff administer or assist with medications for this person (245D.05). Shows the Medical tab. */
+    medicationSupport: boolean("medication_support").notNull().default(false),
+    dischargedOn: date("discharged_on"),
     ...timestamps,
   },
   (t) => [
@@ -339,6 +342,11 @@ export const visits = pgTable(
     approvedBy: uuid("approved_by").references(() => users.id),
     /** Scheduled shift this visit fulfilled, when one existed. */
     shiftId: uuid("shift_id"),
+    /** When and where the note was last saved, from the device that saved it. */
+    noteSavedAt: timestamp("note_saved_at", { withTimezone: true }),
+    noteSavedBy: uuid("note_saved_by").references(() => users.id),
+    noteSavedLat: doublePrecision("note_saved_lat"),
+    noteSavedLng: doublePrecision("note_saved_lng"),
 
     /** Set when the person entered their signing code after reading the shift note. */
     clientSignedAt: timestamp("client_signed_at", { withTimezone: true }),

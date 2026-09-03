@@ -102,7 +102,7 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
       )}
 
       <Card title="My recent visits" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">This pay period</Link>}>
-        {visits.length === 0 ? <Empty icon="clock" title="No visits yet" /> : (
+        {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (
           <ul className="divide-y divide-line-soft">
             {visits.map(({ visit: v, personFirst, personLast }) => (
               <li key={v.id}>
@@ -145,8 +145,8 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
       </div>
       <div className="mb-6"><ReviewQueue data={{ awaitingApproval: queue.awaitingApproval.map(row), unsigned: queue.unsigned.map(row), missingNote: queue.missingNote.map(row), notStaffSigned: queue.notStaffSigned.map(row), open: queue.open.map(row), approved: queue.approved, total: queue.total }} /></div>
 
-      <Card title="Recent visits" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All visits</Link>}>
-        {visits.length === 0 ? <Empty icon="clock" title="No visits yet" /> : (
+      <Card title="Recent notes" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All notes</Link>}>
+        {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (
           <Table>
             <Thead><Th>Clock in</Th><Th>Client</Th><Th>Staff</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead>
             <tbody>

@@ -17,7 +17,7 @@ import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionSt
 
 export async function createPerson(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
-  const parsed = personSchema.safeParse(formToObject(fd));
+  const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
   let id: string;
@@ -34,7 +34,7 @@ export async function createPerson(_prev: ActionState, fd: FormData): Promise<Ac
 
 export async function updatePerson(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
-  const parsed = personSchema.safeParse(formToObject(fd));
+  const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
   const values = Object.fromEntries(Object.keys(personSchema.shape).map((k) => [k, (parsed.data as Record<string, unknown>)[k] ?? null]));
@@ -105,4 +105,39 @@ export async function extractAgreement(personId: string, _prev: ExtractState, fd
   } catch (e) {
     return { message: explainAiError(e), documentPath: relPath, documentName: file.name };
   }
+}
+
+/** One-click status change from the record header. Discharge records the date. */
+export async function setPersonStatus(personId: string, status: "intake" | "active" | "discharged"): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  await audited(db, { userId: user.id }).update(schema.people, personId, { status, dischargedOn: status === "discharged" ? new Date().toISOString().slice(0, 10) : null });
+  revalidatePath(`/clients/${personId}`);
+  revalidatePath("/clients");
+  return { message: status === "discharged" ? "Client discharged." : status === "active" ? "Client is active." : "Client moved to intake." };
+}
+
+export async function setMedicationSupport(personId: string, on: boolean): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  await audited(db, { userId: user.id }).update(schema.people, personId, { medicationSupport: on });
+  revalidatePath(`/clients/${personId}`);
+  return { message: on ? "Medication support turned on. The Medical tab is now visible." : "Medication support turned off." };
+}
+
+const agreementEditSchema = agreementSchema;
+
+/** Edit an existing agreement. Units, dates, and rate change when the county amends the SA. */
+export async function updateAgreement(agreementId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const parsed = agreementEditSchema.safeParse({ ...formToObject(fd), personId, modifiers: fd.getAll("modifiers[]").map(String) });
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the highlighted fields." };
+  const status = String(fd.get("status") ?? "active");
+  if (!["active", "exhausted", "expired", "cancelled"].includes(status)) return { errors: { status: "Choose a status" } };
+  const db = await getDb();
+  const { unitRate, personId: _p, documentPath: _d, documentName: _n, ...rest } = parsed.data;
+  void _p; void _d; void _n;
+  await audited(db, { userId: user.id }).update(schema.serviceAgreements, agreementId, { ...rest, unitRate: unitRate.toFixed(2), status: status as "active" | "exhausted" | "expired" | "cancelled" });
+  revalidatePath(`/clients/${personId}`);
+  redirect(`/clients/${personId}?tab=authorizations`);
 }

@@ -15,9 +15,9 @@ export function ClientCodePanel({ personId, hasCode, setAt }: { personId: string
   return (
     <div>
       {code ? (
-        <div className="rounded-md border border-ok/30 bg-ok-soft p-3">
-          <div className="text-[13px] text-ok">New signing code. Give it to the person now. It is not shown again.</div>
-          <div className="mt-1 text-[28px] font-bold tracking-[0.2em] text-text-strong tabular-nums">{code}</div>
+        <div className="flex items-center gap-3 rounded-lg border border-ok/30 bg-ok-soft px-3 py-2.5">
+          <span className="rounded-md border border-ok/30 bg-page px-2.5 py-1 font-mono text-[18px] font-semibold tracking-[0.18em] text-text-strong">{code}</span>
+          <span className="text-[12.5px] leading-4 text-ok">New signing code. Give it to the person now; it is not shown again.</span>
         </div>
       ) : (
         <p className="text-[13px] text-muted-foreground">{hasCode ? `Code set ${setAt}. The person enters it on the staff phone to sign each shift note.` : "No signing code yet. Without one the person cannot sign shift notes."}</p>

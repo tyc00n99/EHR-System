@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/kit";
+import { Button, Checkbox, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/kit";
 import { PERSON_STATUS, WAIVERS, type ActionState } from "@/lib/validation";
 import type { Person } from "@/db/schema";
 
@@ -32,6 +32,7 @@ export function PersonForm({ action, defaults, cancelHref }: { action: Action; d
         </Field>
         <Field label="Service start date" error={e.serviceStartDate} className="md:col-span-2"><Input name="serviceStartDate" type="date" defaultValue={d.serviceStartDate ?? ""} /></Field>
         <Field label="County of residence" error={e.county} className="col-span-2 md:col-span-2"><Input name="county" defaultValue={d.county} required /></Field>
+        <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="medicationSupport" value="true" defaultChecked={d.medicationSupport ?? false} label="Staff administer or assist with medications for this person (shows the Medical tab and MAR)" /></div>
       </FormSection>
 
       <FormSection title="Emergency contact" description="Who staff call first in an emergency. Can be the guardian or someone else.">

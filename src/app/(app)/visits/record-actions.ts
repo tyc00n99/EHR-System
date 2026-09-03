@@ -36,11 +36,16 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
   const db = await getDb();
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
+    const lat = Number(fd.get("lat")), lng = Number(fd.get("lng"));
     await w.update(visits, v.id, {
       interactionLevel: d.interactionLevel ?? null,
       skills: d.skills,
       shiftNote: d.shiftNote || null,
       staffSignedAt: d.staffSign ? new Date() : v.staffSignedAt,
+      noteSavedAt: new Date(),
+      noteSavedBy: user.id,
+      noteSavedLat: Number.isFinite(lat) && fd.get("lat") ? lat : v.noteSavedLat,
+      noteSavedLng: Number.isFinite(lng) && fd.get("lng") ? lng : v.noteSavedLng,
       updatedBy: user.id,
     });
     for (const { q } of record.questions) {

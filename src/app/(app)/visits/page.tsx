@@ -8,7 +8,7 @@ import { fmtDateTime, fullName } from "@/lib/format";
 import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam } from "@/lib/pay-period";
 import { minutesBetween } from "@/lib/units";
 
-export const metadata = { title: "Visits" };
+export const metadata = { title: "Notes" };
 
 
 export default async function VisitsPage({ searchParams }: PageProps<"/visits">) {
@@ -24,16 +24,16 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
   const units = completed.reduce((n, r) => n + r.visit.units, 0);
   const minutes = completed.reduce((n, r) => n + (r.visit.clockOutAt ? minutesBetween(r.visit.clockInAt, r.visit.clockOutAt) : 0), 0);
   const periodHref = (p: { startDate: string }) => `/visits?period=${p.startDate}${personId ? `&person=${personId}` : ""}`;
-  const title = person ? `Visits with ${fullName(person)}` : user.role === "dsp" ? "My visits" : "Visits";
+  const title = person ? `Notes for ${fullName(person)}` : user.role === "dsp" ? "My notes" : "Notes";
 
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
   return (
     <div>
       {openVisit && <VisitSheet id={openVisit} />}
       <PageHeader
-        eyebrow={person && <><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Visits</Crumb></>}
+        eyebrow={person && <><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Notes</Crumb></>}
         title={title}
-        actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a visit manually</LinkButton>}
+        actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a note manually</LinkButton>}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-sidebar px-3 py-2">
