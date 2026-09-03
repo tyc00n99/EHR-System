@@ -10,7 +10,8 @@ import * as schema from "./schema";
  */
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
-export const DATABASE_URL = process.env.DATABASE_URL?.trim() || null;
+/** Read lazily: scripts load .env.local after imports are evaluated. */
+export const databaseUrl = () => process.env.DATABASE_URL?.trim() || null;
 export const PGLITE_DIR = process.env.PGLITE_DATA_DIR ?? path.join(process.cwd(), "data", "pglite");
 export const MIGRATIONS_DIR = path.join(process.cwd(), "drizzle");
 
@@ -39,17 +40,21 @@ async function openPglite(): Promise<Db> {
 
 /** Singleton connection. Survives Next.js dev hot reloads via globalThis. */
 export function getDb(): Promise<Db> {
-  if (!g.__ehrDb) g.__ehrDb = DATABASE_URL ? openPostgres(DATABASE_URL) : openPglite();
+  if (!g.__ehrDb) {
+    const url = databaseUrl();
+    g.__ehrDb = url ? openPostgres(url) : openPglite();
+  }
   return g.__ehrDb;
 }
 
 /** Apply pending migrations to whichever database is configured. Used by scripts/migrate.ts and the build. */
 export async function migrateDb(): Promise<"postgres" | "pglite"> {
-  if (DATABASE_URL) {
+  const url = databaseUrl();
+  if (url) {
     const { drizzle } = await import("drizzle-orm/postgres-js");
     const { migrate } = await import("drizzle-orm/postgres-js/migrator");
     const { default: postgres } = await import("postgres");
-    const client = postgres(DATABASE_URL, { max: 1, prepare: false });
+    const client = postgres(url, { max: 1, prepare: false });
     try {
       await migrate(drizzle(client), { migrationsFolder: MIGRATIONS_DIR });
     } finally {
