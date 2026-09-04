@@ -12,7 +12,6 @@ import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeMenuItems } from "@/components/theme-switcher";
 import { signOut, type CurrentUser } from "@/lib/auth";
-import { currentPayPeriod } from "@/lib/pay-period";
 
 async function logout() {
   "use server";
@@ -24,10 +23,9 @@ const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" 
 
 export function AppShell({ user, orgName, attention, palette, children }: { user: CurrentUser; orgName: string; attention: number; palette: PaletteEntry[]; children: ReactNode }) {
   const office = user.role === "admin" || user.role === "supervisor";
-  const period = currentPayPeriod();
   return (
     <div className="flex min-h-screen">
-      <Sidebar role={user.role} orgName={orgName} attention={attention} periodLabel={period.label} canClock={Boolean(user.staffId)} />
+      <Sidebar role={user.role} orgName={orgName} attention={attention} canClock={Boolean(user.staffId)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-page px-4 md:px-5">
           <Link href="/" className="flex items-center gap-2 md:hidden"><span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-[12px] font-bold text-primary-foreground">D</span></Link>

@@ -17,7 +17,7 @@ const PROMO_KEY = "ehr.sidebar.promo";
  * a short list of destinations, a context switcher (our pay period), then the product areas
  * separated by hairlines. Collapses to icons.
  */
-export function Sidebar({ role, orgName, attention, periodLabel, canClock }: { role: Role; orgName: string; attention: number; periodLabel: string; canClock: boolean }) {
+export function Sidebar({ role, orgName, attention, canClock }: { role: Role; orgName: string; attention: number; canClock: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [promo, setPromo] = useState(false);
@@ -41,7 +41,7 @@ export function Sidebar({ role, orgName, attention, periodLabel, canClock }: { r
       { href: "/attention", label: "Needs attention", icon: "bell", roles: ["admin", "supervisor"], badge: attention },
       { href: "/settings", label: "Settings", icon: "settings", roles: ["admin"] },
     ] },
-    { label: "Pay period", items: [
+    { label: "Care", items: [
       { href: "/clients", label: role === "dsp" ? "My clients" : "Clients", icon: "clients" },
       { href: "/clock", label: "Clock in / out", icon: "clock" },
       { href: "/visits", label: "Notes & EVV", icon: "visits" },
@@ -81,16 +81,7 @@ export function Sidebar({ role, orgName, attention, periodLabel, canClock }: { r
           if (!items.length) return null;
           return (
             <div key={gi} className={cx(g.divider && "mt-3 border-t border-nav-border pt-3", !g.divider && gi > 0 && "mt-5")}>
-              {g.label && !collapsed && (
-                <>
-                  <div className="mb-2 px-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-nav-group">{g.label}</div>
-                  <Link href="/billing" className="mb-2 flex h-9 items-center gap-2 rounded-md border border-line bg-panel px-2.5 text-[13px] text-nav-text-strong hover:bg-nav-hover">
-                    <Icon.calendar size={15} className="text-nav-text" />
-                    <span className="min-w-0 flex-1 truncate tabular-nums">{periodLabel}</span>
-                    <Icon.chevronDown size={14} className="text-nav-group" />
-                  </Link>
-                </>
-              )}
+              {g.label && !collapsed && <div className="mb-2 px-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-nav-group">{g.label}</div>}
               {g.label && collapsed && <div className="mx-auto mb-2 h-px w-6 bg-nav-border" />}
               <ul className="space-y-px">
                 {items.map((it) => {
