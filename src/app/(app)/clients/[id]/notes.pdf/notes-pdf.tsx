@@ -86,7 +86,7 @@ const s = StyleSheet.create({
   prompt: { fontSize: 9.5, lineHeight: 1.3 },
   goal: { fontSize: 7.5, color: HINT, lineHeight: 1.3 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
-  tag: { fontSize: 8, color: "#3f3f9a", backgroundColor: "#ecebf8", border: "0.6 solid #d2d1ee", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
+  tag: { fontSize: 8, color: "#6b4a0c", backgroundColor: "#f4e8cd", border: "0.6 solid #e3cf9f", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
   fact: { marginBottom: 10 },
   factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
   factV: { fontSize: 9.5, fontWeight: 500 },
@@ -146,7 +146,6 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
         const medsIssues = v.meds.filter((m) => m.status !== "given");
         const yes = v.outcomes.filter((o) => o.response === "yes").length;
         const code = `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`;
-        const rid = v.id.replace(/-/g, "").toUpperCase();
         return (
           <Page key={v.id} size="LETTER" style={s.page} wrap>
             <View style={s.eyebrowRow}>
@@ -211,7 +210,7 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                   <View style={v.staffSignedAt ? s.sigBox : s.sigBoxEmpty}>
                     <Text style={v.staffSignedAt ? s.sigBy : s.sigByEmpty}>{v.staffSignedAt ? "Electronically signed by:" : "Awaiting signature"}</Text>
                     <Text style={v.staffSignedAt ? s.sigName : s.sigNameEmpty}>{v.staff}</Text>
-                    <Text style={s.sigId}>{v.staffSignedAt ? `${dt.format(v.staffSignedAt)} CT · ${v.renderingIdType.toUpperCase()} ${v.renderingId} · ${rid.slice(0, 8)}` : " "}</Text>
+                    <Text style={s.sigId}>{v.staffSignedAt ? `${dt.format(v.staffSignedAt)} CT · ${v.renderingIdType.toUpperCase()} ${v.renderingId}` : " "}</Text>
                   </View>
                   <Text style={s.sigK}>Caregiver signature</Text>
                 </View>
@@ -219,7 +218,7 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                   <View style={v.clientSignedAt ? s.sigBox : s.sigBoxEmpty}>
                     <Text style={v.clientSignedAt ? s.sigBy : s.sigByEmpty}>{v.clientSignedAt ? "Electronically signed by:" : v.clientUnsignedReason ? `Not signed · ${v.clientUnsignedReason}` : "Awaiting signature"}</Text>
                     <Text style={v.clientSignedAt ? s.sigName : s.sigNameEmpty}>{v.clientSignedAt ? personName : " "}</Text>
-                    <Text style={s.sigId}>{v.clientSignedAt ? `${dt.format(v.clientSignedAt)} CT · verified with private client code · ${rid.slice(8, 16)}` : " "}</Text>
+                    <Text style={s.sigId}>{v.clientSignedAt ? `${dt.format(v.clientSignedAt)} CT · identity verified` : " "}</Text>
                   </View>
                   <Text style={s.sigK}>Client signature</Text>
                 </View>
