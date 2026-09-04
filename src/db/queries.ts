@@ -304,6 +304,8 @@ export interface PeriodLine {
   personName: string;
   serviceCode: string;
   units: number;
+  clockInAt: Date;
+  clockOutAt: Date | null;
   minutes: number;
   unitRate: number;
   payRate: number;
@@ -347,6 +349,8 @@ export async function periodLines(from: Date, to: Date): Promise<PeriodLine[]> {
     personName: `${r.personFirst} ${r.personLast}`,
     serviceCode: r.serviceCode,
     units: r.units,
+    clockInAt: r.clockInAt,
+    clockOutAt: r.clockOutAt,
     minutes: r.clockOutAt ? Math.round((r.clockOutAt.getTime() - r.clockInAt.getTime()) / 60000) : 0,
     unitRate: Number(r.unitRate),
     payRate: Number(r.payRate),
