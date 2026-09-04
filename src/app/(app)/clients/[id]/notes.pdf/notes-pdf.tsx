@@ -75,7 +75,7 @@ const s = StyleSheet.create({
   ts: { fontSize: 7.5, color: MUTED, marginTop: 1 },
   tsMono: { fontSize: 7.5, color: MUTED, marginTop: 1 },
   columns: { flexDirection: "row", gap: 24 },
-  main: { flex: 1.6 },
+  main: { flex: 1.9 },
   side: { flex: 1, borderLeft: `0.75 solid ${LINE}`, paddingLeft: 16 },
   label: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: NAVY, marginBottom: 5, fontWeight: 700 },
   narrative: { fontSize: 10.5, lineHeight: 1.55, marginBottom: 14 },
@@ -86,6 +86,10 @@ const s = StyleSheet.create({
   goal: { fontSize: 7.5, color: HINT, lineHeight: 1.3 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
   tag: { fontSize: 8, color: INK, backgroundColor: PAPER, paddingVertical: 2.5, paddingHorizontal: 6, borderRadius: 3, fontWeight: 500 },
+  fact: { marginBottom: 10 },
+  factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
+  factV: { fontSize: 9.5, fontWeight: 500 },
+  factS: { fontSize: 8, color: MUTED, lineHeight: 1.3 },
   ok: { color: OK }, danger: { color: DANGER },
   ack: { marginTop: 10, borderTop: `1.2 solid ${INK}`, paddingTop: 8 },
   ackTitle: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: NAVY, marginBottom: 6, fontWeight: 700 },
@@ -111,6 +115,16 @@ const dt = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", 
 const hours = (min: number) => { const h = min / 60; return Number.isInteger(h) ? String(h) : h.toFixed(2).replace(/0$/, ""); };
 const PLACE: Record<string, string> = { "12": "Home", "99": "Community", "11": "Office", "14": "Residence", "04": "Shelter" };
 const MED_STATUS: Record<string, string> = { given: "given", refused: "refused", held: "held", missed: "missed" };
+
+function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
+  return (
+    <View style={s.fact}>
+      <Text style={s.factK}>{k}</Text>
+      <Text style={[s.factV, tone === "ok" ? s.ok : tone === "danger" ? s.danger : {}]}>{v}</Text>
+      {sub ? <Text style={s.factS}>{sub}</Text> : null}
+    </View>
+  );
+}
 
 export function NotesPdf({ org, person, rows, range }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string } }) {
   const personName = `${person.firstName} ${person.lastName}`;
@@ -152,19 +166,20 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 <View style={[s.tcell, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
                 <View style={[s.tcellLast, { flex: 1.4 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
               </View>
-              <View style={s.trow}>
-                <View style={[s.tcell, { flex: 1.3 }]}><Text style={s.tk}>Level of assistance</Text><Text style={s.tv}>{level ? level[1] : "Not documented"}</Text>{level ? <Text style={s.ts}>{level[2]}</Text> : null}</View>
-                <View style={[s.tcell, { flex: 1.5 }]}><Text style={s.tk}>Medication administration</Text><Text style={[s.tv, medsIssues.length ? s.danger : {}]}>{v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`}</Text>{v.meds.length ? <Text style={s.ts}>{v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("; ")}</Text> : null}</View>
-                <View style={[s.tcell, { flex: 0.9 }]}><Text style={s.tk}>Incidents</Text><Text style={s.tv}>None reported</Text></View>
-                <View style={[s.tcellLast, { flex: 1.6 }]}><Text style={s.tk}>Visit verification</Text><Text style={[s.tv, v.manualEntry ? {} : s.ok]}>{v.manualEntry ? "Manual entry" : "EVV, GPS at clock-in and clock-out"}</Text><Text style={s.ts}>{v.manualEntry ? (v.manualEntryReason ?? "") : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : ""}{v.edits > 0 ? ` · ${v.edits} correction${v.edits === 1 ? "" : "s"} after signing (audit log)` : ""}</Text></View>
-              </View>
             </View>
-
-            <Text style={s.label}>Service narrative</Text>
-            <Text style={s.narrative}>{v.shiftNote?.trim() || "No narrative was documented for this service."}</Text>
 
             <View style={s.columns}>
               <View style={s.main}>
+                <Text style={s.label}>Service narrative</Text>
+                <Text style={s.narrative}>{v.shiftNote?.trim() || "No narrative was documented for this service."}</Text>
+
+                {supports.length > 0 && (
+                  <>
+                    <Text style={s.label}>Supports provided</Text>
+                    <View style={[s.tags, { marginBottom: 14 }]}>{supports.map((x) => <Text key={x} style={s.tag}>{x}</Text>)}</View>
+                  </>
+                )}
+
                 <Text style={s.label}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
                 {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {first} on this date.</Text> : v.outcomes.map((o, j) => (
                   <View key={j} style={s.outcomeRow} wrap={false}>
@@ -173,9 +188,13 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                   </View>
                 ))}
               </View>
+
               <View style={s.side}>
-                <Text style={s.label}>Supports provided</Text>
-                {supports.length === 0 ? <Text style={s.support}>None marked.</Text> : <View style={s.tags}>{supports.map((x) => <Text key={x} style={s.tag}>{x}</Text>)}</View>}
+                <Fact k="Level of assistance" v={level ? level[1] : "Not documented"} sub={level ? level[2] : undefined} />
+                <Fact k="Medication administration" v={v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`} sub={v.meds.length ? v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("\n") : undefined} tone={medsIssues.length ? "danger" : undefined} />
+                <Fact k="Incidents" v="None reported" />
+                <Fact k="Visit verification" v={v.manualEntry ? "Manual entry" : "EVV, GPS at clock-in and clock-out"} sub={v.manualEntry ? v.manualEntryReason ?? undefined : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : undefined} tone={v.manualEntry ? undefined : "ok"} />
+                {v.edits > 0 && <Fact k="Corrections" v={`${v.edits} after signing`} sub="Detail in the audit log" />}
               </View>
             </View>
 
