@@ -10,7 +10,7 @@ const s = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
   label: { fontSize: 8, color: "#857f76", textTransform: "uppercase", letterSpacing: 0.5, marginTop: 6, marginBottom: 2 },
   mono: { fontFamily: "Courier", fontSize: 9 },
-  body: { lineHeight: 1.45 },
+  body: { lineHeight: 1.35 },
   sig: { fontSize: 8.5, color: "#5e5952", marginTop: 6 },
   footer: { position: "absolute", bottom: 20, left: 40, right: 40, fontSize: 8, color: "#857f76", flexDirection: "row", justifyContent: "space-between" },
 });
