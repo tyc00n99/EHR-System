@@ -61,15 +61,16 @@ const SANS = "Public Sans", MONO = "Inconsolata", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
   page: { paddingTop: 42, paddingHorizontal: 48, paddingBottom: 54, fontSize: 9.5, fontFamily: SANS, color: INK, lineHeight: 1.4 },
-  eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 },
+  eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottom: `1.2 solid ${INK}`, paddingBottom: 7 },
   eyebrow: { fontSize: 14, fontWeight: 600, color: INK, letterSpacing: -0.1 },
   eyebrowRight: { fontSize: 7.5, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 600 },
-  who: { flexDirection: "row", alignItems: "baseline", gap: 10, borderTop: `1.2 solid ${INK}`, paddingTop: 10, marginBottom: 10 },
-  whoDate: { fontSize: 13, fontWeight: 600, color: INK, lineHeight: 1.2 },
-  whoTime: { fontSize: 10, color: MUTED },
+  band: { backgroundColor: "#f5f4f0", borderRadius: 6, paddingHorizontal: 12, marginTop: 12, marginBottom: 18 },
+  brow: { flexDirection: "row", paddingVertical: 9, borderBottom: `0.75 solid #e3dfd5` },
+  browLast: { flexDirection: "row", paddingVertical: 9 },
+  blast: { borderRight: 0, paddingRight: 0, marginRight: 0 },
+  tvTime: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
   tvName: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
   tsCode: { fontSize: 8, color: MUTED, marginTop: 1.5, fontFamily: MONO, fontWeight: 600 },
-  band: { flexDirection: "row", backgroundColor: "#f4f3ef", borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 18 },
   bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid ${LINE}` },
   tk: { fontSize: 6.3, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 600 },
   tv: { fontSize: 9.5, color: INK, lineHeight: 1.25, fontWeight: 500 },
@@ -156,17 +157,19 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
               <Text style={s.eyebrowRight}>{org.name}{org.licenseNumber ? ` · 245D license ${org.licenseNumber}` : ""}</Text>
             </View>
 
-            <View style={s.who}>
-              <Text style={s.whoDate}>{dDow.format(v.clockInAt)}, {dNum.format(v.clockInAt)}</Text>
-              <Text style={s.whoTime}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text>
-            </View>
             <View style={s.band}>
-              <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
-              <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
-              <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
-              <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-              <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}</Text><Text style={s.tsCode}>{code}</Text></View>
-              <View style={[s.bcell, { flex: 0.7, borderRight: 0, paddingRight: 0 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
+              <View style={s.brow}>
+                <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
+                <View style={[s.bcell, { flex: 1.4 }]}><Text style={s.tk}>Date of service</Text><Text style={s.tvNum}>{dNum.format(v.clockInAt)}</Text><Text style={s.ts}>{dDow.format(v.clockInAt)}</Text></View>
+                <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Time</Text><Text style={s.tvTime}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
+                <View style={[s.bcell, { flex: 0.6 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
+                <View style={[s.bcell, s.blast, { flex: 0.6 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
+              </View>
+              <View style={s.browLast}>
+                <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}</Text><Text style={s.tsCode}>{code}</Text></View>
+                <View style={[s.bcell, { flex: 1.4 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
+                <View style={[s.bcell, s.blast, { flex: 2.7 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>Place of service {v.placeOfService}</Text></View>
+              </View>
             </View>
 
             <View style={s.columns}>
