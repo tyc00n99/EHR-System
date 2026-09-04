@@ -10,7 +10,7 @@ import { evaluateCompliance } from "@/lib/credentials";
 import { fmtDateTime, fullName } from "@/lib/format";
 import { currentPayPeriod } from "@/lib/pay-period";
 import { VisitSheet } from "./visits/record/visit-sheet";
-import { ActivityChart, type DayPoint } from "./activity-chart";
+import { TodayBoard, type BoardShift } from "./today-board";
 import { GetStarted } from "./get-started";
 import { Info } from "lucide-react";
 
@@ -125,9 +125,14 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
 
 /* ---------- office home (admin / supervisor) ---------- */
 
-const dayKey = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
-const dayLabel = (d: Date) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric" }).format(d);
 const timeLabel = (d: Date) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }).format(d);
+/** Minutes past midnight in Chicago, so the board can place a shift without shipping timestamps. */
+const minutesOfDay = (d: Date) => {
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(d);
+  return (Number(p.find((x) => x.type === "hour")?.value ?? 0) % 24) * 60 + Number(p.find((x) => x.type === "minute")?.value ?? 0);
+};
+/** Long service names crowd the board; the code is on the shift sheet. */
+const shortService = (l: string) => l.replace(/^Individualized home supports/i, "IHS").replace(/^Individual community living support \(ICLS\)$/i, "ICLS").replace(/^Independent living skills/i, "ILS").replace(/,\s*1:\d$/, "");
 
 function Metric({ label, hint, value, of, note, tone, href }: { label: string; hint: string; value: ReactNode; of?: ReactNode; note?: ReactNode; tone?: "warn" | "danger" | "ok"; href: string }) {
   return (
@@ -142,24 +147,16 @@ function Metric({ label, hint, value, of, note, tone, href }: { label: string; h
   );
 }
 
-const SHIFT_TONE: Record<string, { dot: string; label: string }> = {
-  scheduled: { dot: "bg-gray-500", label: "Scheduled" },
-  in_progress: { dot: "bg-ok", label: "In progress" },
-  completed: { dot: "bg-ok", label: "Completed" },
-  missed: { dot: "bg-danger", label: "Missed" },
-  cancelled: { dot: "bg-gray-400", label: "Cancelled" },
-};
 
 async function OfficeHome({ user }: { user: { staffId: string | null; staffName: string | null; role: string } }) {
   const period = currentPayPeriod();
   const dayStart = startOfToday();
   const dayEnd = new Date(dayStart.getTime() + 86_400_000 - 1);
-  const [counts, visits, open, queue, periodVisits, todayShifts, weekShifts, agreements, staffRows] = await Promise.all([
+  const [counts, visits, open, queue, todayShifts, weekShifts, agreements, staffRows] = await Promise.all([
     dashboardCounts(period),
     listVisits({ limit: 8 }),
     user.staffId ? getOpenVisitForStaff(user.staffId) : null,
     reviewQueue(period.start, period.end),
-    listVisits({ from: period.start, to: period.end, limit: 2000 }),
     listShifts(dayStart, dayEnd),
     listShifts(dayStart, new Date(dayStart.getTime() + 7 * 86_400_000)),
     listAgreementsWithUsage(),
@@ -167,11 +164,6 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
   ]);
   const row = (r: (typeof queue.open)[number]): QueueRow => ({ id: r.visit.id, person: `${r.personFirst} ${r.personLast}`, staff: `${r.staffFirst} ${r.staffLast}`, when: fmtDateTime(r.visit.clockInAt), units: r.visit.units, note: r.visit.shiftNote });
 
-  // Units per day across the pay period, for the activity panel.
-  const byDay = new Map<string, DayPoint>();
-  for (let t = period.start.getTime(); t <= period.end.getTime(); t += 86_400_000) { const d = new Date(t); byDay.set(dayKey(d), { date: dayKey(d), label: dayLabel(d), units: 0, visits: 0 }); }
-  for (const { visit: v } of periodVisits) { if (v.status === "void") continue; const k = byDay.get(dayKey(v.clockInAt)); if (k) { k.units += v.units; k.visits += 1; } }
-  const points = [...byDay.values()];
   const activeAgreements = agreements.filter((a) => a.agreement.status === "active");
   const authorized = activeAgreements.reduce((n, a) => n + a.agreement.authorizedUnits, 0);
   const used = activeAgreements.reduce((n, a) => n + a.unitsUsed, 0);
@@ -183,7 +175,17 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
     { key: "agreements", done: agreements.length > 0 },
     { key: "shifts", done: weekShifts.length > 0 },
   ];
-  const live = todayShifts.filter((s) => s.shift.status === "in_progress" || s.shift.status === "completed").length;
+  const boardShifts: BoardShift[] = todayShifts.map((s) => ({
+    id: s.shift.id,
+    staff: `${s.staffFirst} ${s.staffLast}`,
+    client: `${s.personFirst} ${s.personLast}`,
+    service: shortService(labelForCode(s.serviceCode, s.modifiers)),
+    startMin: minutesOfDay(s.shift.startAt),
+    endMin: minutesOfDay(s.shift.endAt),
+    startLabel: timeLabel(s.shift.startAt),
+    endLabel: timeLabel(s.shift.endAt),
+    status: s.shift.status,
+  }));
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -217,44 +219,9 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
         <div className="border-t border-line-soft px-5 py-2.5 text-[12.5px] text-muted-foreground">Pay period {period.label}. Authorizations used: {used.toLocaleString()} of {authorized.toLocaleString()} units across {activeAgreements.length} active agreement{activeAgreements.length === 1 ? "" : "s"}. <Link href="/billing" className="text-primary hover:underline">Billing</Link></div>
       </section>
 
-      <div className="mb-6 grid gap-6 xl:grid-cols-[3fr_2fr]">
-        <Card title="Activity" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All notes</Link>}>
-          <div className="flex flex-wrap items-center gap-2 border-b border-line-soft px-5 py-3">
-            <span className="text-[12.5px] text-muted-foreground">Period</span>
-            <Link href="/billing" className="inline-flex h-8 items-center gap-2 rounded-md border border-line bg-panel px-2.5 text-[13px] text-text-strong hover:bg-hover"><span className="tabular-nums">{period.label}</span><Badge tone="neutral">Current</Badge><Icon.chevronDown size={14} className="text-hint" /></Link>
-            <span className="ml-2 text-[12.5px] text-muted-foreground">Metric</span>
-            <span className="inline-flex h-8 items-center gap-2 rounded-md border border-line bg-panel px-2.5 text-[13px] text-text-strong">Units<Icon.chevronDown size={14} className="text-hint" /></span>
-            <LinkButton href="/" variant="outline" className="ml-auto h-8">Refresh</LinkButton>
-          </div>
-          <div className="px-3 pb-2 pt-4"><ActivityChart points={points} /></div>
-        </Card>
-
-        <Card title={`${live} / ${todayShifts.length} Shifts today`} actions={<Link href="/scheduling" className="text-[13px] font-medium text-primary hover:underline">View all</Link>}>
-          {todayShifts.length === 0 ? (
-            <div className="m-4 rounded-md border border-line bg-panel p-4">
-              <Badge tone="accent">Scheduling</Badge>
-              <p className="mt-2 text-[13.5px] leading-5 text-text">No shifts on the calendar today. Build the week so caregivers see their day before it starts.</p>
-              <LinkButton href="/scheduling" variant="outline" className="mt-3">Open scheduling</LinkButton>
-            </div>
-          ) : (
-            <Table>
-              <Thead><Th>Shift</Th><Th>Time</Th><Th>Status</Th></Thead>
-              <tbody>
-                {todayShifts.slice(0, 8).map((s) => {
-                  const t = SHIFT_TONE[s.shift.status] ?? SHIFT_TONE.scheduled;
-                  return (
-                    <Tr key={s.shift.id}>
-                      <Td><Link href={`/scheduling?shift=${s.shift.id}`} className="block hover:underline"><span className="block font-medium text-text-strong">{s.staffFirst} {s.staffLast}</span><span className="block text-[12.5px] text-muted-foreground">{s.personFirst} {s.personLast}</span></Link></Td>
-                      <Td className="tabular-nums text-[12.5px] text-muted-foreground">{timeLabel(s.shift.startAt)} – {timeLabel(s.shift.endAt)}</Td>
-                      <Td><span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 text-[12px] leading-5"><span className={cx("h-1.5 w-1.5 rounded-full", t.dot)} />{t.label}</span></Td>
-                    </Tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          )}
-        </Card>
-      </div>
+      <Card className="mb-6" title="Today on the board" description={boardShifts.length ? `${boardShifts.filter((b) => b.status === "in_progress").length} clocked in · ${boardShifts.filter((b) => b.status === "completed").length} finished · ${boardShifts.length} shifts` : "Every shift today, against the clock"} actions={<Link href="/scheduling" className="text-[13px] font-medium text-primary hover:underline">Scheduling</Link>}>
+        <TodayBoard shifts={boardShifts} />
+      </Card>
 
       <div className="mb-6"><ReviewQueue data={{ awaitingApproval: queue.awaitingApproval.map(row), unsigned: queue.unsigned.map(row), missingNote: queue.missingNote.map(row), notStaffSigned: queue.notStaffSigned.map(row), open: queue.open.map(row), approved: queue.approved, total: queue.total }} /></div>
 
