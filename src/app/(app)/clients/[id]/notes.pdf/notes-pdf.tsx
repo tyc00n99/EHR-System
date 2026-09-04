@@ -99,6 +99,7 @@ const s = StyleSheet.create({
   sigs: { flexDirection: "row", gap: 24 },
   sig: { flex: 1 },
   ackText: { fontSize: 7.2, color: MUTED, lineHeight: 1.4, marginTop: 6 },
+  ackLead: { fontWeight: 700, color: INK },
   evv: { flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: "#f5f4f0", borderRadius: 5, paddingHorizontal: 11, paddingVertical: 6, marginTop: 12 },
   evvLabel: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, fontWeight: 600 },
   evvValue: { fontSize: 8.5, fontWeight: 600, color: INK },
@@ -232,8 +233,8 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 </View>
               </View>
               <View style={s.sigs}>
-                <Text style={[s.ackText, { flex: 1 }]}>Caregiver: I certify and swear under penalty of law that I have accurately reported on this service note the hours I actually worked, the services I provided, and the dates and times worked. I understand that misreporting my hours is fraud for which I could face criminal prosecution and civil proceedings.</Text>
-                <Text style={[s.ackText, { flex: 1 }]}>Client: Review this note for accuracy before signing. If any date or time above was not received from the Caregiver, do not sign; tell the provider so it can be corrected. It is a crime to provide false information on caregiver billings for Medical Assistance payment. By signing below I swear and verify that the time and services entered above are accurate and were performed by the Caregiver named on this note as specified in my support plan.</Text>
+                <Text style={[s.ackText, { flex: 1 }]}><Text style={s.ackLead}>Caregiver.</Text>  I certify under penalty of law that I personally provided the services described here, and that the date, times, hours, and units on this note are true and complete. I understand that falsifying a service record is fraud and may lead to criminal prosecution, civil penalties, and loss of my employment.</Text>
+                <Text style={[s.ackText, { flex: 1 }]}><Text style={s.ackLead}>Person served.</Text>  I have reviewed this note. I certify that I received this service on the date and during the times shown, from the caregiver named here, as authorized in my support plan. If anything above is wrong I will not sign, and I will tell the provider so it can be corrected. I understand that knowingly giving false information for Medical Assistance payment is a crime.</Text>
               </View>
 
               <View style={s.evv}>
