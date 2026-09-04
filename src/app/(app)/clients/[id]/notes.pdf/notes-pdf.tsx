@@ -64,10 +64,11 @@ const s = StyleSheet.create({
   eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 },
   eyebrow: { fontSize: 14, fontWeight: 600, color: INK, letterSpacing: -0.1 },
   eyebrowRight: { fontSize: 7.5, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 600 },
-  who: { flexDirection: "row", alignItems: "flex-end", borderTop: `1.2 solid ${INK}`, paddingTop: 10, marginBottom: 10 },
-  whoName: { fontSize: 17, fontWeight: 600, color: INK, lineHeight: 1.15, letterSpacing: -0.2 },
-  whoMeta: { fontSize: 8.5, color: MUTED, marginTop: 2 },
-  whoDate: { fontSize: 11, fontWeight: 600, color: INK, lineHeight: 1.2 },
+  who: { flexDirection: "row", alignItems: "baseline", gap: 10, borderTop: `1.2 solid ${INK}`, paddingTop: 10, marginBottom: 10 },
+  whoDate: { fontSize: 13, fontWeight: 600, color: INK, lineHeight: 1.2 },
+  whoTime: { fontSize: 10, color: MUTED },
+  tvName: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
+  tsCode: { fontSize: 8, color: MUTED, marginTop: 1.5, fontFamily: MONO, fontWeight: 600 },
   band: { flexDirection: "row", backgroundColor: "#f4f3ef", borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 18 },
   bcell: { paddingRight: 10, marginRight: 10, borderRight: `0.75 solid ${LINE}` },
   tk: { fontSize: 6.3, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 600 },
@@ -154,21 +155,15 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
             </View>
 
             <View style={s.who}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.whoName}>{personName}</Text>
-                <Text style={s.whoMeta}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={s.whoDate}>{dDow.format(v.clockInAt)}, {dNum.format(v.clockInAt)}</Text>
-                <Text style={s.whoMeta}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text>
-              </View>
+              <Text style={s.whoDate}>{dDow.format(v.clockInAt)}, {dNum.format(v.clockInAt)}</Text>
+              <Text style={s.whoTime}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text>
             </View>
             <View style={s.band}>
-              <View style={[s.bcell, { flex: 2 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text></View>
-              <View style={[s.bcell, { flex: 1.55 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
+              <View style={[s.bcell, { flex: 1.7 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
+              <View style={[s.bcell, { flex: 1.4 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
               <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
               <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-              <View style={[s.bcell, { flex: 1.05 }]}><Text style={s.tk}>Code</Text><Text style={s.tvCode}>{code}</Text></View>
+              <View style={[s.bcell, { flex: 2 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text><Text style={s.tsCode}>{code}</Text></View>
               <View style={[s.bcell, { flex: 0.8, borderRight: 0, paddingRight: 0 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
             </View>
 
