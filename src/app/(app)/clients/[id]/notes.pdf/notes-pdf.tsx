@@ -70,7 +70,7 @@ const s = StyleSheet.create({
   tvName: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
   tsCode: { fontSize: 8, color: MUTED, marginTop: 1.5, fontFamily: MONO, fontWeight: 600 },
   band: { flexDirection: "row", backgroundColor: "#f4f3ef", borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 18 },
-  bcell: { paddingRight: 10, marginRight: 10, borderRight: `0.75 solid ${LINE}` },
+  bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid ${LINE}` },
   tk: { fontSize: 6.3, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 600 },
   tv: { fontSize: 9.5, color: INK, lineHeight: 1.25, fontWeight: 500 },
   tvNum: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
@@ -118,6 +118,8 @@ const dt = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", 
 const hours = (min: number) => { const h = min / 60; return Number.isInteger(h) ? String(h) : h.toFixed(2).replace(/0$/, ""); };
 const PLACE: Record<string, string> = { "12": "Home", "99": "Community", "11": "Office", "14": "Residence", "04": "Shelter" };
 const MED_STATUS: Record<string, string> = { given: "given", refused: "refused", held: "held", missed: "missed" };
+/** Short service names for the header band; the full name still appears in the app and on billing exports. */
+const shortService = (label: string) => label.replace(/^Individualized home supports/i, "IHS").replace(/^Individual community living support \(ICLS\)$/i, "ICLS").replace(/^Independent living skills/i, "ILS");
 
 function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
   return (
@@ -159,12 +161,12 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
               <Text style={s.whoTime}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text>
             </View>
             <View style={s.band}>
-              <View style={[s.bcell, { flex: 1.7 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
-              <View style={[s.bcell, { flex: 1.4 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
-              <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
-              <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-              <View style={[s.bcell, { flex: 2 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text><Text style={s.tsCode}>{code}</Text></View>
-              <View style={[s.bcell, { flex: 0.8, borderRight: 0, paddingRight: 0 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
+              <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
+              <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle.replace("Direct support professional", "DSP")}</Text> : null}</View>
+              <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
+              <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
+              <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text><Text style={s.tsCode}>{code}</Text></View>
+              <View style={[s.bcell, { flex: 0.7, borderRight: 0, paddingRight: 0 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
             </View>
 
             <View style={s.columns}>
