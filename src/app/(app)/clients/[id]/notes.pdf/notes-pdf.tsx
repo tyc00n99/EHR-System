@@ -75,7 +75,7 @@ const s = StyleSheet.create({
   ts: { fontSize: 7.5, color: MUTED, marginTop: 1 },
   tsMono: { fontSize: 7.5, color: MUTED, marginTop: 1 },
   columns: { flexDirection: "row", gap: 24 },
-  main: { flex: 1.9 },
+  main: { flex: 1.6 },
   side: { flex: 1, borderLeft: `0.75 solid ${LINE}`, paddingLeft: 16 },
   label: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: NAVY, marginBottom: 5, fontWeight: 700 },
   narrative: { fontSize: 10.5, lineHeight: 1.55, marginBottom: 14 },
@@ -86,24 +86,20 @@ const s = StyleSheet.create({
   goal: { fontSize: 7.5, color: HINT, lineHeight: 1.3 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
   tag: { fontSize: 8, color: INK, backgroundColor: PAPER, paddingVertical: 2.5, paddingHorizontal: 6, borderRadius: 3, fontWeight: 500 },
-  fact: { marginBottom: 10 },
-  factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
-  factV: { fontSize: 9.5, fontWeight: 500 },
-  factS: { fontSize: 8, color: MUTED, lineHeight: 1.3 },
   ok: { color: OK }, danger: { color: DANGER },
-  ack: { marginTop: 14, borderTop: `1.2 solid ${INK}`, paddingTop: 8 },
+  ack: { marginTop: 10, borderTop: `1.2 solid ${INK}`, paddingTop: 8 },
   ackTitle: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: NAVY, marginBottom: 6, fontWeight: 700 },
   sigs: { flexDirection: "row", gap: 24 },
   sig: { flex: 1 },
-  ackText: { fontSize: 7.4, color: MUTED, lineHeight: 1.4, marginBottom: 8 },
+  ackText: { fontSize: 7.2, color: MUTED, lineHeight: 1.4, marginTop: 6 },
   sigBox: { borderLeft: `2 solid ${NAVY}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBoxEmpty: { borderLeft: `2 solid ${LINE}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBy: { fontSize: 6.5, color: NAVY, letterSpacing: 0.6, fontWeight: 600 },
   sigByEmpty: { fontSize: 6.5, color: HINT, letterSpacing: 0.6, fontWeight: 600 },
-  sigName: { fontFamily: SCRIPT, fontSize: 22, color: INK, lineHeight: 1.05, marginTop: 1 },
-  sigNameEmpty: { fontFamily: SCRIPT, fontSize: 22, color: LINE, lineHeight: 1.05, marginTop: 1 },
-  sigId: { fontSize: 6.5, color: HINT, fontFamily: MONO, marginTop: 1 },
-  sigK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 700, marginTop: 5 },
+  sigName: { fontFamily: SCRIPT, fontSize: 22, color: INK, lineHeight: 1.2, marginTop: 1 },
+  sigNameEmpty: { fontFamily: SCRIPT, fontSize: 22, color: LINE, lineHeight: 1.2, marginTop: 1 },
+  sigId: { fontSize: 6.5, color: HINT, fontFamily: MONO, marginTop: 3 },
+  sigK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 700, marginTop: 4 },
   sigV: { fontSize: 8, color: MUTED, marginTop: 1, lineHeight: 1.3 },
   footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 7, color: HINT, textAlign: "center" },
 });
@@ -115,16 +111,6 @@ const dt = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", 
 const hours = (min: number) => { const h = min / 60; return Number.isInteger(h) ? String(h) : h.toFixed(2).replace(/0$/, ""); };
 const PLACE: Record<string, string> = { "12": "Home", "99": "Community", "11": "Office", "14": "Residence", "04": "Shelter" };
 const MED_STATUS: Record<string, string> = { given: "given", refused: "refused", held: "held", missed: "missed" };
-
-function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
-  return (
-    <View style={s.fact}>
-      <Text style={s.factK}>{k}</Text>
-      <Text style={[s.factV, tone === "ok" ? s.ok : tone === "danger" ? s.danger : {}]}>{v}</Text>
-      {sub ? <Text style={s.factS}>{sub}</Text> : null}
-    </View>
-  );
-}
 
 export function NotesPdf({ org, person, rows, range }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string } }) {
   const personName = `${person.firstName} ${person.lastName}`;
@@ -166,20 +152,19 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 <View style={[s.tcell, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
                 <View style={[s.tcellLast, { flex: 1.4 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
               </View>
+              <View style={s.trow}>
+                <View style={[s.tcell, { flex: 1.3 }]}><Text style={s.tk}>Level of assistance</Text><Text style={s.tv}>{level ? level[1] : "Not documented"}</Text>{level ? <Text style={s.ts}>{level[2]}</Text> : null}</View>
+                <View style={[s.tcell, { flex: 1.5 }]}><Text style={s.tk}>Medication administration</Text><Text style={[s.tv, medsIssues.length ? s.danger : {}]}>{v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`}</Text>{v.meds.length ? <Text style={s.ts}>{v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("; ")}</Text> : null}</View>
+                <View style={[s.tcell, { flex: 0.9 }]}><Text style={s.tk}>Incidents</Text><Text style={s.tv}>None reported</Text></View>
+                <View style={[s.tcellLast, { flex: 1.6 }]}><Text style={s.tk}>Visit verification</Text><Text style={[s.tv, v.manualEntry ? {} : s.ok]}>{v.manualEntry ? "Manual entry" : "EVV, GPS at clock-in and clock-out"}</Text><Text style={s.ts}>{v.manualEntry ? (v.manualEntryReason ?? "") : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : ""}{v.edits > 0 ? ` · ${v.edits} correction${v.edits === 1 ? "" : "s"} after signing (audit log)` : ""}</Text></View>
+              </View>
             </View>
+
+            <Text style={s.label}>Service narrative</Text>
+            <Text style={s.narrative}>{v.shiftNote?.trim() || "No narrative was documented for this service."}</Text>
 
             <View style={s.columns}>
               <View style={s.main}>
-                <Text style={s.label}>Service narrative</Text>
-                <Text style={s.narrative}>{v.shiftNote?.trim() || "No narrative was documented for this service."}</Text>
-
-                {supports.length > 0 && (
-                  <>
-                    <Text style={s.label}>Supports provided</Text>
-                    <View style={[s.tags, { marginBottom: 14 }]}>{supports.map((x) => <Text key={x} style={s.tag}>{x}</Text>)}</View>
-                  </>
-                )}
-
                 <Text style={s.label}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
                 {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {first} on this date.</Text> : v.outcomes.map((o, j) => (
                   <View key={j} style={s.outcomeRow} wrap={false}>
@@ -188,22 +173,14 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                   </View>
                 ))}
               </View>
-
               <View style={s.side}>
-                <Fact k="Level of assistance" v={level ? level[1] : "Not documented"} sub={level ? level[2] : undefined} />
-                <Fact k="Medication administration" v={v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`} sub={v.meds.length ? v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("\n") : undefined} tone={medsIssues.length ? "danger" : undefined} />
-                <Fact k="Incidents" v="None reported" />
-                <Fact k="Visit verification" v={v.manualEntry ? "Manual entry" : "EVV, GPS at clock-in and clock-out"} sub={v.manualEntry ? v.manualEntryReason ?? undefined : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : undefined} tone={v.manualEntry ? undefined : "ok"} />
-                {v.edits > 0 && <Fact k="Corrections" v={`${v.edits} after signing`} sub="Detail in the audit log" />}
+                <Text style={s.label}>Supports provided</Text>
+                {supports.length === 0 ? <Text style={s.support}>None marked.</Text> : <View style={s.tags}>{supports.map((x) => <Text key={x} style={s.tag}>{x}</Text>)}</View>}
               </View>
             </View>
 
             <View style={s.ack} wrap={false}>
               <Text style={s.ackTitle}>Acknowledgement and required signatures</Text>
-              <View style={s.sigs}>
-                <Text style={[s.ackText, { flex: 1 }]}>Caregiver: I certify and swear under penalty of law that I have accurately reported on this service note the hours I actually worked, the services I provided, and the dates and times worked. I understand that misreporting my hours is fraud for which I could face criminal prosecution and civil proceedings.</Text>
-                <Text style={[s.ackText, { flex: 1 }]}>Client: Review this note for accuracy before signing. If any date or time above was not received from the Caregiver, do not sign; tell the provider so it can be corrected. It is a crime to provide false information on caregiver billings for Medical Assistance payment. By signing below I swear and verify that the time and services entered above are accurate and were performed by the Caregiver named on this note as specified in my support plan.</Text>
-              </View>
               <View style={s.sigs}>
                 <View style={s.sig}>
                   <View style={v.staffSignedAt ? s.sigBox : s.sigBoxEmpty}>
@@ -221,6 +198,10 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                   </View>
                   <Text style={s.sigK}>Client signature</Text>
                 </View>
+              </View>
+              <View style={s.sigs}>
+                <Text style={[s.ackText, { flex: 1 }]}>Caregiver: I certify and swear under penalty of law that I have accurately reported on this service note the hours I actually worked, the services I provided, and the dates and times worked. I understand that misreporting my hours is fraud for which I could face criminal prosecution and civil proceedings.</Text>
+                <Text style={[s.ackText, { flex: 1 }]}>Client: Review this note for accuracy before signing. If any date or time above was not received from the Caregiver, do not sign; tell the provider so it can be corrected. It is a crime to provide false information on caregiver billings for Medical Assistance payment. By signing below I swear and verify that the time and services entered above are accurate and were performed by the Caregiver named on this note as specified in my support plan.</Text>
               </View>
             </View>
 
