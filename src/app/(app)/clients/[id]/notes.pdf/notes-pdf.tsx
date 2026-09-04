@@ -99,11 +99,9 @@ const s = StyleSheet.create({
   sigs: { flexDirection: "row", gap: 24 },
   sig: { flex: 1 },
   ackText: { fontSize: 7.2, color: MUTED, lineHeight: 1.4, marginTop: 6 },
-  evv: { flexDirection: "row", backgroundColor: "#f5f4f0", borderRadius: 5, paddingHorizontal: 11, paddingTop: 6, paddingBottom: 7, marginTop: 12 },
-  evvCell: { paddingRight: 10, marginRight: 10, borderRight: `0.75 solid #e4e0d6` },
-  evvValue: { fontSize: 9, color: INK, fontWeight: 600, lineHeight: 1.2 },
-  evvSub: { fontSize: 7.2, color: MUTED, marginTop: 1.5, lineHeight: 1.3 },
-  evvMono: { fontSize: 7.2, color: MUTED, marginTop: 1.5, fontFamily: MONO },
+  evv: { flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: "#f5f4f0", borderRadius: 5, paddingHorizontal: 11, paddingVertical: 6, marginTop: 12 },
+  evvLabel: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, fontWeight: 600 },
+  evvValue: { fontSize: 8.5, fontWeight: 600, color: INK },
   sigBox: { borderLeft: `2 solid ${NAVY}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBoxEmpty: { borderLeft: `2 solid ${LINE}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBy: { fontSize: 6.5, color: NAVY, letterSpacing: 0.6, fontWeight: 600 },
@@ -239,26 +237,8 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
               </View>
 
               <View style={s.evv}>
-                <View style={[s.evvCell, { flex: 1.5 }]}>
-                  <Text style={s.tk}>Visit verification</Text>
-                  <Text style={[s.evvValue, v.manualEntry ? {} : s.ok]}>{v.manualEntry ? "Manual entry" : "Electronic visit verification"}</Text>
-                  <Text style={s.evvSub}>{v.manualEntry ? v.manualEntryReason ?? "Reason not recorded" : "GPS captured at clock-in and clock-out"}</Text>
-                </View>
-                <View style={[s.evvCell, { flex: 1.15 }]}>
-                  <Text style={s.tk}>Clock in</Text>
-                  <Text style={s.evvValue}>{tm.format(v.clockInAt)}</Text>
-                  <Text style={s.evvMono}>{v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}${v.clockInAccuracyM ? ` ±${Math.round(v.clockInAccuracyM)} m` : ""}` : "no location"}</Text>
-                </View>
-                <View style={[s.evvCell, { flex: 1.15 }]}>
-                  <Text style={s.tk}>Clock out</Text>
-                  <Text style={s.evvValue}>{v.clockOutAt ? tm.format(v.clockOutAt) : "—"}</Text>
-                  <Text style={s.evvMono}>{v.clockOutLat != null ? `${v.clockOutLat.toFixed(4)}, ${v.clockOutLng?.toFixed(4)}${v.clockOutAccuracyM ? ` ±${Math.round(v.clockOutAccuracyM)} m` : ""}` : "no location"}</Text>
-                </View>
-                <View style={[s.evvCell, s.blast, { flex: 1.3 }]}>
-                  <Text style={s.tk}>Note saved</Text>
-                  <Text style={s.evvValue}>{v.noteSavedAt ? dt.format(v.noteSavedAt) : "—"}</Text>
-                  <Text style={s.evvMono}>{v.noteSavedLat != null ? `${v.noteSavedLat.toFixed(4)}, ${v.noteSavedLng?.toFixed(4)}` : "no device location"}{v.edits > 0 ? ` · ${v.edits} correction${v.edits === 1 ? "" : "s"}` : ""}</Text>
-                </View>
+                <Text style={s.evvLabel}>Visit verification</Text>
+                <Text style={[s.evvValue, v.manualEntry ? {} : s.ok]}>{v.manualEntry ? `Manual entry · ${v.manualEntryReason ?? "reason not recorded"}` : "Electronic visit verification, GPS captured at clock-in and clock-out"}</Text>
               </View>
             </View>
 
