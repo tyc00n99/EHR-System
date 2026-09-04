@@ -1,14 +1,26 @@
 import Link from "next/link";
 import { Card, PageHeader } from "@/components/kit";
 import { Icon } from "@/components/icons";
+import { listAgreementsWithUsage, listPeople } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
+import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
+import { NotesReport, type NotesReportClient } from "./notes-report";
 
 export const metadata = { title: "Reports" };
 
 export default async function ReportsPage() {
   await requireUser(["admin", "supervisor"]);
   const periods = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(currentPayPeriod().index - i));
+  const [people, agreements] = await Promise.all([listPeople(), listAgreementsWithUsage()]);
+  const clients: NotesReportClient[] = people.filter((p) => p.status !== "discharged" || agreements.some((a) => a.agreement.personId === p.id)).map((p) => {
+    const codes = new Map<string, string>();
+    for (const a of agreements) if (a.agreement.personId === p.id) codes.set(a.agreement.serviceCode, labelForCode(a.agreement.serviceCode, a.agreement.modifiers));
+    return { id: p.id, name: `${p.lastName}, ${p.firstName}`, pmi: p.pmi, services: [...codes.entries()].map(([code, label]) => ({ code, label })) };
+  });
+  const chicago = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  const todayLocal = chicago(new Date());
+  const quarterStart = chicago(new Date(Date.now() - 91 * 86_400_000));
   const reports = [
     { key: "visits", title: "Visit detail", desc: "Every completed visit with PMI, code, modifiers, units, rate, amount, rendering ID, GPS, signature and EVV status. The aggregator and claim source of truth.", file: "visits" },
     { key: "payroll", title: "Payroll hours", desc: "Hours, units, and gross pay by caregiver, with unsigned counts. Hand to payroll at the end of each period.", file: "payroll" },
@@ -16,6 +28,9 @@ export default async function ReportsPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader title="Reports" meta={<span>Exports by pay period. PDF for printing or sending to the county; CSV for Excel and your biller.</span>} />
+      <Card title="Progress notes" description="Every note for one client, filtered by service type and date range. The same document the client's Notes tab downloads." className="mb-4">
+        <NotesReport clients={clients} defaultFrom={quarterStart} defaultTo={todayLocal} />
+      </Card>
       <div className="grid gap-4 md:grid-cols-2">
         {reports.map((r) => (
           <Card key={r.key} title={r.title} description={r.desc}>
