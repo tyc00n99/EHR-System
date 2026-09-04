@@ -64,17 +64,17 @@ const s = StyleSheet.create({
   eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 },
   eyebrow: { fontSize: 14, fontWeight: 600, color: INK, letterSpacing: -0.1 },
   eyebrowRight: { fontSize: 7.5, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 600 },
-  table: { borderTop: `1.2 solid ${INK}`, borderLeft: `0.75 solid ${LINE}`, borderRight: `0.75 solid ${LINE}`, marginBottom: 18 },
-  trow: { flexDirection: "row", borderBottom: `0.75 solid ${LINE}` },
-  tcell: { flex: 1, paddingVertical: 6, paddingHorizontal: 9, borderRight: `0.75 solid ${LINE}` },
-  tcellLast: { flex: 1, paddingVertical: 6, paddingHorizontal: 9 },
-  tk: { fontSize: 6.5, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 600 },
-  tv: { fontSize: 10, color: INK, lineHeight: 1.25, fontWeight: 500 },
-  tvBig: { fontSize: 11.5, color: INK, lineHeight: 1.2, fontWeight: 600 },
-  tvMono: { fontSize: 10, color: INK, lineHeight: 1.25, fontWeight: 500 },
-  tvCode: { fontSize: 10, color: INK, fontFamily: MONO, fontWeight: 600, lineHeight: 1.25 },
+  who: { flexDirection: "row", alignItems: "flex-end", borderTop: `1.2 solid ${INK}`, paddingTop: 10, marginBottom: 10 },
+  whoName: { fontSize: 17, fontWeight: 600, color: INK, lineHeight: 1.15, letterSpacing: -0.2 },
+  whoMeta: { fontSize: 8.5, color: MUTED, marginTop: 2 },
+  whoDate: { fontSize: 11, fontWeight: 600, color: INK, lineHeight: 1.2 },
+  band: { flexDirection: "row", backgroundColor: "#f4f3ef", borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 18 },
+  bcell: { paddingRight: 10, marginRight: 10, borderRight: `0.75 solid ${LINE}` },
+  tk: { fontSize: 6.3, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 600 },
+  tv: { fontSize: 9.5, color: INK, lineHeight: 1.25, fontWeight: 500 },
+  tvNum: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
+  tvCode: { fontSize: 9.5, color: INK, fontFamily: MONO, fontWeight: 600, lineHeight: 1.25 },
   ts: { fontSize: 7.5, color: MUTED, marginTop: 1 },
-  tsMono: { fontSize: 7.5, color: MUTED, marginTop: 1 },
   columns: { flexDirection: "row", gap: 24 },
   main: { flex: 1.9 },
   side: { flex: 1, borderLeft: `0.75 solid ${LINE}`, paddingLeft: 16 },
@@ -153,20 +153,23 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
               <Text style={s.eyebrowRight}>{org.name}{org.licenseNumber ? ` · 245D license ${org.licenseNumber}` : ""}</Text>
             </View>
 
-            <View style={s.table}>
-              <View style={s.trow}>
-                <View style={[s.tcell, { flex: 2.2 }]}><Text style={s.tk}>Client</Text><Text style={s.tvBig}>{personName}</Text><Text style={s.tsMono}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
-                <View style={[s.tcell, { flex: 1.2 }]}><Text style={s.tk}>Date of service</Text><Text style={s.tvMono}>{dNum.format(v.clockInAt)}</Text><Text style={s.ts}>{dDow.format(v.clockInAt)}</Text></View>
-                <View style={[s.tcell, { flex: 1.3 }]}><Text style={s.tk}>Time</Text><Text style={s.tvMono}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
-                <View style={[s.tcell, { flex: 0.7 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvMono}>{hours(minutes)}</Text></View>
-                <View style={[s.tcellLast, { flex: 0.7 }]}><Text style={s.tk}>Units</Text><Text style={s.tvMono}>{v.units}</Text></View>
+            <View style={s.who}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.whoName}>{personName}</Text>
+                <Text style={s.whoMeta}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text>
               </View>
-              <View style={s.trow}>
-                <View style={[s.tcell, { flex: 2.2 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text></View>
-                <View style={[s.tcell, { flex: 1.2 }]}><Text style={s.tk}>Service code</Text><Text style={s.tvCode}>{code}</Text></View>
-                <View style={[s.tcell, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
-                <View style={[s.tcellLast, { flex: 1.4 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
+              <View style={{ alignItems: "flex-end" }}>
+                <Text style={s.whoDate}>{dDow.format(v.clockInAt)}, {dNum.format(v.clockInAt)}</Text>
+                <Text style={s.whoMeta}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text>
               </View>
+            </View>
+            <View style={s.band}>
+              <View style={[s.bcell, { flex: 2 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text></View>
+              <View style={[s.bcell, { flex: 1.55 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
+              <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
+              <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
+              <View style={[s.bcell, { flex: 1.05 }]}><Text style={s.tk}>Code</Text><Text style={s.tvCode}>{code}</Text></View>
+              <View style={[s.bcell, { flex: 0.8, borderRight: 0, paddingRight: 0 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
             </View>
 
             <View style={s.columns}>
@@ -218,7 +221,7 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                   <View style={v.clientSignedAt ? s.sigBox : s.sigBoxEmpty}>
                     <Text style={v.clientSignedAt ? s.sigBy : s.sigByEmpty}>{v.clientSignedAt ? "Electronically signed by:" : v.clientUnsignedReason ? `Not signed · ${v.clientUnsignedReason}` : "Awaiting signature"}</Text>
                     <Text style={v.clientSignedAt ? s.sigName : s.sigNameEmpty}>{v.clientSignedAt ? personName : " "}</Text>
-                    <Text style={s.sigId}>{v.clientSignedAt ? `${dt.format(v.clientSignedAt)} CT · identity verified` : " "}</Text>
+                    <Text style={s.sigId}>{v.clientSignedAt ? `${dt.format(v.clientSignedAt)} CT · verified with private client code` : " "}</Text>
                   </View>
                   <Text style={s.sigK}>Client signature</Text>
                 </View>
