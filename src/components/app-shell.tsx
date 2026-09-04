@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { ChevronDown, CircleHelp, Clock, FileEdit, LogOut, Plus, Building2, User, Users, UserSquare2, FileText } from "lucide-react";
 import { CommandPalette, type PaletteEntry } from "@/components/command-palette";
 import { Sidebar } from "@/components/sidebar";
@@ -8,6 +8,7 @@ import { TopbarCrumbs } from "@/components/topbar-crumbs";
 import { Avatar, cx } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeMenuItems } from "@/components/theme-switcher";
 import { signOut, type CurrentUser } from "@/lib/auth";
@@ -71,6 +72,7 @@ export function AppShell({ user, orgName, attention, palette, children }: { user
         </header>
         <main className="flex-1 px-4 py-5 md:px-8 md:py-6">{children}</main>
         <MobileNav role={user.role} />
+        <Suspense fallback={null}><NotePreview /></Suspense>
         <Toaster position="bottom-right" richColors closeButton />
       </div>
     </div>

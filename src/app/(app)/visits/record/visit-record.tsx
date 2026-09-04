@@ -30,7 +30,7 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
     <div className="flex min-h-full flex-col">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-nav px-5 py-3 text-white">
         <div className="min-w-0 flex-1"><div className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/60">Service record</div><div className="truncate text-[15px] font-semibold">{fullName(person)} <span className="font-normal text-white/70">· {labelForCode(v.serviceCode, v.modifiers)}</span></div></div>
-        <a href={`/clients/${person.id}/notes.pdf?visit=${v.id}`} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12.5px] text-white/80 hover:bg-white/10"><FileDown className="size-3.5" /> PDF</a>
+        <a href={`/visits/${v.id}/note.pdf`} target="_blank" rel="noreferrer" className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12.5px] text-white/80 hover:bg-white/10"><FileDown className="size-3.5" /> PDF</a>
         {!inSheet ? null : <Link href={`/visits/${v.id}`} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12.5px] text-white/80 hover:bg-white/10"><ExternalLink className="size-3.5" /> Full page</Link>}
         {inSheet && <CloseSheetButton><X className="size-4" /></CloseSheetButton>}
       </div>

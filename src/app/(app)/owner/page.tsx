@@ -70,12 +70,6 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
   const staffCompliance = staffRows.map((s) => ({ s, ...complianceSummary(evaluateCompliance(s.hireDate, creds.get(s.id) ?? [])) }));
   const nonCompliant = staffCompliance.filter((x) => x.overdue > 0);
 
-  const byStaff = Object.values(lines.reduce<Record<string, { name: string; hours: number; revenue: number; cost: number; visits: number; unsigned: number }>>((acc, l) => {
-    const row = (acc[l.staffId] ??= { name: l.staffName, hours: 0, revenue: 0, cost: 0, visits: 0, unsigned: 0 });
-    row.hours += l.minutes / 60; row.revenue += l.units * l.unitRate; row.cost += (l.minutes / 60) * l.payRate; row.visits += 1; if (!l.signed) row.unsigned += 1;
-    return acc;
-  }, {})).sort((a, b) => b.revenue - a.revenue);
-
   const census = { active: people.filter((p) => p.status === "active").length, intake: people.filter((p) => p.status === "intake").length, discharged: people.filter((p) => p.status === "discharged").length };
   const byWaiver = Object.entries(people.filter((p) => p.status === "active").reduce<Record<string, number>>((m, p) => ((m[p.waiverProgram] = (m[p.waiverProgram] ?? 0) + 1), m), {})).sort((a, b) => b[1] - a[1]);
   const noCode = people.filter((p) => p.status === "active" && !p.signatureCodeHash);
@@ -156,26 +150,6 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
         </Card>
       </div>
 
-      <Card title="Caregivers this period" description="Revenue each caregiver generated against what they cost">
-        {byStaff.length === 0 ? <Empty icon="staff" title="No completed visits in this pay period" /> : (
-          <Table>
-            <Thead><Th>Caregiver</Th><Th align="right">Visits</Th><Th align="right">Hours</Th><Th align="right">Billable</Th><Th align="right">Gross pay</Th><Th align="right">Margin</Th><Th>Unsigned</Th></Thead>
-            <tbody>
-              {byStaff.map((r) => (
-                <Tr key={r.name}>
-                  <Td strong>{r.name}</Td>
-                  <Td align="right">{r.visits}</Td>
-                  <Td align="right">{r.hours.toFixed(1)}</Td>
-                  <Td align="right">{fmtMoney(r.revenue)}</Td>
-                  <Td align="right" className="text-muted-foreground">{fmtMoney(r.cost)}</Td>
-                  <Td align="right" className={r.revenue - r.cost < 0 ? "text-danger" : ""}>{fmtMoney(r.revenue - r.cost)} <span className="text-muted-foreground">({pct(r.revenue - r.cost, r.revenue)}%)</span></Td>
-                  <Td>{r.unsigned ? <Badge tone="danger">{r.unsigned}</Badge> : <Badge tone="ok">0</Badge>}</Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Card>
     </div>
   );
 }

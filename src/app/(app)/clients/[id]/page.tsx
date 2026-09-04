@@ -162,7 +162,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               {visits.length === 0 ? <Empty icon="clock" title="No notes in the current pay period" /> : (
                 <Table>
                   <Thead><Th>When</Th><Th>Caregiver</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead>
-                  <tbody>{visits.slice(0, 6).map(({ visit: v, staffFirst, staffLast }) => <Tr key={v.id}><Td strong><Link href={`/clients/${id}?visit=${v.id}`} scroll={false} className="hover:underline">{fmtDateTime(v.clockInAt)}</Link></Td><Td>{staffFirst} {staffLast}</Td><Td className="tabular-nums">{v.serviceCode}</Td><Td align="right">{v.units}</Td><Td><span className="flex gap-1"><Badge tone={visitTone(v.status)}>{v.status.replace("_", " ")}</Badge>{v.status === "completed" && !v.clientSignedAt && <Badge tone="danger">unsigned</Badge>}</span></Td></Tr>)}</tbody>
+                  <tbody>{visits.slice(0, 6).map(({ visit: v, staffFirst, staffLast }) => <Tr key={v.id}><Td strong><Link href={`/clients/${id}?note=${v.id}`} scroll={false} className="hover:underline">{fmtDateTime(v.clockInAt)}</Link></Td><Td>{staffFirst} {staffLast}</Td><Td className="tabular-nums">{v.serviceCode}</Td><Td align="right">{v.units}</Td><Td><span className="flex gap-1"><Badge tone={visitTone(v.status)}>{v.status.replace("_", " ")}</Badge>{v.status === "completed" && !v.clientSignedAt && <Badge tone="danger">unsigned</Badge>}</span></Td></Tr>)}</tbody>
                 </Table>
               )}
             </Card>
