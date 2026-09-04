@@ -18,7 +18,7 @@ export function NotesReport({ clients, defaultFrom, defaultTo }: { clients: Note
   const [to, setTo] = useState(defaultTo);
   const url = clientId ? `/clients/${clientId}/notes.pdf?${new URLSearchParams({ ...(code ? { code } : {}), ...(from ? { from } : {}), ...(to ? { to } : {}) })}` : "#";
   return (
-    <div className="grid gap-4 px-5 py-4 md:grid-cols-[1.4fr_1.4fr_1fr_1fr_auto] md:items-end">
+    <div className="grid gap-4 px-5 py-4 md:grid-cols-[1.6fr_1.8fr_1fr_1fr_auto] md:items-end">
       <Field label="Client">
         <Select value={clientId} onChange={(e) => { setClientId(e.target.value); setCode(""); }}>
           {clients.map((c) => <option key={c.id} value={c.id}>{c.name} · PMI {c.pmi}</option>)}
