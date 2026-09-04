@@ -162,10 +162,10 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
             </View>
             <View style={s.band}>
               <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
-              <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle.replace("Direct support professional", "DSP")}</Text> : null}</View>
+              <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
               <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
               <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-              <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text><Text style={s.tsCode}>{code}</Text></View>
+              <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}</Text><Text style={s.tsCode}>{code}</Text></View>
               <View style={[s.bcell, { flex: 0.7, borderRight: 0, paddingRight: 0 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
             </View>
 
