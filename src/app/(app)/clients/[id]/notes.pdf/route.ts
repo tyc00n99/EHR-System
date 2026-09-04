@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { canViewPerson, getOrganization, getPerson, listVisits, notesDetailForVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { fromLocalInput } from "@/lib/format";
+import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { NotesPdf, type PdfNote } from "./notes-pdf";
 
 const chicagoDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -34,6 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     edits: detail.edits.get(r.visit.id) ?? 0,
     approvedByName: detail.approvers.get(r.visit.id) ?? null,
   }));
+  registerPdfFonts();
   const buffer = await renderToBuffer(NotesPdf({ org, person, rows: notes, range: { from, to, code } }));
   return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="service-notes-${person.lastName}-${person.firstName}${from ? `-${from}` : ""}${to ? `-${to}` : ""}.pdf"` } });
 }

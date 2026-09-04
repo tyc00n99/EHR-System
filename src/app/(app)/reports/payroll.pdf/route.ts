@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { getOrganization, periodLines } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { payPeriodFromParam } from "@/lib/pay-period";
+import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { ReportPdf } from "../report-pdf";
 
 const money = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -28,6 +29,7 @@ export async function GET(req: Request) {
     ...(admin ? [{ key: "rate", label: "Hourly rate", width: 80, align: "right" as const, mono: true }, { key: "cost", label: "Gross pay", width: 90, align: "right" as const, mono: true }] : []),
     { key: "unsigned", label: "Unsigned", width: 70, align: "right" as const, mono: true },
   ];
+  registerPdfFonts();
   const buffer = await renderToBuffer(ReportPdf({
     title: `Payroll hours · ${period.label}`,
     org: org.name,

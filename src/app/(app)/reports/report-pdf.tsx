@@ -8,19 +8,19 @@ export interface PdfColumn { key: string; label: string; width: number; align?: 
 export type PdfRow = Record<string, string | number>;
 
 const s = StyleSheet.create({
-  page: { padding: 36, fontSize: 9, fontFamily: "Helvetica", color: "#1b1818" },
-  h1: { fontSize: 18, fontFamily: "Times-Roman", marginBottom: 2 },
+  page: { padding: 36, fontSize: 9, fontFamily: "Public Sans", color: "#1b1818" },
+  h1: { fontSize: 18, fontFamily: "Fraunces", fontWeight: 600, marginBottom: 2 },
   meta: { fontSize: 9, color: "#5e5952", marginBottom: 12 },
   head: { flexDirection: "row", borderBottom: "1 solid #1b1818", paddingBottom: 4, marginBottom: 2 },
-  headCell: { fontSize: 7.5, color: "#857f76", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "Courier" },
+  headCell: { fontSize: 7.5, color: "#857f76", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "Inconsolata" },
   row: { flexDirection: "row", borderBottom: "0.5 solid #e3dfd6", paddingVertical: 4 },
   total: { flexDirection: "row", borderTop: "1 solid #1b1818", paddingTop: 5, marginTop: 2 },
-  mono: { fontFamily: "Courier" },
-  bold: { fontFamily: "Helvetica-Bold" },
+  mono: { fontFamily: "Inconsolata" },
+  bold: { fontWeight: 700 },
   footer: { position: "absolute", bottom: 18, left: 36, right: 36, fontSize: 8, color: "#857f76", flexDirection: "row", justifyContent: "space-between" },
   summary: { flexDirection: "row", gap: 24, marginBottom: 14 },
-  sumLabel: { fontSize: 7.5, color: "#857f76", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "Courier" },
-  sumValue: { fontSize: 14, fontFamily: "Times-Roman", marginTop: 1 },
+  sumLabel: { fontSize: 7.5, color: "#857f76", textTransform: "uppercase", letterSpacing: 0.5, fontFamily: "Inconsolata" },
+  sumValue: { fontSize: 14, fontFamily: "Fraunces", fontWeight: 600, marginTop: 1 },
 });
 
 type Style = (typeof s)[keyof typeof s];
