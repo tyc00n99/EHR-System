@@ -16,9 +16,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!person || !(await canViewPerson(user, id))) notFound();
   const sp = new URL(req.url).searchParams;
   const code = sp.get("code") ?? "";
+  const visitId = sp.get("visit");
   const from = sp.get("from"), to = sp.get("to");
   const rows = (await listVisits({ personId: id, from: from ? fromLocalInput(`${from}T00:00`) : undefined, to: to ? new Date(fromLocalInput(`${to}T00:00`).getTime() + 86_399_000) : undefined, limit: 2000 }))
-    .filter((r) => r.visit.status === "completed" && (!code || r.visit.serviceCode === code));
+    .filter((r) => (visitId ? r.visit.id === visitId : r.visit.status === "completed" && (!code || r.visit.serviceCode === code)));
   const [org, detail] = await Promise.all([
     getOrganization(),
     notesDetailForVisits(id, rows.map((r) => r.visit.id), [...new Set(rows.map((r) => chicagoDate(r.visit.clockInAt)))]),
@@ -43,7 +44,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const rangeEnd = to ? fromLocalInput(`${to}T00:00`) : span?.end;
   const days = rangeStart && rangeEnd ? Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86_400_000) + 1 : 0;
   let summary: { groups: TimesheetGroup[]; from: Date; to: Date } | undefined;
-  if (days >= 7 && notes.length > 0 && rangeStart && rangeEnd) {
+  if (!visitId && days >= 7 && notes.length > 0 && rangeStart && rangeEnd) {
     const byGroup = new Map<string, TimesheetGroup>();
     for (const n of [...notes].reverse()) {
       const k = `${n.staff}|${n.serviceCode}|${n.modifiers.join(" ")}`;
@@ -54,5 +55,5 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     summary = { groups: [...byGroup.values()], from: rangeStart, to: rangeEnd };
   }
   const buffer = await renderToBuffer(NotesPdf({ org, person, rows: notes, range: { from, to, code }, summary }));
-  return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="service-notes-${person.lastName}-${person.firstName}${from ? `-${from}` : ""}${to ? `-${to}` : ""}.pdf"` } });
+  return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="service-note${visitId ? "" : "s"}-${person.lastName}-${person.firstName}${visitId && notes[0] ? `-${chicagoDate(notes[0].clockInAt)}` : `${from ? `-${from}` : ""}${to ? `-${to}` : ""}`}.pdf"` } });
 }
