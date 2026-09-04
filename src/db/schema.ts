@@ -199,6 +199,8 @@ export const people = pgTable(
     serviceStartDate: date("service_start_date"),
     /** Staff administer or assist with medications for this person (245D.05). Shows the Medical tab. */
     medicationSupport: boolean("medication_support").notNull().default(false),
+    /** Per-person activity statements staff can pick on a note. Empty means use the default library with the person's name. */
+    activityLibrary: text("activity_library").array().notNull().default(sql`'{}'::text[]`),
     dischargedOn: date("discharged_on"),
     ...timestamps,
   },
@@ -337,6 +339,8 @@ export const visits = pgTable(
     /** Structured documentation captured with the note. */
     interactionLevel: interactionLevel("interaction_level"),
     skills: text("skills").array().notNull().default(sql`'{}'::text[]`),
+    /** Daily activities the caregiver selected from the person's activity library. */
+    activities: text("activities").array().notNull().default(sql`'{}'::text[]`),
     /** Staff attestation and supervisor approval of the documentation. */
     staffSignedAt: timestamp("staff_signed_at", { withTimezone: true }),
     approvedAt: timestamp("approved_at", { withTimezone: true }),

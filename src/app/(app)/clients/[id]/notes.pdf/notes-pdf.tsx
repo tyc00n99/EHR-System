@@ -24,6 +24,7 @@ export interface PdfNote {
   shiftNote: string | null;
   interactionLevel: string | null;
   skills: string[];
+  activities: string[];
   tasks: VisitTask[];
   manualEntry: boolean;
   manualEntryReason: string | null;
@@ -90,6 +91,7 @@ const s = StyleSheet.create({
   factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
   factV: { fontSize: 9.5, fontWeight: 500 },
   factS: { fontSize: 8, color: MUTED, lineHeight: 1.3 },
+  activity: { fontSize: 8.2, color: INK, lineHeight: 1.35, marginBottom: 3 },
   ok: { color: OK }, danger: { color: DANGER },
   ack: { marginTop: 10, borderTop: `1.2 solid ${INK}`, paddingTop: 8 },
   ackTitle: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: NAVY, marginBottom: 6, fontWeight: 700 },
@@ -191,6 +193,10 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
 
               <View style={s.side}>
                 <Fact k="Level of assistance" v={level ? level[1] : "Not documented"} sub={level ? level[2] : undefined} />
+                <View style={s.fact}>
+                  <Text style={s.factK}>Daily activities</Text>
+                  {v.activities.length === 0 ? <Text style={s.factS}>None selected</Text> : v.activities.map((a, j) => <Text key={j} style={s.activity}>•  {a}</Text>)}
+                </View>
                 <Fact k="Medication administration" v={v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`} sub={v.meds.length ? v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("\n") : undefined} tone={medsIssues.length ? "danger" : undefined} />
                 <Fact k="Incidents" v="None reported" />
                 <Fact k="Visit verification" v={v.manualEntry ? "Manual entry" : "EVV, GPS at clock-in and clock-out"} sub={v.manualEntry ? v.manualEntryReason ?? undefined : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : undefined} tone={v.manualEntry ? undefined : "ok"} />

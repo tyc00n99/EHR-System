@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx } from "@/components/kit";
+import { ActivityLibrary } from "./activity-library";
+import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listAuditForRecord, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, listNoteEvents, countNotes, listVisits, personFeed } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { Feed, type FeedItem } from "./feed";
@@ -223,6 +225,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         <div className="mx-auto max-w-4xl">
           <div className="mb-4 flex items-baseline justify-between"><h2 className="text-[18px]">{person.firstName}&apos;s life plan goals</h2><span className="text-[13px] text-muted-foreground">Responses from the last 90 days</span></div>
           <LifePlan personId={id} manage={manage} rangeLabel="in the last 90 days" goals={goals.map((g) => ({ id: g.goal.id, title: g.goal.title, description: g.goal.description, category: g.goal.category, status: g.goal.status, targetDate: g.goal.targetDate, questions: g.questions.map((q) => ({ id: q.question.id, prompt: q.question.prompt, yes: q.yes, no: q.no, na: q.na })) }))} />
+          <ActivityLibrary personId={id} firstName={person.firstName} library={person.activityLibrary} defaults={DEFAULT_ACTIVITIES} manage={manage} />
         </div>
       )}
 

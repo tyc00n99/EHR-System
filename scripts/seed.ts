@@ -15,7 +15,7 @@ import { encryptField } from "../src/lib/crypto";
 import { audited } from "../src/db/audited";
 import { hashPassword } from "../src/lib/password";
 import { SERVICE_CODES } from "../src/lib/hcpcs";
-import { skillsFor } from "../src/lib/templates";
+import { activitiesFor, skillsFor } from "../src/lib/templates";
 
 const { organizations, staff, users, people, sites, programs, serviceAgreements, assignments, staffCredentials, visits, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
 
@@ -274,6 +274,7 @@ async function main() {
       clientUnsignedReason: opts.signed === false ? "Asleep at end of shift" : null,
       interactionLevel: (["low", "medium", "high"] as const)[n % 3],
       skills,
+      activities: (() => { const all = activitiesFor(opts.person.firstName, null); return [all[n % all.length], all[(n * 7 + 3) % all.length], ...(n % 3 === 0 ? [all[(n * 5 + 11) % all.length]] : [])].filter((x, i, a) => a.indexOf(x) === i); })(),
       staffSignedAt: new Date(end.getTime() + 120000),
       noteSavedAt: new Date(end.getTime() + 120000),
       noteSavedBy: opts.createdBy,

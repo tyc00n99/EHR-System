@@ -39,3 +39,32 @@ export const GOAL_CATEGORIES = [
   ["communication", "Communication"],
   ["other", "Other"],
 ] as const;
+
+/**
+ * Default daily-activity statements, written with {name} so each client's list reads naturally.
+ * Supervisors can replace the list per client (people.activityLibrary).
+ */
+export const DEFAULT_ACTIVITIES = [
+  "Accompanied {name} on community outings, providing support as needed to promote comfort and participation",
+  "Assisted {name} with coordinating transportation to events, appointments, and social outings",
+  "Assisted {name} with developing and following a weekly activity schedule to reduce idle time and promote active daily routines",
+  "Assisted {name} with hygiene routines to promote consistency",
+  "Assisted {name} with organizing personal belongings and daily tasks",
+  "Assisted {name} with setting boundaries and navigating social interactions",
+  "Assisted {name} with setting up reminders and systems for appointments and scheduled events",
+  "Assisted {name} with meal planning, grocery shopping, and preparing a meal",
+  "Assisted {name} with household tasks such as laundry, dishes, and tidying living areas",
+  "Assisted {name} with budgeting, paying bills, and tracking spending",
+  "Supported {name} with medication reminders and monitoring for side effects",
+  "Supported {name} in practicing coping strategies during moments of stress or frustration",
+  "Provided supervision and safety monitoring throughout the service",
+  "Modeled and practiced communication skills with {name} in a natural setting",
+  "Supported {name} in contacting family, friends, or providers to stay connected",
+  "Assisted {name} with physical activity or exercise as tolerated",
+];
+
+/** The activity choices for one person: their own library if set, otherwise the defaults with their name filled in. */
+export function activitiesFor(firstName: string, library: string[] | null | undefined): string[] {
+  const base = library && library.length ? library : DEFAULT_ACTIVITIES;
+  return base.map((a) => a.replace(/\{name\}/g, firstName));
+}

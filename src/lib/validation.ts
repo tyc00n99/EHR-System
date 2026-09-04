@@ -275,9 +275,12 @@ export const documentationSchema = z.object({
   visitId: z.uuid(),
   interactionLevel: z.enum(["low", "medium", "high"]).optional(),
   skills: z.array(z.string().max(60)).max(20).default([]),
+  activities: z.array(z.string().max(240)).max(30).default([]),
   shiftNote: z.string().max(6000).default(""),
   staffSign: z.coerce.boolean().default(false),
 });
+
+export const activityLibrarySchema = z.object({ personId: z.uuid(), activities: z.array(z.string().trim().min(3).max(240)).max(60) });
 
 export const goalSchema = z.object({
   title: z.string().min(1, "Required").max(200),

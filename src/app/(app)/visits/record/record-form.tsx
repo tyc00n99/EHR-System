@@ -3,14 +3,15 @@
 import { useActionState, useState, useTransition } from "react";
 import { Check, Loader2, Lock, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { Badge, Button, Field, FormError, Input, Textarea, cx } from "@/components/kit";
+import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
+import { X } from "lucide-react";
 import { INTERACTION_LEVELS } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
 import { draftProgressReview, recordMedAdmin, saveDocumentation, setApproval, signVisitWithCode } from "../record-actions";
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
-export function RecordForm({ visitId, personFirst, locked, skillsOptions, defaults, tasks, questions }: { visitId: string; personFirst: string; locked: boolean; skillsOptions: string[]; defaults: { interactionLevel: string; skills: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
+export function RecordForm({ visitId, personFirst, locked, skillsOptions, activityOptions, defaults, tasks, questions }: { visitId: string; personFirst: string; locked: boolean; skillsOptions: string[]; activityOptions: string[]; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
   const [state, submit, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
     // Best-effort device location for the note history; never blocks the save.
     const fix = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
@@ -23,6 +24,7 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, defaul
   }, {});
   const [interaction, setInteraction] = useState(defaults.interactionLevel);
   const [skills, setSkills] = useState<string[]>(defaults.skills);
+  const [activities, setActivities] = useState<string[]>(defaults.activities);
   const [note, setNote] = useState(defaults.shiftNote);
   const [answers, setAnswers] = useState<Record<string, string>>(Object.fromEntries(questions.map((q) => [q.id, q.response])));
   const [notes, setNotes] = useState<Record<string, string>>(Object.fromEntries(questions.map((q) => [q.id, q.note])));
@@ -40,6 +42,7 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, defaul
       <input type="hidden" name="visitId" value={visitId} />
       {interaction && <input type="hidden" name="interactionLevel" value={interaction} />}
       {skills.map((s) => <input key={s} type="hidden" name="skills[]" value={s} />)}
+      {activities.map((a) => <input key={a} type="hidden" name="activities[]" value={a} />)}
       <FormError message={state.errors ? state.message : undefined} />
       {locked && <div className="flex items-center gap-2 rounded-md bg-ok-soft px-3 py-2 text-[13px] text-ok"><Lock className="size-3.5" /> Approved by a supervisor. Read only.</div>}
 
@@ -61,6 +64,24 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, defaul
           <div className="flex flex-wrap gap-1.5">
             {skillsOptions.map((s) => <button key={s} type="button" onClick={() => toggleSkill(s)} className={cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium", skills.includes(s) ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-hover")}>{skills.includes(s) && <Check className="size-3.5" />}{s}</button>)}
           </div>
+        </section>
+
+        <section>
+          <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-semibold text-text-strong">Daily activities</span><span className="text-[12px] text-muted-foreground">Pick each activity you did with {personFirst}</span></div>
+          <Select value="" onChange={(ev) => { const a = ev.target.value; if (a && !activities.includes(a)) setActivities((cur) => [...cur, a]); }} className="h-9">
+            <option value="">Add an activity…</option>
+            {activityOptions.filter((a) => !activities.includes(a)).map((a) => <option key={a} value={a}>{a}</option>)}
+          </Select>
+          {activities.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {activities.map((a) => (
+                <li key={a} className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary-soft px-3 py-1.5 text-[13px] text-text-strong">
+                  <span className="min-w-0 flex-1">{a}</span>
+                  {!locked && <button type="button" onClick={() => setActivities((cur) => cur.filter((x) => x !== a))} aria-label="Remove activity" className="rounded p-0.5 text-muted-foreground hover:bg-hover hover:text-danger"><X className="size-3.5" /></button>}
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         {questions.length > 0 && (

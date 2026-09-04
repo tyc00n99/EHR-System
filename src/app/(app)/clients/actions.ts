@@ -11,7 +11,7 @@ import { requireUser } from "@/lib/auth";
 import { generateClientCode } from "@/lib/client-code";
 import { hashPassword } from "@/lib/password";
 import { putFile } from "@/lib/storage";
-import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState } from "@/lib/validation";
+import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState, activityLibrarySchema } from "@/lib/validation";
 
 export async function createPerson(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
@@ -120,6 +120,18 @@ export async function setMedicationSupport(personId: string, on: boolean): Promi
   await audited(db, { userId: user.id }).update(schema.people, personId, { medicationSupport: on });
   revalidatePath(`/clients/${personId}`);
   return { message: on ? "Medication support turned on. The Medical tab is now visible." : "Medication support turned off." };
+}
+
+/** Replace a person's daily-activity library (one statement per line; {name} is filled with the first name). */
+export async function setActivityLibrary(personId: string, text: string): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const activities = text.split("\n").map((l) => l.replace(/^[-•\s]+/, "").trim()).filter(Boolean);
+  const parsed = activityLibrarySchema.safeParse({ personId, activities });
+  if (!parsed.success) return { message: "Each activity needs 3 to 240 characters, at most 60 lines." };
+  const db = await getDb();
+  await audited(db, { userId: user.id }).update(schema.people, personId, { activityLibrary: parsed.data.activities });
+  revalidatePath(`/clients/${personId}`);
+  return { message: parsed.data.activities.length ? `${parsed.data.activities.length} activities saved.` : "Library cleared. The default list is back." };
 }
 
 const agreementEditSchema = agreementSchema;

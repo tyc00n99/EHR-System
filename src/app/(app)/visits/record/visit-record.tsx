@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { fmtDateTime, fullName } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { minutesBetween } from "@/lib/units";
-import { skillsFor } from "@/lib/templates";
+import { activitiesFor, skillsFor } from "@/lib/templates";
 import { RecordForm, SignaturePanel, MedsDue } from "./record-form";
 import { CloseSheetButton } from "./close-button";
 
@@ -59,7 +59,8 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           personFirst={person.firstName}
           locked={locked}
           skillsOptions={skillsFor(serviceTypeId)}
-          defaults={{ interactionLevel: v.interactionLevel ?? "", skills: v.skills, shiftNote: v.shiftNote ?? "", staffSigned: Boolean(v.staffSignedAt) }}
+          activityOptions={activitiesFor(person.firstName, person.activityLibrary)}
+          defaults={{ interactionLevel: v.interactionLevel ?? "", skills: v.skills, activities: v.activities, shiftNote: v.shiftNote ?? "", staffSigned: Boolean(v.staffSignedAt) }}
           tasks={v.tasks}
           questions={r.questions.map(({ q, goal }) => ({ id: q.id, prompt: q.prompt, goal: goal.title, response: r.responses.find((x) => x.questionId === q.id)?.response ?? "", note: r.responses.find((x) => x.questionId === q.id)?.note ?? "" }))}
         />

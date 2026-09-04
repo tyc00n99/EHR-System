@@ -23,7 +23,7 @@ function revalidateVisit(id: string, personId: string) {
 /** Saves structured documentation, goal responses, and the progress review. Optionally records the staff signature. */
 export async function saveDocumentation(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser();
-  const parsed = documentationSchema.safeParse({ ...formToObject(fd), skills: fd.getAll("skills[]").map(String), staffSign: fd.get("staffSign") === "true" });
+  const parsed = documentationSchema.safeParse({ ...formToObject(fd), skills: fd.getAll("skills[]").map(String), activities: fd.getAll("activities[]").map(String), staffSign: fd.get("staffSign") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the highlighted fields." };
   const d = parsed.data;
   const record = await getVisitRecord(d.visitId);
@@ -40,6 +40,7 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
     await w.update(visits, v.id, {
       interactionLevel: d.interactionLevel ?? null,
       skills: d.skills,
+      activities: d.activities,
       shiftNote: d.shiftNote || null,
       staffSignedAt: d.staffSign ? new Date() : v.staffSignedAt,
       noteSavedAt: new Date(),
