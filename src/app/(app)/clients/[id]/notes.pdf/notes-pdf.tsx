@@ -69,7 +69,7 @@ const s = StyleSheet.create({
   browLast: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6 },
   blast: { borderRight: 0, paddingRight: 0, marginRight: 0 },
   tvName: { fontSize: 9.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
-  tsCode: { fontSize: 8, color: MUTED, fontFamily: MONO, fontWeight: 600 },
+  tsCode: { fontSize: 9, color: INK, fontFamily: MONO, fontWeight: 600 },
   bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid #e4e0d6` },
   tk: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, marginBottom: 1.5, fontWeight: 600 },
   tv: { fontSize: 9, color: INK, lineHeight: 1.15, fontWeight: 500 },
