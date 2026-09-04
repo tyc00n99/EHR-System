@@ -67,6 +67,14 @@ const s = StyleSheet.create({
   factsMono: { fontFamily: "Courier", fontSize: 9.5, color: INK },
   service: { fontSize: 10, color: MUTED },
   rule: { borderTop: `1.2 solid ${INK}`, marginTop: 12, marginBottom: 16 },
+  table: { marginTop: 10, borderTop: `1.2 solid ${INK}`, borderLeft: `0.75 solid ${LINE}`, borderRight: `0.75 solid ${LINE}` },
+  trow: { flexDirection: "row", borderBottom: `0.75 solid ${LINE}` },
+  tcell: { flex: 1, paddingVertical: 6, paddingHorizontal: 9, borderRight: `0.75 solid ${LINE}` },
+  tcellLast: { flex: 1, paddingVertical: 6, paddingHorizontal: 9 },
+  tk: { fontSize: 6.5, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontFamily: "Helvetica-Bold" },
+  tv: { fontSize: 10, color: INK, lineHeight: 1.25 },
+  tvMono: { fontSize: 10, color: INK, fontFamily: "Courier", lineHeight: 1.25 },
+  ts: { fontSize: 7.5, color: MUTED, marginTop: 1 },
   columns: { flexDirection: "row", gap: 26 },
   main: { flex: 1.9 },
   side: { flex: 1, borderLeft: `0.75 solid ${LINE}`, paddingLeft: 16 },
@@ -98,7 +106,7 @@ const dShort = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric"
 const tm = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
 const dt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
 const hours = (min: number) => { const h = min / 60; return `${Number.isInteger(h) ? h : h.toFixed(2).replace(/0$/, "")} hour${h === 1 ? "" : "s"}`; };
-const PLACE: Record<string, string> = { "12": "at home", "99": "in the community", "11": "at the office", "14": "at the residence", "04": "at the shelter" };
+const PLACE: Record<string, string> = { "12": "Home", "99": "Community", "11": "Office", "14": "Residence", "04": "Shelter" };
 const MED_STATUS: Record<string, string> = { given: "given", refused: "refused", held: "held", missed: "missed" };
 
 function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
@@ -135,9 +143,21 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
               <Text style={s.eyebrowRight}>{org.name}{org.licenseNumber ? ` · 245D ${org.licenseNumber}` : ""}</Text>
             </View>
             <Text style={s.name}>{personName}</Text>
-            <Text style={s.facts}>{dLong.format(v.clockInAt)}  ·  <Text style={s.factsMono}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text>  ·  <Text style={s.factsMono}>{hours(minutes)}</Text>  ·  <Text style={s.factsMono}>{v.units} units</Text></Text>
-            <Text style={s.service}>{labelForCode(v.serviceCode, v.modifiers)} with {v.staff}, {PLACE[v.placeOfService] ?? "on site"}</Text>
-            <View style={s.rule} />
+            <View style={s.table}>
+              <View style={s.trow}>
+                <View style={[s.tcell, { flex: 1.5 }]}><Text style={s.tk}>Date of service</Text><Text style={s.tv}>{dLong.format(v.clockInAt)}</Text></View>
+                <View style={s.tcell}><Text style={s.tk}>Time</Text><Text style={s.tvMono}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
+                <View style={[s.tcell, { flex: 0.7 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvMono}>{hours(minutes).replace(/ hours?$/, "")}</Text></View>
+                <View style={[s.tcellLast, { flex: 0.7 }]}><Text style={s.tk}>Units</Text><Text style={s.tvMono}>{v.units}</Text></View>
+              </View>
+              <View style={s.trow}>
+                <View style={[s.tcell, { flex: 1.5 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{labelForCode(v.serviceCode, v.modifiers)}</Text></View>
+                <View style={s.tcell}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
+                <View style={[s.tcell, { flex: 0.7 }]}><Text style={s.tk}>Location</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text></View>
+                <View style={[s.tcellLast, { flex: 0.7 }]}><Text style={s.tk}>PMI</Text><Text style={s.tvMono}>{person.pmi}</Text></View>
+              </View>
+            </View>
+            <View style={{ marginBottom: 16 }} />
 
             <View style={s.columns}>
               <View style={s.main}>
@@ -166,7 +186,7 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 <Fact k="Incidents" v="None reported" />
                 <Fact k="Visit verified" v={v.manualEntry ? "Entered manually" : "GPS, clock-in and clock-out"} sub={v.manualEntry ? v.manualEntryReason ?? undefined : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : undefined} tone={v.manualEntry ? undefined : "ok"} />
                 {v.edits > 0 && <Fact k="Corrections" v={`${v.edits} after signing`} sub="Details in the audit log" />}
-                <Fact k="Person served" v={`PMI ${person.pmi}`} sub={person.dob ? `Born ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "America/Chicago" }).format(new Date(person.dob + "T12:00:00-05:00"))}` : undefined} />
+                {person.dob && <Fact k="Date of birth" v={new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "America/Chicago" }).format(new Date(person.dob + "T12:00:00-05:00"))} />}
               </View>
             </View>
 
