@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, gte, isNull, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lte, sql, sum } from "drizzle-orm";
 import { getDb, schema } from "./index";
 
 const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
@@ -200,11 +200,17 @@ export async function listVisits(f: VisitFilter = {}) {
       personLast: people.lastName,
       staffFirst: staff.firstName,
       staffLast: staff.lastName,
+      staffTitle: staff.title,
+      agreementNumber: serviceAgreements.agreementNumber,
+      agreementStart: serviceAgreements.startDate,
+      agreementEnd: serviceAgreements.endDate,
+      authorizedUnits: serviceAgreements.authorizedUnits,
       editCount: sql<number>`(select count(*) from ${visitEdits} where ${visitEdits.visitId} = ${visits.id})::int`,
     })
     .from(visits)
     .innerJoin(people, eq(visits.personId, people.id))
     .innerJoin(staff, eq(visits.staffId, staff.id))
+    .innerJoin(serviceAgreements, eq(visits.serviceAgreementId, serviceAgreements.id))
     .where(where.length ? and(...where) : undefined)
     .orderBy(desc(visits.clockInAt))
     .limit(f.limit ?? 200);
@@ -550,4 +556,30 @@ export async function listNoteEvents(personId: string) {
     .orderBy(desc(visits.noteSavedAt), desc(visits.clockInAt))
     .limit(300);
   return rows;
+}
+
+/* ---------- notes export ---------- */
+
+/** Everything the printed service note needs beyond the visit row, fetched in a handful of queries for many visits at once. */
+export async function notesDetailForVisits(personId: string, visitIds: string[], dates: string[]) {
+  const db = await getDb();
+  if (visitIds.length === 0) return { responses: new Map<string, { goal: string; prompt: string; response: string }[]>(), admins: new Map<string, { name: string; dose: string; time: string; status: string }[]>(), edits: new Map<string, number>(), approvers: new Map<string, string>() };
+  const [resp, adm, ed, appr] = await Promise.all([
+    db.select({ visitId: goalResponses.visitId, response: goalResponses.response, prompt: goalQuestions.prompt, sortOrder: goalQuestions.sortOrder, goal: goals.title })
+      .from(goalResponses).innerJoin(goalQuestions, eq(goalResponses.questionId, goalQuestions.id)).innerJoin(goals, eq(goalQuestions.goalId, goals.id))
+      .where(inArray(goalResponses.visitId, visitIds)).orderBy(goals.createdAt, goalQuestions.sortOrder),
+    dates.length
+      ? db.select({ date: medicationAdministrations.scheduledDate, time: medicationAdministrations.scheduledTime, status: medicationAdministrations.status, name: medications.name, dose: medications.dose })
+          .from(medicationAdministrations).innerJoin(medications, eq(medicationAdministrations.medicationId, medications.id))
+          .where(and(eq(medicationAdministrations.personId, personId), inArray(medicationAdministrations.scheduledDate, dates))).orderBy(medicationAdministrations.scheduledTime)
+      : Promise.resolve([] as { date: string; time: string; status: string; name: string; dose: string }[]),
+    db.select({ visitId: visitEdits.visitId, n: count() }).from(visitEdits).where(inArray(visitEdits.visitId, visitIds)).groupBy(visitEdits.visitId),
+    db.select({ visitId: visits.id, name: sql<string>`coalesce(${staff.firstName} || ' ' || ${staff.lastName}, ${users.email})` })
+      .from(visits).innerJoin(users, eq(visits.approvedBy, users.id)).leftJoin(staff, eq(users.staffId, staff.id)).where(inArray(visits.id, visitIds)),
+  ]);
+  const responses = new Map<string, { goal: string; prompt: string; response: string }[]>();
+  for (const r of resp) responses.set(r.visitId, [...(responses.get(r.visitId) ?? []), { goal: r.goal, prompt: r.prompt, response: r.response }]);
+  const admins = new Map<string, { name: string; dose: string; time: string; status: string }[]>();
+  for (const a of adm) admins.set(a.date, [...(admins.get(a.date) ?? []), { name: a.name, dose: a.dose, time: a.time, status: a.status }]);
+  return { responses, admins, edits: new Map(ed.map((e) => [e.visitId, e.n])), approvers: new Map(appr.map((a) => [a.visitId, a.name])) };
 }
