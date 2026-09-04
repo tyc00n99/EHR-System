@@ -3,7 +3,7 @@ import { Font } from "@react-pdf/renderer";
 
 /**
  * The app's own faces for printed documents: Public Sans for text, Fraunces for signatures and
- * display, Inconsolata for numbers. Files live in src/fonts and are traced into the serverless
+ * display, Inconsolata for numbers, Great Vibes for signatures. Files live in src/fonts and are traced into the serverless
  * bundle by next.config (outputFileTracingIncludes). Registration is idempotent.
  */
 const dir = path.join(process.cwd(), "src", "fonts");
@@ -37,6 +37,7 @@ export function registerPdfFonts() {
       { src: path.join(dir, "Inconsolata-SemiBold.ttf"), fontWeight: 600 },
     ],
   });
+  Font.register({ family: "Great Vibes", src: path.join(dir, "GreatVibes-Regular.ttf") });
   // Keep words whole; the defaults hyphenate aggressively in narrow cells.
   Font.registerHyphenationCallback((word) => [word]);
 }
