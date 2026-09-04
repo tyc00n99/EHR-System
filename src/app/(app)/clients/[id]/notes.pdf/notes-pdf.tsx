@@ -164,14 +164,14 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 <View style={[s.bcell, { flex: 1.15 }]}><Text style={s.tk}>PMI #</Text><Text style={s.tvNum}>{person.pmi}</Text></View>
                 <View style={[s.bcell, { flex: 1.15 }]}><Text style={s.tk}>Date of birth</Text><Text style={s.tvNum}>{person.dob ? dNum.format(new Date(person.dob + "T12:00:00-05:00")) : "—"}</Text></View>
                 <View style={[s.bcell, { flex: 1.3 }]}><Text style={s.tk}>Date of service</Text><Text style={s.tvNum}>{dNum.format(v.clockInAt)}</Text></View>
-                <View style={[s.bcell, s.blast, { flex: 1.6 }]}><Text style={s.tk}>Time</Text><Text style={s.tvNum}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
+                <View style={[s.bcell, s.blast, { flex: 1.6 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}  ·  POS {v.placeOfService}</Text></View>
               </View>
               <View style={s.browLast}>
-                <View style={[s.bcell, { flex: 3 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}, <Text style={s.tsCode}>{code}</Text></Text></View>
+                <View style={[s.bcell, { flex: 2.8 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}, <Text style={s.tsCode}>{code}</Text></Text></View>
                 <View style={[s.bcell, { flex: 0.8 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
                 <View style={[s.bcell, { flex: 0.8 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-                <View style={[s.bcell, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}{v.staffTitle ? `, ${shortTitle(v.staffTitle)}` : ""}</Text></View>
-                <View style={[s.bcell, s.blast, { flex: 1.3 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}  ·  POS {v.placeOfService}</Text></View>
+                <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Time</Text><Text style={s.tvNum}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
+                <View style={[s.bcell, s.blast, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}{v.staffTitle ? `, ${shortTitle(v.staffTitle)}` : ""}</Text></View>
               </View>
             </View>
 
