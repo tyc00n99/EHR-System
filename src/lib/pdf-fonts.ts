@@ -37,6 +37,16 @@ export function registerPdfFonts() {
       { src: path.join(dir, "Inconsolata-SemiBold.ttf"), fontWeight: 600 },
     ],
   });
+  Font.register({
+    family: "EB Garamond",
+    fonts: [
+      { src: path.join(dir, "EBGaramond-400.ttf"), fontWeight: 400 },
+      { src: path.join(dir, "EBGaramond-400i.ttf"), fontWeight: 400, fontStyle: "italic" },
+      { src: path.join(dir, "EBGaramond-500.ttf"), fontWeight: 500 },
+      { src: path.join(dir, "EBGaramond-600.ttf"), fontWeight: 600 },
+      { src: path.join(dir, "EBGaramond-700.ttf"), fontWeight: 700 },
+    ],
+  });
   Font.register({ family: "Great Vibes", src: path.join(dir, "GreatVibes-Regular.ttf") });
   // Keep words whole; the defaults hyphenate aggressively in narrow cells.
   Font.registerHyphenationCallback((word) => [word]);
