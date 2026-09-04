@@ -64,19 +64,16 @@ const s = StyleSheet.create({
   eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottom: `1.2 solid ${INK}`, paddingBottom: 7 },
   eyebrow: { fontSize: 14, fontWeight: 600, color: INK, letterSpacing: -0.1 },
   eyebrowRight: { fontSize: 7.5, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 600 },
-  band: { backgroundColor: "#f5f4f0", borderRadius: 6, paddingHorizontal: 12, marginTop: 12, marginBottom: 18 },
-  brow: { flexDirection: "row", paddingVertical: 9, borderBottom: `0.75 solid #e3dfd5` },
-  browLast: { flexDirection: "row", paddingVertical: 9 },
+  band: { flexDirection: "row", paddingTop: 8, paddingBottom: 9, borderBottom: `0.75 solid ${LINE}`, marginBottom: 16 },
   blast: { borderRight: 0, paddingRight: 0, marginRight: 0 },
-  tvTime: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
-  tvName: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
-  tsCode: { fontSize: 8, color: MUTED, marginTop: 1.5, fontFamily: MONO, fontWeight: 600 },
-  bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid ${LINE}` },
+  tvName: { fontSize: 10, color: INK, lineHeight: 1.2, fontWeight: 600 },
+  tsCode: { fontSize: 7.5, color: MUTED, marginTop: 1.5, fontFamily: MONO, fontWeight: 600 },
+  bcell: { paddingRight: 7, marginRight: 7, borderRight: `0.75 solid ${LINE}` },
   tk: { fontSize: 6.3, letterSpacing: 1.1, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 600 },
-  tv: { fontSize: 9.5, color: INK, lineHeight: 1.25, fontWeight: 500 },
-  tvNum: { fontSize: 11, color: INK, lineHeight: 1.2, fontWeight: 600 },
+  tv: { fontSize: 9.5, color: INK, lineHeight: 1.2, fontWeight: 500 },
+  tvNum: { fontSize: 10, color: INK, lineHeight: 1.2, fontWeight: 600 },
   tvCode: { fontSize: 9.5, color: INK, fontFamily: MONO, fontWeight: 600, lineHeight: 1.25 },
-  ts: { fontSize: 7.5, color: MUTED, marginTop: 1 },
+  ts: { fontSize: 7.3, color: MUTED, marginTop: 1.5 },
   columns: { flexDirection: "row", gap: 24 },
   main: { flex: 1.9 },
   side: { flex: 1, borderLeft: `0.75 solid ${LINE}`, paddingLeft: 16 },
@@ -120,6 +117,7 @@ const hours = (min: number) => { const h = min / 60; return Number.isInteger(h) 
 const PLACE: Record<string, string> = { "12": "Home", "99": "Community", "11": "Office", "14": "Residence", "04": "Shelter" };
 const MED_STATUS: Record<string, string> = { given: "given", refused: "refused", held: "held", missed: "missed" };
 /** Short service names for the header band; the full name still appears in the app and on billing exports. */
+const shortTitle = (t: string) => t.replace(/^Direct support professional$/i, "DSP").replace(/^Designated (coordinator|manager)$/i, (m) => m);
 const shortService = (label: string) => label.replace(/^Individualized home supports/i, "IHS").replace(/^Individual community living support \(ICLS\)$/i, "ICLS").replace(/^Independent living skills/i, "ILS");
 
 function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
@@ -158,18 +156,13 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
             </View>
 
             <View style={s.band}>
-              <View style={s.brow}>
-                <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
-                <View style={[s.bcell, { flex: 1.4 }]}><Text style={s.tk}>Date of service</Text><Text style={s.tvNum}>{dNum.format(v.clockInAt)}</Text><Text style={s.ts}>{dDow.format(v.clockInAt)}</Text></View>
-                <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Time</Text><Text style={s.tvTime}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
-                <View style={[s.bcell, { flex: 0.6 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
-                <View style={[s.bcell, s.blast, { flex: 0.6 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-              </View>
-              <View style={s.browLast}>
-                <View style={[s.bcell, { flex: 2.1 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}</Text><Text style={s.tsCode}>{code}</Text></View>
-                <View style={[s.bcell, { flex: 1.4 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text>{v.staffTitle ? <Text style={s.ts}>{v.staffTitle}</Text> : null}</View>
-                <View style={[s.bcell, s.blast, { flex: 2.7 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>Place of service {v.placeOfService}</Text></View>
-              </View>
+              <View style={[s.bcell, { flex: 2.3 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text><Text style={s.ts}>PMI {person.pmi}{person.dob ? `  ·  DOB ${dNum.format(new Date(person.dob + "T12:00:00-05:00"))}` : ""}</Text></View>
+              <View style={[s.bcell, { flex: 1.6 }]}><Text style={s.tk}>Date and time</Text><Text style={s.tvNum}>{dNum.format(v.clockInAt)}</Text><Text style={s.ts}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
+              <View style={[s.bcell, { flex: 0.5 }]}><Text style={s.tk}>Hrs</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
+              <View style={[s.bcell, { flex: 0.55 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
+              <View style={[s.bcell, { flex: 1.8 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}</Text><Text style={s.tsCode}>{code}</Text></View>
+              <View style={[s.bcell, { flex: 1.25 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text><Text style={s.ts}>{v.staffTitle ? shortTitle(v.staffTitle) : " "}</Text></View>
+              <View style={[s.bcell, s.blast, { flex: 0.7 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}</Text><Text style={s.ts}>POS {v.placeOfService}</Text></View>
             </View>
 
             <View style={s.columns}>
