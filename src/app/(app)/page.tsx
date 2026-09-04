@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons";
 import type { ReactNode } from "react";
-import { Badge, Card, cx, Empty, LinkButton, Notice, StatTile, Table, Td, Th, Thead, Tr } from "@/components/kit";
-import { dashboardCounts, getOpenVisitForStaff, getStaff, listAgreementsWithUsage, listAssignmentsForStaff, listCredentials, listShifts, listStaff, listVisits, reviewQueue, staffPeriodTotals } from "@/db/queries";
-import { ReviewQueue, type QueueRow } from "./review-queue";
+import { Badge, Card, cx, Empty, LinkButton, Notice, StatTile } from "@/components/kit";
+import { dashboardCounts, getOpenVisitForStaff, getStaff, listAgreementsWithUsage, listAssignmentsForStaff, listCredentials, listShifts, listStaff, listVisits, staffPeriodTotals } from "@/db/queries";
 import { labelForCode } from "@/lib/hcpcs";
 import { requireUser } from "@/lib/auth";
 import { evaluateCompliance } from "@/lib/credentials";
@@ -152,22 +151,18 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
   const period = currentPayPeriod();
   const dayStart = startOfToday();
   const dayEnd = new Date(dayStart.getTime() + 86_400_000 - 1);
-  const [counts, visits, open, queue, todayShifts, weekShifts, agreements, staffRows] = await Promise.all([
+  const [counts, open, todayShifts, weekShifts, agreements, staffRows] = await Promise.all([
     dashboardCounts(period),
-    listVisits({ limit: 8 }),
     user.staffId ? getOpenVisitForStaff(user.staffId) : null,
-    reviewQueue(period.start, period.end),
     listShifts(dayStart, dayEnd),
     listShifts(dayStart, new Date(dayStart.getTime() + 7 * 86_400_000)),
     listAgreementsWithUsage(),
     listStaff(true),
   ]);
-  const row = (r: (typeof queue.open)[number]): QueueRow => ({ id: r.visit.id, person: `${r.personFirst} ${r.personLast}`, staff: `${r.staffFirst} ${r.staffLast}`, when: fmtDateTime(r.visit.clockInAt), units: r.visit.units, note: r.visit.shiftNote });
 
   const activeAgreements = agreements.filter((a) => a.agreement.status === "active");
   const authorized = activeAgreements.reduce((n, a) => n + a.agreement.authorizedUnits, 0);
   const used = activeAgreements.reduce((n, a) => n + a.unitsUsed, 0);
-  const unsigned = queue.unsigned.length;
   const first = user.staffName?.split(" ")[0];
   const steps = [
     { key: "clients", done: counts.active + counts.intake > 0 },
@@ -213,8 +208,8 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
         <div className="grid divide-y divide-line-soft sm:grid-cols-2 sm:divide-y-0 xl:grid-cols-4 xl:divide-x">
           <Metric label="Active clients" hint="Clients with status active. Intake clients are not counted." value={counts.active} note={`${counts.intake} in intake`} href="/clients" />
           <Metric label="Units this period" hint="15-minute units on completed notes in the current pay period." value={counts.periodUnits.toLocaleString()} of={`${authorized.toLocaleString()} authorized`} note={`${counts.periodVisits} visits${counts.open ? ` · ${counts.open} in progress` : ""}`} href="/visits" />
-          <Metric label="Notes approved" hint="Completed notes a supervisor has approved this period." value={queue.approved} of={queue.total} note={queue.total - queue.approved ? `${queue.total - queue.approved} waiting for review` : "All reviewed"} tone={queue.total - queue.approved ? "warn" : "ok"} href="/visits" />
-          <Metric label="Unsigned by client" hint="Completed notes without the client's signing code. These cannot be billed." value={unsigned} note={unsigned ? "Needs a signing code" : "Every note signed"} tone={unsigned ? "danger" : "ok"} href="/visits" />
+          <Metric label="Returned for correction" hint="Notes a supervisor sent back. Everything else is accepted when the caregiver submits it." value={counts.returned} note={counts.returned ? "Caregivers need to fix these" : "Nothing sent back"} tone={counts.returned ? "warn" : "ok"} href="/visits" />
+          <Metric label="Unsigned by client" hint="Completed notes without the client's signing code. These cannot be billed." value={counts.unsigned} note={counts.unsigned ? "Needs a signing code" : "Every note signed"} tone={counts.unsigned ? "danger" : "ok"} href="/visits" />
         </div>
         <div className="border-t border-line-soft px-5 py-2.5 text-[12.5px] text-muted-foreground">Pay period {period.label}. Authorizations used: {used.toLocaleString()} of {authorized.toLocaleString()} units across {activeAgreements.length} active agreement{activeAgreements.length === 1 ? "" : "s"}. <Link href="/billing" className="text-primary hover:underline">Billing</Link></div>
       </section>
@@ -223,27 +218,7 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
         <TodayBoard shifts={boardShifts} />
       </Card>
 
-      <div className="mb-6"><ReviewQueue data={{ awaitingApproval: queue.awaitingApproval.map(row), unsigned: queue.unsigned.map(row), missingNote: queue.missingNote.map(row), notStaffSigned: queue.notStaffSigned.map(row), open: queue.open.map(row), approved: queue.approved, total: queue.total }} /></div>
 
-      <Card title="Recent notes" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All notes</Link>}>
-        {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (
-          <Table>
-            <Thead><Th>Clock in</Th><Th>Client</Th><Th>Staff</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead>
-            <tbody>
-              {visits.map(({ visit: v, personFirst, personLast, staffFirst, staffLast }) => (
-                <Tr key={v.id}>
-                  <Td strong><Link href={`/?visit=${v.id}`} scroll={false} className="hover:underline">{fmtDateTime(v.clockInAt)}</Link></Td>
-                  <Td>{personFirst} {personLast}</Td>
-                  <Td>{staffFirst} {staffLast}</Td>
-                  <Td className="tabular-nums">{v.serviceCode}{v.modifiers.length ? ` ${v.modifiers.join(" ")}` : ""}</Td>
-                  <Td align="right">{v.units}</Td>
-                  <Td><span className="flex gap-1"><Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status.replace("_", " ")}</Badge>{v.manualEntry && <Badge tone="warn">manual</Badge>}{v.status === "completed" && !v.clientSignedAt && <Badge tone="danger">unsigned</Badge>}</span></Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </Card>
     </div>
   );
 }

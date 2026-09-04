@@ -23,8 +23,8 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
   const minutes = v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null;
   const serviceTypeId = r.program?.serviceTypeId ?? null;
   const office = user.role !== "dsp";
-  const locked = Boolean(v.approvedAt) && !office;
-  const docState = v.approvedAt ? "approved" : v.staffSignedAt ? "signed" : v.shiftNote ? "draft" : "empty";
+  const locked = v.status === "void";
+  const docState = v.returnedAt ? "returned" : v.approvedAt ? "accepted" : v.shiftNote ? "draft" : "empty";
 
   return (
     <div className="flex min-h-full flex-col">
@@ -41,7 +41,7 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
         <span className="text-muted-foreground">{s.firstName} {s.lastName}</span>
         <span className="ml-auto flex gap-1">
           <Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status.replace("_", " ")}</Badge>
-          <Badge tone={docState === "approved" ? "ok" : docState === "signed" ? "accent" : docState === "draft" ? "warn" : "neutral"}>{docState === "approved" ? "approved" : docState === "signed" ? "staff signed" : docState === "draft" ? "draft" : "no note"}</Badge>
+          <Badge tone={docState === "accepted" ? "ok" : docState === "returned" ? "warn" : docState === "draft" ? "warn" : "neutral"}>{docState === "accepted" ? "accepted" : docState === "returned" ? "returned" : docState === "draft" ? "draft" : "no note"}</Badge>
           {v.status === "completed" && (v.clientSignedAt ? <Badge tone="ok">client signed</Badge> : <Badge tone="danger">unsigned</Badge>)}
           {v.manualEntry && <Badge tone="warn">manual</Badge>}
         </span>
@@ -66,12 +66,12 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           questions={r.questions.map(({ q, goal }) => ({ id: q.id, prompt: q.prompt, goal: goal.title, response: r.responses.find((x) => x.questionId === q.id)?.response ?? "", note: r.responses.find((x) => x.questionId === q.id)?.note ?? "" }))}
         />
 
-        <SignaturePanel visitId={v.id} status={v.status} clientSignedAt={v.clientSignedAt ? fmtDateTime(v.clientSignedAt) : null} unsignedReason={v.clientUnsignedReason} staffSignedAt={v.staffSignedAt ? fmtDateTime(v.staffSignedAt) : null} approvedAt={v.approvedAt ? fmtDateTime(v.approvedAt) : null} approverEmail={r.approverEmail} canApprove={office} hasNote={Boolean(v.shiftNote)} />
+        <SignaturePanel visitId={v.id} status={v.status} clientSignedAt={v.clientSignedAt ? fmtDateTime(v.clientSignedAt) : null} unsignedReason={v.clientUnsignedReason} staffSignedAt={v.staffSignedAt ? fmtDateTime(v.staffSignedAt) : null} approvedAt={v.approvedAt ? fmtDateTime(v.approvedAt) : null} approverEmail={r.approverEmail} canApprove={office} hasNote={Boolean(v.shiftNote)} returnedAt={v.returnedAt ? fmtDateTime(v.returnedAt) : null} returnedBy={r.returnedByName} returnReason={v.returnReason} />
 
         <section className="text-[12.5px] text-muted-foreground">
           <div className="flex flex-wrap gap-x-4 gap-y-1"><span>Authorization {agreement.agreementNumber}</span><span>PMI {v.pmi}</span><span>{v.renderingIdType.toUpperCase()} {v.renderingId}</span><span>POS {v.placeOfService}</span>{edits.length > 0 && <span>{edits.length} edit{edits.length === 1 ? "" : "s"}</span>}</div>
           {v.manualEntry && <div className="mt-1">Manual entry: {v.manualEntryReason}</div>}
-          {v.approvedAt && <div className="mt-1 flex items-center gap-1 text-ok"><CheckCircle2 className="size-3.5" /> Approved {fmtDateTime(v.approvedAt)}{r.approverEmail ? ` by ${r.approverEmail}` : ""}</div>}
+          {v.returnedAt ? <div className="mt-1 text-warn">Returned for correction {fmtDateTime(v.returnedAt)}{v.returnReason ? `: ${v.returnReason}` : ""}</div> : v.approvedAt ? <div className="mt-1 flex items-center gap-1 text-ok"><CheckCircle2 className="size-3.5" /> Accepted {fmtDateTime(v.approvedAt)}{r.approverEmail ? ` by ${r.approverEmail}` : ""}</div> : null}
         </section>
       </div>
     </div>

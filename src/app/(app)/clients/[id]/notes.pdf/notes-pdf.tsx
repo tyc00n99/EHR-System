@@ -116,8 +116,6 @@ const s = StyleSheet.create({
 });
 
 const dNum = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: "America/Chicago" });
-const dDow = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "America/Chicago" });
-const dAbbr = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "America/Chicago" });
 const tm = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
 const dt = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
 const hours = (min: number) => { const h = min / 60; return Number.isInteger(h) ? String(h) : h.toFixed(2).replace(/0$/, ""); };

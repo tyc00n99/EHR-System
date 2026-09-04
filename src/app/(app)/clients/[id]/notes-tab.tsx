@@ -7,7 +7,7 @@ import { fmtDate } from "@/lib/format";
 const time = new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/Chicago" });
 const day = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "America/Chicago" });
 
-export interface NoteRow { id: string; clockInAt: Date; clockOutAt: Date | null; serviceCode: string; modifiers: string[]; units: number; status: string; note: string | null; interaction: string | null; skills: string[]; staff: string; staffSigned: boolean; clientSigned: boolean; approved: boolean; manual: boolean; edits: number; goalYes: number; goalNo: number }
+export interface NoteRow { id: string; clockInAt: Date; clockOutAt: Date | null; serviceCode: string; modifiers: string[]; units: number; status: string; returned: boolean; note: string | null; interaction: string | null; skills: string[]; staff: string; staffSigned: boolean; clientSigned: boolean; approved: boolean; manual: boolean; edits: number; goalYes: number; goalNo: number }
 
 export function NotesTab({ personId, rows, codes, filters, base }: { personId: string; rows: NoteRow[]; codes: { code: string; label: string }[]; filters: { code: string; from: string; to: string }; base: string }) {
   const q = new URLSearchParams({ ...(filters.code ? { code: filters.code } : {}), ...(filters.from ? { from: filters.from } : {}), ...(filters.to ? { to: filters.to } : {}) });
@@ -36,7 +36,7 @@ export function NotesTab({ personId, rows, codes, filters, base }: { personId: s
               <span className="tabular-nums text-muted-foreground">{time.format(r.clockInAt)}{r.clockOutAt ? ` – ${time.format(r.clockOutAt)}` : ""}</span>
               <span className="tabular-nums text-muted-foreground">{r.serviceCode} {r.modifiers.join(" ")} · {r.units} units</span>
               <span className="text-muted-foreground">· {r.staff}</span>
-              <span className="ml-auto flex gap-1"><Badge tone={r.approved ? "ok" : r.staffSigned ? "accent" : r.note ? "warn" : "neutral"}>{r.approved ? "approved" : r.staffSigned ? "staff signed" : r.note ? "draft" : "no note"}</Badge>{r.status === "completed" && !r.clientSigned && <Badge tone="danger">unsigned</Badge>}{r.manual && <Badge tone="warn">manual</Badge>}{r.edits > 0 && <Badge tone="warn">edited</Badge>}</span>
+              <span className="ml-auto flex gap-1"><Badge tone={r.returned ? "warn" : r.approved ? "ok" : r.staffSigned ? "accent" : r.note ? "warn" : "neutral"}>{r.returned ? "returned" : r.approved ? "accepted" : r.note ? "draft" : "no note"}</Badge>{r.status === "completed" && !r.clientSigned && <Badge tone="danger">unsigned</Badge>}{r.manual && <Badge tone="warn">manual</Badge>}{r.edits > 0 && <Badge tone="warn">edited</Badge>}</span>
             </div>
             <div className="grid gap-4 px-4 py-3 md:grid-cols-[1fr_200px]">
               <div>

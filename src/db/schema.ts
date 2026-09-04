@@ -343,8 +343,12 @@ export const visits = pgTable(
     activities: text("activities").array().notNull().default(sql`'{}'::text[]`),
     /** Staff attestation and supervisor approval of the documentation. */
     staffSignedAt: timestamp("staff_signed_at", { withTimezone: true }),
+    /** Set automatically when the caregiver submits. A supervisor can return the note instead. */
     approvedAt: timestamp("approved_at", { withTimezone: true }),
     approvedBy: uuid("approved_by").references(() => users.id),
+    returnedAt: timestamp("returned_at", { withTimezone: true }),
+    returnedBy: uuid("returned_by").references(() => users.id),
+    returnReason: text("return_reason"),
     /** Scheduled shift this visit fulfilled, when one existed. */
     shiftId: uuid("shift_id"),
     /** When and where the note was last saved, from the device that saved it. */

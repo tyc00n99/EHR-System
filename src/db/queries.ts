@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, gte, inArray, isNull, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNotNull, isNull, lte, sql, sum } from "drizzle-orm";
 import { getDb, schema } from "./index";
 
 const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
@@ -258,7 +258,10 @@ export async function dashboardCounts(period: { start: Date; end: Date }) {
     db.select({ n: count(), units: sum(visits.units) }).from(visits).where(and(gte(visits.clockInAt, period.start), lte(visits.clockInAt, period.end), eq(visits.status, "completed"))),
     db.select({ n: count() }).from(visits).where(and(eq(visits.manualEntry, true), eq(visits.evvStatus, "pending"))),
   ]);
-  return { active: active.n, intake: intake.n, open: open.n, periodVisits: inPeriod.n, periodUnits: Number(inPeriod.units ?? 0), manualPending: manual.n };
+  const inPeriodAnd = (...more: Parameters<typeof and>) => and(eq(visits.status, "completed"), gte(visits.clockInAt, period.start), lte(visits.clockInAt, period.end), ...more);
+  const [returned] = await db.select({ n: count() }).from(visits).where(inPeriodAnd(isNotNull(visits.returnedAt)));
+  const [unsigned] = await db.select({ n: count() }).from(visits).where(inPeriodAnd(isNull(visits.clientSignedAt)));
+  return { active: active.n, intake: intake.n, open: open.n, periodVisits: inPeriod.n, periodUnits: Number(inPeriod.units ?? 0), manualPending: manual.n, returned: returned.n, unsigned: unsigned.n };
 }
 
 export async function listAudit(limit = 200) {
@@ -395,15 +398,16 @@ export async function getVisitRecord(id: string) {
   const base = await getVisit(id);
   if (!base) return null;
   const db = await getDb();
-  const [questions, responses, meds, admins, program, approver] = await Promise.all([
+  const [questions, responses, meds, admins, program, approver, returnedByName] = await Promise.all([
     db.select({ q: goalQuestions, goal: goals }).from(goalQuestions).innerJoin(goals, eq(goalQuestions.goalId, goals.id)).where(and(eq(goals.personId, base.person.id), eq(goals.status, "active"), eq(goalQuestions.active, true))).orderBy(goals.createdAt, goalQuestions.sortOrder),
     db.select().from(goalResponses).where(eq(goalResponses.visitId, id)),
     db.select().from(medications).where(and(eq(medications.personId, base.person.id), eq(medications.active, true))).orderBy(medications.name),
     db.select().from(medicationAdministrations).where(and(eq(medicationAdministrations.personId, base.person.id), eq(medicationAdministrations.scheduledDate, base.visit.clockInAt.toISOString().slice(0, 10)))),
     base.visit.programId ? db.select().from(programs).where(eq(programs.id, base.visit.programId)).limit(1).then((r) => r[0] ?? null) : Promise.resolve(null),
     base.visit.approvedBy ? db.select({ email: users.email }).from(users).where(eq(users.id, base.visit.approvedBy)).limit(1).then((r) => r[0]?.email ?? null) : Promise.resolve(null),
+    base.visit.returnedBy ? db.select({ name: sql<string>`coalesce(${staff.firstName} || ' ' || ${staff.lastName}, ${users.email})` }).from(users).leftJoin(staff, eq(users.staffId, staff.id)).where(eq(users.id, base.visit.returnedBy)).limit(1).then((r) => r[0]?.name ?? null) : Promise.resolve(null),
   ]);
-  return { ...base, questions, responses, meds, admins, program, approverEmail: approver };
+  return { ...base, questions, responses, meds, admins, program, approverEmail: approver, returnedByName };
 }
 
 /* ---------- life plan ---------- */
@@ -516,19 +520,6 @@ export async function personFeed(personId: string, from: Date, to: Date): Promis
 }
 
 /** Office review queue for the current pay period. */
-export async function reviewQueue(from: Date, to: Date) {
-  const rows = await listVisits({ from, to, limit: 2000 });
-  const completed = rows.filter((r) => r.visit.status === "completed");
-  return {
-    awaitingApproval: completed.filter((r) => r.visit.staffSignedAt && !r.visit.approvedAt),
-    unsigned: completed.filter((r) => !r.visit.clientSignedAt),
-    missingNote: completed.filter((r) => !r.visit.shiftNote),
-    notStaffSigned: completed.filter((r) => r.visit.shiftNote && !r.visit.staffSignedAt),
-    open: rows.filter((r) => r.visit.status === "in_progress"),
-    approved: completed.filter((r) => r.visit.approvedAt).length,
-    total: completed.length,
-  };
-}
 
 export async function goalCountsForVisits(visitIds: string[]) {
   const db = await getDb();

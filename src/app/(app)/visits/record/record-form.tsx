@@ -7,7 +7,7 @@ import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/
 import { X } from "lucide-react";
 import { INTERACTION_LEVELS } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
-import { draftProgressReview, recordMedAdmin, saveDocumentation, setApproval, signVisitWithCode } from "../record-actions";
+import { acceptNote, draftProgressReview, recordMedAdmin, returnNote, saveDocumentation, signVisitWithCode } from "../record-actions";
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
@@ -126,8 +126,9 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
   );
 }
 
-export function SignaturePanel({ visitId, status, clientSignedAt, unsignedReason, staffSignedAt, approvedAt, approverEmail, canApprove, hasNote }: { visitId: string; status: string; clientSignedAt: string | null; unsignedReason: string | null; staffSignedAt: string | null; approvedAt: string | null; approverEmail: string | null; canApprove: boolean; hasNote: boolean }) {
+export function SignaturePanel({ visitId, status, clientSignedAt, unsignedReason, staffSignedAt, approvedAt, approverEmail, returnedAt, returnedBy, returnReason, canApprove, hasNote }: { visitId: string; status: string; clientSignedAt: string | null; unsignedReason: string | null; staffSignedAt: string | null; approvedAt: string | null; approverEmail: string | null; returnedAt: string | null; returnedBy: string | null; returnReason: string | null; canApprove: boolean; hasNote: boolean }) {
   const [code, setCode] = useState("");
+  const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
   const run = (fn: () => Promise<ActionState>) => start(async () => { const r = await fn(); if (r.errors || (r.message && /not|cannot|only|already/i.test(r.message))) toast.error(r.message ?? "Failed"); else toast.success(r.message ?? "Done"); });
   return (
@@ -142,17 +143,30 @@ export function SignaturePanel({ visitId, status, clientSignedAt, unsignedReason
           ) : <span className="text-muted-foreground">signs at clock-out.</span>}
         </li>
         <li className="flex flex-wrap items-center gap-2">
-          <Step done={Boolean(approvedAt)} /><span className="font-medium">Supervisor</span>
-          {approvedAt ? <span className="text-muted-foreground">approved {approvedAt}{approverEmail ? ` by ${approverEmail}` : ""}</span> : <span className="text-muted-foreground">not yet approved.</span>}
-          {canApprove && (approvedAt ? <Button variant="ghost" className="h-7 text-[12px]" disabled={pending} onClick={() => run(() => setApproval(visitId, false))}>Reopen</Button> : <Button className="h-7 text-[12px]" disabled={pending || status !== "completed" || !hasNote} onClick={() => run(() => setApproval(visitId, true))}>Approve</Button>)}
+          <Step done={Boolean(approvedAt)} tone={returnedAt ? "warn" : "ok"} /><span className="font-medium">Review</span>
+          {returnedAt ? (
+            <span className="text-warn">returned {returnedAt}{returnedBy ? ` by ${returnedBy}` : ""}{returnReason ? `: ${returnReason}` : ""}</span>
+          ) : approvedAt ? (
+            <span className="text-muted-foreground">accepted on submission{approverEmail ? `, re-accepted by ${approverEmail}` : ""}</span>
+          ) : (
+            <span className="text-muted-foreground">accepted once the caregiver submits.</span>
+          )}
+          {canApprove && hasNote && (returnedAt ? (
+            <Button className="h-7 text-[12px]" disabled={pending} onClick={() => run(() => acceptNote(visitId))}>Accept</Button>
+          ) : approvedAt ? (
+            <span className="flex items-center gap-1.5">
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="What needs fixing?" className="h-7 w-52 text-[12px]" />
+              <Button variant="outline" className="h-7 text-[12px]" disabled={pending || reason.trim().length < 3} onClick={() => run(async () => { const r = await returnNote(visitId, reason); if (!r.errors) setReason(""); return r; })}>Return</Button>
+            </span>
+          ) : null)}
         </li>
       </ul>
     </section>
   );
 }
 
-function Step({ done }: { done: boolean }) {
-  return <span className={cx("flex h-5 w-5 items-center justify-center rounded-full border", done ? "border-ok bg-ok text-white" : "border-line bg-page text-transparent")}><Check className="size-3" /></span>;
+function Step({ done, tone = "ok" }: { done: boolean; tone?: "ok" | "warn" }) {
+  return <span className={cx("flex h-5 w-5 items-center justify-center rounded-full border", done ? (tone === "warn" ? "border-warn bg-warn text-white" : "border-ok bg-ok text-white") : "border-line bg-page text-transparent")}><Check className="size-3" /></span>;
 }
 
 export function MedsDue({ visitId, personId, date, meds, admins, readOnly }: { visitId: string; personId: string; date: string; meds: { id: string; name: string; dose: string; times: string[] }[]; admins: { medicationId: string; time: string; status: string }[]; readOnly: boolean }) {

@@ -31,7 +31,6 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
   const v = record.visit;
   if (user.role === "dsp" && v.staffId !== user.staffId) return { message: "This is not your visit." };
   if (v.status === "void") return { message: "Voided visits cannot be documented." };
-  if (v.approvedAt && user.role === "dsp") return { message: "This record is approved. Ask a supervisor to reopen it." };
 
   const db = await getDb();
   await db.transaction(async (tx) => {
@@ -43,6 +42,12 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
       activities: d.activities,
       shiftNote: d.shiftNote || null,
       staffSignedAt: d.staffSign ? new Date() : v.staffSignedAt,
+      // Submitting accepts the note. Supervisors review in batches and return the ones they reject.
+      approvedAt: d.staffSign ? new Date() : v.approvedAt,
+      approvedBy: d.staffSign ? null : v.approvedBy,
+      returnedAt: d.staffSign ? null : v.returnedAt,
+      returnedBy: d.staffSign ? null : v.returnedBy,
+      returnReason: d.staffSign ? null : v.returnReason,
       noteSavedAt: new Date(),
       noteSavedBy: user.id,
       noteSavedLat: Number.isFinite(lat) && fd.get("lat") ? lat : v.noteSavedLat,
@@ -79,17 +84,32 @@ export async function signVisitWithCode(visitId: string, code: string): Promise<
   return { message: "Client signature recorded." };
 }
 
-/** Supervisor approval of the documentation. Reopening clears it. */
-export async function setApproval(visitId: string, approved: boolean): Promise<ActionState> {
+/**
+ * Notes are accepted when the caregiver submits them. A supervisor reviews in batches and returns
+ * the ones that need work; the caregiver fixes and resubmits, which accepts it again.
+ */
+export async function returnNote(visitId: string, reason: string): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const text = reason.trim();
+  if (text.length < 3) return { message: "Say what needs fixing so the caregiver can correct it." };
+  const db = await getDb();
+  const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
+  if (!v) return { message: "Visit not found." };
+  await audited(db, { userId: user.id }).update(visits, v.id, { approvedAt: null, approvedBy: null, returnedAt: new Date(), returnedBy: user.id, returnReason: text.slice(0, 400), updatedBy: user.id });
+  revalidateVisit(v.id, v.personId);
+  return { message: "Returned to the caregiver." };
+}
+
+/** Supervisor accepts a note they had returned. */
+export async function acceptNote(visitId: string): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
   if (!v) return { message: "Visit not found." };
-  if (approved && v.status !== "completed") return { message: "Only completed visits can be approved." };
-  if (approved && !v.shiftNote) return { message: "Add a progress review before approving." };
-  await audited(db, { userId: user.id }).update(visits, v.id, { approvedAt: approved ? new Date() : null, approvedBy: approved ? user.id : null, updatedBy: user.id });
+  if (!v.shiftNote) return { message: "Add a progress review first." };
+  await audited(db, { userId: user.id }).update(visits, v.id, { approvedAt: new Date(), approvedBy: user.id, returnedAt: null, returnedBy: null, returnReason: null, updatedBy: user.id });
   revalidateVisit(v.id, v.personId);
-  return { message: approved ? "Approved." : "Reopened for edits." };
+  return { message: "Accepted." };
 }
 
 /** Asks Claude to draft the progress review from the structured fields. The caregiver edits it before signing. */

@@ -4,7 +4,7 @@ import { complianceSummary, evaluateCompliance } from "./credentials";
 import { currentPayPeriod } from "./pay-period";
 
 export interface AttentionItem {
-  kind: "unsigned" | "manual" | "compliance" | "code" | "authorization" | "orientation" | "open" | "missed_shift";
+  kind: "unsigned" | "returned" | "manual" | "compliance" | "code" | "authorization" | "orientation" | "open" | "missed_shift";
   severity: "danger" | "warn" | "accent";
   title: string;
   detail: string;
@@ -29,6 +29,7 @@ export async function attentionItems(): Promise<AttentionItem[]> {
 
   for (const v of visits) {
     if (v.visit.status !== "completed") continue;
+    if (v.visit.returnedAt) items.push({ kind: "returned", severity: "warn", title: `Returned for correction · ${v.personFirst} ${v.personLast}`, detail: `${v.visit.returnReason ?? "Supervisor sent this note back"}`, href: `/visits?visit=${v.visit.id}` });
     if (!v.visit.clientSignedAt) items.push({ kind: "unsigned", severity: "danger", title: `Unsigned visit · ${v.personFirst} ${v.personLast}`, detail: `${v.staffFirst} ${v.staffLast} · ${v.visit.units} units · ${v.visit.clientUnsignedReason ?? "no reason recorded"}`, href: `/visits/${v.visit.id}` });
     if (v.visit.manualEntry && v.visit.evvStatus === "pending") items.push({ kind: "manual", severity: "warn", title: `Manual visit pending EVV evidence · ${v.personFirst} ${v.personLast}`, detail: v.visit.manualEntryReason ?? "", href: `/visits/${v.visit.id}` });
   }

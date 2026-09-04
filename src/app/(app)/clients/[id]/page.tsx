@@ -187,7 +187,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           base={`/clients/${id}`}
           filters={{ code: noteCode, from: noteFrom, to: noteTo }}
           codes={Array.from(new Map(agreements.map((a) => [a.agreement.serviceCode, { code: a.agreement.serviceCode, label: labelForCode(a.agreement.serviceCode, a.agreement.modifiers) }])).values())}
-          rows={noteRows.filter((r) => !noteCode || r.visit.serviceCode === noteCode).map(({ visit: v, staffFirst, staffLast, editCount }): NoteRow => ({ id: v.id, clockInAt: v.clockInAt, clockOutAt: v.clockOutAt, serviceCode: v.serviceCode, modifiers: v.modifiers, units: v.units, status: v.status, note: v.shiftNote, interaction: v.interactionLevel, skills: v.skills, staff: `${staffFirst} ${staffLast}`, staffSigned: Boolean(v.staffSignedAt), clientSigned: Boolean(v.clientSignedAt), approved: Boolean(v.approvedAt), manual: v.manualEntry, edits: editCount, goalYes: noteResponses.get(v.id)?.yes ?? 0, goalNo: noteResponses.get(v.id)?.no ?? 0 }))}
+          rows={noteRows.filter((r) => !noteCode || r.visit.serviceCode === noteCode).map(({ visit: v, staffFirst, staffLast, editCount }): NoteRow => ({ returned: Boolean(v.returnedAt), id: v.id, clockInAt: v.clockInAt, clockOutAt: v.clockOutAt, serviceCode: v.serviceCode, modifiers: v.modifiers, units: v.units, status: v.status, note: v.shiftNote, interaction: v.interactionLevel, skills: v.skills, staff: `${staffFirst} ${staffLast}`, staffSigned: Boolean(v.staffSignedAt), clientSigned: Boolean(v.clientSignedAt), approved: Boolean(v.approvedAt), manual: v.manualEntry, edits: editCount, goalYes: noteResponses.get(v.id)?.yes ?? 0, goalNo: noteResponses.get(v.id)?.no ?? 0 }))}
         />
       )}
 
