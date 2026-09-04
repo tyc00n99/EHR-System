@@ -4,7 +4,7 @@ import { labelForCode } from "@/lib/hcpcs";
 import { INTERACTION_LEVELS } from "@/lib/templates";
 
 /**
- * Daily service note, one per page, in the app's own faces (Public Sans, Inconsolata, Great Vibes for signatures).
+ * Daily service note, one per page. One type family throughout (Public Sans); Great Vibes is used only for the signatures.
  * A header table carries the identifying facts a county or auditor scans first; the narrative,
  * supports, and support-plan outcomes fill the wide column; a quiet sidebar holds the clinical
  * facts; the caregiver and the person served sign at the bottom.
@@ -57,7 +57,7 @@ export interface PdfNote {
 }
 
 const INK = "#1b1818", MUTED = "#5e5952", HINT = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
-const SANS = "Public Sans", MONO = "Inconsolata", SCRIPT = "Great Vibes";
+const SANS = "Public Sans", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
   page: { paddingTop: 42, paddingHorizontal: 48, paddingBottom: 54, fontSize: 9.5, fontFamily: SANS, color: INK, lineHeight: 1.4 },
@@ -69,12 +69,11 @@ const s = StyleSheet.create({
   browLast: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6 },
   blast: { borderRight: 0, paddingRight: 0, marginRight: 0 },
   tvName: { fontSize: 9.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
-  tsCode: { fontSize: 9, color: INK, fontFamily: MONO, fontWeight: 600 },
+  tsCode: { fontSize: 9, color: INK, fontWeight: 600, letterSpacing: 0.3 },
   bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid #e4e0d6` },
   tk: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, marginBottom: 1.5, fontWeight: 600 },
   tv: { fontSize: 9, color: INK, lineHeight: 1.15, fontWeight: 500 },
   tvNum: { fontSize: 9.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
-  tvCode: { fontSize: 9.5, color: INK, fontFamily: MONO, fontWeight: 600, lineHeight: 1.25 },
   ts: { fontSize: 7.3, color: MUTED, marginTop: 1.5 },
   columns: { flexDirection: "row", gap: 24 },
   main: { flex: 1.9 },
@@ -109,7 +108,7 @@ const s = StyleSheet.create({
   sigByEmpty: { fontSize: 6.5, color: HINT, letterSpacing: 0.6, fontWeight: 600 },
   sigName: { fontFamily: SCRIPT, fontSize: 22, color: INK, lineHeight: 1.2, marginTop: 1 },
   sigNameEmpty: { fontFamily: SCRIPT, fontSize: 22, color: LINE, lineHeight: 1.2, marginTop: 1 },
-  sigId: { fontSize: 6.5, color: HINT, fontFamily: MONO, marginTop: 3 },
+  sigId: { fontSize: 6.8, color: HINT, marginTop: 3, letterSpacing: 0.2 },
   sigK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 700, marginTop: 4 },
   sigV: { fontSize: 8, color: MUTED, marginTop: 1, lineHeight: 1.3 },
   footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 7, color: HINT, textAlign: "center" },
