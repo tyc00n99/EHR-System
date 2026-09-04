@@ -22,16 +22,15 @@ export default async function ReportsPage() {
   const todayLocal = chicago(new Date());
   const quarterStart = chicago(new Date(Date.now() - 91 * 86_400_000));
   const reports = [
-    { key: "visits", title: "Visit detail", desc: "Every completed visit with PMI, code, modifiers, units, rate, amount, rendering ID, GPS, signature and EVV status. The aggregator and claim source of truth.", file: "visits" },
     { key: "payroll", title: "Payroll hours", desc: "Hours, units, and gross pay by caregiver, with unsigned counts. Hand to payroll at the end of each period.", file: "payroll" },
   ];
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title="Reports" meta={<span>Exports by pay period. PDF for printing or sending to the county; CSV for Excel and your biller.</span>} />
+      <PageHeader title="Reports" meta={<span>Progress notes for the county, payroll by pay period. Claim-line exports live under Billing.</span>} />
       <Card title="Progress notes" description="Every note for one client, filtered by service type and date range. The same document the client's Notes tab downloads." className="mb-4">
         <NotesReport clients={clients} defaultFrom={quarterStart} defaultTo={todayLocal} />
       </Card>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4">
         {reports.map((r) => (
           <Card key={r.key} title={r.title} description={r.desc}>
             <ul className="divide-y divide-line-soft">
