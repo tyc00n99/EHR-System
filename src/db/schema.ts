@@ -331,6 +331,9 @@ export const visits = pgTable(
 
     /** True when any timestamp or location was keyed in rather than captured live. */
     manualEntry: boolean("manual_entry").notNull().default(false),
+    /** Set when someone confirms the paper or verbal evidence behind a manual entry is on file. */
+    manualEvidenceAt: timestamp("manual_evidence_at", { withTimezone: true }),
+    manualEvidenceBy: uuid("manual_evidence_by").references(() => users.id),
     manualEntryReason: text("manual_entry_reason"),
 
     tasks: jsonb("tasks").$type<VisitTask[]>().notNull().default([]),

@@ -9,6 +9,8 @@ export interface AttentionItem {
   title: string;
   detail: string;
   href: string;
+  /** Record this row points at, when the row can be fixed in bulk. */
+  id?: string;
 }
 
 /** Everything an office user should act on, across the whole business. */
@@ -30,8 +32,8 @@ export async function attentionItems(): Promise<AttentionItem[]> {
   for (const v of visits) {
     if (v.visit.status !== "completed") continue;
     if (v.visit.returnedAt) items.push({ kind: "returned", severity: "warn", title: `Returned for correction · ${v.personFirst} ${v.personLast}`, detail: `${v.visit.returnReason ?? "Supervisor sent this note back"}`, href: `/visits?visit=${v.visit.id}` });
-    if (!v.visit.clientSignedAt) items.push({ kind: "unsigned", severity: "danger", title: `Unsigned visit · ${v.personFirst} ${v.personLast}`, detail: `${v.staffFirst} ${v.staffLast} · ${v.visit.units} units · ${v.visit.clientUnsignedReason ?? "no reason recorded"}`, href: `/visits/${v.visit.id}` });
-    if (v.visit.manualEntry && v.visit.evvStatus === "pending") items.push({ kind: "manual", severity: "warn", title: `Manual visit pending EVV evidence · ${v.personFirst} ${v.personLast}`, detail: v.visit.manualEntryReason ?? "", href: `/visits/${v.visit.id}` });
+    if (!v.visit.clientSignedAt && !v.visit.clientUnsignedReason) items.push({ id: v.visit.id, kind: "unsigned", severity: "danger", title: `Unsigned visit · ${v.personFirst} ${v.personLast}`, detail: `${v.staffFirst} ${v.staffLast} · ${v.visit.units} units · ${v.visit.clientUnsignedReason ?? "no reason recorded"}`, href: `/visits/${v.visit.id}` });
+    if (v.visit.manualEntry && v.visit.evvStatus === "pending" && !v.visit.manualEvidenceAt) items.push({ id: v.visit.id, kind: "manual", severity: "warn", title: `Manual visit pending EVV evidence · ${v.personFirst} ${v.personLast}`, detail: v.visit.manualEntryReason ?? "", href: `/visits/${v.visit.id}` });
   }
   for (const s of staffRows) {
     const c = complianceSummary(evaluateCompliance(s.hireDate, creds.get(s.id) ?? []));
@@ -52,7 +54,7 @@ export async function attentionItems(): Promise<AttentionItem[]> {
     if (hours > 12) items.push({ kind: "open", severity: "danger", title: `Visit open ${Math.round(hours)} hours · ${o.staffFirst} ${o.staffLast} with ${o.personFirst} ${o.personLast}`, detail: "Probably a missed clock-out. Have the caregiver close it or a supervisor correct it.", href: `/visits/${o.visit.id}` });
   }
   for (const sh of recentShifts) {
-    if ((sh.shift.status === "scheduled" && sh.shift.endAt < new Date()) || sh.shift.status === "missed") items.push({ kind: "missed_shift", severity: "danger", title: `Missed shift · ${sh.staffFirst} ${sh.staffLast} with ${sh.personFirst} ${sh.personLast}`, detail: `Scheduled ${sh.shift.startAt.toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" })}. No clock-in was recorded.`, href: `/scheduling?week=${sh.shift.startAt.toISOString().slice(0, 10)}&shift=${sh.shift.id}` });
+    if ((sh.shift.status === "scheduled" && sh.shift.endAt < new Date()) || sh.shift.status === "missed") items.push({ id: sh.shift.id, kind: "missed_shift", severity: "danger", title: `Missed shift · ${sh.staffFirst} ${sh.staffLast} with ${sh.personFirst} ${sh.personLast}`, detail: `Scheduled ${sh.shift.startAt.toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" })}. No clock-in was recorded.`, href: `/scheduling?week=${sh.shift.startAt.toISOString().slice(0, 10)}&shift=${sh.shift.id}` });
   }
   const rank = { danger: 0, warn: 1, accent: 2 };
   return items.sort((a, b) => rank[a.severity] - rank[b.severity]);

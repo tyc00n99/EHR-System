@@ -90,13 +90,13 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
 
       <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi label="Billable this period" value={fmtMoney(now.revenue)} note={isCurrent ? `Day ${daysElapsed} of 14 · last period ${fmtMoney(before.revenue)}` : <Delta now={now.revenue} prev={before.revenue} money />} spark={sparkRev} href="/billing" />
-        <Kpi label="Gross margin" value={fmtMoney(now.margin)} note={`${pct(now.margin, now.revenue)}% of billable · labor ${fmtMoney(now.labor)}`} tone={now.margin < 0 ? "danger" : undefined} spark={sparkMargin} />
+        <Kpi label="Profit expectations" value={fmtMoney(now.margin)} note={`${pct(now.margin, now.revenue)}% of billable · gross pay ${fmtMoney(now.labor)}`} tone={now.margin < 0 ? "danger" : undefined} spark={sparkMargin} />
         <Kpi label="Caregiver hours" value={now.hours.toFixed(1)} note={`${now.visits} completed visit${now.visits === 1 ? "" : "s"} · ${now.units} units`} spark={sparkHours} href="/visits" />
         <Kpi label="Revenue at risk" value={fmtMoney(now.atRiskRevenue)} note={now.atRisk.length ? `${now.atRisk.length} visit${now.atRisk.length === 1 ? "" : "s"} unsigned or manual` : "Every visit signed and captured live"} tone={now.atRisk.length ? "warn" : "ok"} href="/attention" />
       </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Card title="Billable vs labor" description="Last six pay periods. Hover for the numbers." padded>
+        <Card title="What you bill against what you pay" description="Billable revenue and caregiver gross pay, last six pay periods. Hover for the numbers." padded>
           <TrendChart points={trend.map(({ p, s }) => ({ label: p.label.split(" – ")[0], revenue: s.revenue, labor: s.labor, current: p.index === period.index }))} />
         </Card>
 
