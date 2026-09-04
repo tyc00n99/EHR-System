@@ -18,7 +18,7 @@ export function ActivityChart({ points, unit = "units" }: { points: DayPoint[]; 
   const line = points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.units).toFixed(1)}`).join(" ");
   const ticks = [0, 0.5, 1].map((f) => Math.round(max * f));
   const h = hover != null ? points[hover] : null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
   return (
     <div className="relative">
