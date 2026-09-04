@@ -2,6 +2,7 @@ import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { Organization, Person, VisitTask } from "@/db/schema";
 import { labelForCode } from "@/lib/hcpcs";
 import { INTERACTION_LEVELS } from "@/lib/templates";
+import { timesheetPages, type TimesheetGroup } from "./timesheet-pdf";
 
 /**
  * Daily service note, one per page. One type family throughout (Public Sans); Great Vibes is used only for the signatures.
@@ -136,13 +137,14 @@ function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: 
   );
 }
 
-export function NotesPdf({ org, person, rows, range }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string } }) {
+export function NotesPdf({ org, person, rows, range, summary }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string }; summary?: { groups: TimesheetGroup[]; from: Date; to: Date } }) {
   const personName = `${person.firstName} ${person.lastName}`;
   const first = person.preferredName || person.firstName;
   const subject = `${rows.length} note${rows.length === 1 ? "" : "s"}${range.code ? ` · ${labelForCode(range.code, [])}` : ""}${range.from ? ` · from ${range.from}` : ""}${range.to ? ` to ${range.to}` : ""}`;
 
   return (
     <Document title={`Service notes · ${personName}`} author={org.name} subject={subject}>
+      {summary && summary.groups.length > 0 ? timesheetPages(org, person, summary.groups, summary.from, summary.to) : null}
       {rows.length === 0 && (
         <Page size="LETTER" style={s.page}><Text style={s.eyebrow}>Daily Service Note</Text><Text style={{ marginTop: 10, color: MUTED }}>No notes match this filter for {personName}.</Text></Page>
       )}

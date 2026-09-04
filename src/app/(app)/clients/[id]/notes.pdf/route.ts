@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { fromLocalInput } from "@/lib/format";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { NotesPdf, type PdfNote } from "./notes-pdf";
+import type { TimesheetGroup } from "./timesheet-pdf";
 
 const chicagoDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 
@@ -36,6 +37,22 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     approvedByName: detail.approvers.get(r.visit.id) ?? null,
   }));
   registerPdfFonts();
-  const buffer = await renderToBuffer(NotesPdf({ org, person, rows: notes, range: { from, to, code } }));
+  // A week or more of notes gets a service summary in front: one page per caregiver and service.
+  const span = notes.length ? { start: notes[notes.length - 1].clockInAt, end: notes[0].clockInAt } : null;
+  const rangeStart = from ? fromLocalInput(`${from}T00:00`) : span?.start;
+  const rangeEnd = to ? fromLocalInput(`${to}T00:00`) : span?.end;
+  const days = rangeStart && rangeEnd ? Math.round((rangeEnd.getTime() - rangeStart.getTime()) / 86_400_000) + 1 : 0;
+  let summary: { groups: TimesheetGroup[]; from: Date; to: Date } | undefined;
+  if (days >= 7 && notes.length > 0 && rangeStart && rangeEnd) {
+    const byGroup = new Map<string, TimesheetGroup>();
+    for (const n of [...notes].reverse()) {
+      const k = `${n.staff}|${n.serviceCode}|${n.modifiers.join(" ")}`;
+      const g = byGroup.get(k) ?? { staff: n.staff, renderingIdType: n.renderingIdType, renderingId: n.renderingId, serviceCode: n.serviceCode, modifiers: n.modifiers, agreementNumber: n.agreementNumber, agreementStart: n.agreementStart, agreementEnd: n.agreementEnd, authorizedUnits: n.authorizedUnits, notes: [] };
+      g.notes.push(n);
+      byGroup.set(k, g);
+    }
+    summary = { groups: [...byGroup.values()], from: rangeStart, to: rangeEnd };
+  }
+  const buffer = await renderToBuffer(NotesPdf({ org, person, rows: notes, range: { from, to, code }, summary }));
   return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="service-notes-${person.lastName}-${person.firstName}${from ? `-${from}` : ""}${to ? `-${to}` : ""}.pdf"` } });
 }
