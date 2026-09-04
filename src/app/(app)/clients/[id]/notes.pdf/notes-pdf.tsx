@@ -56,7 +56,7 @@ export interface PdfNote {
   edits: number;
 }
 
-const INK = "#1b1818", MUTED = "#5e5952", HINT = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
+const INK = "#1b1818", MUTED = "#1b1818", HINT = "#1b1818", GHOST = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
 const SANS = "EB Garamond", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
@@ -105,13 +105,13 @@ const s = StyleSheet.create({
   sigBox: { borderLeft: `2 solid ${NAVY}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBoxEmpty: { borderLeft: `2 solid ${LINE}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBy: { fontSize: 6.5, color: NAVY, letterSpacing: 0.6, fontWeight: 600 },
-  sigByEmpty: { fontSize: 6.5, color: HINT, letterSpacing: 0.6, fontWeight: 600 },
+  sigByEmpty: { fontSize: 6.5, color: GHOST, letterSpacing: 0.6, fontWeight: 600 },
   sigName: { fontFamily: SCRIPT, fontSize: 22, color: INK, lineHeight: 1.2, marginTop: 1 },
   sigNameEmpty: { fontFamily: SCRIPT, fontSize: 22, color: LINE, lineHeight: 1.2, marginTop: 1 },
   sigId: { fontSize: 6.8, color: HINT, marginTop: 3, letterSpacing: 0.2 },
   sigK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 700, marginTop: 4 },
   sigV: { fontSize: 8, color: MUTED, marginTop: 1, lineHeight: 1.3 },
-  footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 7, color: HINT, textAlign: "center" },
+  footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 7, color: GHOST, textAlign: "center" },
 });
 
 const dNum = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: "America/Chicago" });
@@ -193,7 +193,7 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 <Text style={s.label}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
                 {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {first} on this date.</Text> : v.outcomes.map((o, j) => (
                   <View key={j} style={s.outcomeRow} wrap={false}>
-                    <Text style={[s.mark, o.response === "yes" ? s.ok : o.response === "no" ? s.danger : { color: HINT }]}>{o.response === "yes" ? "YES" : o.response === "no" ? "NO" : "N/A"}</Text>
+                    <Text style={[s.mark, o.response === "yes" ? s.ok : o.response === "no" ? s.danger : { color: GHOST }]}>{o.response === "yes" ? "YES" : o.response === "no" ? "NO" : "N/A"}</Text>
                     <Text style={{ flex: 1 }}><Text style={s.prompt}>{o.prompt}</Text>{"\n"}<Text style={s.goal}>{o.goal}</Text></Text>
                   </View>
                 ))}
