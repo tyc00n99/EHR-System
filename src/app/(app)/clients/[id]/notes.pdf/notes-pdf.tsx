@@ -144,7 +144,6 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
 
   return (
     <Document title={`Service notes · ${personName}`} author={org.name} subject={subject}>
-      {summary && summary.groups.length > 0 ? timesheetPages(org, person, summary.groups, summary.from, summary.to) : null}
       {rows.length === 0 && (
         <Page size="LETTER" style={s.page}><Text style={s.eyebrow}>Daily Service Note</Text><Text style={{ marginTop: 10, color: MUTED }}>No notes match this filter for {personName}.</Text></Page>
       )}
@@ -248,6 +247,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
           </Page>
         );
       })}
+      {summary && summary.groups.length > 0 ? timesheetPages(org, person, summary.groups, summary.from, summary.to) : null}
     </Document>
   );
 }
