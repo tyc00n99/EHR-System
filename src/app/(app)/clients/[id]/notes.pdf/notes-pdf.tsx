@@ -86,7 +86,7 @@ const s = StyleSheet.create({
   prompt: { fontSize: 9.5, lineHeight: 1.3 },
   goal: { fontSize: 7.5, color: HINT, lineHeight: 1.3 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
-  tag: { fontSize: 8, color: NAVY, backgroundColor: "#e8ecf6", border: "0.6 solid #c5cde6", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
+  tag: { fontSize: 8, color: "#3f3f9a", backgroundColor: "#ecebf8", border: "0.6 solid #d2d1ee", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
   fact: { marginBottom: 10 },
   factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
   factV: { fontSize: 9.5, fontWeight: 500 },
