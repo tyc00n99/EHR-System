@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     { key: "visits", label: "Visits", width: 60, align: "right" as const, mono: true },
     { key: "hours", label: "Hours", width: 70, align: "right" as const, mono: true },
     { key: "units", label: "Units", width: 60, align: "right" as const, mono: true },
-    ...(admin ? [{ key: "rate", label: "Hourly rate", width: 80, align: "right" as const, mono: true }, { key: "cost", label: "Labor cost", width: 90, align: "right" as const, mono: true }] : []),
+    ...(admin ? [{ key: "rate", label: "Hourly rate", width: 80, align: "right" as const, mono: true }, { key: "cost", label: "Gross pay", width: 90, align: "right" as const, mono: true }] : []),
     { key: "unsigned", label: "Unsigned", width: 70, align: "right" as const, mono: true },
   ];
   const buffer = await renderToBuffer(ReportPdf({
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       { label: "Caregivers", value: String(by.length) },
       { label: "Hours", value: hours(totalMinutes) },
       { label: "Units", value: by.reduce((n, r) => n + r.units, 0).toLocaleString() },
-      ...(admin ? [{ label: "Labor cost", value: money(totalCost) }] : []),
+      ...(admin ? [{ label: "Gross pay", value: money(totalCost) }] : []),
     ],
     columns,
     rows: by.map((r) => ({ name: r.name, visits: r.visits, hours: hours(r.minutes), units: r.units, rate: money(r.rate), cost: money((r.minutes / 60) * r.rate), unsigned: r.unsigned })),

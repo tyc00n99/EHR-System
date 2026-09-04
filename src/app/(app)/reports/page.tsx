@@ -11,7 +11,7 @@ export default async function ReportsPage() {
   const periods = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(currentPayPeriod().index - i));
   const reports = [
     { key: "visits", title: "Visit detail", desc: "Every completed visit with PMI, code, modifiers, units, rate, amount, rendering ID, GPS, signature and EVV status. The aggregator and claim source of truth.", file: "visits" },
-    { key: "payroll", title: "Payroll hours", desc: "Hours, units, and labor cost by caregiver, with unsigned counts. Hand to payroll at the end of each period.", file: "payroll" },
+    { key: "payroll", title: "Payroll hours", desc: "Hours, units, and gross pay by caregiver, with unsigned counts. Hand to payroll at the end of each period.", file: "payroll" },
   ];
   return (
     <div className="mx-auto max-w-4xl">

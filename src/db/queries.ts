@@ -314,7 +314,7 @@ export interface PeriodLine {
   evvStatus: string;
 }
 
-/** Completed visits in a range with the numbers needed to price them: billable revenue and labor cost. */
+/** Completed visits in a range with the numbers needed to price them: billable revenue and gross pay. */
 export async function periodLines(from: Date, to: Date): Promise<PeriodLine[]> {
   const db = await getDb();
   const rows = await db

@@ -21,9 +21,9 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
     <div className="relative">
       <div className="mb-2 flex items-center gap-4 px-1 text-[12px] text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-1)" }} />Billable</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-2)" }} />Labor cost</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-2)" }} />Gross pay</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Billable revenue and labor cost by pay period" onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Billable revenue and gross pay by pay period" onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>
             <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="var(--gray-200)" strokeWidth="1" />
@@ -47,7 +47,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
         <div className="pointer-events-none absolute top-8 rounded-md border border-line bg-card px-3 py-2 text-[12px] shadow-[var(--shadow-md)]" style={{ left: `${(x(hover) / W) * 100}%`, transform: hover > points.length / 2 ? "translateX(-110%)" : "translateX(12px)" }}>
           <div className="font-medium text-text-strong">{h.label}</div>
           <div className="mt-1 flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-1)" }} />Billable {money(h.revenue)}</div>
-          <div className="flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-2)" }} />Labor {money(h.labor)}</div>
+          <div className="flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-2)" }} />Gross pay {money(h.labor)}</div>
           <div className="mt-1 text-muted-foreground">Margin {money(h.revenue - h.labor)}</div>
         </div>
       )}

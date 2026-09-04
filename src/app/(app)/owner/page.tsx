@@ -159,7 +159,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
       <Card title="Caregivers this period" description="Revenue each caregiver generated against what they cost">
         {byStaff.length === 0 ? <Empty icon="staff" title="No completed visits in this pay period" /> : (
           <Table>
-            <Thead><Th>Caregiver</Th><Th align="right">Visits</Th><Th align="right">Hours</Th><Th align="right">Billable</Th><Th align="right">Labor</Th><Th align="right">Margin</Th><Th>Unsigned</Th></Thead>
+            <Thead><Th>Caregiver</Th><Th align="right">Visits</Th><Th align="right">Hours</Th><Th align="right">Billable</Th><Th align="right">Gross pay</Th><Th align="right">Margin</Th><Th>Unsigned</Th></Thead>
             <tbody>
               {byStaff.map((r) => (
                 <Tr key={r.name}>
