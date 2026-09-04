@@ -9,6 +9,13 @@ import { NotesReport, type NotesReportClient } from "./notes-report";
 
 export const metadata = { title: "Reports" };
 
+const chicago = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+/** Default window for the progress-notes picker: the last quarter, in Chicago dates. */
+function defaultNoteRange() {
+  const now = Date.now();
+  return { todayLocal: chicago(new Date(now)), quarterStart: chicago(new Date(now - 91 * 86_400_000)) };
+}
+
 export default async function ReportsPage() {
   await requireUser(["admin", "supervisor"]);
   const periods = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(currentPayPeriod().index - i));
@@ -18,9 +25,7 @@ export default async function ReportsPage() {
     for (const a of agreements) if (a.agreement.personId === p.id) codes.set(a.agreement.serviceCode, labelForCode(a.agreement.serviceCode, a.agreement.modifiers));
     return { id: p.id, name: `${p.lastName}, ${p.firstName}`, pmi: p.pmi, services: [...codes.entries()].map(([code, label]) => ({ code, label })) };
   });
-  const chicago = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
-  const todayLocal = chicago(new Date());
-  const quarterStart = chicago(new Date(Date.now() - 91 * 86_400_000));
+  const { todayLocal, quarterStart } = defaultNoteRange();
   const reports = [
     { key: "payroll", title: "Payroll hours", desc: "Hours, units, and gross pay by caregiver, with unsigned counts. Hand to payroll at the end of each period.", file: "payroll" },
   ];
