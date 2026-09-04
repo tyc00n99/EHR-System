@@ -180,7 +180,7 @@ function TimesheetPage({ org, person, g, days }: { org: Organization; person: Pe
         <Text style={s.saItem}><Text style={s.strong}>Notes in period</Text>  {g.notes.length}</Text>
       </View>
 
-      <Text style={s.ackTitle}>Acknowledgement and required signatures for the person served</Text>
+      <Text style={s.ackTitle} minPresenceAhead={60}>Acknowledgement and required signatures for the person served</Text>
       <Text style={s.ackText}>I have reviewed this summary and the daily notes attached to it. I certify that I received these services on the dates and during the times shown, from the caregiver named here, as authorized in my support plan. If any date or time above is wrong I will draw a line through it and will not sign until it is corrected. I understand that knowingly giving false information for Medical Assistance payment is a crime.</Text>
       <View style={s.sigGrid}>
         <View style={s.sigHead}>
@@ -197,7 +197,7 @@ function TimesheetPage({ org, person, g, days }: { org: Organization; person: Pe
         </View>
       </View>
 
-      <Text style={s.ackTitle}>Acknowledgement and required signatures for the caregiver</Text>
+      <Text style={s.ackTitle} minPresenceAhead={60}>Acknowledgement and required signatures for the caregiver</Text>
       <Text style={s.ackText}>I certify and swear under penalty of law that I have accurately reported on this summary the hours I actually worked, the services I provided, and the dates and times worked. I understand that misreporting my hours is fraud for which I could face criminal prosecution and civil proceedings.</Text>
       <View style={s.sigGrid}>
         <View style={s.sigHead}>

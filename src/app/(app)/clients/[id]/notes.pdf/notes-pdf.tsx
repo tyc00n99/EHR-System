@@ -129,7 +129,7 @@ const shortService = (label: string) => label.replace(/,\s*1:\d$/, "").replace(/
 
 function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
   return (
-    <View style={s.fact}>
+    <View style={s.fact} wrap={false}>
       <Text style={s.factK}>{k}</Text>
       <Text style={[s.factV, tone === "ok" ? s.ok : tone === "danger" ? s.danger : {}]}>{v}</Text>
       {sub ? <Text style={s.factS}>{sub}</Text> : null}
@@ -181,17 +181,17 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
 
             <View style={s.columns}>
               <View style={s.main}>
-                <Text style={s.label}>Service narrative</Text>
+                <Text style={s.label} minPresenceAhead={46}>Service narrative</Text>
                 <Text style={s.narrative}>{v.shiftNote?.trim() || "No narrative was documented for this service."}</Text>
 
                 {supports.length > 0 && (
-                  <>
+                  <View wrap={false}>
                     <Text style={s.label}>Supports provided</Text>
                     <View style={[s.tags, { marginBottom: 14 }]}>{supports.map((x) => <Text key={x} style={s.tag}>{x}</Text>)}</View>
-                  </>
+                  </View>
                 )}
 
-                <Text style={s.label}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
+                <Text style={s.label} minPresenceAhead={46}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
                 {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {first} on this date.</Text> : v.outcomes.map((o, j) => (
                   <View key={j} style={s.outcomeRow} wrap={false}>
                     <Text style={[s.mark, o.response === "yes" ? s.ok : o.response === "no" ? s.danger : { color: GHOST }]}>{o.response === "yes" ? "YES" : o.response === "no" ? "NO" : "N/A"}</Text>
@@ -202,7 +202,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
 
               <View style={s.side}>
                 <Fact k="Level of assistance" v={level ? level[1] : "Not documented"} sub={level ? level[2] : undefined} />
-                <View style={s.fact}>
+                <View style={s.fact} wrap={false}>
                   <Text style={s.factK}>Daily activities</Text>
                   {v.activities.length === 0 ? <Text style={s.factS}>None selected</Text> : v.activities.map((a, j) => <Text key={j} style={s.activity}>•  {a}</Text>)}
                 </View>
