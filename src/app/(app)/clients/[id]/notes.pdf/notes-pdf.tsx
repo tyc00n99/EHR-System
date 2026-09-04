@@ -99,6 +99,11 @@ const s = StyleSheet.create({
   sigs: { flexDirection: "row", gap: 24 },
   sig: { flex: 1 },
   ackText: { fontSize: 7.2, color: MUTED, lineHeight: 1.4, marginTop: 6 },
+  evv: { flexDirection: "row", backgroundColor: "#f5f4f0", borderRadius: 5, paddingHorizontal: 11, paddingTop: 6, paddingBottom: 7, marginTop: 12 },
+  evvCell: { paddingRight: 10, marginRight: 10, borderRight: `0.75 solid #e4e0d6` },
+  evvValue: { fontSize: 9, color: INK, fontWeight: 600, lineHeight: 1.2 },
+  evvSub: { fontSize: 7.2, color: MUTED, marginTop: 1.5, lineHeight: 1.3 },
+  evvMono: { fontSize: 7.2, color: MUTED, marginTop: 1.5, fontFamily: MONO },
   sigBox: { borderLeft: `2 solid ${NAVY}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBoxEmpty: { borderLeft: `2 solid ${LINE}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
   sigBy: { fontSize: 6.5, color: NAVY, letterSpacing: 0.6, fontWeight: 600 },
@@ -204,7 +209,6 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
                 </View>
                 <Fact k="Medication administration" v={v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`} sub={v.meds.length ? v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("\n") : undefined} tone={medsIssues.length ? "danger" : undefined} />
                 <Fact k="Incidents" v="None reported" />
-                <Fact k="Visit verification" v={v.manualEntry ? "Manual entry" : "EVV, GPS at clock-in and clock-out"} sub={v.manualEntry ? v.manualEntryReason ?? undefined : v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}` : undefined} tone={v.manualEntry ? undefined : "ok"} />
                 {v.edits > 0 && <Fact k="Corrections" v={`${v.edits} after signing`} sub="Detail in the audit log" />}
               </View>
             </View>
@@ -232,6 +236,29 @@ export function NotesPdf({ org, person, rows, range }: { org: Organization; pers
               <View style={s.sigs}>
                 <Text style={[s.ackText, { flex: 1 }]}>Caregiver: I certify and swear under penalty of law that I have accurately reported on this service note the hours I actually worked, the services I provided, and the dates and times worked. I understand that misreporting my hours is fraud for which I could face criminal prosecution and civil proceedings.</Text>
                 <Text style={[s.ackText, { flex: 1 }]}>Client: Review this note for accuracy before signing. If any date or time above was not received from the Caregiver, do not sign; tell the provider so it can be corrected. It is a crime to provide false information on caregiver billings for Medical Assistance payment. By signing below I swear and verify that the time and services entered above are accurate and were performed by the Caregiver named on this note as specified in my support plan.</Text>
+              </View>
+
+              <View style={s.evv}>
+                <View style={[s.evvCell, { flex: 1.5 }]}>
+                  <Text style={s.tk}>Visit verification</Text>
+                  <Text style={[s.evvValue, v.manualEntry ? {} : s.ok]}>{v.manualEntry ? "Manual entry" : "Electronic visit verification"}</Text>
+                  <Text style={s.evvSub}>{v.manualEntry ? v.manualEntryReason ?? "Reason not recorded" : "GPS captured at clock-in and clock-out"}</Text>
+                </View>
+                <View style={[s.evvCell, { flex: 1.15 }]}>
+                  <Text style={s.tk}>Clock in</Text>
+                  <Text style={s.evvValue}>{tm.format(v.clockInAt)}</Text>
+                  <Text style={s.evvMono}>{v.clockInLat != null ? `${v.clockInLat.toFixed(4)}, ${v.clockInLng?.toFixed(4)}${v.clockInAccuracyM ? ` ±${Math.round(v.clockInAccuracyM)} m` : ""}` : "no location"}</Text>
+                </View>
+                <View style={[s.evvCell, { flex: 1.15 }]}>
+                  <Text style={s.tk}>Clock out</Text>
+                  <Text style={s.evvValue}>{v.clockOutAt ? tm.format(v.clockOutAt) : "—"}</Text>
+                  <Text style={s.evvMono}>{v.clockOutLat != null ? `${v.clockOutLat.toFixed(4)}, ${v.clockOutLng?.toFixed(4)}${v.clockOutAccuracyM ? ` ±${Math.round(v.clockOutAccuracyM)} m` : ""}` : "no location"}</Text>
+                </View>
+                <View style={[s.evvCell, s.blast, { flex: 1.3 }]}>
+                  <Text style={s.tk}>Note saved</Text>
+                  <Text style={s.evvValue}>{v.noteSavedAt ? dt.format(v.noteSavedAt) : "—"}</Text>
+                  <Text style={s.evvMono}>{v.noteSavedLat != null ? `${v.noteSavedLat.toFixed(4)}, ${v.noteSavedLng?.toFixed(4)}` : "no device location"}{v.edits > 0 ? ` · ${v.edits} correction${v.edits === 1 ? "" : "s"}` : ""}</Text>
+                </View>
               </View>
             </View>
 
