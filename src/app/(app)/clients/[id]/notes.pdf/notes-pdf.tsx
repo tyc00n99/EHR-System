@@ -56,7 +56,7 @@ export interface PdfNote {
   edits: number;
 }
 
-const INK = "#1b1818", MUTED = "#5e5952", HINT = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e", PAPER = "#f4f3ef";
+const INK = "#1b1818", MUTED = "#5e5952", HINT = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
 const SANS = "Public Sans", MONO = "Inconsolata", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
@@ -86,7 +86,7 @@ const s = StyleSheet.create({
   prompt: { fontSize: 9.5, lineHeight: 1.3 },
   goal: { fontSize: 7.5, color: HINT, lineHeight: 1.3 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
-  tag: { fontSize: 8, color: INK, backgroundColor: PAPER, paddingVertical: 2.5, paddingHorizontal: 6, borderRadius: 3, fontWeight: 500 },
+  tag: { fontSize: 8, color: NAVY, backgroundColor: "#e8ecf6", border: "0.6 solid #c5cde6", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
   fact: { marginBottom: 10 },
   factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
   factV: { fontSize: 9.5, fontWeight: 500 },
