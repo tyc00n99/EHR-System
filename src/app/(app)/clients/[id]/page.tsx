@@ -153,7 +153,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             </Card>
           </div>
           <div className="min-w-0 space-y-4">
-            <Card title="Client workspace" description="Care documents and current service information, one step away." padded>
+            <Card title="Client workspace" description="Notes, the support plan and other files, and the authorizations behind them." padded>
               <div className="flex flex-wrap gap-2"><LinkButton href={`/clients/${id}?tab=notes`}>View notes · {noteCount}</LinkButton><LinkButton href={`/clients/${id}?tab=files`} variant="outline">Plans & files · {documents.length}</LinkButton><LinkButton href={`/clients/${id}?tab=lifeplan`} variant="outline">Life plan</LinkButton>{manage && !person.signatureCodeHash && <LinkButton href={`/clients/${id}?tab=contacts`} variant="outline">Set signing code</LinkButton>}</div>
             </Card>
             <div className="grid gap-3 sm:grid-cols-3">

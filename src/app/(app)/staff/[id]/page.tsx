@@ -100,7 +100,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "login" && user.role === "admin" && (
-        <div className="max-w-md"><Card title="Login" description="Access to this system. Role controls what they can see." padded><LoginPanel staffId={id} login={login} defaultEmail={s.email ?? ""} isSelf={login?.id === user.id} /></Card></div>
+        <div className="max-w-md"><Card title="Login" description="Administrators see everything including pay rates. Supervisors see clients and notes. Caregivers see only the people assigned to them." padded><LoginPanel staffId={id} login={login} defaultEmail={s.email ?? ""} isSelf={login?.id === user.id} /></Card></div>
       )}
     </div>
   );

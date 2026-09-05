@@ -16,7 +16,7 @@ export const RULES = {
   },
   units: {
     title: "How units are counted",
-    body: "A unit is 15 minutes. The app converts clocked time using the 8-minute rule: a leftover of 8 minutes or more earns another unit, less than 8 earns nothing. A 3 hour 10 minute service bills 13 units, not 12.5.",
+    body: "A unit is 15 minutes. The app converts clocked time with the 8-minute rule. A leftover of 8 minutes or more earns another unit, and less than 8 earns nothing, so a 3 hour 10 minute service bills 13 units rather than 12.5.",
     cite: "DHS provider manual, unit-based services",
   },
   code: {

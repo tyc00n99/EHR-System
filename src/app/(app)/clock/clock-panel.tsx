@@ -67,7 +67,7 @@ function ClientSignature({ error, reasonError }: { error?: string; reasonError?:
         <span>The person is unable to sign right now</span>
       </label>
       {unable && (
-        <Field label="Why" error={reasonError} className="mt-3" hint="A supervisor reviews unsigned visits.">
+        <Field label="Why" error={reasonError} className="mt-3" hint="The note goes to a supervisor unsigned, and cannot be billed until the client signs or this reason is accepted.">
           <Textarea name="unableReason" required className="min-h-20" placeholder="Asleep at end of shift; guardian not present" />
         </Field>
       )}

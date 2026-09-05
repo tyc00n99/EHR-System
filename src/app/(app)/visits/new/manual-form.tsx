@@ -39,7 +39,7 @@ export function ManualVisitForm({ agreements, staff }: { agreements: AgreementOp
         <Field label="Clock-out latitude" error={e.clockOutLat} className="md:col-span-3"><Input name="clockOutLat" type="number" step="any" required /></Field>
         <Field label="Clock-out longitude" error={e.clockOutLng} className="md:col-span-3"><Input name="clockOutLng" type="number" step="any" required /></Field>
       </FormSection>
-      <FormSection title="Evidence" description="Both are exported with the visit.">
+      <FormSection title="Evidence" description="The reason and the note both travel to the aggregator and stay in the record.">
         <Field label="Why is this being entered manually?" error={e.manualEntryReason} className="col-span-2 md:col-span-6"><Input name="manualEntryReason" required placeholder="Phone died; times confirmed with guardian by text" /></Field>
         <Field label="Shift note" error={e.shiftNote} className="col-span-2 md:col-span-6"><Textarea name="shiftNote" required /></Field>
       </FormSection>

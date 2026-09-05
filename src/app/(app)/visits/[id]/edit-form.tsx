@@ -21,7 +21,7 @@ export function VisitEditForm({ visitId, defaults }: { visitId: string; defaults
       </div>
       <Field label="Shift note" error={e.shiftNote}><Textarea name="shiftNote" defaultValue={defaults.shiftNote} /></Field>
       <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-        <Field label="Reason for edit" error={e.reason} hint="Exported to the aggregator with the note"><Input name="reason" required placeholder="What was wrong and how the correct value was confirmed" /></Field>
+        <Field label="Reason for edit" error={e.reason} hint="Kept in the note history and sent to the aggregator, so say what changed and why"><Input name="reason" required placeholder="What was wrong and how the correct value was confirmed" /></Field>
         <Button type="submit" disabled={pending} className="h-9 md:mb-[22px]">{pending ? "Saving…" : "Save edit"}</Button>
       </div>
     </form>
