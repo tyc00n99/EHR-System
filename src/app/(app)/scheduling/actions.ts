@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, gte, lte, ne, or } from "drizzle-orm";
+import { and, eq, gt, gte, lt, lte, ne, or } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
@@ -27,7 +27,7 @@ async function checkEligibility(staffId: string, personId: string): Promise<stri
 
 export async function createShifts(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
-  const parsed = shiftSchema.safeParse(formToObject(fd));
+  const parsed = shiftSchema.safeParse({ ...formToObject(fd), weekdays: fd.getAll("weekdays[]").map(String) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const d = parsed.data;
   const agreement = await getAgreement(d.serviceAgreementId);
@@ -35,17 +35,28 @@ export async function createShifts(_prev: ActionState, fd: FormData): Promise<Ac
   const problem = await checkEligibility(d.staffId, d.personId);
   if (problem) return { errors: { staffId: problem } };
   const db = await getDb();
-  const seriesId = d.repeatWeeks > 1 ? randomUUID() : null;
+  // The chosen weekdays, or just the weekday of the start date when none are ticked.
+  const first = new Date(d.date + "T12:00:00Z");
+  const days = d.weekdays.length ? [...new Set(d.weekdays)].sort((a, b) => a - b) : [first.getUTCDay()];
+  const dates: string[] = [];
+  const weekStart = new Date(first); weekStart.setUTCDate(weekStart.getUTCDate() - first.getUTCDay());
+  for (let week = 0; week < d.repeatWeeks; week++) {
+    for (const wd of days) {
+      const day = new Date(weekStart); day.setUTCDate(weekStart.getUTCDate() + week * 7 + wd);
+      const iso = day.toISOString().slice(0, 10);
+      if (iso < d.date || iso > agreement.endDate) continue;
+      dates.push(iso);
+    }
+  }
+  if (dates.length === 0) return { errors: { date: "That combination lands on no dates before the agreement ends." } };
+  const seriesId = dates.length > 1 ? randomUUID() : null;
   const created: string[] = [];
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
-    for (let i = 0; i < d.repeatWeeks; i++) {
-      const day = new Date(d.date + "T12:00:00Z"); day.setUTCDate(day.getUTCDate() + 7 * i);
-      const iso = day.toISOString().slice(0, 10);
+    for (const iso of dates) {
       const startAt = fromLocalInput(`${iso}T${d.start}`), endAt = fromLocalInput(`${iso}T${d.end}`);
-      if (iso > agreement.endDate) break;
       // overlap check for the caregiver
-      const clash = await tx.select({ id: shifts.id }).from(shifts).where(and(eq(shifts.staffId, d.staffId), ne(shifts.status, "cancelled"), or(and(lte(shifts.startAt, startAt), gte(shifts.endAt, startAt)), and(lte(shifts.startAt, endAt), gte(shifts.endAt, endAt))))).limit(1);
+      const clash = await tx.select({ id: shifts.id }).from(shifts).where(and(eq(shifts.staffId, d.staffId), ne(shifts.status, "cancelled"), or(and(lte(shifts.startAt, startAt), gt(shifts.endAt, startAt)), and(lt(shifts.startAt, endAt), gte(shifts.endAt, endAt)), and(gte(shifts.startAt, startAt), lte(shifts.endAt, endAt)))));
       if (clash.length) continue;
       const row = await w.insert(shifts, { personId: d.personId, staffId: d.staffId, serviceAgreementId: d.serviceAgreementId, startAt, endAt, note: d.note ?? null, seriesId, createdBy: user.id });
       created.push(row.id);

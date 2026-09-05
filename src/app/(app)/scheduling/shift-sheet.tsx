@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Badge, Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
+import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
 import type { ActionState } from "@/lib/validation";
 import { cancelShift, createShifts, markMissed } from "./actions";
 
@@ -16,6 +16,8 @@ function useClose(params: string[]) {
   const router = useRouter(); const pathname = usePathname(); const sp = useSearchParams();
   return () => { const n = new URLSearchParams(sp.toString()); params.forEach((p) => n.delete(p)); router.replace(n.size ? `${pathname}?${n}` : pathname, { scroll: false }); };
 }
+
+const DAYS: [number, string][] = [[0, "Sun"], [1, "Mon"], [2, "Tue"], [3, "Wed"], [4, "Thu"], [5, "Fri"], [6, "Sat"]];
 
 export function ShiftSheet({ shift, office }: { shift: { id: string; status: string; start: string; end: string; note: string | null; seriesId: string | null; client: string; personId: string; staff: string; staffId: string; service: string; agreementNumber: string; visitId: string | null }; office: boolean }) {
   const close = useClose(["shift"]);
@@ -55,6 +57,7 @@ export function NewShiftSheet({ defaultDate, staff, agreements }: { defaultDate:
   const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => { const r = await createShifts(p, fd); if (r.message && !r.errors) { toast.success(r.message); close(); } return r; }, {});
   const people = useMemo(() => Array.from(new Map(agreements.map((a) => [a.personId, a.personName])).entries()), [agreements]);
   const [personId, setPersonId] = useState(people[0]?.[0] ?? "");
+  const [weekdays, setWeekdays] = useState<number[]>([]);
   const options = agreements.filter((a) => a.personId === personId);
   const e = state.errors ?? {};
   return (
@@ -72,7 +75,22 @@ export function NewShiftSheet({ defaultDate, staff, agreements }: { defaultDate:
             <Field label="Start" error={e.start}><Input name="start" type="time" defaultValue="09:00" required /></Field>
             <Field label="End" error={e.end}><Input name="end" type="time" defaultValue="12:00" required /></Field>
           </div>
-          <Field label="Repeat weekly for" error={e.repeatWeeks} hint="Stops at the agreement end date. Skips weeks where the caregiver is already booked."><Select name="repeatWeeks" defaultValue="1">{[1, 2, 4, 8, 12, 26].map((n) => <option key={n} value={n}>{n === 1 ? "Just this once" : `${n} weeks`}</option>)}</Select></Field>
+          <div>
+            <span className="mb-1.5 block text-[13px] font-medium text-text">Days of the week</span>
+            <div className="flex flex-wrap gap-1.5">
+              {DAYS.map(([n, label]) => {
+                const on = weekdays.includes(n);
+                return (
+                  <label key={n} className={cx("cursor-pointer select-none rounded-full border px-3 py-1.5 text-[13px] font-medium", on ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
+                    <input type="checkbox" name="weekdays[]" value={n} checked={on} onChange={() => setWeekdays((cur) => (cur.includes(n) ? cur.filter((x) => x !== n) : [...cur, n]))} className="sr-only" />
+                    {label}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-[13px] text-muted-foreground">{weekdays.length === 0 ? "Leave these clear to use the day of the date above." : `Every ${[...weekdays].sort((a, b) => a - b).map((n) => DAYS[n][1]).join(", ")}, for the number of weeks below.`}</p>
+          </div>
+          <Field label="How many weeks" error={e.repeatWeeks} hint="Stops at the agreement end date. Skips any slot where the caregiver is already booked."><Select name="repeatWeeks" defaultValue="1">{[1, 2, 4, 8, 12, 26].map((n) => <option key={n} value={n}>{n === 1 ? "Just this week" : `${n} weeks`}</option>)}</Select></Field>
           <Field label="Note for the caregiver" error={e.note}><Textarea name="note" className="min-h-14" /></Field>
           <div className="flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Scheduling…" : "Schedule"}</Button><Button type="button" variant="ghost" onClick={close}>Cancel</Button></div>
         </form>

@@ -301,6 +301,8 @@ export const shiftSchema = z
     start: z.string().regex(/^\d{2}:\d{2}$/, "Start time"),
     end: z.string().regex(/^\d{2}:\d{2}$/, "End time"),
     repeatWeeks: z.coerce.number().int().min(1).max(26).default(1),
+    /** 0=Sunday. Empty means the weekday of the start date. */
+    weekdays: z.array(z.coerce.number().int().min(0).max(6)).max(7).default([]),
     note: z.string().max(500).optional(),
   })
   .refine((s) => s.end > s.start, { message: "End must be after start", path: ["end"] });
