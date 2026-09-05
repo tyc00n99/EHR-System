@@ -4,6 +4,10 @@ import "./globals.css";
 import { DEFAULT_THEME, THEME_BOOT } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
+const montserrat = localFont({ variable: "--font-montserrat", src: [
+  { path: "../fonts/Montserrat-400.ttf", weight: "400" },
+  { path: "../fonts/Montserrat-500.ttf", weight: "500" },
+] });
 const publicSans = localFont({ variable: "--font-public-sans", src: [
   { path: "../fonts/PublicSans-Regular.ttf", weight: "400" },
   { path: "../fonts/PublicSans-Medium.ttf", weight: "500" },
@@ -29,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", publicSans.variable, fraunces.variable, inconsolata.variable)}>
+    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", publicSans.variable, fraunces.variable, inconsolata.variable, montserrat.variable)}>
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         {children}
