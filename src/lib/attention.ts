@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { countOpenVisits, listAgreementsWithUsage, listAllCredentials, listPeople, listShifts, listStaff, listVisits, listAssignmentsForStaff } from "@/db/queries";
 import { complianceSummary, evaluateCompliance } from "./credentials";
 import { currentPayPeriod } from "./pay-period";
@@ -14,7 +15,7 @@ export interface AttentionItem {
 }
 
 /** Everything an office user should act on, across the whole business. */
-export async function attentionItems(): Promise<AttentionItem[]> {
+export const attentionItems = cache(async function attentionItems(): Promise<AttentionItem[]> {
   const period = currentPayPeriod();
   const today = new Date().toISOString().slice(0, 10);
   const in60 = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
@@ -58,4 +59,4 @@ export async function attentionItems(): Promise<AttentionItem[]> {
   }
   const rank = { danger: 0, warn: 1, accent: 2 };
   return items.sort((a, b) => rank[a.severity] - rank[b.severity]);
-}
+});

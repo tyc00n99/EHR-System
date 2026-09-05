@@ -485,3 +485,29 @@ kbd { font-family: var(--font-mono); }
     @apply font-sans;
   }
 }
+/* Care workspace refresh: restrained surfaces, readable labels, clear actions. */
+:root {
+  --font-display: var(--font-sans);
+  --radius-btn: 0.5rem;
+}
+:root[data-theme="tide"] {
+  --nav: #f8fafb;
+  --nav-group: #607381;
+  --nav-active: #e2f1ef;
+  --nav-cta: #e2f1ef;
+  --nav-cta-border: #c6dfda;
+  --text-muted: #526575;
+  --text-hint: #697d8d;
+  --primary: #176b64;
+  --primary-hover: #10564f;
+  --primary-soft: #e2f1ef;
+  --blue-500: #237b73;
+  --ring: #237b73;
+  --radius: 0.75rem;
+}
+h1, h2 { font-weight: 650; }
+.figure { font-family: var(--font-sans); font-weight: 650; }
+.tabular-nums { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

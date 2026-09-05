@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ChevronsUpDown } from "lucide-react";
 
 const SECTIONS: [string, string][] = [
-  ["/owner", "Owner insights"], ["/attention", "Needs attention"], ["/clients", "Clients"], ["/clock", "Clock in / out"], ["/visits", "Notes & EVV"], ["/scheduling", "Scheduling"],
+  ["/owner", "Owner insights"], ["/attention", "Review queue"], ["/clients", "Clients"], ["/clock", "Clock in / out"], ["/visits", "Notes & EVV"], ["/scheduling", "Scheduling"],
   ["/billing", "Billing"], ["/staff", "Staff"], ["/compliance", "Compliance"], ["/reports", "Reports"], ["/sites", "Sites & programs"], ["/services", "245D services"],
   ["/settings", "Settings"], ["/audit", "Audit log"], ["/agreements", "Authorizations"], ["/me", "My profile"], ["/search", "Search"],
 ];

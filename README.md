@@ -2,6 +2,8 @@
 
 Electronic health record for Minnesota 245D-licensed providers of home and community-based services.
 
+See [UI-UX-UPDATE.md](UI-UX-UPDATE.md) for the interface changes, setup notes, and validation limits.
+
 ## Run it
 
 ```bash

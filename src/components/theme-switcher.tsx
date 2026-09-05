@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Palette } from "lucide-react";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
-export const DEFAULT_THEME = "hubble";
+export const DEFAULT_THEME = "tide";
 const STORAGE_KEY = "ehr.theme.v2";
 
 export const THEMES = [

@@ -40,9 +40,9 @@ function age(dob: string) {
 }
 
 function Ring({ used, total, size = 40 }: { used: number; total: number; size?: number }) {
-  const p = Math.min(100, Math.round((used / total) * 100));
+  const p = total > 0 ? Math.min(100, Math.max(0, Math.round((used / total) * 100))) : 0;
   const r = (size - 5) / 2, c = 2 * Math.PI * r;
-  const color = p >= 90 ? "var(--danger)" : p >= 75 ? "var(--warn)" : "var(--accent)";
+  const color = p >= 90 ? "var(--danger)" : p >= 75 ? "var(--warn)" : "var(--primary)";
   return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0" aria-label={`${p}% used`}><circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--gray-200)" strokeWidth="4" /><circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="4" strokeDasharray={`${(p / 100) * c} ${c}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} /></svg>;
 }
 
@@ -99,17 +99,17 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const active = agreements.filter((a) => a.agreement.status === "active");
   const unitsLeft = active.reduce((n, a) => n + (a.agreement.authorizedUnits - a.unitsUsed), 0);
   const periodVisits = visits.filter(({ visit: v }) => v.clockInAt >= current.start && v.status === "completed");
-  const unsigned = visits.filter(({ visit: v }) => v.status === "completed" && !v.clientSignedAt).length;
+  const unsigned = visits.filter(({ visit: v }) => v.status === "completed" && !v.clientSignedAt && !v.clientUnsignedReason).length;
 
   const tabs = [
     { key: "overview", label: "Overview" },
-    { key: "feed", label: "Feed" },
+    { key: "feed", label: "Activity" },
     { key: "lifeplan", label: "Life plan", count: goals.filter((g) => g.goal.status === "active").length },
     { key: "notes", label: "Notes", count: noteCount },
     { key: "authorizations", label: "Authorizations", count: active.length },
     { key: "files", label: "Plans & files", count: documents.length },
     { key: "medical", label: "Medical", count: meds.filter((m) => m.active).length || undefined },
-    { key: "contacts", label: "Contacts" },
+    { key: "contacts", label: "Care team & contacts" },
     ...(user.role === "admin" ? [{ key: "history", label: "History", count: noteCount }] : []),
   ];
 
@@ -121,34 +121,41 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         avatar={<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">{person.firstName[0]}{person.lastName[0]}</span>}
         title={fullName(person)}
         chips={<>{manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}{!person.signatureCodeHash && person.status === "active" && <Badge tone="danger">no signing code</Badge>}{person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-muted-foreground">discharged {fmtDate(person.dischargedOn)}</span>}</>}
-        subtitle={<><span className="tabular-nums">PMI {person.pmi}</span><span className="text-hint">·</span><span>{person.waiverProgram} waiver</span><span className="text-hint">·</span><span>{age(person.dob)} years</span><span className="text-hint">·</span><span>{person.county} County</span>{person.serviceStartDate && <><span className="text-hint">·</span><span>Client since {fmtDate(person.serviceStartDate)}</span></>}{team.length > 0 && <><span className="text-hint">·</span><span>Team: {team.map((t) => `${t.staff.firstName} ${t.staff.lastName}`).join(", ")}</span></>}</>}
+        subtitle={<><span className="tabular-nums">PMI {person.pmi}</span><span className="text-hint">·</span><span>{person.waiverProgram} waiver</span><span className="text-hint">·</span><span>{age(person.dob)} years</span><span className="text-hint">·</span><span>{person.county} County</span>{person.serviceStartDate && <><span className="text-hint">·</span><span>Client since {fmtDate(person.serviceStartDate)}</span></>}</>}
         actions={<>{user.staffId && <LinkButton href="/clock" variant="primary"><Icon.clock size={14} />Clock in</LinkButton>}{manage && <LinkButton href={`/clients/${id}/edit`} variant="outline">Edit</LinkButton>}</>}
       />
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
 
       {tab === "overview" && (
-        <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+        <div className="grid gap-4 xl:grid-cols-[310px_minmax(0,1fr)]">
           <div className="space-y-4">
-            <Card title="Profile" padded>
-              <Properties labelWidth={124} items={[
-                { icon: "calendar", label: "Born", value: fmtDate(person.dob) },
+            <Card title="At a glance" actions={<Link href={`/clients/${id}?tab=contacts`} className="text-xs font-medium text-primary">Contacts →</Link>} padded>
+              <Properties labelWidth={100} items={[
+                { icon: "calendar", label: "Date of birth", value: fmtDate(person.dob) },
                 { icon: "id", label: "PMI #", value: <span className="tabular-nums">{person.pmi}</span> },
                 { icon: "catalog", label: "Waiver", value: person.waiverProgram },
                 { icon: "pin", label: "Address", value: address || null },
-                { icon: "phone", label: "Phone", value: person.phone },
+                { icon: "phone", label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="text-primary hover:underline">{person.phone}</a> : null },
                 { icon: "mail", label: "Email", value: person.email ? <a href={`mailto:${person.email}`} className="text-primary hover:underline">{person.email}</a> : null },
                 { icon: "user", label: "Case manager", value: person.caseManagerName },
                 { icon: "flag", label: "Service start", value: fmtDate(person.serviceStartDate) || null },
               ]} />
             </Card>
+            <Contact title="Emergency contact" name={person.emergencyContactName} sub={person.emergencyContactRelationship} phone={person.emergencyContactPhone} />
+            <Card title="Care team" actions={<Link href={`/clients/${id}?tab=contacts`} className="text-xs font-medium text-primary">View all →</Link>} padded>
+              {team.filter((t) => t.assignment.active).length === 0 ? <p className="text-sm text-muted-foreground">No active caregivers assigned.</p> : <ul className="space-y-3">{team.filter((t) => t.assignment.active).slice(0, 3).map((t) => <li key={t.assignment.id} className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm font-medium">{t.staff.firstName} {t.staff.lastName}</span><Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge></li>)}</ul>}
+            </Card>
             {manage && !person.medicationSupport && meds.length === 0 && <div className="rounded-xl border border-dashed border-line px-4 py-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
             <Card title={track ? `Planning deadlines · ${track}` : "Planning deadlines"} titleAfter={<Rule name="planning" />} padded>
-              {deadlines.length === 0 ? <p className="text-[13px] text-muted-foreground">{person.serviceStartDate ? "Add a service agreement with a program to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
-                <ul className="space-y-2.5">{deadlines.map((d) => { const overdue = d.due < new Date(); return <li key={d.id} className="text-[13px]"><div className={cx("font-medium tabular-nums", overdue ? "text-danger" : "text-text-strong")}>{fmtDate(d.due)}{overdue && <span className="ml-1.5 font-normal">overdue</span>}</div><div className="text-text">{d.label}</div><div className="text-xs text-muted-foreground">{d.cite}</div></li>; })}</ul>
+              {deadlines.length === 0 ? <p className="text-[13px] text-muted-foreground">{person.serviceStartDate ? "Add an agreement with a service type to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
+                <ul className="space-y-2.5"><li className="text-xs text-muted-foreground">Calculated dates; verify completion in Plans & files.</li>{deadlines.map((d) => { const overdue = d.due < new Date(); return <li key={d.id} className="text-[13px]"><div className={cx("font-medium tabular-nums", overdue ? "text-danger" : "text-text-strong")}>{fmtDate(d.due)}{overdue && <span className="ml-1.5 font-normal">date passed</span>}</div><div className="text-text">{d.label}</div><div className="text-xs text-muted-foreground">{d.cite}</div></li>; })}</ul>
               )}
             </Card>
           </div>
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
+            <Card title="Client workspace" description="Care documents and current service information, one step away." padded>
+              <div className="flex flex-wrap gap-2"><LinkButton href={`/clients/${id}?tab=notes`}>View notes · {noteCount}</LinkButton><LinkButton href={`/clients/${id}?tab=files`} variant="outline">Plans & files · {documents.length}</LinkButton><LinkButton href={`/clients/${id}?tab=lifeplan`} variant="outline">Life plan</LinkButton>{manage && !person.signatureCodeHash && <LinkButton href={`/clients/${id}?tab=contacts`} variant="outline">Set signing code</LinkButton>}</div>
+            </Card>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-line bg-card px-4 py-3 shadow-[var(--shadow-sm)]"><div className="text-[12.5px] font-medium text-muted-foreground">Units remaining</div><div className="figure mt-1 text-[24px] text-text-strong">{unitsLeft.toLocaleString()}</div><div className="text-[12.5px] text-muted-foreground">across {active.length} active authorization{active.length === 1 ? "" : "s"}</div></div>
               <div className="rounded-lg border border-line bg-card px-4 py-3 shadow-[var(--shadow-sm)]"><div className="text-[12.5px] font-medium text-muted-foreground">This pay period</div><div className="figure mt-1 text-[24px] text-text-strong">{periodVisits.reduce((n, r) => n + r.visit.units, 0)} <span className="font-sans text-[13px] font-normal text-muted-foreground">units</span></div><div className="text-[12.5px] text-muted-foreground">{periodVisits.length} completed note{periodVisits.length === 1 ? "" : "s"}</div></div>
