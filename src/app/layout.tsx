@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inconsolata, Public_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { DEFAULT_THEME, THEME_BOOT } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
-const publicSans = Public_Sans({ variable: "--font-public-sans", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], weight: "variable", axes: ["opsz", "SOFT"] });
-const inconsolata = Inconsolata({ variable: "--font-inconsolata", subsets: ["latin"], weight: ["400", "500", "600"] });
+const publicSans = localFont({ variable: "--font-public-sans", src: [
+  { path: "../fonts/PublicSans-Regular.ttf", weight: "400" },
+  { path: "../fonts/PublicSans-Medium.ttf", weight: "500" },
+  { path: "../fonts/PublicSans-SemiBold.ttf", weight: "600" },
+  { path: "../fonts/PublicSans-Bold.ttf", weight: "700" },
+] });
+const fraunces = localFont({ variable: "--font-fraunces", src: "../fonts/Fraunces9pt-Regular.ttf" });
+const inconsolata = localFont({ variable: "--font-inconsolata", src: "../fonts/Inconsolata-Regular.ttf" });
 
 export const metadata: Metadata = {
   title: { default: "245D EHR", template: "%s · 245D EHR" },

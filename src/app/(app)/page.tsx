@@ -11,9 +11,11 @@ import { currentPayPeriod } from "@/lib/pay-period";
 import { VisitSheet } from "./visits/record/visit-sheet";
 import { TodayBoard, type BoardShift } from "./today-board";
 import { GetStarted } from "./get-started";
+import { attentionItems } from "@/lib/attention";
+import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { Info } from "lucide-react";
 
-function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function startOfToday() { return fromLocalInput(toLocalInput(new Date()).slice(0, 10) + "T00:00"); }
 const today = () => new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/Chicago" }).format(new Date());
 
 export default async function Dashboard({ searchParams }: PageProps<"/">) {
@@ -151,15 +153,18 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
   const period = currentPayPeriod();
   const dayStart = startOfToday();
   const dayEnd = new Date(dayStart.getTime() + 86_400_000 - 1);
-  const [counts, open, todayShifts, weekShifts, agreements, staffRows] = await Promise.all([
+  const [counts, open, todayShifts, weekShifts, agreements, staffRows, review, recentNotes] = await Promise.all([
     dashboardCounts(period),
     user.staffId ? getOpenVisitForStaff(user.staffId) : null,
     listShifts(dayStart, dayEnd),
     listShifts(dayStart, new Date(dayStart.getTime() + 7 * 86_400_000)),
     listAgreementsWithUsage(),
     listStaff(true),
+    attentionItems(),
+    listVisits({ limit: 5 }),
   ]);
 
+  const unsignedToReview = review.filter((r) => r.kind === "unsigned").length;
   const activeAgreements = agreements.filter((a) => a.agreement.status === "active");
   const authorized = activeAgreements.reduce((n, a) => n + a.agreement.authorizedUnits, 0);
   const used = activeAgreements.reduce((n, a) => n + a.unitsUsed, 0);
@@ -186,11 +191,13 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
     <div className="mx-auto max-w-6xl">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[28px] leading-9">{first ? `Good day, ${first}` : "Dashboard"}</h1>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">Your workspace</p>
+          <h1 className="text-[28px] leading-9">{first ? `Today, ${first}` : "Today at your agency"}</h1>
           <p className="mt-1 text-[13px] text-muted-foreground">{today()} · Pay period {period.label}</p>
         </div>
         <div className="flex gap-2">
-          <LinkButton href="/visits/new" variant="outline">Manual note</LinkButton>
+          <LinkButton href="/scheduling" variant="outline"><Icon.calendar size={15} /> Schedule</LinkButton>
+          <LinkButton href="/visits/new" variant="primary"><Icon.plus size={15} /> Manual note</LinkButton>
           <LinkButton href="/reports" variant="outline"><Icon.download size={15} /> Export</LinkButton>
         </div>
       </header>
@@ -202,14 +209,25 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
         </Notice>
       )}
 
-      <GetStarted steps={steps} />
+      <Card className="mb-5" title="Start with what needs you" description="Unresolved items across notes, people, and scheduled care." actions={<LinkButton href="/attention" variant="primary">Review queue · {review.length}<Icon.chevronRight size={14} /></LinkButton>}>
+        {review.length === 0 ? <Empty icon="check" title="No unresolved items in the current review scope" /> : <div className="grid divide-y divide-line-soft sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {[
+            { label: "Documentation", kinds: ["unsigned", "returned", "manual", "code"], href: "/attention?kind=unsigned", detail: "Signatures, corrections & EVV" },
+            { label: "Care delivery", kinds: ["open", "missed_shift"], href: "/attention?kind=missed_shift", detail: "Missed shifts & open visits" },
+            { label: "People & authorizations", kinds: ["compliance", "orientation", "authorization"], href: "/attention?kind=compliance", detail: "Training, orientation & units" },
+          ].map((group) => {
+            const rows = review.filter((r) => group.kinds.includes(r.kind));
+            return <Link key={group.label} href={rows.length ? `/attention?kind=${rows[0].kind}` : group.href} className="px-5 py-4 hover:bg-hover"><div className="flex items-center justify-between"><span className="text-sm font-semibold">{group.label}</span><span className={cx("figure text-2xl", rows.some((r) => r.severity === "danger") ? "text-danger" : "text-text-strong")}>{rows.length}</span></div><p className="mt-1 text-xs text-muted-foreground">{group.detail}</p><div className="mt-3 text-xs font-medium text-primary">{rows.length ? "View next action →" : "No open items"}</div></Link>;
+          })}
+        </div>}
+      </Card>
 
       <section className="mb-6 overflow-hidden rounded-[var(--radius-app)] border border-line bg-card">
         <div className="grid divide-y divide-line-soft sm:grid-cols-2 sm:divide-y-0 xl:grid-cols-4 xl:divide-x">
           <Metric label="Active clients" hint="Clients with status active. Intake clients are not counted." value={counts.active} note={`${counts.intake} in intake`} href="/clients" />
-          <Metric label="Units this period" hint="15-minute units on completed notes in the current pay period." value={counts.periodUnits.toLocaleString()} of={`${authorized.toLocaleString()} authorized`} note={`${counts.periodVisits} visits${counts.open ? ` · ${counts.open} in progress` : ""}`} href="/visits" />
-          <Metric label="Returned for correction" hint="Notes a supervisor sent back. Everything else is accepted when the caregiver submits it." value={counts.returned} note={counts.returned ? "Caregivers need to fix these" : "Nothing sent back"} tone={counts.returned ? "warn" : "ok"} href="/visits" />
-          <Metric label="Unsigned by client" hint="Completed notes without the client's signing code. These cannot be billed." value={counts.unsigned} note={counts.unsigned ? "Needs a signing code" : "Every note signed"} tone={counts.unsigned ? "danger" : "ok"} href="/visits" />
+          <Metric label="Units this period" hint="15-minute units on completed notes in the current pay period." value={counts.periodUnits.toLocaleString()} note={`${counts.periodVisits} visits${counts.open ? ` · ${counts.open} in progress` : ""}`} href="/visits" />
+          <Metric label="Returned for correction" hint="Notes a supervisor sent back. Everything else is accepted when the caregiver submits it." value={counts.returned} note={counts.returned ? "Caregivers need to fix these" : "Nothing sent back"} tone={counts.returned ? "warn" : "ok"} href="/attention?kind=returned" />
+          <Metric label="Unsigned by client" hint="Completed notes without the client's signing code. These cannot be billed." value={unsignedToReview} note={unsignedToReview ? "Signature or reason needed" : "No missing signature evidence"} tone={unsignedToReview ? "danger" : "ok"} href="/attention?kind=unsigned" />
         </div>
         <div className="border-t border-line-soft px-5 py-2.5 text-[12.5px] text-muted-foreground">Pay period {period.label}. Authorizations used: {used.toLocaleString()} of {authorized.toLocaleString()} units across {activeAgreements.length} active agreement{activeAgreements.length === 1 ? "" : "s"}. <Link href="/billing" className="text-primary hover:underline">Billing</Link></div>
       </section>
@@ -217,6 +235,16 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
       <Card className="mb-6" title="Today on the board" description={boardShifts.length ? `${boardShifts.filter((b) => b.status === "in_progress").length} clocked in · ${boardShifts.filter((b) => b.status === "completed").length} finished · ${boardShifts.length} shifts` : "Every shift today, against the clock"} actions={<Link href="/scheduling" className="text-[13px] font-medium text-primary hover:underline">Scheduling</Link>}>
         <TodayBoard shifts={boardShifts} />
       </Card>
+      <div className="mb-6 grid items-start gap-5 xl:grid-cols-2">
+        <Card title="Next in review" description="Highest-priority unresolved items" actions={<Link href="/attention" className="text-xs font-medium text-primary">View all →</Link>}>
+          {review.length === 0 ? <Empty icon="check" title="Queue is clear" /> : <ul className="divide-y divide-line-soft">{review.slice(0, 5).map((r, i) => <li key={i}><Link href={r.href} className="flex items-center gap-3 px-5 py-3 hover:bg-hover"><span className={cx("h-2 w-2 shrink-0 rounded-full", r.severity === "danger" ? "bg-danger" : "bg-warn")} /><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{r.title}</span><span className="mt-0.5 block text-xs text-muted-foreground">{r.detail}</span></span><Icon.chevronRight size={15} /></Link></li>)}</ul>}
+        </Card>
+        <Card title="Recent notes" description="Open a note to preview its document" actions={<Link href="/visits" className="text-xs font-medium text-primary">All notes →</Link>}>
+          {recentNotes.length === 0 ? <Empty icon="doc" title="No notes yet" /> : <ul className="divide-y divide-line-soft">{recentNotes.map(({ visit: v, personFirst, personLast, staffFirst, staffLast }) => <li key={v.id}><Link href={`/?note=${v.id}`} scroll={false} className="flex items-center gap-3 px-5 py-3 hover:bg-hover"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-xs font-semibold text-primary">{personFirst[0]}{personLast[0]}</span><span className="min-w-0 flex-1"><span className="block font-medium">{personFirst} {personLast}</span><span className="block text-xs text-muted-foreground">{staffFirst} {staffLast} · {fmtDateTime(v.clockInAt)}</span></span><Badge tone={v.returnedAt ? "warn" : v.status === "completed" ? "ok" : "neutral"}>{v.returnedAt ? "Returned" : v.status.replace("_", " ")}</Badge></Link></li>)}</ul>}
+        </Card>
+      </div>
+      {user.role === "admin" && steps.some((step) => !step.done) && <GetStarted steps={steps} />}
+
 
 
     </div>

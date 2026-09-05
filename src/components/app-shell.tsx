@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { ChevronDown, CircleHelp, Clock, FileEdit, LogOut, Plus, Building2, User, Users, UserSquare2, FileText } from "lucide-react";
 import { CommandPalette, type PaletteEntry } from "@/components/command-palette";
+import { MobileNav } from "@/components/mobile-nav";
 import { Sidebar } from "@/components/sidebar";
 import { TopbarCrumbs } from "@/components/topbar-crumbs";
 import { Avatar, cx } from "@/components/kit";
@@ -24,7 +25,8 @@ const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" 
 export function AppShell({ user, orgName, attention, palette, children }: { user: CurrentUser; orgName: string; attention: number; palette: PaletteEntry[]; children: ReactNode }) {
   const office = user.role === "admin" || user.role === "supervisor";
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-page-bg">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
       <Sidebar role={user.role} orgName={orgName} attention={attention} canClock={Boolean(user.staffId)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-page px-4 md:px-5">
@@ -52,7 +54,7 @@ export function AppShell({ user, orgName, attention, palette, children }: { user
             )}
             <Button variant="ghost" size="icon" className="hidden h-8 w-8 sm:inline-flex" nativeButton={false} render={<Link href="/services" aria-label="245D service reference" />}><CircleHelp className="size-[17px] text-muted-foreground" /></Button>
             <DropdownMenu>
-              <DropdownMenuTrigger render={<button className="flex h-8 items-center gap-2 rounded-md pl-1 pr-1.5 hover:bg-hover" />}>
+              <DropdownMenuTrigger render={<button aria-label="Account and appearance" className="flex h-8 items-center gap-2 rounded-md pl-1 pr-1.5 hover:bg-hover" />}>
                 <Avatar name={user.staffName ?? user.email} size={26} />
                 <ChevronDown className="hidden size-3.5 text-gray-400 md:block" />
               </DropdownMenuTrigger>
@@ -68,22 +70,11 @@ export function AppShell({ user, orgName, attention, palette, children }: { user
             </DropdownMenu>
           </div>
         </header>
-        <main className="flex-1 px-4 py-5 md:px-8 md:py-6">{children}</main>
+        <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-5 md:px-8 md:py-6">{children}</main>
         <MobileNav role={user.role} />
         <Suspense fallback={null}><NotePreview /></Suspense>
         <Toaster position="bottom-right" richColors closeButton />
       </div>
     </div>
-  );
-}
-
-function MobileNav({ role }: { role: CurrentUser["role"] }) {
-  const items: [string, string, typeof Clock][] = role === "dsp"
-    ? [["/", "Home", Users], ["/clock", "Clock", Clock], ["/visits", "Notes", FileText], ["/me", "Me", User]]
-    : [["/", "Home", Users], ["/clients", "Clients", Users], ["/visits", "Notes", FileText], ["/attention", "Alerts", CircleHelp]];
-  return (
-    <nav className="sticky bottom-0 z-20 flex border-t border-line bg-page md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
-      {items.map(([href, label, Ic]) => <Link key={href} href={href} className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground hover:text-text-strong"><Ic className="size-5" />{label}</Link>)}
-    </nav>
   );
 }

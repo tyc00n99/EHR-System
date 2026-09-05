@@ -38,8 +38,7 @@ export function Sidebar({ role, orgName, attention, canClock }: { role: Role; or
     { items: [
       { href: "/", label: office ? "Dashboard" : "Home", icon: "home" },
       { href: "/owner", label: "Owner insights", icon: "trend", roles: ["admin"] },
-      { href: "/attention", label: "Needs attention", icon: "bell", roles: ["admin", "supervisor"], badge: attention },
-      { href: "/settings", label: "Settings", icon: "settings", roles: ["admin"] },
+      { href: "/attention", label: "Review queue", icon: "bell", roles: ["admin", "supervisor"], badge: attention },
     ] },
     { label: "Care", items: [
       { href: "/clients", label: role === "dsp" ? "My clients" : "Clients", icon: "clients" },
@@ -47,19 +46,20 @@ export function Sidebar({ role, orgName, attention, canClock }: { role: Role; or
       { href: "/visits", label: "Notes & EVV", icon: "visits" },
       { href: "/scheduling", label: "Scheduling", icon: "calendar" },
     ] },
-    { divider: true, items: [
+    { label: "Operations", divider: true, items: [
       { href: "/billing", label: "Billing", icon: "money", roles: ["admin", "supervisor"] },
       { href: "/staff", label: "Staff", icon: "staff", roles: ["admin", "supervisor"] },
       { href: "/compliance", label: "Compliance", icon: "audit", roles: ["admin", "supervisor"] },
       { href: "/reports", label: "Reports", icon: "chart", roles: ["admin", "supervisor"] },
     ] },
-    { divider: true, items: [
+    { label: "Administration", divider: true, items: [
+      { href: "/settings", label: "Settings", icon: "settings", roles: ["admin"] },
       { href: "/sites", label: "Sites & programs", icon: "sites", roles: ["admin", "supervisor"] },
       { href: "/services", label: "245D services", icon: "catalog" },
       { href: "/audit", label: "Audit log", icon: "history", roles: ["admin"] },
     ] },
   ];
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/") || (href === "/visits" && pathname.startsWith("/notes")));
   const cta = canClock ? { href: "/clock", label: "Clock in", icon: "clock" as IconName } : { href: "/clients/new", label: "New client", icon: "plus" as IconName };
 
   return (
@@ -103,8 +103,8 @@ export function Sidebar({ role, orgName, attention, canClock }: { role: Role; or
         })}
       </nav>
 
-      {office && promo && !collapsed && (
-        <div className="mx-3 mb-3 rounded-md border border-line bg-panel p-3">
+      {role === "admin" && promo && !collapsed && (
+        <div className="mx-3 mb-3 rounded-md border border-nav-border bg-nav-hover p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="text-[13px] font-semibold text-nav-text-strong">Set up your agency</div>
             <button onClick={dismissPromo} aria-label="Dismiss" className="-mr-1 -mt-1 rounded p-1 text-nav-group hover:bg-nav-hover hover:text-nav-text-strong"><Icon.plus size={14} className="rotate-45" /></button>
