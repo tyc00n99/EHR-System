@@ -7,9 +7,9 @@ import { attentionItems } from "@/lib/attention";
 export const metadata = { title: "Needs attention" };
 
 const KIND: Record<string, { label: string; icon: keyof typeof Icon }> = {
-  unsigned: { label: "Unsigned visits", icon: "edit" },
-  manual: { label: "Manual visits pending EVV evidence", icon: "flag" },
-  open: { label: "Visits left open", icon: "clock" },
+  unsigned: { label: "Unsigned notes", icon: "edit" },
+  manual: { label: "Manual notes pending EVV evidence", icon: "flag" },
+  open: { label: "Still clocked in", icon: "clock" },
   missed_shift: { label: "Missed shifts", icon: "calendar" },
   compliance: { label: "Staff compliance", icon: "audit" },
   orientation: { label: "Orientation before unsupervised contact", icon: "clients" },

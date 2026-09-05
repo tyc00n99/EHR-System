@@ -23,8 +23,9 @@ export function GetStarted({ steps }: { steps: SetupStep[] }) {
     const id = requestAnimationFrame(() => { try { setHidden(localStorage.getItem(KEY) === "dismissed"); } catch { setHidden(false); } });
     return () => cancelAnimationFrame(id);
   }, []);
-  if (hidden) return null;
   const done = new Set(steps.filter((s) => s.done).map((s) => s.key));
+  // Once the agency is set up the card has nothing left to say, so it retires itself.
+  if (hidden || CARDS.every((c) => done.has(c.key))) return null;
   return (
     <section className="mb-6 rounded-[var(--radius-app)] border border-line bg-card p-5">
       <div className="mb-4 flex items-center justify-between gap-4">

@@ -30,7 +30,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         <div className="ml-auto flex gap-5 text-[13px] tabular-nums text-muted-foreground"><span><span className="font-medium text-ok">{fmtMoney(total(ready))}</span> ready</span><span><span className="font-medium text-warn">{fmtMoney(total(hold))}</span> on hold</span><span><span className="font-medium text-text-strong">{fmtMoney(total(lines))}</span> total</span></div>
       </div>
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Card title="Ready to bill" description="Grouped by client. One row per visit becomes one 837P service line." actions={<Badge tone="ok">{ready.length} lines</Badge>}>
+        <Card title="Ready to bill" description="Grouped by client. One row per note becomes one 837P service line." actions={<Badge tone="ok">{ready.length} lines</Badge>}>
           {byClient.length === 0 ? <Empty icon="money" title="Nothing ready in this period" /> : byClient.map((c) => (
             <div key={c.personId} className="border-b border-line-soft last:border-b-0">
               <div className="flex items-center justify-between bg-sidebar px-5 py-1.5 text-[12px]"><Link href={`/clients/${c.personId}`} className="font-semibold text-text-strong hover:underline">{c.name}</Link><span className="tabular-nums text-muted-foreground">{c.lines.length} line{c.lines.length === 1 ? "" : "s"} · {fmtMoney(total(c.lines))}</span></div>

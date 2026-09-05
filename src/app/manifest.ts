@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "245D EHR",
     short_name: "245D EHR",
-    description: "Clock in and out of visits, record tasks and shift notes.",
+    description: "Clock in and out, record tasks and write the note.",
     start_url: "/clock",
     display: "standalone",
     background_color: "#ffffff",

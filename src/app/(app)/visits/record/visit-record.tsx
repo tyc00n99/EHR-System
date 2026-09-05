@@ -17,7 +17,7 @@ const day = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "A
 export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boolean }) {
   const user = await requireUser();
   const r = await getVisitRecord(id);
-  if (!r) return <div className="p-6 text-muted-foreground">Visit not found.</div>;
+  if (!r) return <div className="p-6 text-muted-foreground">Note not found.</div>;
   if (user.role === "dsp" && r.visit.staffId !== user.staffId) return <div className="p-6 text-muted-foreground">This visit belongs to another caregiver.</div>;
   const { visit: v, person, staff: s, agreement, edits } = r;
   const minutes = v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null;

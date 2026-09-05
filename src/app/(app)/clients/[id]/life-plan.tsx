@@ -27,7 +27,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
   const [newQ, setNewQ] = useState<Record<string, string>>({});
   return (
     <div className="space-y-4">
-      {goals.length === 0 && <div className="rounded-lg border border-dashed border-line px-6 py-10 text-center text-[13px] text-muted-foreground">No goals yet. {manage ? "Add the outcomes from the support plan below. Each goal gets yes/no questions caregivers answer in every visit note." : "A supervisor adds goals from the support plan."}</div>}
+      {goals.length === 0 && <div className="rounded-lg border border-dashed border-line px-6 py-10 text-center text-[13px] text-muted-foreground">No goals yet. {manage ? "Add the outcomes from the support plan below. Each goal gets yes/no questions caregivers answer on every note." : "A supervisor adds goals from the support plan."}</div>}
       {goals.map((g) => {
         return (
           <section key={g.id} className={cx("rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]", g.status !== "active" && "opacity-70")}>
@@ -58,7 +58,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
               </ol>
               {manage && g.status === "active" && (
                 <div className="mt-4 flex gap-2 sm:pl-8">
-                  <Input value={newQ[g.id] ?? ""} onChange={(e) => setNewQ((s) => ({ ...s, [g.id]: e.target.value }))} placeholder="Add a yes/no question caregivers answer each visit" className="h-8 text-[12.5px]" />
+                  <Input value={newQ[g.id] ?? ""} onChange={(e) => setNewQ((s) => ({ ...s, [g.id]: e.target.value }))} placeholder="Add a yes/no question caregivers answer on each note" className="h-8 text-[12.5px]" />
                   <Button variant="outline" className="h-8 gap-1" disabled={pending || !(newQ[g.id] ?? "").trim()} onClick={() => start(async () => { const r = await addGoalQuestion(g.id, personId, newQ[g.id] ?? ""); if (r.message) toast.error(r.message); else { toast.success("Question added"); setNewQ((s) => ({ ...s, [g.id]: "" })); } })}><Plus className="size-3.5" />Add</Button>
                 </div>
               )}

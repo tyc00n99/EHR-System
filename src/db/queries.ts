@@ -61,7 +61,7 @@ export async function listPrograms() {
     .orderBy(sites.name, programs.name);
 }
 
-/** Agreements for a person with units consumed by completed visits. */
+/** Agreements for a person with units consumed by completed notes. */
 export async function listAgreementsForPerson(personId: string) {
   const db = await getDb();
   const used = db
@@ -161,7 +161,7 @@ export async function getUserForStaff(staffId: string) {
   return u ?? null;
 }
 
-/** Per-staff totals for a date range: completed visits, units, minutes, unsigned count. */
+/** Per-staff totals for a date range: completed notes, units, minutes, unsigned count. */
 export async function staffPeriodTotals(staffId: string, from: Date, to: Date) {
   const db = await getDb();
   const rows = await db

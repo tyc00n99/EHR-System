@@ -44,7 +44,7 @@ export function ManualVisitForm({ agreements, staff }: { agreements: AgreementOp
         <Field label="Shift note" error={e.shiftNote} className="col-span-2 md:col-span-6"><Textarea name="shiftNote" required /></Field>
       </FormSection>
       <FormActions>
-        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save visit"}</Button>
+        <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save note"}</Button>
         <LinkButton href="/visits" variant="ghost">Cancel</LinkButton>
       </FormActions>
     </form>

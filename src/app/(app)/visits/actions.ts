@@ -68,7 +68,7 @@ export async function clockIn(_prev: ActionState, fd: FormData): Promise<ActionS
   const db = await getDb();
 
   const [open] = await db.select({ id: visits.id }).from(visits).where(and(eq(visits.staffId, user.staffId), eq(visits.status, "in_progress"), isNull(visits.clockOutAt))).limit(1);
-  if (open) return { message: "You already have a visit in progress. Clock out first." };
+  if (open) return { message: "You are already clocked in. Clock out first." };
 
   if (user.role === "dsp") {
     const mine = (await listAssignmentsForStaff(user.staffId)).find((a) => a.assignment.active && a.person.id === d.personId);
@@ -115,8 +115,8 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
   const d = parsed.data;
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, d.visitId)).limit(1);
-  if (!v) return { message: "Visit not found." };
-  if (v.status !== "in_progress") return { message: "This visit is already closed." };
+  if (!v) return { message: "Note not found." };
+  if (v.status !== "in_progress") return { message: "This note is already closed." };
   if (v.staffId !== user.staffId && user.role === "dsp") return { message: "This is not your visit." };
   const [agreement, person] = await Promise.all([getAgreement(v.serviceAgreementId), getPerson(v.personId)]);
   let clientSignedAt: Date | null = null;
@@ -212,8 +212,8 @@ export async function editVisit(_prev: ActionState, fd: FormData): Promise<Actio
   const d = parsed.data;
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, d.visitId)).limit(1);
-  if (!v) return { message: "Visit not found." };
-  if (v.status === "void") return { message: "Voided visits cannot be edited." };
+  if (!v) return { message: "Note not found." };
+  if (v.status === "void") return { message: "Voided notes cannot be edited." };
   const agreement = await getAgreement(v.serviceAgreementId);
   // datetime-local inputs carry minute precision. Keep the original timestamp
   // (with seconds) when the minute the user saw is unchanged.
@@ -248,7 +248,7 @@ export async function voidVisit(visitId: string, reason: string): Promise<Action
   if (reason.trim().length < 5) return { message: "Give a reason for voiding this visit." };
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
-  if (!v) return { message: "Visit not found." };
+  if (!v) return { message: "Note not found." };
   if (v.status === "void") return { message: "Already void." };
   await recordEdit(user, v.id, reason, { status: { from: v.status, to: "void" } }, { status: "void", manualEntryReason: v.manualEntryReason ?? reason });
   revalidatePath(`/visits/${v.id}`);

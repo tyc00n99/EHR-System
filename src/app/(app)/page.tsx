@@ -93,7 +93,7 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
 
       <div className="mb-6 grid grid-cols-3 gap-2">
         <StatTile label="Hours" value={Math.round(totals.minutes / 6) / 10} note={period.label} href="/visits" />
-        <StatTile label="Units" value={totals.units} note={`${totals.visits} visit${totals.visits === 1 ? "" : "s"}`} href="/visits" />
+        <StatTile label="Units" value={totals.units} note={`${totals.visits} note${totals.visits === 1 ? "" : "s"}`} href="/visits" />
         <StatTile label="Unsigned" value={totals.unsigned} note={totals.unsigned ? "Need a signature" : "All signed"} tone={totals.unsigned ? "danger" : "ok"} href="/visits" />
       </div>
 
@@ -104,7 +104,7 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
         </Notice>
       )}
 
-      <Card title="My recent visits" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">This pay period</Link>}>
+      <Card title="My recent notes" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">This pay period</Link>}>
         {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (
           <ul className="divide-y divide-line-soft">
             {visits.map(({ visit: v, personFirst, personLast }) => (

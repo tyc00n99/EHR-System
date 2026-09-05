@@ -5,21 +5,22 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge, Button, Card, Input, cx } from "@/components/kit";
 import { Icon } from "@/components/icons";
-import { bulkCancelShifts, bulkConfirmManualEvidence, bulkRecordUnableToSign } from "./actions";
+import { bulkCancelShifts, bulkConfirmManualEvidence, bulkRecordUnableToSign, undoBulk } from "./actions";
 
 export interface Row { id?: string; kind: string; severity: string; title: string; detail: string; href: string }
 export interface Group { kind: string; label: string; icon: keyof typeof Icon; rows: Row[] }
 
 /** Kinds that can be fixed in a batch, and what the batch does. */
-const BULK: Record<string, { verb: string; needsReason?: string; hint: string }> = {
-  unsigned: { verb: "Record reason", needsReason: "Why the client could not sign", hint: "Recording why the client could not sign clears the note for billing." },
-  manual: { verb: "Confirm evidence", hint: "Confirms the paper or verbal backup for these manual entries is on file." },
-  missed_shift: { verb: "Cancel shifts", hint: "Marks these shifts cancelled so the calendar and this list stop counting them." },
+const BULK: Record<string, { verb: string; needsReason?: string; hint: string; confirm: (n: number) => string }> = {
+  unsigned: { verb: "Record reason", needsReason: "Why the client could not sign", hint: "Recording why the client could not sign clears the note for billing.", confirm: (n) => `Write this reason on ${n} note${n === 1 ? "" : "s"}?` },
+  manual: { verb: "Confirm evidence", hint: "Confirms the paper or verbal backup for these manual entries is on file.", confirm: (n) => `Confirm evidence on ${n} manual entr${n === 1 ? "y" : "ies"}?` },
+  missed_shift: { verb: "Cancel shifts", hint: "Marks these shifts cancelled so the calendar and this list stop counting them.", confirm: (n) => `Cancel ${n} shift${n === 1 ? "" : "s"}? Each one can be put back with Undo.` },
 };
 
 export function AttentionList({ groups }: { groups: Group[] }) {
   const [picked, setPicked] = useState<Record<string, Set<string>>>({});
   const [reason, setReason] = useState("");
+  const [confirming, setConfirming] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const chosen = (kind: string) => picked[kind] ?? new Set<string>();
@@ -43,8 +44,12 @@ export function AttentionList({ groups }: { groups: Group[] }) {
         kind === "unsigned" ? await bulkRecordUnableToSign(ids, reason)
         : kind === "manual" ? await bulkConfirmManualEvidence(ids)
         : await bulkCancelShifts(ids);
-      if (/^(Nothing|Say )/.test(r.message ?? "")) toast.error(r.message);
-      else { toast.success(r.message ?? "Done"); setPicked((cur) => ({ ...cur, [kind]: new Set() })); setReason(""); }
+      setConfirming(null);
+      if (/^(Nothing|Say )/.test(r.message ?? "")) { toast.error(r.message); return; }
+      const undo = r.undo;
+      toast.success(r.message ?? "Done", undo ? { action: { label: "Undo", onClick: () => start(async () => { const u = await undoBulk(undo); toast.success(u.message ?? "Undone."); }) }, duration: 12000 } : undefined);
+      setPicked((cur) => ({ ...cur, [kind]: new Set() }));
+      setReason("");
     });
 
   return (
@@ -96,9 +101,19 @@ export function AttentionList({ groups }: { groups: Group[] }) {
             {bulk && sel.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 border-t border-line-soft bg-sidebar px-5 py-3">
                 <span className="text-[13px] font-medium text-text-strong">{sel.size} selected</span>
-                {bulk.needsReason && <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={bulk.needsReason} className="h-8 w-64 text-[13px]" />}
-                <Button disabled={pending || (Boolean(bulk.needsReason) && reason.trim().length < 3)} onClick={() => run(g.kind)}>{pending ? "Working…" : bulk.verb}</Button>
-                <Button variant="ghost" disabled={pending} onClick={() => setPicked((cur) => ({ ...cur, [g.kind]: new Set() }))}>Cancel</Button>
+                {bulk.needsReason && confirming !== g.kind && <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={bulk.needsReason} className="h-8 w-64 text-[13px]" />}
+                {confirming === g.kind ? (
+                  <>
+                    <span className="text-[13px] text-text">{bulk.confirm(sel.size)}</span>
+                    <Button disabled={pending} onClick={() => run(g.kind)}>{pending ? "Working…" : "Yes, do it"}</Button>
+                    <Button variant="ghost" disabled={pending} onClick={() => setConfirming(null)}>Back</Button>
+                  </>
+                ) : (
+                  <>
+                    <Button disabled={pending || (Boolean(bulk.needsReason) && reason.trim().length < 3)} onClick={() => setConfirming(g.kind)}>{bulk.verb}</Button>
+                    <Button variant="ghost" disabled={pending} onClick={() => setPicked((cur) => ({ ...cur, [g.kind]: new Set() }))}>Cancel</Button>
+                  </>
+                )}
               </div>
             )}
           </Card>

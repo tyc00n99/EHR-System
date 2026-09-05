@@ -156,7 +156,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
           </div>
         </FormSection>
 
-        <FormSection title="Units and rate" description="All units are 15 minutes. Units burn down as visits complete.">
+        <FormSection title="Units and rate" description="All units are 15 minutes. Units burn down as notes are completed.">
           <Field label="Authorized units" error={e.authorizedUnits} hint="15-minute units" className="md:col-span-3"><Input name="authorizedUnits" type="number" min={1} step={1} value={fields.authorizedUnits} onChange={set("authorizedUnits")} required /></Field>
           <Field label="Rate per unit" error={e.unitRate} className="md:col-span-3"><Input name="unitRate" type="number" min={0.01} step={0.01} placeholder="0.00" value={fields.unitRate} onChange={set("unitRate")} required /></Field>
         </FormSection>

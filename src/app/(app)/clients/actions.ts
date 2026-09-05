@@ -82,7 +82,7 @@ export interface ExtractState extends ActionState {
 /** Stores the uploaded service agreement PDF and asks Claude to read the billing details out of it. */
 export async function extractAgreement(personId: string, _prev: ExtractState, fd: FormData): Promise<ExtractState> {
   await requireUser(["admin", "supervisor"]);
-  if (!aiConfigured()) return { message: "AI extraction is not configured. Add ANTHROPIC_API_KEY to .env.local and restart the server." };
+  if (!aiConfigured()) return { message: "AI extraction is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying. You can still type the authorization in by hand." };
   const file = fd.get("document");
   if (!(file instanceof File) || file.size === 0) return { message: "Choose a PDF first." };
   if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return { message: "Only PDF files are supported." };

@@ -206,7 +206,7 @@ export const manualVisitSchema = z
     clockInLng: coord,
     clockOutLat: coord,
     clockOutLng: coord,
-    manualEntryReason: z.string().min(5, "Explain why this visit is being entered manually").max(1000),
+    manualEntryReason: z.string().min(5, "Explain why this note is being entered manually").max(1000),
     shiftNote: z.string().min(1, "A shift note is required").max(4000),
   })
   .refine((v) => v.clockOutAt > v.clockInAt, { message: "Clock-out must be after clock-in", path: ["clockOutAt"] });
@@ -218,7 +218,7 @@ export const visitEditSchema = z
     clockOutAt: isoDateTime,
     placeOfService: z.string().regex(/^\d{2}$/, "Two-digit place of service"),
     shiftNote: z.string().min(1, "A shift note is required").max(4000),
-    reason: z.string().min(5, "Explain why this visit is being edited").max(1000),
+    reason: z.string().min(5, "Explain why this note is being edited").max(1000),
   })
   .refine((v) => v.clockOutAt > v.clockInAt, { message: "Clock-out must be after clock-in", path: ["clockOutAt"] });
 

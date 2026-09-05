@@ -42,7 +42,7 @@ export function StaffForm({ action, defaults, cancelHref }: { action: (p: Action
         <Field label="Hourly pay rate" error={e.payRate} className="md:col-span-1"><Input name="payRate" type="number" min={0.01} step={0.01} defaultValue={d.payRate ?? ""} required /></Field>
         <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="active" defaultChecked={d.active ?? true} label="Active. Inactive staff cannot clock in." /></div>
       </FormSection>
-      <FormSection title="Rendering provider ID" description="One is required. It goes on every visit and claim line this person renders.">
+      <FormSection title="Rendering provider ID" description="One is required. It goes on every note and claim line this person renders.">
         <Field label="NPI" error={e.npi} hint="10 digits" className="md:col-span-3"><Input name="npi" inputMode="numeric" defaultValue={d.npi ?? ""} /></Field>
         <Field label="UMPI" error={e.umpi} hint="10 characters from MHCP enrollment" className="md:col-span-3"><Input name="umpi" className="uppercase" defaultValue={d.umpi ?? ""} /></Field>
       </FormSection>

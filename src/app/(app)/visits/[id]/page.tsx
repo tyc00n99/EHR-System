@@ -91,7 +91,7 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
           <Card title="Shift note" padded>
             <p className="whitespace-pre-wrap leading-6">{v.shiftNote || <span className="text-hint">No shift note yet.</span>}</p>
           </Card>
-          <Card title="Edit history" description="Kept with the visit and exported as EVV evidence">
+          <Card title="Edit history" description="Kept with the note and exported as EVV evidence">
             {edits.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No edits since creation.</p> : (
               <ul className="divide-y divide-line-soft">
                 {edits.map(({ edit, editorEmail }) => (
@@ -112,7 +112,7 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
       </div>
 
       {editable && (
-        <Card title="Edit this visit" description="A reason is required. The change is kept as history and the visit is marked manually adjusted for EVV." className="mt-4" padded>
+        <Card title="Edit this note" description="A reason is required. The change is kept as history and the note is marked manually adjusted for EVV." className="mt-4" padded>
           <VisitEditForm
             visitId={v.id}
             defaults={{ clockInAt: toLocalInput(v.clockInAt), clockOutAt: v.clockOutAt ? toLocalInput(v.clockOutAt) : toLocalInput(new Date()), placeOfService: v.placeOfService, shiftNote: v.shiftNote ?? "" }}

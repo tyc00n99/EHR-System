@@ -21,7 +21,7 @@ export function VisitEditForm({ visitId, defaults }: { visitId: string; defaults
       </div>
       <Field label="Shift note" error={e.shiftNote}><Textarea name="shiftNote" defaultValue={defaults.shiftNote} /></Field>
       <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-        <Field label="Reason for edit" error={e.reason} hint="Exported to the aggregator with the visit"><Input name="reason" required placeholder="What was wrong and how the correct value was confirmed" /></Field>
+        <Field label="Reason for edit" error={e.reason} hint="Exported to the aggregator with the note"><Input name="reason" required placeholder="What was wrong and how the correct value was confirmed" /></Field>
         <Button type="submit" disabled={pending} className="h-9 md:mb-[22px]">{pending ? "Saving…" : "Save edit"}</Button>
       </div>
     </form>
@@ -34,10 +34,10 @@ export function VoidButton({ visitId }: { visitId: string }) {
   const [pending, start] = useTransition();
   return (
     <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-      <Field label="Void this visit" error={msg} hint="A voided visit is never billed or exported. It stays in the record.">
+      <Field label="Void this note" error={msg} hint="A voided note is never billed or exported. It stays in the record.">
         <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason for voiding" />
       </Field>
-      <Button variant="danger" disabled={pending} className="h-9 md:mb-[22px]" onClick={() => { if (!confirm("Void this visit? It will not be billed or exported.")) return; start(async () => { const r = await voidVisit(visitId, reason); setMsg(r.message); }); }}>
+      <Button variant="danger" disabled={pending} className="h-9 md:mb-[22px]" onClick={() => { if (!confirm("Void this note? It will not be billed or exported.")) return; start(async () => { const r = await voidVisit(visitId, reason); setMsg(r.message); }); }}>
         Void visit
       </Button>
     </div>

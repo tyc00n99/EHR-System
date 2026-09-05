@@ -92,7 +92,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
 
       {tab === "visits" && (
         <Card title="Recent notes" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All notes</Link>}>
-          {visits.length === 0 ? <Empty icon="clock" title="No visits yet" /> : (
+          {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (
             <Table><Thead><Th>Clock in</Th><Th>Client</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead><tbody>{visits.map(({ visit: v, personFirst, personLast }) => <Tr key={v.id}><Td strong><Link href={`/staff/${id}?note=${v.id}`} scroll={false} className="hover:underline">{fmtDateTime(v.clockInAt)}</Link></Td><Td>{personFirst} {personLast}</Td><Td className="tabular-nums">{v.serviceCode}</Td><Td align="right">{v.units}</Td><Td><span className="flex gap-1"><Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status.replace("_", " ")}</Badge>{v.status === "completed" && !v.clientSignedAt && <Badge tone="danger">unsigned</Badge>}</span></Td></Tr>)}</tbody></Table>
           )}
         </Card>
