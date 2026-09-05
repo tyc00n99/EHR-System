@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { Rule } from "@/components/rule";
 import { Badge, Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import { addAssignment, addCredential, createLogin, deleteCredential, endAssignment, markOriented, updateLogin } from "../actions";
 

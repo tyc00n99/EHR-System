@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/icons";
+import { DownloadButton } from "@/components/download-button";
 import { Field, Input, Select } from "@/components/kit";
 
 export interface NotesReportClient { id: string; name: string; pmi: string; services: { code: string; label: string }[] }
@@ -32,7 +33,7 @@ export function NotesReport({ clients, defaultFrom, defaultTo }: { clients: Note
       </Field>
       <Field label="From"><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
       <Field label="To"><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
-      <a href={url} aria-disabled={!clientId} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-[var(--radius-btn)] bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary-hover aria-disabled:pointer-events-none aria-disabled:opacity-50"><Icon.doc size={15} />Notes PDF</a>
+      <DownloadButton href={url} icon="doc" className={clientId ? "" : "pointer-events-none opacity-50"}>Notes PDF</DownloadButton>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
@@ -141,7 +142,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               ]} />
             </Card>
             {manage && !person.medicationSupport && meds.length === 0 && <div className="rounded-xl border border-dashed border-line px-4 py-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
-            <Card title={track ? `Planning deadlines · ${track}` : "Planning deadlines"} padded>
+            <Card title={track ? `Planning deadlines · ${track}` : "Planning deadlines"} titleAfter={<Rule name="planning" />} padded>
               {deadlines.length === 0 ? <p className="text-[13px] text-muted-foreground">{person.serviceStartDate ? "Add a service agreement with a program to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
                 <ul className="space-y-2.5">{deadlines.map((d) => { const overdue = d.due < new Date(); return <li key={d.id} className="text-[13px]"><div className={cx("font-medium tabular-nums", overdue ? "text-danger" : "text-text-strong")}>{fmtDate(d.due)}{overdue && <span className="ml-1.5 font-normal">overdue</span>}</div><div className="text-text">{d.label}</div><div className="text-xs text-muted-foreground">{d.cite}</div></li>; })}</ul>
               )}
@@ -243,7 +244,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           <Contact title="County case manager" name={person.caseManagerName} phone={person.caseManagerPhone} email={person.caseManagerEmail} />
           <Contact title="Consultation Services provider" name={person.consultProviderName} sub={person.consultContactName} phone={person.consultPhone} email={person.consultEmail} />
           <Card title="Care team" padded>{team.length === 0 ? <p className="text-[13px] text-muted-foreground">No caregivers assigned. Assign from the staff record.</p> : <ul className="space-y-2">{team.map((t) => <li key={t.assignment.id} className="flex items-center justify-between text-[13px]"><Link href={`/staff/${t.staff.id}`} className="font-medium text-text-strong hover:underline">{t.staff.firstName} {t.staff.lastName}</Link>{t.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}</Card>
-          {manage && <Card title="Signing code" padded><ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} /></Card>}
+          {manage && <Card title="Signing code" titleAfter={<Rule name="code" />} padded><ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} /></Card>}
         </div>
       )}
 

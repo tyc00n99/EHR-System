@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Download, Pencil } from "lucide-react";
+import { DownloadButton } from "@/components/download-button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 /**
@@ -28,7 +29,7 @@ export function NotePreview() {
           <span className="min-w-0 flex-1 truncate">Daily service note</span>
           <span className="ml-auto flex shrink-0 items-center gap-1.5">
             <Link href={`${pathname}?visit=${id}`} scroll={false} onClick={close} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[12.5px] font-medium hover:bg-hover"><Pencil className="size-3.5" /> Open record</Link>
-            <a href={src} download className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] bg-primary px-2.5 text-[12.5px] font-medium text-primary-foreground hover:bg-primary-hover"><Download className="size-3.5" /> Download</a>
+            <DownloadButton href={src} className="h-7 px-2.5 text-[12.5px]">Download</DownloadButton>
           </span>
         </DialogTitle>
         <iframe src={`${src}#toolbar=0&view=FitH`} title="Daily service note" className="min-h-0 flex-1 bg-panel" />

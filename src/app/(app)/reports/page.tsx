@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Card, PageHeader } from "@/components/kit";
-import { Icon } from "@/components/icons";
 import { listAgreementsWithUsage, listPeople } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
+import { Icon } from "@/components/icons";
+import { DownloadButton } from "@/components/download-button";
 import { NotesReport, type NotesReportClient } from "./notes-report";
 
 export const metadata = { title: "Reports" };
@@ -43,7 +44,7 @@ export default async function ReportsPage() {
                 <li key={p.index} className="flex items-center justify-between gap-3 px-5 py-2.5">
                   <span className="text-[13px]">{i === 0 ? "Current period" : "Pay period"} <span className="text-muted-foreground">· {p.label}</span></span>
                   <span className="flex items-center gap-1">
-                    <Link href={`/reports/${r.file}.pdf?period=${p.startDate}`} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-btn)] bg-primary-soft px-2.5 text-[12.5px] font-medium text-primary hover:bg-blue-300/40"><Icon.doc size={13} />PDF</Link>
+                    <DownloadButton href={`/reports/${r.file}.pdf?period=${p.startDate}`} icon="doc" className="h-7 px-2.5 text-[12.5px]">PDF</DownloadButton>
                     <Link href={`/reports/${r.file}.csv?period=${p.startDate}`} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-btn)] border border-line px-2.5 text-[12.5px] font-medium text-text hover:bg-hover"><Icon.download size={13} />CSV</Link>
                   </span>
                 </li>

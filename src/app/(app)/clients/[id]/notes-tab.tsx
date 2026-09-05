@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { DownloadButton } from "@/components/download-button";
 import { Badge, cx } from "@/components/kit";
 import { labelForCode } from "@/lib/hcpcs";
 import { fmtDate } from "@/lib/format";
@@ -23,7 +23,7 @@ export function NotesTab({ personId, rows, codes, filters, base }: { personId: s
         {(filters.code || filters.from || filters.to) && <Link href={`${base}?tab=notes`} className="text-[13px] text-muted-foreground hover:text-text">Clear</Link>}
         <div className="ml-auto flex items-center gap-3">
           <span className="text-[12.5px] tabular-nums text-muted-foreground">{rows.length} notes · {units} units</span>
-          <a href={`/clients/${personId}/notes.pdf?${q}`} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary-hover"><Download className="size-4" /> Download PDF</a>
+          <DownloadButton href={`/clients/${personId}/notes.pdf?${q}`}>Download PDF</DownloadButton>
         </div>
       </form>
 

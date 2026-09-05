@@ -64,11 +64,11 @@ export function Checkbox({ label, className, ...props }: ComponentProps<"input">
 }
 
 /** Settings-style form section: title and description on the left, fields on the right. */
-export function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function FormSection({ title, titleAfter, description, children }: { title: string; titleAfter?: ReactNode; description?: string; children: ReactNode }) {
   return (
     <section className="grid gap-4 border-t border-line-soft py-7 first:border-t-0 first:pt-0 md:grid-cols-[200px_1fr] md:gap-10">
       <div>
-        <h3 className="text-[15px]">{title}</h3>
+        <h3 className="flex items-center gap-1.5 text-[15px]">{title}{titleAfter}</h3>
         {description && <p className="mt-1 text-[13px] leading-5 text-muted-foreground">{description}</p>}
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-6">{children}</div>
@@ -124,13 +124,13 @@ export function PageIcon({ text, tone = "neutral" }: { text: string; tone?: "neu
   return <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-base font-semibold", tones[tone])}>{text}</span>;
 }
 
-export function Card({ title, description, actions, children, className, padded = false }: { title?: string; description?: string; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
+export function Card({ title, titleAfter, description, actions, children, className, padded = false }: { title?: string; titleAfter?: ReactNode; description?: string; actions?: ReactNode; children: ReactNode; className?: string; padded?: boolean }) {
   return (
     <section className={cx("overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)]", className)}>
-      {(title || actions) && (
+      {(title || actions || titleAfter) && (
         <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-3">
           <div>
-            {title && <h3>{title}</h3>}
+            {title && <h3 className="flex items-center gap-1.5">{title}{titleAfter}</h3>}
             {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

@@ -1,4 +1,5 @@
 import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
+import { Rule } from "@/components/rule";
 import { listClockableAgreements, listStaff } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { ManualVisitForm } from "./manual-form";
@@ -11,7 +12,7 @@ export default async function NewVisitPage() {
   const [agreements, staff] = await Promise.all([listClockableAgreements(), listStaff(true)]);
   return (
     <div>
-      <PageHeader eyebrow={<><Crumb href="/visits">Notes</Crumb><CrumbSep /><Crumb>Manual entry</Crumb></>} title="Enter a note manually" meta={<span>For visits not captured with a live clock-in. The reason travels with the visit to the aggregator.</span>} />
+      <PageHeader eyebrow={<><Crumb href="/visits">Notes</Crumb><CrumbSep /><Crumb>Manual entry</Crumb></>} title="Enter a note manually" meta={<span>For visits not captured with a live clock-in. The reason travels with the visit to the aggregator. <Rule name="manual" className="align-middle" /></span>} />
       <ManualVisitForm
         agreements={agreements.map((a) => ({ id: a.agreement.id, personId: a.person.id, personName: `${a.person.lastName}, ${a.person.firstName}`, label: `${a.agreement.agreementNumber} · ${labelForCode(a.agreement.serviceCode, a.agreement.modifiers)} · ${a.agreement.serviceCode}${a.agreement.modifiers.length ? " " + a.agreement.modifiers.join(" ") : ""}` }))}
         staff={staff.map((s) => ({ id: s.id, name: `${s.lastName}, ${s.firstName}` }))}

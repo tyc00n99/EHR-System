@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
 import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listVisits } from "@/db/queries";
@@ -85,7 +86,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "clients" && (
-        <Card title="Assigned clients" description="Caregivers can only clock in with people assigned to them, after orientation to that person (245D.09, subd. 4a).">
+        <Card title="Assigned clients" titleAfter={<Rule name="orientation" />} description="Caregivers can only clock in with people assigned to them, after orientation to that person.">
           <AssignmentPanel staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />
         </Card>
       )}
