@@ -100,7 +100,7 @@
   --sidebar-ring: var(--ring);
 }
 
-/* ---- Tide: cool slate neutrals, white sidebar, teal ---- */
+/* ---- Tide: cool slate neutrals, white sidebar, clinical blue. Green is reserved for status. ---- */
 :root[data-theme="tide"] {
   --gray-100: #f8fafc;
   --gray-200: #f1f5f9;
@@ -112,12 +112,12 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
-  --blue-100: #f0fdfa;
-  --blue-200: #ccfbf1;
-  --blue-300: #5eead4;
-  --blue-500: #14b8a6;
-  --blue-600: #0f766e;
-  --blue-700: #115e59;
+  --blue-100: #f4f7fc;
+  --blue-200: #dce7f5;
+  --blue-300: #a9c3e2;
+  --blue-500: #4a7fc1;
+  --blue-600: #1d4e89;
+  --blue-700: #173e6d;
 
   --text: #0f172a;
   --text-strong: #0b1220;
@@ -139,14 +139,14 @@
   --nav-text: #475569;
   --nav-text-strong: #0f172a;
   --nav-hover: rgba(15, 23, 42, 0.04);
-  --nav-active: #ccfbf1;
-  --nav-active-text: #115e59;
+  --nav-active: #dce7f5;
+  --nav-active-text: #173e6d;
   --nav-group: #94a3b8;
   --nav-badge: #dc2626;
-  --nav-cta: #ccfbf1;
-  --nav-cta-border: #5eead4;
-  --nav-cta: #ccfbf1;
-  --nav-cta-border: #5eead4;
+  --nav-cta: #dce7f5;
+  --nav-cta-border: #a9c3e2;
+  --nav-cta: #dce7f5;
+  --nav-cta-border: #a9c3e2;
 
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.06);
@@ -166,10 +166,10 @@
   --card-foreground: var(--text);
   --popover: #ffffff;
   --popover-foreground: var(--text);
-  --primary: #0f766e;
+  --primary: #1d4e89;
   --primary-foreground: #ffffff;
-  --primary-hover: #115e59;
-  --primary-soft: #ccfbf1;
+  --primary-hover: #173e6d;
+  --primary-soft: #dce7f5;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
   --muted: var(--gray-200);
@@ -179,8 +179,8 @@
   --destructive: var(--danger);
   --border: var(--gray-300);
   --input: var(--gray-300);
-  --ring: #14b8a6;
-  --chart-1: #0f766e;
+  --ring: #4a7fc1;
+  --chart-1: #1d4e89;
   --chart-2: #f59e0b;
   --chart-3: #6366f1;
   --chart-4: #0ea5e9;
@@ -487,7 +487,8 @@ kbd { font-family: var(--font-mono); }
     @apply font-sans;
   }
 }
-/* Care workspace refresh: restrained surfaces, readable labels, clear actions. */
+/* Care workspace refresh: restrained surfaces, readable labels, clear actions.
+   Primary is a clinical blue; green is reserved for status such as signed, clocked in, and completed. */
 :root {
   --font-display: var(--font-sans);
   --radius-btn: 0.5rem;
@@ -495,16 +496,16 @@ kbd { font-family: var(--font-mono); }
 :root[data-theme="tide"] {
   --nav: #f8fafb;
   --nav-group: #607381;
-  --nav-active: #e2f1ef;
-  --nav-cta: #e2f1ef;
-  --nav-cta-border: #c6dfda;
+  --nav-active: #dce7f5;
+  --nav-cta: #dce7f5;
+  --nav-cta-border: #b9cee8;
   --text-muted: #526575;
   --text-hint: #697d8d;
-  --primary: #176b64;
-  --primary-hover: #10564f;
-  --primary-soft: #e2f1ef;
-  --blue-500: #237b73;
-  --ring: #237b73;
+  --primary: #1d4e89;
+  --primary-hover: #173e6d;
+  --primary-soft: #dce7f5;
+  --blue-500: #4a7fc1;
+  --ring: #4a7fc1;
   --radius: 0.75rem;
 }
 h1, h2 { font-weight: 500; }
