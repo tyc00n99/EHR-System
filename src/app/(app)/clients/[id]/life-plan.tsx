@@ -10,6 +10,12 @@ import { addGoalQuestion, createGoal, retireGoalQuestion, setGoalStatus } from "
 
 export interface GoalView { id: string; title: string; description: string | null; category: string; status: "active" | "met" | "discontinued"; targetDate: string | null; questions: { id: string; prompt: string; yes: number; no: number; na: number }[] }
 
+/** Turns a stored category into something readable, including ones people add themselves. */
+export function categoryLabel(value: string): string {
+  const known = GOAL_CATEGORIES.find(([v]) => v === value);
+  return known ? known[1] : value.replace(/[_-]+/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
 const ICON: Record<string, string> = { social: "👥", daily_living: "🏠", health: "💚", community: "🚌", employment: "💼", communication: "💬", other: "⭐" };
 
 function Bar({ label, n, total, tone }: { label: string; n: number; total: number; tone: "ok" | "danger" }) {
@@ -33,7 +39,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
           <section key={g.id} className={cx("rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]", g.status !== "active" && "opacity-70")}>
             <div className="flex items-start gap-3 border-b border-line-soft px-5 py-4">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel text-lg">{ICON[g.category] ?? "⭐"}</span>
-              <div className="min-w-0 flex-1"><h3 className="text-[16px] font-semibold text-text-strong">{g.title}</h3>{g.description && <p className="mt-0.5 text-[13px] text-muted-foreground">{g.description}</p>}{g.targetDate && <p className="mt-0.5 text-[12px] text-muted-foreground">Target {g.targetDate}</p>}</div>
+              <div className="min-w-0 flex-1"><h3 className="text-[16px] font-semibold text-text-strong">{g.title}</h3><span className="text-[12px] text-muted-foreground">{categoryLabel(g.category)}</span>{g.description && <p className="mt-0.5 text-[13px] text-muted-foreground">{g.description}</p>}{g.targetDate && <p className="mt-0.5 text-[12px] text-muted-foreground">Target {g.targetDate}</p>}</div>
               <Badge tone={g.status === "active" ? "ok" : g.status === "met" ? "accent" : "neutral"}>{g.status}</Badge>
               {manage && (
                 <div className="w-36 shrink-0">
@@ -66,12 +72,13 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
           </section>
         );
       })}
-      {manage && <NewGoal personId={personId} />}
+      {manage && <NewGoal personId={personId} extraCategories={[...new Set(goals.map((g) => g.category))].filter((c) => !GOAL_CATEGORIES.some(([v]) => v === c))} />}
     </div>
   );
 }
 
-function NewGoal({ personId }: { personId: string }) {
+function NewGoal({ personId, extraCategories }: { personId: string; extraCategories: string[] }) {
+  const [adding, setAdding] = useState(false);
   const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => { const r = await createGoal(personId, p, fd); if (r.message && !r.errors) toast.success(r.message); return r; }, {});
   const [questions, setQuestions] = useState<string[]>([""]);
   const e = state.errors ?? {};
@@ -81,7 +88,19 @@ function NewGoal({ personId }: { personId: string }) {
       <FormError message={state.errors ? state.message : undefined} />
       <div className="grid gap-3 md:grid-cols-6">
         <Field label="Goal" error={e.title} className="md:col-span-4"><Input name="title" placeholder="Improve social skills" required /></Field>
-        <Field label="Category" error={e.category} className="md:col-span-2"><Select name="category" defaultValue="social">{GOAL_CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
+        <Field label="Category" error={e.category} className="md:col-span-2" hint={adding ? "Name it the way your team says it, for example Money management." : undefined}>
+          {adding ? (
+            <div className="flex gap-1.5">
+              <Input name="category" autoFocus required maxLength={40} placeholder="New category" />
+              <Button type="button" variant="outline" className="h-9 shrink-0" onClick={() => setAdding(false)}>Back</Button>
+            </div>
+          ) : (
+            <Select name="category" defaultValue="social" onChange={(ev) => { if (ev.target.value === "__new") setAdding(true); }}>
+              {[...GOAL_CATEGORIES.map(([v, l]) => [v, l] as [string, string]), ...extraCategories.map((c) => [c, categoryLabel(c)] as [string, string])].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              <option value="__new">Add a category…</option>
+            </Select>
+          )}
+        </Field>
         <Field label="What this looks like for the person" error={e.description} className="md:col-span-6"><Textarea name="description" className="min-h-14" placeholder="Help Jordan build social skills by joining group activities and starting conversations." /></Field>
         <Field label="Start" error={e.startDate} className="md:col-span-2"><Input name="startDate" type="date" /></Field>
         <Field label="Target" error={e.targetDate} className="md:col-span-2"><Input name="targetDate" type="date" /></Field>

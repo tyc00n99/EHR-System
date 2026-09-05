@@ -86,7 +86,7 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
 
         {questions.length > 0 && (
           <section>
-            <div className="mb-2 text-[13px] font-semibold text-text-strong">Life plan goals</div>
+            <div className="mb-2 text-[13px] font-semibold text-text-strong">Support plan goals</div>
             <div className="space-y-3">
               {Object.entries(grouped).map(([goal, qs]) => (
                 <div key={goal} className="rounded-md border border-line bg-card">

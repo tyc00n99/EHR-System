@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
+
 import { Icon } from "@/components/icons";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
-import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listAuditForRecord, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, listNoteEvents, countNotes, listVisits, personFeed } from "@/db/queries";
+import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
 import { LifePlan } from "./life-plan";
-import { Feed, type FeedItem } from "./feed";
 import { NotesTab, type NoteRow } from "./notes-tab";
 import { PreviewButton } from "./doc-preview";
 import { StatusControl } from "./status-control";
@@ -71,24 +70,20 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const goalFrom = daysAgo(90);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
-  const feedDays = Math.min(365, Math.max(7, Number(sp.days) || 30));
   const noteCode = typeof sp.code === "string" ? sp.code : "";
   const noteFrom = typeof sp.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.from) ? sp.from : "";
   const noteTo = typeof sp.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.to) ? sp.to : "";
   const noteRows = tab === "notes" ? await listVisits({ personId: id, from: noteFrom ? fromLocalInput(`${noteFrom}T00:00`) : daysAgo(90), to: noteTo ? new Date(fromLocalInput(`${noteTo}T00:00`).getTime() + 86_399_000) : undefined, limit: 2000 }) : [];
   const noteResponses = tab === "notes" && noteRows.length ? await goalCountsForVisits(noteRows.map((r) => r.visit.id)) : new Map<string, { yes: number; no: number }>();
-  const feed = tab === "feed" ? await personFeed(id, daysAgo(feedDays), new Date()) : [];
-  const [agreements, visits, audit, documents, team, goals, meds, admins] = await Promise.all([
+  const [agreements, visits, documents, team, goals, meds, admins] = await Promise.all([
     listAgreementsForPerson(id),
     listVisits({ personId: id, from: oldest.start, to: current.end, limit: 500 }),
-    user.role === "admin" ? listAuditForRecord("people", id) : Promise.resolve([]),
     listClientDocuments(id),
     listAssignmentsForPerson(id),
     listGoalsWithStats(id, goalFrom, new Date()),
     listMedications(id),
     listMedAdmins(id, `${month}-01`, monthEnd),
   ]);
-  const noteEvents = tab === "history" ? await listNoteEvents(id) : [];
   const noteCount = await countNotes(id);
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
@@ -104,14 +99,12 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
   const tabs = [
     { key: "overview", label: "Overview" },
-    { key: "feed", label: "Activity" },
-    { key: "lifeplan", label: "Life plan", count: goals.filter((g) => g.goal.status === "active").length },
+    { key: "lifeplan", label: "Support plan goals", count: goals.filter((g) => g.goal.status === "active").length },
     { key: "notes", label: "Notes", count: noteCount },
     { key: "authorizations", label: "Authorizations", count: active.length },
     { key: "files", label: "Plans & files", count: documents.length },
     { key: "medical", label: "Medical", count: meds.filter((m) => m.active).length || undefined },
     { key: "contacts", label: "Care team & contacts" },
-    ...(user.role === "admin" ? [{ key: "history", label: "History", count: noteCount }] : []),
   ];
 
   return (
@@ -160,7 +153,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           </div>
           <div className="min-w-0 space-y-4">
             <Card title="Client workspace" description="Notes, the support plan and other files, and the authorizations behind them." padded>
-              <div className="flex flex-wrap gap-2"><LinkButton href={`/clients/${id}?tab=notes`}>View notes · {noteCount}</LinkButton><LinkButton href={`/clients/${id}?tab=files`} variant="outline">Plans & files · {documents.length}</LinkButton><LinkButton href={`/clients/${id}?tab=lifeplan`} variant="outline">Life plan</LinkButton>{manage && !person.signatureCodeHash && <LinkButton href={`/clients/${id}?tab=contacts`} variant="outline">Set signing code</LinkButton>}</div>
+              <div className="flex flex-wrap gap-2"><LinkButton href={`/clients/${id}?tab=notes`}>View notes · {noteCount}</LinkButton><LinkButton href={`/clients/${id}?tab=files`} variant="outline">Plans & files · {documents.length}</LinkButton><LinkButton href={`/clients/${id}?tab=lifeplan`} variant="outline">Support plan goals</LinkButton>{manage && !person.signatureCodeHash && <LinkButton href={`/clients/${id}?tab=contacts`} variant="outline">Set signing code</LinkButton>}</div>
             </Card>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-line bg-card px-4 py-3 shadow-[var(--shadow-sm)]"><div className="text-[12.5px] font-medium text-muted-foreground">Units remaining</div><div className="figure mt-1 text-[24px] text-text-strong">{unitsLeft.toLocaleString()}</div><div className="text-[12.5px] text-muted-foreground">across {active.length} active authorization{active.length === 1 ? "" : "s"}</div></div>
@@ -219,25 +212,10 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </Card>
       )}
 
-      {tab === "feed" && (
-        <Feed personId={id} days={feedDays} olderHref={`/clients/${id}?tab=feed&days=${feedDays + 30}`} items={feed.map((e): FeedItem => {
-          const day = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/Chicago" }).format(e.at);
-          const time = new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/Chicago" }).format(e.at);
-          const common = { at: e.at.toISOString(), day, time };
-          switch (e.kind) {
-            case "visit": return { ...common, kind: "visit", id: e.id, staff: e.staff, service: e.service, units: e.units, minutes: e.minutes, status: e.status, note: e.note, interaction: e.interaction, skills: e.skills, signed: e.signed, staffSigned: e.staffSigned, approved: e.approved, manual: e.manual, goalYes: e.goalYes, goalNo: e.goalNo };
-            case "med": return { ...common, kind: "med", id: e.id, name: e.name, dose: e.dose, status: e.status, note: e.note, by: e.by };
-            case "shift": return { ...common, kind: "shift", id: e.id, staff: e.staff, service: e.service, status: e.status };
-            case "document": return { ...common, kind: "document", id: e.id, title: e.title, category: e.category, by: e.by };
-            case "agreement": return { ...common, kind: "agreement", id: e.id, number: e.number, service: e.service, units: e.units, status: e.status };
-            case "goal": return { ...common, kind: "goal", id: e.id, title: e.title, status: e.status };
-          }
-        })} />
-      )}
 
       {tab === "lifeplan" && (
         <div className="mx-auto max-w-4xl">
-          <div className="mb-4 flex items-baseline justify-between"><h2 className="text-[18px]">{person.firstName}&apos;s life plan goals</h2><span className="text-[13px] text-muted-foreground">Responses from the last 90 days</span></div>
+          <div className="mb-4 flex items-baseline justify-between"><h2 className="text-[18px]">{person.firstName}&apos;s support plan goals</h2><span className="text-[13px] text-muted-foreground">Responses from the last 90 days</span></div>
           <LifePlan personId={id} manage={manage} rangeLabel="in the last 90 days" goals={goals.map((g) => ({ id: g.goal.id, title: g.goal.title, description: g.goal.description, category: g.goal.category, status: g.goal.status, targetDate: g.goal.targetDate, questions: g.questions.map((q) => ({ id: q.question.id, prompt: q.question.prompt, yes: q.yes, no: q.no, na: q.na })) }))} />
           <ActivityLibrary personId={id} firstName={person.firstName} library={person.activityLibrary} defaults={DEFAULT_ACTIVITIES} manage={manage} />
         </div>
@@ -260,24 +238,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           {manage && <Card title="Signing code" titleAfter={<Rule name="code" />} padded><ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} /></Card>}
         </div>
       )}
-
-      {tab === "history" && user.role === "admin" && (
-        <Card title="Note history" description="Every note save with who, when, and where the device was. Record edits are in the audit log.">
-          {noteEvents.length === 0 ? <Empty icon="history" title="No notes saved yet" /> : (
-            <ul className="divide-y divide-line-soft">
-              {noteEvents.map((e) => (
-                <li key={e.visitId} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5 text-[13px]">
-                  <Link href={`/clients/${id}?tab=history&visit=${e.visitId}`} scroll={false} className="font-medium text-text-strong hover:underline">{fmtDateTime(e.visitAt)} note</Link>
-                  <span className="text-muted-foreground">saved by {e.by ?? "—"} at <span className="tabular-nums">{e.savedAt ? fmtDateTime(e.savedAt) : "—"}</span></span>
-                  {e.lat != null && e.lng != null ? <a href={`https://www.google.com/maps?q=${e.lat},${e.lng}`} target="_blank" rel="noreferrer" className="tabular-nums text-primary hover:underline">{e.lat.toFixed(4)}, {e.lng.toFixed(4)}</a> : <span className="text-hint">no device location</span>}
-                  {e.edits > 0 && <Badge tone="warn">{e.edits} edit{e.edits === 1 ? "" : "s"}</Badge>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      )}
-      {(null as ReactNode)}
     </div>
   );
 }

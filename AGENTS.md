@@ -109,3 +109,4 @@ The latest user authorized palette changes. Default theme is now Tide with slate
 - Billing filters by service code with chips above the tables (`?code=`), counts included.
 - Texting a signing code requires `people.smsConsent`. The client form carries the checkbox next to the phone number; `issueClientCode` and the rotation job both refuse without it and say why. Turn texting on with the Twilio variables in `.env.example`; the code panel states which of the three conditions is missing.
 - A pay period that has not started shows "This pay period has not started" instead of zeros, and the trend chart plots only periods that have begun.
+- The client record dropped the Activity and History tabs (both duplicated the Notes tab and the audit log). "Life plan" is now "Support plan goals" everywhere, including the service record. Goal categories are free text: the picker offers the defaults plus any this client already uses, and "Add a category…" swaps in a text field.
