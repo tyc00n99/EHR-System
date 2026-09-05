@@ -40,6 +40,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
   const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
   const prev = payPeriodByIndex(period.index - 1);
   const isCurrent = period.index === currentPayPeriod().index;
+  const notStarted = period.start > new Date();
   const trendPeriods: PayPeriod[] = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(period.index - 5 + i));
 
   const [lines, prevLines, trend, agreements, people, staffRows, creds, open] = await Promise.all([
@@ -53,6 +54,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
     countOpenVisits(),
   ]);
   const now = summarize(lines), before = summarize(prevLines);
+  const noWork = !notStarted && now.visits === 0;
   const sparkRev = trend.map((t) => t.s.revenue), sparkMargin = trend.map((t) => t.s.margin), sparkHours = trend.map((t) => t.s.hours);
   const today = isoDaysFromNow(0);
   const in60 = isoDaysFromNow(60);
@@ -86,16 +88,23 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
         {open.length > 0 && <span className="ml-auto text-[13px] text-muted-foreground"><span className="font-medium text-primary">{open.length}</span> visit{open.length === 1 ? "" : "s"} in progress right now</span>}
       </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Kpi label="Billable this period" value={fmtMoney(now.revenue)} note={isCurrent ? `Day ${daysElapsed} of 14 · last period ${fmtMoney(before.revenue)}` : <Delta now={now.revenue} prev={before.revenue} money />} spark={sparkRev} href="/billing" />
-        <Kpi label="Profit expectations" value={fmtMoney(now.margin)} note={`${pct(now.margin, now.revenue)}% of billable · gross pay ${fmtMoney(now.labor)}`} tone={now.margin < 0 ? "danger" : undefined} spark={sparkMargin} />
-        <Kpi label="Caregiver hours" value={now.hours.toFixed(1)} note={`${now.visits} completed note${now.visits === 1 ? "" : "s"} · ${now.units} units`} spark={sparkHours} href="/visits" />
-        <Kpi label="Revenue at risk" value={fmtMoney(now.atRiskRevenue)} note={now.atRisk.length ? `${now.atRisk.length} note${now.atRisk.length === 1 ? "" : "s"} unsigned or manual` : "Every note signed and captured live"} tone={now.atRisk.length ? "warn" : "ok"} href="/attention" />
-      </div>
+      {notStarted ? (
+        <Card className="mb-5" padded>
+          <div className="text-[15px] font-medium text-text-strong">This pay period has not started</div>
+          <p className="mt-1 text-[13px] text-muted-foreground">Nothing to measure until {period.label.split(" – ")[0]}. Use the arrows to look back at a period that has been worked, or jump to the current one.</p>
+        </Card>
+      ) : (
+        <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Kpi label="Billable this period" value={fmtMoney(now.revenue)} note={noWork ? "No notes in this period yet" : isCurrent ? `Day ${daysElapsed} of 14 · last period ${fmtMoney(before.revenue)}` : <Delta now={now.revenue} prev={before.revenue} />} spark={sparkRev} href="/billing" />
+          <Kpi label="Profit expectations" value={noWork ? "—" : fmtMoney(now.margin)} note={noWork ? "Nothing billed yet" : `${pct(now.margin, now.revenue)}% of billable · gross pay ${fmtMoney(now.labor)}`} tone={!noWork && now.margin < 0 ? "danger" : undefined} spark={sparkMargin} />
+          <Kpi label="Caregiver hours" value={now.hours.toFixed(1)} note={noWork ? "No completed notes yet" : `${now.visits} completed note${now.visits === 1 ? "" : "s"} · ${now.units} units`} spark={sparkHours} href="/visits" />
+          <Kpi label="Revenue at risk" value={noWork ? "—" : fmtMoney(now.atRiskRevenue)} note={noWork ? "Nothing to check yet" : now.atRisk.length ? `${now.atRisk.length} note${now.atRisk.length === 1 ? "" : "s"} unsigned or manual` : "Every note signed and captured live"} tone={now.atRisk.length ? "warn" : undefined} href="/billing" />
+        </div>
+      )}
 
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Card title="What you bill against what you pay" description="Billable revenue and caregiver gross pay, last six pay periods. Hover for the numbers." padded>
-          <TrendChart points={trend.map(({ p, s }) => ({ label: p.label.split(" – ")[0], revenue: s.revenue, labor: s.labor, current: p.index === period.index }))} />
+          <TrendChart points={trend.filter(({ p }) => p.start <= new Date()).map(({ p, s }) => ({ label: p.label.split(" – ")[0], revenue: s.revenue, labor: s.labor, current: p.index === period.index }))} />
         </Card>
 
         <Card title="Census" description="Who you serve and how much authorized work is on the books">

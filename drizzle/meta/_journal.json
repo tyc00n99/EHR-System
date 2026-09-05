@@ -71,6 +71,13 @@
       "when": 1788603233752,
       "tag": "0009_code_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788603994065,
+      "tag": "0010_sms_consent",
+      "breakpoints": true
     }
   ]
 }

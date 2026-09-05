@@ -29,13 +29,16 @@ export interface IssuedCode {
 export async function issueClientCode(
   db: Executor,
   actorId: string | null,
-  person: { id: string; firstName: string; phone: string | null },
+  person: { id: string; firstName: string; phone: string | null; smsConsent?: boolean },
   orgName: string,
 ): Promise<IssuedCode> {
   const code = generateClientCode();
   const w = audited(db, { userId: actorId });
   const number = toE164(person.phone);
-  const sms = number && smsConfigured() ? await sendSms(number, signingCodeMessage(orgName, person.firstName, code)) : { sent: false, reason: number ? "Texting is not configured." : "No mobile number on the client record." };
+  const canText = Boolean(number) && person.smsConsent !== false && smsConfigured();
+  const sms = canText
+    ? await sendSms(number!, signingCodeMessage(orgName, person.firstName, code))
+    : { sent: false, reason: !number ? "No mobile number on the client record." : person.smsConsent === false ? "The client has not agreed to receive texts." : "Texting is not configured." };
   await w.update(schema.people, person.id, {
     signatureCodeHash: await hashPassword(code),
     signatureCodeSetAt: new Date(),

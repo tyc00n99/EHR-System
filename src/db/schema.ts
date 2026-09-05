@@ -191,6 +191,9 @@ export const people = pgTable(
     /** When the current code was last texted to the person, and where it went. */
     signatureCodeSentAt: timestamp("signature_code_sent_at", { withTimezone: true }),
     signatureCodeSentTo: text("signature_code_sent_to"),
+    /** The person agreed to receive text messages. Required before the app texts a signing code. */
+    smsConsent: boolean("sms_consent").notNull().default(false),
+    smsConsentAt: timestamp("sms_consent_at", { withTimezone: true }),
     address1: text("address1"),
     address2: text("address2"),
     city: text("city"),

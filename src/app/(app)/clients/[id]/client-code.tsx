@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/kit";
 import { setClientCode } from "../actions";
 
-export function ClientCodePanel({ personId, hasCode, setAt, sentAt, sentTo, phone }: { personId: string; hasCode: boolean; setAt: string | null; sentAt: string | null; sentTo: string | null; phone: string | null }) {
+export function ClientCodePanel({ personId, hasCode, setAt, sentAt, sentTo, phone, consent }: { personId: string; hasCode: boolean; setAt: string | null; sentAt: string | null; sentTo: string | null; phone: string | null; consent: boolean }) {
   const [code, setCode] = useState<string>();
   const [texted, setTexted] = useState(false);
   const [msg, setMsg] = useState<string>();
@@ -26,6 +26,11 @@ export function ClientCodePanel({ personId, hasCode, setAt, sentAt, sentTo, phon
         <p className="text-[13px] text-muted-foreground">{hasCode ? `Code set ${setAt}${sentAt ? `, texted to ${sentTo}` : phone ? ", not texted yet" : ". No mobile number on file, so read it to the client"}. The person enters it on the staff phone to sign each shift note.` : "No signing code yet. Without one the person cannot sign shift notes."}</p>
       )}
       {msg && <p className="mt-2 text-[13px] text-danger">{msg}</p>}
+      {!sentAt && (
+        <p className="mt-2 text-[13px] text-muted-foreground">
+          {!phone ? "No mobile number on file, so codes have to be read to the client." : !consent ? "The client has not agreed to receive texts, so codes have to be read to them." : "Codes will be texted once texting is switched on."}
+        </p>
+      )}
       <Button variant={hasCode ? "outline" : "primary"} className="mt-3" disabled={pending} onClick={generate}>{pending ? "Generating…" : hasCode ? "Generate a new code" : "Generate signing code"}</Button>
     </div>
   );

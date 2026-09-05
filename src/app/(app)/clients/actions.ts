@@ -15,7 +15,7 @@ import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionSt
 
 export async function createPerson(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
-  const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true" });
+  const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true", smsConsent: fd.get("smsConsent") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
   let id: string;
@@ -27,14 +27,14 @@ export async function createPerson(_prev: ActionState, fd: FormData): Promise<Ac
     throw e;
   }
   const org = await getOrganization();
-  const issued = await issueClientCode(db, user.id, { id, firstName: parsed.data.firstName, phone: parsed.data.phone ?? null }, org.name);
+  const issued = await issueClientCode(db, user.id, { id, firstName: parsed.data.firstName, phone: parsed.data.phone ?? null, smsConsent: parsed.data.smsConsent }, org.name);
   revalidatePath("/clients");
   redirect(`/clients/${id}?code=${issued.texted ? "texted" : issued.code}`);
 }
 
 export async function updatePerson(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
-  const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true" });
+  const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true", smsConsent: fd.get("smsConsent") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
   const values = Object.fromEntries(Object.keys(personSchema.shape).map((k) => [k, (parsed.data as Record<string, unknown>)[k] ?? null]));
@@ -51,7 +51,7 @@ export async function setClientCode(personId: string): Promise<{ code?: string; 
   if (!person) return { message: "Client not found." };
   const db = await getDb();
   const org = await getOrganization();
-  const issued = await issueClientCode(db, user.id, { id: personId, firstName: person.firstName, phone: person.phone }, org.name);
+  const issued = await issueClientCode(db, user.id, { id: personId, firstName: person.firstName, phone: person.phone, smsConsent: person.smsConsent }, org.name);
   revalidatePath(`/clients/${personId}`);
   return { code: issued.code, texted: issued.texted, message: issued.texted ? undefined : issued.reason };
 }

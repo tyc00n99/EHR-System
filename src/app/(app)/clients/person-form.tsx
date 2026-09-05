@@ -69,6 +69,7 @@ export function PersonForm({ action, defaults, cancelHref }: { action: Action; d
         <Field label="State" error={e.state} className="md:col-span-1"><Input name="state" defaultValue={d.state ?? "MN"} maxLength={2} /></Field>
         <Field label="ZIP" error={e.zip} className="md:col-span-2"><Input name="zip" inputMode="numeric" defaultValue={d.zip ?? ""} /></Field>
         <Field label="Phone" error={e.phone} className="md:col-span-3"><Input name="phone" type="tel" defaultValue={d.phone ?? ""} /></Field>
+        <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="smsConsent" value="true" defaultChecked={d.smsConsent ?? false} label={<span>This person agreed to receive text messages at that number<span className="block text-[13px] text-muted-foreground">Signing codes are texted only with consent. They can stop any time by replying STOP.</span></span>} /></div>
         <Field label="Email" error={e.email} className="md:col-span-3"><Input name="email" type="email" defaultValue={d.email ?? ""} /></Field>
       </FormSection>
 

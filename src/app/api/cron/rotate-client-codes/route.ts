@@ -24,13 +24,14 @@ export async function GET(req: Request) {
   const org = await getOrganization();
   const cutoff = new Date(Date.now() - CODE_ROTATION_DAYS * 86_400_000);
   const due = await db
-    .select({ id: schema.people.id, firstName: schema.people.firstName, lastName: schema.people.lastName, phone: schema.people.phone })
+    .select({ id: schema.people.id, firstName: schema.people.firstName, lastName: schema.people.lastName, phone: schema.people.phone, smsConsent: schema.people.smsConsent })
     .from(schema.people)
     .where(and(eq(schema.people.status, "active"), or(isNull(schema.people.signatureCodeSetAt), lt(schema.people.signatureCodeSetAt, cutoff))));
 
   const results: { client: string; texted: boolean; reason?: string }[] = [];
   for (const p of due) {
     if (!p.phone) { results.push({ client: `${p.firstName} ${p.lastName}`, texted: false, reason: "No mobile number on file." }); continue; }
+    if (!p.smsConsent) { results.push({ client: `${p.firstName} ${p.lastName}`, texted: false, reason: "Has not agreed to receive texts." }); continue; }
     const issued = await issueClientCode(db, null, p, org.name);
     results.push({ client: `${p.firstName} ${p.lastName}`, texted: issued.texted, reason: issued.reason });
   }

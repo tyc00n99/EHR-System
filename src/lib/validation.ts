@@ -43,6 +43,7 @@ export const PERSON_STATUS = ["intake", "active", "discharged"] as const;
 export const SITE_TYPES = ["office", "community_residential", "day_services", "in_home"] as const;
 
 export const personSchema = z.object({
+  smsConsent: z.boolean().default(false),
   firstName: z.string().min(1, "Required").max(100),
   lastName: z.string().min(1, "Required").max(100),
   preferredName: optionalText,
