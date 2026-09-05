@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Badge, Card, Empty, Kpi, PageHeader, Table, Td, Th, Thead, Tr, cx } from "@/components/kit";
 import { TrendChart } from "@/components/trend-chart";
-import { attentionItems } from "@/lib/attention";
 import { countOpenVisits, listAgreementsWithUsage, listAllCredentials, listPeople, listStaff, periodLines } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
@@ -9,7 +8,7 @@ import { fmtDate, fmtDateTime, fmtMoney } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam, type PayPeriod } from "@/lib/pay-period";
 
-export const metadata = { title: "Owner view" };
+export const metadata = { title: "Agency performance" };
 
 function summarize(lines: Awaited<ReturnType<typeof periodLines>>) {
   const revenue = lines.reduce((n, l) => n + l.units * l.unitRate, 0);
@@ -43,7 +42,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
   const isCurrent = period.index === currentPayPeriod().index;
   const trendPeriods: PayPeriod[] = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(period.index - 5 + i));
 
-  const [lines, prevLines, trend, agreements, people, staffRows, creds, open, attention] = await Promise.all([
+  const [lines, prevLines, trend, agreements, people, staffRows, creds, open] = await Promise.all([
     periodLines(period.start, period.end),
     periodLines(prev.start, prev.end),
     Promise.all(trendPeriods.map((p) => periodLines(p.start, p.end).then((l) => ({ p, s: summarize(l) })))),
@@ -52,7 +51,6 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
     listStaff(true),
     listAllCredentials(),
     countOpenVisits(),
-    attentionItems(),
   ]);
   const now = summarize(lines), before = summarize(prevLines);
   const sparkRev = trend.map((t) => t.s.revenue), sparkMargin = trend.map((t) => t.s.margin), sparkHours = trend.map((t) => t.s.hours);
@@ -78,7 +76,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
   
   return (
     <div>
-      <PageHeader title="Owner insights" meta={<span>Money, billing risk, authorizations, and licensing exposure in one place.</span>} />
+      <PageHeader title="Agency performance" meta={<span>Billable revenue against gross pay, how fast authorizations are being used, and what is holding up claims, by pay period.</span>} />
 
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-sidebar px-3 py-2">
         <Link href={q(prev)} aria-label="Previous pay period" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</Link>
@@ -134,15 +132,8 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
           )}
         </Card>
 
-        <Card title="Needs attention" description="Worst first. Everything here is a licensing, billing, or payroll problem." actions={<Link href="/attention" className="text-[13px] font-medium text-primary hover:underline">All {attention.length}</Link>}>
-          {attention.length === 0 ? <Empty icon="check" title="Nothing needs attention" /> : (
-            <ul className="divide-y divide-line-soft">
-              {attention.slice(0, 7).map((i, n) => (
-                <li key={n}><Link href={i.href} className="flex items-start gap-3 px-5 py-2.5 hover:bg-hover"><span className={cx("mt-1.5 h-2 w-2 shrink-0 rounded-full", i.severity === "danger" ? "bg-danger" : "bg-warn")} /><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{i.title}</span><span className="block truncate text-[12.5px] text-muted-foreground">{i.detail}</span></span></Link></li>
-              ))}
-            </ul>
-          )}
-          <div className="grid grid-cols-3 divide-x divide-line-soft border-t border-line-soft bg-sidebar text-center">
+        <Card title="Where the risk sits" description="Counts behind this period's numbers. The review queue has the detail." actions={<Link href="/attention" className="text-[13px] font-medium text-primary hover:underline">Review queue</Link>}>
+          <div className="grid grid-cols-3 divide-x divide-line-soft text-center">
             <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{nonCompliant.length}</div><div className="text-[11.5px] text-muted-foreground">staff out of compliance</div></div>
             <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{now.atRisk.filter((l) => !l.signed).length}</div><div className="text-[11.5px] text-muted-foreground">unsigned visits</div></div>
             <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{open.length}</div><div className="text-[11.5px] text-muted-foreground">clocked in now</div></div>

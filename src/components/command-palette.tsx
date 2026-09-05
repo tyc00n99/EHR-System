@@ -8,7 +8,7 @@ import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, Comma
 export interface PaletteEntry { id: string; label: string; hint?: string; href: string; group: "Clients" | "Staff" }
 
 const NAV = [
-  ["Home", "/", Home], ["Owner insights", "/owner", TrendingUp], ["Needs attention", "/attention", Bell], ["Clients", "/clients", Users], ["Clock in / out", "/clock", Clock], ["Notes & EVV", "/visits", ListChecks], ["Billing", "/billing", Wallet], ["Staff", "/staff", UserSquare2], ["Compliance", "/compliance", ShieldCheck], ["Reports", "/reports", LayoutDashboard], ["Sites & programs", "/sites", Building2], ["245D services", "/services", FileText], ["Settings", "/settings", Settings],
+  ["Home", "/", Home], ["Agency performance", "/owner", TrendingUp], ["Needs attention", "/attention", Bell], ["Clients", "/clients", Users], ["Clock in / out", "/clock", Clock], ["Notes & EVV", "/visits", ListChecks], ["Billing", "/billing", Wallet], ["Staff", "/staff", UserSquare2], ["Compliance", "/compliance", ShieldCheck], ["Reports", "/reports", LayoutDashboard], ["Sites & programs", "/sites", Building2], ["245D services", "/services", FileText], ["Settings", "/settings", Settings],
 ] as const;
 
 export function CommandPalette({ entries, role }: { entries: PaletteEntry[]; role: string }) {

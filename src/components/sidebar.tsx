@@ -37,7 +37,7 @@ export function Sidebar({ role, orgName, attention, canClock }: { role: Role; or
   const groups: Group[] = [
     { items: [
       { href: "/", label: office ? "Dashboard" : "Home", icon: "home" },
-      { href: "/owner", label: "Owner insights", icon: "trend", roles: ["admin"] },
+      { href: "/owner", label: "Agency performance", icon: "trend", roles: ["admin"] },
       { href: "/attention", label: "Review queue", icon: "bell", roles: ["admin", "supervisor"], badge: attention },
     ] },
     { label: "Care", items: [

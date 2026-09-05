@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Icon } from "@/components/icons";
 import { DownloadButton } from "@/components/download-button";
 import { Field, Input, Select } from "@/components/kit";
 

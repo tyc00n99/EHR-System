@@ -15,7 +15,7 @@ export function MobileNav({ role }: { role: "admin" | "supervisor" | "dsp" }) {
   const more = [
     { href: "/scheduling", label: "Scheduling" },
     ...(office ? [{ href: "/billing", label: "Billing" }, { href: "/staff", label: "Staff" }, { href: "/compliance", label: "Compliance" }, { href: "/reports", label: "Reports" }, { href: "/sites", label: "Sites & programs" }] : []),
-    ...(role === "admin" ? [{ href: "/owner", label: "Owner insights" }, { href: "/settings", label: "Settings" }, { href: "/audit", label: "Audit log" }] : []),
+    ...(role === "admin" ? [{ href: "/owner", label: "Agency performance" }, { href: "/settings", label: "Settings" }, { href: "/audit", label: "Audit log" }] : []),
     { href: "/services", label: "245D services" }, { href: "/me", label: "My profile" },
   ];
   const active = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href) || (href === "/visits" && pathname.startsWith("/notes"));

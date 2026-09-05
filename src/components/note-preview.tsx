@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
