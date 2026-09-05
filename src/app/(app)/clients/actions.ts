@@ -5,10 +5,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { getPerson } from "@/db/queries";
+import { getPerson, getOrganization } from "@/db/queries";
 import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAgreement } from "@/lib/ai/extract-agreement";
 import { requireUser } from "@/lib/auth";
-import { generateClientCode } from "@/lib/client-code";
+import { issueClientCode } from "@/lib/client-code";
 import { hashPassword } from "@/lib/password";
 import { putFile } from "@/lib/storage";
 import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState, activityLibrarySchema } from "@/lib/validation";
@@ -26,8 +26,10 @@ export async function createPerson(_prev: ActionState, fd: FormData): Promise<Ac
     if (String(e).includes("people_pmi_idx")) return { errors: { pmi: "A client with this PMI number already exists" } };
     throw e;
   }
+  const org = await getOrganization();
+  const issued = await issueClientCode(db, user.id, { id, firstName: parsed.data.firstName, phone: parsed.data.phone ?? null }, org.name);
   revalidatePath("/clients");
-  redirect(`/clients/${id}`);
+  redirect(`/clients/${id}?code=${issued.texted ? "texted" : issued.code}`);
 }
 
 export async function updatePerson(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -43,15 +45,15 @@ export async function updatePerson(id: string, _prev: ActionState, fd: FormData)
 }
 
 /** Generates a new six-digit signing code for the person and returns it once. Only the hash is stored. */
-export async function setClientCode(personId: string): Promise<{ code?: string; message?: string }> {
+export async function setClientCode(personId: string): Promise<{ code?: string; texted?: boolean; message?: string }> {
   const user = await requireUser(["admin", "supervisor"]);
   const person = await getPerson(personId);
   if (!person) return { message: "Client not found." };
-  const code = generateClientCode();
   const db = await getDb();
-  await audited(db, { userId: user.id }).update(schema.people, personId, { signatureCodeHash: await hashPassword(code), signatureCodeSetAt: new Date() });
+  const org = await getOrganization();
+  const issued = await issueClientCode(db, user.id, { id: personId, firstName: person.firstName, phone: person.phone }, org.name);
   revalidatePath(`/clients/${personId}`);
-  return { code };
+  return { code: issued.code, texted: issued.texted, message: issued.texted ? undefined : issued.reason };
 }
 
 export async function createAgreement(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {

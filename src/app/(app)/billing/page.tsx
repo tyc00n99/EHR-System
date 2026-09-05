@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Badge, Card, Empty, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
+import { Badge, Card, cx, Empty, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { periodLines } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { fmtMoney } from "@/lib/format";
@@ -13,12 +13,16 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   const sp = await searchParams;
   const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
   const isCurrent = period.index === currentPayPeriod().index;
-  const lines = await periodLines(period.start, period.end);
+  const all = await periodLines(period.start, period.end);
+  const code = typeof sp.code === "string" ? sp.code : "";
+  const codes = [...new Set(all.map((l) => l.serviceCode))].sort();
+  const lines = code ? all.filter((l) => l.serviceCode === code) : all;
   const ready = lines.filter((l) => l.signed && !l.manual);
   const hold = lines.filter((l) => !l.signed || l.manual);
   const byClient = Object.values(ready.reduce<Record<string, { personId: string; name: string; lines: typeof ready }>>((acc, l) => { (acc[l.personId] ??= { personId: l.personId, name: l.personName, lines: [] }).lines.push(l); return acc; }, {}));
   const total = (ls: typeof lines) => ls.reduce((n, l) => n + l.units * l.unitRate, 0);
-  const q = (p: { startDate: string }) => `/billing?period=${p.startDate}`;
+  const q = (p: { startDate: string }) => `/billing?period=${p.startDate}${code ? `&code=${code}` : ""}`;
+  const codeHref = (c: string) => `/billing?period=${period.startDate}${c ? `&code=${c}` : ""}`;
 
   return (
     <div>
@@ -28,6 +32,21 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         <div className="text-[13px] font-medium text-text-strong">{isCurrent ? "Current pay period" : "Pay period"} <span className="font-normal text-muted-foreground">· {period.label}</span></div>
         <Link href={q(payPeriodByIndex(period.index + 1))} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</Link>
         <div className="ml-auto flex gap-5 text-[13px] tabular-nums text-muted-foreground"><span><span className="font-medium text-ok">{fmtMoney(total(ready))}</span> ready</span><span><span className="font-medium text-warn">{fmtMoney(total(hold))}</span> on hold</span><span><span className="font-medium text-text-strong">{fmtMoney(total(lines))}</span> total</span></div>
+      </div>
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
+        <span className="text-[13px] text-muted-foreground">Service code</span>
+        <Link href={codeHref("")} className={cx("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium", code ? "border-line bg-page text-text hover:bg-hover" : "border-primary bg-primary-soft text-primary")}>
+          All<span className="tabular-nums opacity-70">{all.length}</span>
+        </Link>
+        {codes.map((c) => {
+          const n = all.filter((l) => l.serviceCode === c).length;
+          return (
+            <Link key={c} href={codeHref(c)} title={labelForCode(c, [])} className={cx("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium", code === c ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
+              <span className="font-mono">{c}</span><span className="tabular-nums opacity-70">{n}</span>
+            </Link>
+          );
+        })}
+        {code && <span className="ml-auto text-[13px] text-muted-foreground">{labelForCode(code, [])} · {fmtMoney(total(lines))} of {fmtMoney(total(all))}</span>}
       </div>
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card title="Ready to bill" description="Grouped by client. One row per note becomes one 837P service line." actions={<Badge tone="ok">{ready.length} lines</Badge>}>

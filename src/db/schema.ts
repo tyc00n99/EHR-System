@@ -188,6 +188,9 @@ export const people = pgTable(
     /** Scrypt hash of the client's signing code. The person enters it to co-sign a shift note. */
     signatureCodeHash: text("signature_code_hash"),
     signatureCodeSetAt: timestamp("signature_code_set_at", { withTimezone: true }),
+    /** When the current code was last texted to the person, and where it went. */
+    signatureCodeSentAt: timestamp("signature_code_sent_at", { withTimezone: true }),
+    signatureCodeSentTo: text("signature_code_sent_to"),
     address1: text("address1"),
     address2: text("address2"),
     city: text("city"),

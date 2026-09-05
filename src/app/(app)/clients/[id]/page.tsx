@@ -3,7 +3,7 @@ import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
-import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx } from "@/components/kit";
+import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listAuditForRecord, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, listNoteEvents, countNotes, listVisits, personFeed } from "@/db/queries";
@@ -60,6 +60,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const sp = await searchParams;
   const tab = typeof sp.tab === "string" ? sp.tab : "overview";
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
+  const newCode = typeof sp.code === "string" ? sp.code : null;
   const periodsToShow = Math.min(26, Math.max(1, Number(sp.periods) || 1));
   const person = await getPerson(id);
   if (!person || !(await canViewPerson(user, id))) notFound();
@@ -116,6 +117,11 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   return (
     <div>
       {openVisit && <VisitSheet id={openVisit} />}
+      {newCode && (newCode === "texted" ? (
+        <Notice tone="ok">Signing code texted to {person.firstName}. Staff never see it.</Notice>
+      ) : (
+        <Notice tone="warn"><span className="font-medium text-text-strong">Signing code {newCode}</span><span className="text-muted-foreground"> · read it to {person.firstName} now, it is not shown again. {person.phone ? "Texting is off, so codes cannot be sent yet." : "Add a mobile number and future codes can be texted instead."}</span></Notice>
+      ))}
       <RecordHeader
         crumbs={<><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb>{fullName(person)}</Crumb></>}
         avatar={<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">{person.firstName[0]}{person.lastName[0]}</span>}
@@ -251,7 +257,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           <Contact title="County case manager" name={person.caseManagerName} phone={person.caseManagerPhone} email={person.caseManagerEmail} />
           <Contact title="Consultation Services provider" name={person.consultProviderName} sub={person.consultContactName} phone={person.consultPhone} email={person.consultEmail} />
           <Card title="Care team" padded>{team.length === 0 ? <p className="text-[13px] text-muted-foreground">No caregivers assigned. Assign from the staff record.</p> : <ul className="space-y-2">{team.map((t) => <li key={t.assignment.id} className="flex items-center justify-between text-[13px]"><Link href={`/staff/${t.staff.id}`} className="font-medium text-text-strong hover:underline">{t.staff.firstName} {t.staff.lastName}</Link>{t.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}</Card>
-          {manage && <Card title="Signing code" titleAfter={<Rule name="code" />} padded><ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} /></Card>}
+          {manage && <Card title="Signing code" titleAfter={<Rule name="code" />} padded><ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} /></Card>}
         </div>
       )}
 

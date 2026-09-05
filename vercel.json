@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/rotate-client-codes", "schedule": "0 14 * * 1" }
+  ]
+}
