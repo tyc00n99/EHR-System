@@ -46,3 +46,8 @@ export function fromLocalInput(v: string): Date {
   })();
   return new Date(probe.getTime() - tzOffsetMin * 60000);
 }
+
+/** Today, and dates relative to it, as ISO day strings — the shape every date-only column uses. */
+export function isoDay(offsetDays = 0): string {
+  return new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+}

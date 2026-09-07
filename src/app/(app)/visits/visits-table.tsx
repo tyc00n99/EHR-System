@@ -7,14 +7,17 @@ import { DataTable } from "@/components/data-table";
 import { FilterChips } from "@/components/filter-chips";
 import { Badge } from "@/components/kit";
 
-export interface VisitRow { id: string; clockIn: string; clockInIso: string; minutes: number | null; client: string; personId: string; staff: string; service: string; units: number; status: "in_progress" | "completed" | "void"; manual: boolean; edits: number; signed: boolean; evv: "pending" | "exported" | "accepted" | "rejected" }
+export interface VisitRow { id: string; clockIn: string; clockInIso: string; minutes: number | null; client: string; personId: string; staff: string; service: string; units: number; status: "in_progress" | "completed" | "void"; manual: boolean; returned: boolean; edits: number; signed: boolean; evv: "pending" | "exported" | "accepted" | "rejected" }
 
 const evvTone = { pending: "neutral", exported: "accent", accepted: "ok", rejected: "danger" } as const;
 
-export function VisitsTable({ rows, exportHref }: { rows: VisitRow[]; exportHref?: string }) {
-  const [flag, setFlag] = useState<"all" | "unsigned" | "manual" | "open">("all");
+export function VisitsTable({ rows, exportHref, state }: { rows: VisitRow[]; exportHref?: string; state?: string }) {
+  // The section row owns this filter when it is present; the chips are the fallback for phones
+  // and for caregivers, who have no second row.
+  const [chip, setChip] = useState<"all" | "unsigned" | "manual" | "open">("all");
+  const flag = state ?? chip;
   const byDate = (a: VisitRow, b: VisitRow) => (a.clockInIso < b.clockInIso ? 1 : a.clockInIso > b.clockInIso ? -1 : 0);
-  const data = useMemo(() => rows.filter((r) => (flag === "unsigned" ? r.status === "completed" && !r.signed : flag === "manual" ? r.manual : flag === "open" ? r.status === "in_progress" : true)).sort(byDate), [rows, flag]);
+  const data = useMemo(() => rows.filter((r) => (flag === "unsigned" ? r.status === "completed" && !r.signed : flag === "returned" ? r.returned : flag === "manual" ? r.manual : flag === "open" ? r.status === "in_progress" : true)).sort(byDate), [rows, flag]);
   const columns: ColumnDef<VisitRow, unknown>[] = [
     { accessorKey: "clockInIso", header: "Clock in", cell: ({ row }) => <span className="font-medium text-text-strong">{row.original.clockIn}</span> },
     { accessorKey: "minutes", header: "Duration", cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="tabular-nums text-muted-foreground">{row.original.minutes} min</span> },
@@ -31,7 +34,7 @@ export function VisitsTable({ rows, exportHref }: { rows: VisitRow[]; exportHref
       data={data}
       searchPlaceholder="Search client, caregiver, code…"
       rowHref={(r) => `?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)), note: r.id })}`}
-      chips={<FilterChips value={flag} onChange={setFlag} options={[{ key: "all", label: "All", count: rows.length }, { key: "unsigned", label: "Unsigned", count: rows.filter((r) => r.status === "completed" && !r.signed).length }, { key: "manual", label: "Manual", count: rows.filter((r) => r.manual).length }, { key: "open", label: "In progress", count: rows.filter((r) => r.status === "in_progress").length }]} />}
+      chips={state ? undefined : <FilterChips value={chip} onChange={setChip} options={[{ key: "all", label: "All", count: rows.length }, { key: "unsigned", label: "Unsigned", count: rows.filter((r) => r.status === "completed" && !r.signed).length }, { key: "manual", label: "Manual", count: rows.filter((r) => r.manual).length }, { key: "open", label: "In progress", count: rows.filter((r) => r.status === "in_progress").length }]} />}
       actions={exportHref && <a href={exportHref} className="inline-flex h-8 items-center rounded-md border border-line bg-page px-3 text-[12.5px] font-medium hover:bg-hover">Export CSV</a>}
       emptyTitle="No notes match"
       initialSorting={[{ id: "clockInIso", desc: true }]}

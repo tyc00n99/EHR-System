@@ -27,12 +27,15 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
   const title = person ? `Notes for ${fullName(person)}` : user.role === "dsp" ? "My notes" : "Notes";
 
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
+  const state = typeof sp.state === "string" && ["unsigned", "returned", "manual", "open"].includes(sp.state) ? sp.state : undefined;
+  const stateLabel: Record<string, string> = { unsigned: "awaiting a signature", returned: "returned for correction", manual: "entered manually", open: "still in progress" };
   return (
     <div>
       {openVisit && <VisitSheet id={openVisit} />}
       <PageHeader
         eyebrow={person && <><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Notes</Crumb></>}
         title={title}
+        meta={state && <span>Showing only notes {stateLabel[state]} in this pay period. <Link href={periodHref(period)} className="text-primary hover:underline">Show all notes</Link></span>}
         actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a note manually</LinkButton>}
       />
 
@@ -53,7 +56,7 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
       </div>
 
       <Card>
-        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`, units: v.units, status: v.status, manual: v.manualEntry, edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} exportHref={can(user, "edit_visits") ? `/reports/visits.csv?period=${period.startDate}` : undefined} />
+        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} exportHref={can(user, "edit_visits") ? `/reports/visits.csv?period=${period.startDate}` : undefined} />
       </Card>
     </div>
   );

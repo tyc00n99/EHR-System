@@ -1,0 +1,135 @@
+import type { IconName } from "@/components/icons";
+
+/**
+ * The whole navigation, in one place, so the top bar, the section row, the gear menu and the
+ * phone's tab bar can never disagree about what a role is allowed to open.
+ *
+ * Shape decided September 2026: a caregiver gets four destinations, a supervisor five, an admin
+ * six. Everything an office user opens a few times a month lives behind the gear instead of
+ * competing with Clients for the same glance.
+ */
+
+export type Role = "admin" | "supervisor" | "dsp";
+
+/** Counts the section row shows. Every one is already computed for the bell; nothing new is queried. */
+export interface NavCounts {
+  review: number;
+  unsigned: number;
+  returned: number;
+  manual: number;
+  missed: number;
+  compliance: number;
+  authorizations: number;
+  clientsAll: number;
+  clientsActive: number;
+  clientsIntake: number;
+  clientsDischarged: number;
+}
+
+export const NO_COUNTS: NavCounts = {
+  review: 0, unsigned: 0, returned: 0, manual: 0, missed: 0, compliance: 0,
+  authorizations: 0, clientsAll: 0, clientsActive: 0, clientsIntake: 0, clientsDischarged: 0,
+};
+
+export interface Destination {
+  href: string;
+  label: string;
+  icon: IconName;
+  /** Red count on the tab itself. Only the review queue earns one. */
+  badge?: keyof NavCounts;
+  /** Other paths that should light this tab up. */
+  also?: string[];
+}
+
+/** The tabs across the top, in the order they are read. */
+export function primaryNav(role: Role): Destination[] {
+  if (role === "dsp") {
+    return [
+      { href: "/", label: "Today", icon: "home" },
+      { href: "/clients", label: "My clients", icon: "clients" },
+      { href: "/clock", label: "Clock in", icon: "clock" },
+      { href: "/visits", label: "My notes", icon: "visits", also: ["/notes"] },
+    ];
+  }
+  return [
+    { href: "/", label: "Today", icon: "home" },
+    { href: "/clients", label: "Clients", icon: "clients", also: ["/agreements"] },
+    { href: "/scheduling", label: "Schedule", icon: "calendar" },
+    { href: "/visits", label: "Notes", icon: "visits", also: ["/notes", "/clock"] },
+    ...(role === "admin" ? [{ href: "/billing", label: "Billing", icon: "money" as IconName }] : []),
+    { href: "/attention", label: "Review", icon: "bell", badge: "review" as const },
+  ];
+}
+
+export interface GearGroup { label: string; items: { href: string; label: string; icon: IconName }[] }
+
+/** The screens you open a few times a month. Caregivers get none of them. */
+export function gearGroups(role: Role): GearGroup[] {
+  if (role === "dsp") return [];
+  const runItems: GearGroup["items"] = [
+    ...(role === "admin" ? [{ href: "/owner", label: "Agency performance", icon: "trend" as IconName }] : []),
+    { href: "/staff", label: "Staff", icon: "staff" },
+    { href: "/compliance", label: "Compliance", icon: "audit" },
+    { href: "/reports", label: "Reports", icon: "chart" },
+  ];
+  const setUpItems: GearGroup["items"] = [
+    { href: "/sites", label: "Sites & programs", icon: "sites" },
+    { href: "/services", label: "245D services", icon: "catalog" },
+    ...(role === "admin" ? [{ href: "/settings", label: "Settings", icon: "settings" as IconName }, { href: "/audit", label: "Audit log", icon: "history" as IconName }] : []),
+  ];
+  return [{ label: "Run the agency", items: runItems }, { label: "Set up", items: setUpItems }];
+}
+
+export interface SectionEntry {
+  href: string;
+  label: string;
+  count?: number;
+  /** Draw the count in red: this is a number someone has to act on. */
+  hot?: boolean;
+  /** Matched against the full path + query to decide which entry is current. */
+  match?: (path: string, params: URLSearchParams) => boolean;
+}
+
+const noParam = (key: string) => (_path: string, p: URLSearchParams) => !p.get(key);
+const param = (key: string, value: string) => (_path: string, p: URLSearchParams) => p.get(key) === value;
+
+/**
+ * The second row: what belongs to the section you have open. Returns null where a section has no
+ * depth worth a row — Today, Schedule, Billing and every caregiver screen.
+ */
+export function sectionRow(pathname: string, role: Role, c: NavCounts): SectionEntry[] | null {
+  if (role === "dsp") return null;
+
+  if (pathname === "/clients" || pathname.startsWith("/agreements")) {
+    return [
+      { href: "/clients", label: "All clients", count: c.clientsAll, match: (p, q) => p === "/clients" && !q.get("status") },
+      { href: "/clients?status=active", label: "Active", count: c.clientsActive, match: (p, q) => p === "/clients" && q.get("status") === "active" },
+      { href: "/clients?status=intake", label: "Intake", count: c.clientsIntake, match: (p, q) => p === "/clients" && q.get("status") === "intake" },
+      { href: "/clients?status=discharged", label: "Discharged", count: c.clientsDischarged, match: (p, q) => p === "/clients" && q.get("status") === "discharged" },
+      { href: "/agreements", label: "Authorizations", count: c.authorizations || undefined, hot: c.authorizations > 0, match: (p) => p.startsWith("/agreements") },
+    ];
+  }
+
+  if (pathname === "/visits" || pathname === "/notes") {
+    return [
+      { href: "/visits", label: "All notes", match: noParam("state") },
+      { href: "/visits?state=unsigned", label: "Awaiting signature", count: c.unsigned || undefined, hot: c.unsigned > 0, match: param("state", "unsigned") },
+      { href: "/visits?state=returned", label: "Returned", count: c.returned || undefined, hot: c.returned > 0, match: param("state", "returned") },
+      { href: "/visits?state=manual", label: "Manual entries", count: c.manual || undefined, match: param("state", "manual") },
+      { href: "/visits?state=open", label: "In progress", match: param("state", "open") },
+    ];
+  }
+
+  if (pathname === "/attention") {
+    return [
+      { href: "/attention", label: "Everything", count: c.review, match: noParam("kind") },
+      { href: "/attention?kind=returned", label: "Returned notes", count: c.returned || undefined, hot: c.returned > 0, match: param("kind", "returned") },
+      { href: "/attention?kind=unsigned", label: "Unsigned", count: c.unsigned || undefined, hot: c.unsigned > 0, match: param("kind", "unsigned") },
+      { href: "/attention?kind=manual", label: "Manual EVV", count: c.manual || undefined, match: param("kind", "manual") },
+      { href: "/attention?kind=missed_shift", label: "Missed shifts", count: c.missed || undefined, match: param("kind", "missed_shift") },
+      { href: "/attention?kind=compliance", label: "Credentials", count: c.compliance || undefined, match: param("kind", "compliance") },
+    ];
+  }
+
+  return null;
+}

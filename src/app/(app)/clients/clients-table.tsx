@@ -11,7 +11,7 @@ export interface ClientRow { id: string; name: string; pmi: string; waiver: stri
 
 const tone = { active: "ok", intake: "accent", discharged: "neutral" } as const;
 
-export function ClientsTable({ rows, manage }: { rows: ClientRow[]; manage: boolean }) {
+export function ClientsTable({ rows, manage, showChips = true }: { rows: ClientRow[]; manage: boolean; showChips?: boolean }) {
   const [status, setStatus] = useState<"all" | ClientRow["status"]>("all");
   const data = useMemo(() => (status === "all" ? rows : rows.filter((r) => r.status === status)), [rows, status]);
   const count = (s: ClientRow["status"]) => rows.filter((r) => r.status === s).length;
@@ -31,7 +31,7 @@ export function ClientsTable({ rows, manage }: { rows: ClientRow[]; manage: bool
       data={data}
       searchPlaceholder="Search name, PMI, county…"
       rowHref={(r) => `/clients/${r.id}`}
-      chips={<FilterChips value={status} onChange={setStatus} options={[{ key: "all", label: "All", count: rows.length }, { key: "active", label: "Active", count: count("active") }, { key: "intake", label: "Intake", count: count("intake") }, { key: "discharged", label: "Discharged", count: count("discharged") }]} />}
+      chips={showChips ? <FilterChips value={status} onChange={setStatus} options={[{ key: "all", label: "All", count: rows.length }, { key: "active", label: "Active", count: count("active") }, { key: "intake", label: "Intake", count: count("intake") }, { key: "discharged", label: "Discharged", count: count("discharged") }]} /> : undefined}
       actions={manage && <LinkButton href="/clients/new" variant="primary">New client</LinkButton>}
       emptyTitle="No clients match"
       initialSorting={[{ id: "name", desc: false }]}

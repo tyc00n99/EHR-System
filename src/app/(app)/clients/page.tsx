@@ -7,8 +7,10 @@ import { ClientsTable, type ClientRow } from "./clients-table";
 
 export const metadata = { title: "Clients" };
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ searchParams }: PageProps<"/clients">) {
   const user = await requireUser();
+  const sp = await searchParams;
+  const status = typeof sp.status === "string" && ["active", "intake", "discharged"].includes(sp.status) ? (sp.status as ClientRow["status"]) : null;
   const manage = can(user, "manage_people");
   const people = user.role === "dsp"
     ? (user.staffId ? (await listAssignmentsForStaff(user.staffId)).filter((a) => a.assignment.active).map((a) => a.person) : [])
@@ -16,11 +18,12 @@ export default async function ClientsPage() {
   const db = await getDb();
   const teams = await db.select({ personId: schema.assignments.personId, first: schema.staff.firstName, last: schema.staff.lastName, active: schema.assignments.active }).from(schema.assignments).innerJoin(schema.staff, (await import("drizzle-orm")).eq(schema.assignments.staffId, schema.staff.id));
   const teamFor = (id: string) => teams.filter((t) => t.personId === id && t.active).map((t) => `${t.first} ${t.last[0]}.`).join(", ");
-  const rows: ClientRow[] = people.map((p) => ({ id: p.id, name: fullName(p), pmi: p.pmi, waiver: p.waiverProgram, county: p.county, caseManager: p.caseManagerName, serviceStart: fmtDate(p.serviceStartDate), status: p.status, hasCode: Boolean(p.signatureCodeHash), team: teamFor(p.id) }));
+  const allRows: ClientRow[] = people.map((p) => ({ id: p.id, name: fullName(p), pmi: p.pmi, waiver: p.waiverProgram, county: p.county, caseManager: p.caseManagerName, serviceStart: fmtDate(p.serviceStartDate), status: p.status, hasCode: Boolean(p.signatureCodeHash), team: teamFor(p.id) }));
+  const rows = status ? allRows.filter((r) => r.status === status) : allRows;
   return (
     <div>
-      <PageHeader title={user.role === "dsp" ? "My clients" : "Clients"} meta={<span>{rows.length} people served · {rows.filter((r) => r.status === "active").length} active</span>} />
-      <Card><ClientsTable rows={rows} manage={manage} /></Card>
+      <PageHeader title={user.role === "dsp" ? "My clients" : "Clients"} meta={<span>{status ? `${rows.length} ${status}` : `${allRows.length} people served · ${allRows.filter((r) => r.status === "active").length} active`}</span>} />
+      <Card><ClientsTable rows={rows} manage={manage} showChips={user.role === "dsp"} /></Card>
     </div>
   );
 }
