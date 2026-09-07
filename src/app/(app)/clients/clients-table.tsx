@@ -17,7 +17,7 @@ export function ClientsTable({ rows, manage, showChips = true }: { rows: ClientR
   const count = (s: ClientRow["status"]) => rows.filter((r) => r.status === s).length;
   const columns: ColumnDef<ClientRow, unknown>[] = [
     { accessorKey: "name", header: "Client", cell: ({ row }) => <Link href={`/clients/${row.original.id}`} className="font-medium text-text-strong hover:underline" onClick={(e) => e.stopPropagation()}>{row.original.name}</Link> },
-    { accessorKey: "pmi", header: "PMI #", cell: ({ getValue }) => <span className="tabular-nums">{String(getValue())}</span> },
+    { accessorKey: "pmi", header: "PMI #", cell: ({ getValue }) => <span className="ident">{String(getValue())}</span> },
     { accessorKey: "waiver", header: "Waiver" },
     { accessorKey: "county", header: "County" },
     { accessorKey: "caseManager", header: "Case manager" },

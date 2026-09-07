@@ -50,8 +50,8 @@ export default async function AgreementsPage() {
                   <Tr key={r.agreement.id}>
                     <Td><Link href={`/clients/${r.agreement.personId}`} className="font-medium text-text-strong hover:underline">{r.personFirst} {r.personLast}</Link></Td>
                     <Td wrap>{labelForCode(r.agreement.serviceCode, r.agreement.modifiers)}</Td>
-                    <Td><Link href={`/clients/${r.agreement.personId}/agreements/${r.agreement.id}`} className="tabular-nums text-primary hover:underline">{r.agreement.agreementNumber}</Link></Td>
-                    <Td><span className="text-muted-foreground">{fmtDate(r.agreement.startDate)} – {fmtDate(r.agreement.endDate)}</span></Td>
+                    <Td><Link href={`/clients/${r.agreement.personId}/agreements/${r.agreement.id}`} className="ident text-primary hover:underline">{r.agreement.agreementNumber}</Link></Td>
+                    <Td><span className="ident text-muted-foreground">{fmtDate(r.agreement.startDate)} – {fmtDate(r.agreement.endDate)}</span></Td>
                     <Td align="right">{r.unitsUsed}</Td>
                     <Td align="right">{r.agreement.authorizedUnits}</Td>
                     <Td><Badge tone={used >= 90 ? "danger" : used >= 75 ? "warn" : "neutral"}>{used}%</Badge></Td>

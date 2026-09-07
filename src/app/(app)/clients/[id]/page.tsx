@@ -1,9 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icons";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
+import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
+import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
@@ -16,7 +19,7 @@ import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { deadlinesFromServiceStart } from "@/lib/compliance";
-import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
+import { fmtDate, fmtDateNum, fmtDateTime, fmtDayTime, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { getServiceType } from "@/lib/services";
@@ -77,7 +80,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const noteResponses = tab === "notes" && noteRows.length ? await goalCountsForVisits(noteRows.map((r) => r.visit.id)) : new Map<string, { yes: number; no: number }>();
   const [agreements, visits, documents, team, goals, meds, admins] = await Promise.all([
     listAgreementsForPerson(id),
-    listVisits({ personId: id, from: oldest.start, to: current.end, limit: 500 }),
+    // Wide enough that "recent notes" is never empty because the pay period just turned over.
+    listVisits({ personId: id, from: oldest.start < daysAgo(90) ? oldest.start : daysAgo(90), to: current.end, limit: 500 }),
     listClientDocuments(id),
     listAssignmentsForPerson(id),
     listGoalsWithStats(id, goalFrom, new Date()),
@@ -96,6 +100,23 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const unitsLeft = active.reduce((n, a) => n + (a.agreement.authorizedUnits - a.unitsUsed), 0);
   const periodVisits = visits.filter(({ visit: v }) => v.clockInAt >= current.start && v.status === "completed");
   const unsigned = visits.filter(({ visit: v }) => v.status === "completed" && !v.clientSignedAt && !v.clientUnsignedReason).length;
+  const activeTeam = team.filter((t) => t.assignment.active);
+  const periodUnits = periodVisits.reduce((n, r) => n + r.visit.units, 0);
+  const periodHours = Math.round(periodVisits.reduce((n, r) => n + (r.visit.clockOutAt ? minutesBetween(r.visit.clockInAt, r.visit.clockOutAt) : 0), 0) / 6) / 10;
+
+  // The right column answers "what do I do about this person", which is why the record is open.
+  const soon = isoDay(60);
+  const alerts: { tone: "danger" | "warn"; body: ReactNode; href?: string; cta?: string }[] = [];
+  if (person.status === "active" && !person.signatureCodeHash) alerts.push({ tone: "danger", body: <><span className="font-medium">No signing code has been issued.</span> Nobody can co-sign a note until one exists.</>, href: `/clients/${id}?tab=contacts`, cta: "Issue a code" });
+  if (person.status === "active" && !person.phone) alerts.push({ tone: "warn", body: <><span className="font-medium">No mobile number on file,</span> so a signing code has nowhere to be sent.</>, href: `/clients/${id}/edit`, cta: "Add a number" });
+  if (unsigned) alerts.push({ tone: "warn", body: <><span className="font-medium">{unsigned} note{unsigned === 1 ? " is" : "s are"} unsigned</span> in the periods shown.</>, href: `/clients/${id}?tab=notes`, cta: "Review them" });
+  if (person.status === "active" && active.length === 0) alerts.push({ tone: "danger", body: <><span className="font-medium">No active authorization.</span> Notes cannot be recorded or billed.</>, href: `/clients/${id}/agreements/new`, cta: "Add an agreement" });
+  for (const { agreement: a, unitsUsed } of active) {
+    const pct = a.authorizedUnits ? Math.round((unitsUsed / a.authorizedUnits) * 100) : 0;
+    if (pct >= 75) alerts.push({ tone: pct >= 90 ? "danger" : "warn", body: <><span className="font-medium">{labelForCode(a.serviceCode, a.modifiers)} is {pct}% used</span> with {(a.authorizedUnits - unitsUsed).toLocaleString()} units left.</>, href: `/clients/${id}/agreements/${a.id}`, cta: "Open authorization" });
+    else if (a.endDate <= soon) alerts.push({ tone: "warn", body: <><span className="font-medium">{labelForCode(a.serviceCode, a.modifiers)} ends {fmtDate(a.endDate)}.</span> Renewal has to be in before then.</>, href: `/clients/${id}/agreements/${a.id}`, cta: "Open authorization" });
+  }
+  for (const t of team.filter((x) => x.assignment.active && !x.assignment.orientedOn)) alerts.push({ tone: "warn", body: <><span className="font-medium">{t.staff.firstName} {t.staff.lastName} is not oriented</span> to this person, which blocks clock-in.</>, href: `/staff/${t.staff.id}`, cta: "Record orientation" });
 
   const tabs = [
     { key: "overview", label: "Overview" },
@@ -115,66 +136,111 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       ) : (
         <Notice tone="warn"><span className="font-medium text-text-strong">Signing code {newCode}</span><span className="text-muted-foreground"> · read it to {person.firstName} now, it is not shown again. {person.phone ? "Texting is off, so codes cannot be sent yet." : "Add a mobile number and future codes can be texted instead."}</span></Notice>
       ))}
-      <RecordHeader
-        crumbs={<><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb>{fullName(person)}</Crumb></>}
-        avatar={<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">{person.firstName[0]}{person.lastName[0]}</span>}
-        title={fullName(person)}
-        chips={<>{manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}{!person.signatureCodeHash && person.status === "active" && <Badge tone="danger">no signing code</Badge>}{person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-muted-foreground">discharged {fmtDate(person.dischargedOn)}</span>}</>}
-        subtitle={<><span className="tabular-nums">PMI {person.pmi}</span><span className="text-hint">·</span><span>{person.waiverProgram} waiver</span><span className="text-hint">·</span><span>{age(person.dob)} years</span><span className="text-hint">·</span><span>{person.county} County</span>{person.serviceStartDate && <><span className="text-hint">·</span><span>Client since {fmtDate(person.serviceStartDate)}</span></>}</>}
-        actions={<>{user.staffId && <LinkButton href="/clock" variant="primary"><Icon.clock size={14} />Clock in</LinkButton>}{manage && <LinkButton href={`/clients/${id}/edit`} variant="outline">Edit</LinkButton>}</>}
+      <PatientBanner
+        name={fullName(person)}
+        initials={`${person.firstName[0]}${person.lastName[0]}`}
+        facts={<>
+          <BannerFact label="PMI"><span className="ident">{person.pmi}</span></BannerFact>
+          <BannerFact label="DOB"><span className="ident">{fmtDateNum(person.dob)}</span> · {age(person.dob)}y</BannerFact>
+          <BannerFact label="Waiver">{person.waiverProgram}</BannerFact>
+          <BannerFact>{person.county} County</BannerFact>
+          {person.serviceStartDate && <BannerFact label="Since"><span className="ident">{fmtDateNum(person.serviceStartDate)}</span></BannerFact>}
+        </>}
+        chips={<>
+          {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
+          {!person.signatureCodeHash && person.status === "active" && <Badge tone="danger">no signing code</Badge>}
+          {person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-white/70">discharged {fmtDate(person.dischargedOn)}</span>}
+        </>}
+        actions={<>
+          {user.staffId && <LinkButton href="/clock" variant="primary"><Icon.clock size={14} />Clock in</LinkButton>}
+          {manage && <LinkButton href={`/clients/${id}/edit`} variant="outline">Edit</LinkButton>}
+        </>}
       />
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
 
       {tab === "overview" && (
-        <div className="grid gap-4 xl:grid-cols-[310px_minmax(0,1fr)]">
-          <div className="space-y-4">
-            <Card title="At a glance" actions={<Link href={`/clients/${id}?tab=contacts`} className="text-xs font-medium text-primary">Contacts →</Link>} padded>
-              <Properties labelWidth={100} items={[
-                { icon: "calendar", label: "Date of birth", value: fmtDate(person.dob) },
-                { icon: "id", label: "PMI #", value: <span className="tabular-nums">{person.pmi}</span> },
-                { icon: "catalog", label: "Waiver", value: person.waiverProgram },
-                { icon: "pin", label: "Address", value: address || null },
-                { icon: "phone", label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="text-primary hover:underline">{person.phone}</a> : null },
-                { icon: "mail", label: "Email", value: person.email ? <a href={`mailto:${person.email}`} className="text-primary hover:underline">{person.email}</a> : null },
-                { icon: "user", label: "Case manager", value: person.caseManagerName },
-                { icon: "flag", label: "Service start", value: fmtDate(person.serviceStartDate) || null },
+        <ChartGrid>
+          <ChartCol>
+            <ChartSection label="Demographics" action={<Link href={`/clients/${id}?tab=contacts`} className="text-primary hover:underline">Contacts →</Link>}>
+              <ChartFacts items={[
+                { label: "Address", value: address || null },
+                { label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="ident text-primary hover:underline">{person.phone}</a> : <Link href={`/clients/${id}/edit`} className="text-hint hover:underline">Add a number</Link> },
+                { label: "Email", value: person.email ? <a href={`mailto:${person.email}`} className="text-primary hover:underline">{person.email}</a> : null },
+                { label: "Case mgr", value: person.caseManagerName },
+                { label: "Emergency", value: person.emergencyContactName ? <>{person.emergencyContactName}{person.emergencyContactPhone && <div className="ident text-muted-foreground">{person.emergencyContactPhone}</div>}</> : <span className="text-hint">None on file</span> },
               ]} />
-            </Card>
-            <Contact title="Emergency contact" name={person.emergencyContactName} sub={person.emergencyContactRelationship} phone={person.emergencyContactPhone} />
-            <Card title="Care team" actions={<Link href={`/clients/${id}?tab=contacts`} className="text-xs font-medium text-primary">View all →</Link>} padded>
-              {team.filter((t) => t.assignment.active).length === 0 ? <p className="text-sm text-muted-foreground">No active caregivers assigned.</p> : <ul className="space-y-3">{team.filter((t) => t.assignment.active).slice(0, 3).map((t) => <li key={t.assignment.id} className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm font-medium">{t.staff.firstName} {t.staff.lastName}</span><Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge></li>)}</ul>}
-            </Card>
-            {manage && !person.medicationSupport && meds.length === 0 && <div className="rounded-xl border border-dashed border-line px-4 py-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
-            <Card title={track ? `Planning deadlines · ${track}` : "Planning deadlines"} titleAfter={<Rule name="planning" />} padded>
-              {deadlines.length === 0 ? <p className="text-[13px] text-muted-foreground">{person.serviceStartDate ? "Add an agreement with a service type to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
-                <ul className="space-y-2.5"><li className="text-xs text-muted-foreground">Calculated dates; verify completion in Plans & files.</li>{deadlines.map((d) => { const overdue = d.due < new Date(); return <li key={d.id} className="text-[13px]"><div className={cx("font-medium tabular-nums", overdue ? "text-danger" : "text-text-strong")}>{fmtDate(d.due)}{overdue && <span className="ml-1.5 font-normal">date passed</span>}</div><div className="text-text">{d.label}</div><div className="text-xs text-muted-foreground">{d.cite}</div></li>; })}</ul>
+            </ChartSection>
+            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=contacts`} className="text-primary hover:underline">All →</Link>}>
+              {activeTeam.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
+                <ChartLine key={t.assignment.id}>
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-banner text-[9px] text-white">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
+                  <span className="min-w-0 flex-1 truncate">{t.staff.firstName} {t.staff.lastName}</span>
+                  <Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge>
+                </ChartLine>
+              ))}
+            </ChartSection>
+            <ChartSection label={track ? `Planning · ${track}` : "Planning"} action={<Rule name="planning" />}>
+              {deadlines.length === 0 ? <p className="text-[12.5px] text-muted-foreground">{person.serviceStartDate ? "Add an agreement with a service type to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
+                <>
+                  {deadlines.map((d) => { const overdue = d.due < new Date(); return (
+                    <ChartLine key={d.id} className="items-start">
+                      <span className="min-w-0 flex-1 leading-snug" title={d.cite}>{d.label}</span>
+                      <span className={cx("ident shrink-0", overdue ? "text-danger" : "text-muted-foreground")}>{fmtDateNum(d.due.toISOString())}</span>
+                    </ChartLine>
+                  ); })}
+                  <p className="mt-2 text-[11.5px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>
+                </>
               )}
-            </Card>
-          </div>
-          <div className="min-w-0 space-y-4">
-            <Card title="Client workspace" description="Notes, the support plan and other files, and the authorizations behind them." padded>
-              <div className="flex flex-wrap gap-2"><LinkButton href={`/clients/${id}?tab=notes`}>View notes · {noteCount}</LinkButton><LinkButton href={`/clients/${id}?tab=files`} variant="outline">Plans & files · {documents.length}</LinkButton><LinkButton href={`/clients/${id}?tab=lifeplan`} variant="outline">Support plan goals</LinkButton>{manage && !person.signatureCodeHash && <LinkButton href={`/clients/${id}?tab=contacts`} variant="outline">Set signing code</LinkButton>}</div>
-            </Card>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-line bg-card px-4 py-3 shadow-[var(--shadow-sm)]"><div className="text-[12.5px] font-medium text-muted-foreground">Units remaining</div><div className="figure mt-1 text-[24px] text-text-strong">{unitsLeft.toLocaleString()}</div><div className="text-[12.5px] text-muted-foreground">across {active.length} active authorization{active.length === 1 ? "" : "s"}</div></div>
-              <div className="rounded-lg border border-line bg-card px-4 py-3 shadow-[var(--shadow-sm)]"><div className="text-[12.5px] font-medium text-muted-foreground">This pay period</div><div className="figure mt-1 text-[24px] text-text-strong">{periodVisits.reduce((n, r) => n + r.visit.units, 0)} <span className="font-sans text-[13px] font-normal text-muted-foreground">units</span></div><div className="text-[12.5px] text-muted-foreground">{periodVisits.length} completed note{periodVisits.length === 1 ? "" : "s"}</div></div>
-              <div className={cx("rounded-lg border bg-card px-4 py-3 shadow-[var(--shadow-sm)]", unsigned ? "border-danger/30" : "border-line")}><div className="text-[12.5px] font-medium text-muted-foreground">Unsigned notes</div><div className={cx("figure mt-1 text-[24px]", unsigned ? "text-danger" : "text-text-strong")}>{unsigned}</div><div className="text-[12.5px] text-muted-foreground">in the periods shown</div></div>
-            </div>
-            <Card title="Authorizations" actions={<Link href={`/clients/${id}?tab=authorizations`} className="text-[13px] font-medium text-primary hover:underline">Manage</Link>}>
-              {active.length === 0 ? <Empty icon="doc" title="No active authorization" action={manage && <LinkButton href={`/clients/${id}/agreements/new`} variant="primary">Add an agreement</LinkButton>}>Visits cannot be recorded until one exists.</Empty> : (
-                <ul className="divide-y divide-line-soft">{active.map(({ agreement: a, unitsUsed }) => <li key={a.id}><Link href={`/clients/${id}/agreements/${a.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-hover"><Ring used={unitsUsed} total={a.authorizedUnits} size={36} /><div className="min-w-0 flex-1"><div className="truncate font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</div><div className="text-[12.5px] text-muted-foreground tabular-nums">{a.serviceCode} {a.modifiers.join(" ")} · {(a.authorizedUnits - unitsUsed).toLocaleString()} of {a.authorizedUnits.toLocaleString()} units left · through {fmtDate(a.endDate)}</div></div><span className="text-[13px] tabular-nums text-muted-foreground">{fmtMoney(a.unitRate)}/unit</span></Link></li>)}</ul>
-              )}
-            </Card>
-            <Card title="Recent notes" actions={<Link href={`/clients/${id}?tab=notes`} className="text-[13px] font-medium text-primary hover:underline">All notes</Link>}>
-              {visits.length === 0 ? <Empty icon="clock" title="No notes in the current pay period" /> : (
-                <Table>
-                  <Thead><Th>When</Th><Th>Caregiver</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead>
-                  <tbody>{visits.slice(0, 6).map(({ visit: v, staffFirst, staffLast }) => <Tr key={v.id}><Td strong><Link href={`/clients/${id}?note=${v.id}`} scroll={false} className="hover:underline">{fmtDateTime(v.clockInAt)}</Link></Td><Td>{staffFirst} {staffLast}</Td><Td className="tabular-nums">{v.serviceCode}</Td><Td align="right">{v.units}</Td><Td><span className="flex gap-1"><Badge tone={visitTone(v.status)}>{v.status.replace("_", " ")}</Badge>{v.status === "completed" && !v.clientSignedAt && <Badge tone="danger">unsigned</Badge>}</span></Td></Tr>)}</tbody>
-                </Table>
-              )}
-            </Card>
-          </div>
-        </div>
+            </ChartSection>
+            {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
+          </ChartCol>
+
+          <ChartCol>
+            <ChartSection label={`Authorizations · ${active.length} active`} action={<Link href={`/clients/${id}?tab=authorizations`} className="text-primary hover:underline">Manage →</Link>}>
+              {active.length === 0 ? (
+                <Empty icon="doc" title="No active authorization" action={manage && <LinkButton href={`/clients/${id}/agreements/new`} variant="primary">Add an agreement</LinkButton>}>Notes cannot be recorded until one exists.</Empty>
+              ) : active.map(({ agreement: a, unitsUsed }) => (
+                <Link key={a.id} href={`/clients/${id}/agreements/${a.id}`} className="block border-b border-line-soft py-2 last:border-0 hover:bg-hover">
+                  <div className="flex items-baseline gap-2.5">
+                    <ServiceDot code={a.serviceCode} className="translate-y-[-1px]" />
+                    <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
+                    <span className="ident text-[12px] text-muted-foreground">{fmtMoney(a.unitRate)}/u</span>
+                  </div>
+                  <div className="ml-[18px] mt-0.5 text-[11.5px] text-muted-foreground">
+                    <span className="ident">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
+                    {" · "}<span className="ident text-text-strong">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
+                    {" · through "}<span className="ident">{fmtDateNum(a.endDate)}</span>
+                  </div>
+                  <div className="ml-[18px]"><UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
+                </Link>
+              ))}
+            </ChartSection>
+            <ChartSection label="Recent notes" action={<Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">All {noteCount} →</Link>}>
+              {visits.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No notes in the periods shown. <Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">Look further back</Link>.</p> : visits.slice(0, 8).map(({ visit: v, staffFirst, staffLast }) => (
+                <ChartLine key={v.id}>
+                  <ServiceDot code={v.serviceCode} />
+                  <Link href={`/clients/${id}?note=${v.id}`} scroll={false} className="ident w-[92px] shrink-0 whitespace-nowrap text-muted-foreground hover:underline">{fmtDayTime(v.clockInAt)}</Link>
+                  <span className="min-w-0 flex-1 truncate">{staffFirst} {staffLast} <span className="text-muted-foreground">· <span className="ident">{v.units}</span> units</span></span>
+                  {v.status === "completed" && !v.clientSignedAt ? <Badge tone="danger">unsigned</Badge> : v.status !== "completed" ? <Badge tone={visitTone(v.status)}>{v.status.replace("_", " ")}</Badge> : v.manualEntry ? <Badge tone="warn">manual</Badge> : <Icon.check size={13} className="text-ok" aria-label="signed" />}
+                </ChartLine>
+              ))}
+            </ChartSection>
+          </ChartCol>
+
+          <ChartCol>
+            <ChartSection label={alerts.length ? `Needs attention · ${alerts.length}` : "Needs attention"}>
+              {alerts.length === 0 ? (
+                <p className="text-[12.5px] text-muted-foreground">Nothing outstanding. Notes are signed, the authorizations have room, and the team is oriented.</p>
+              ) : alerts.map((a, i) => <ChartAlert key={i} tone={a.tone} action={a.href && <Link href={a.href} className="font-medium underline underline-offset-2">{a.cta}</Link>}>{a.body}</ChartAlert>)}
+            </ChartSection>
+            <ChartSection label="This pay period">
+              <ChartLine><span className="flex-1 text-muted-foreground">Units</span><span className="ident font-medium text-text-strong">{periodUnits}</span></ChartLine>
+              <ChartLine><span className="flex-1 text-muted-foreground">Hours</span><span className="ident font-medium text-text-strong">{periodHours}</span></ChartLine>
+              <ChartLine><span className="flex-1 text-muted-foreground">Notes</span><span className="ident font-medium text-text-strong">{periodVisits.length}</span></ChartLine>
+              <ChartLine><span className="flex-1 text-muted-foreground">Units left</span><span className="ident font-medium text-text-strong">{unitsLeft.toLocaleString()}</span></ChartLine>
+            </ChartSection>
+          </ChartCol>
+        </ChartGrid>
       )}
 
       {tab === "authorizations" && (

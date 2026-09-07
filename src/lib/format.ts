@@ -51,3 +51,17 @@ export function fromLocalInput(v: string): Date {
 export function isoDay(offsetDays = 0): string {
   return new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
 }
+
+/** MM/DD/YYYY — the compact form for chart columns, where a spelled month wraps. */
+export function fmtDateNum(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${m}/${d}/${y}`;
+}
+
+/** MM/DD 3:30p — one line, always, for dense note lists. */
+export function fmtDayTime(at: Date): string {
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "2-digit", day: "2-digit", hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(at);
+  const g = (t: string) => p.find((x) => x.type === t)?.value ?? "";
+  return `${g("month")}/${g("day")} ${g("hour")}:${g("minute")}${g("dayPeriod").toLowerCase()[0]}`;
+}

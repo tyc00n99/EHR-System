@@ -19,11 +19,11 @@ export function VisitsTable({ rows, exportHref, state }: { rows: VisitRow[]; exp
   const byDate = (a: VisitRow, b: VisitRow) => (a.clockInIso < b.clockInIso ? 1 : a.clockInIso > b.clockInIso ? -1 : 0);
   const data = useMemo(() => rows.filter((r) => (flag === "unsigned" ? r.status === "completed" && !r.signed : flag === "returned" ? r.returned : flag === "manual" ? r.manual : flag === "open" ? r.status === "in_progress" : true)).sort(byDate), [rows, flag]);
   const columns: ColumnDef<VisitRow, unknown>[] = [
-    { accessorKey: "clockInIso", header: "Clock in", cell: ({ row }) => <span className="font-medium text-text-strong">{row.original.clockIn}</span> },
-    { accessorKey: "minutes", header: "Duration", cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="tabular-nums text-muted-foreground">{row.original.minutes} min</span> },
+    { accessorKey: "clockInIso", header: "Clock in", cell: ({ row }) => <span className="ident text-text-strong">{row.original.clockIn}</span> },
+    { accessorKey: "minutes", header: "Duration", cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="ident text-muted-foreground">{row.original.minutes} min</span> },
     { accessorKey: "client", header: "Client", cell: ({ row }) => <Link href={`/clients/${row.original.personId}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{row.original.client}</Link> },
     { accessorKey: "staff", header: "Caregiver" },
-    { accessorKey: "service", header: "Service", cell: ({ getValue }) => <span className="tabular-nums">{String(getValue())}</span> },
+    { accessorKey: "service", header: "Service", cell: ({ getValue }) => <span className="ident">{String(getValue())}</span> },
     { accessorKey: "units", header: "Units", meta: { align: "right" } },
     { id: "status", accessorFn: (r) => r.status, header: "Status", cell: ({ row }) => <span className="flex gap-1"><Badge tone={row.original.status === "completed" ? "ok" : row.original.status === "void" ? "neutral" : "accent"}>{row.original.status.replace("_", " ")}</Badge>{row.original.manual && <Badge tone="warn">manual</Badge>}{row.original.edits > 0 && <Badge tone="warn">{row.original.edits} edit{row.original.edits === 1 ? "" : "s"}</Badge>}{row.original.status === "completed" && !row.original.signed && <Badge tone="danger">unsigned</Badge>}</span> },
     { accessorKey: "evv", header: "EVV", cell: ({ row }) => <Badge tone={evvTone[row.original.evv]}>{row.original.evv}</Badge> },

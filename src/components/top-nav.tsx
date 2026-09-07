@@ -49,7 +49,7 @@ export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) 
   const entries = sectionRow(pathname, role, counts);
   if (!entries) return null;
   return (
-    <nav aria-label="Section" className="sticky top-14 z-10 flex h-10 items-center gap-5 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
+    <nav aria-label="Section" className="z-10 flex h-10 items-center gap-5 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
       {entries.map((e) => {
         const active = e.match ? e.match(pathname, params) : pathname === e.href;
         return (
