@@ -51,7 +51,7 @@ export function ClientRail({ people, label }: { people: RailPerson[]; label: str
                 aria-current={on ? "page" : undefined}
                 className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-banner text-[9.5px] font-medium text-white">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[9.5px] font-medium text-primary-foreground">
                   {p.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                 </span>
                 <span className="min-w-0 flex-1">

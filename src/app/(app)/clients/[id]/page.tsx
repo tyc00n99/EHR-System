@@ -149,7 +149,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         chips={<>
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
           {!person.signatureCodeHash && person.status === "active" && <Badge tone="danger">no signing code</Badge>}
-          {person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-white/70">discharged {fmtDate(person.dischargedOn)}</span>}
+          {person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-muted-foreground">discharged {fmtDate(person.dischargedOn)}</span>}
         </>}
         actions={<>
           {user.staffId && <LinkButton href="/clock" variant="primary"><Icon.clock size={14} />Clock in</LinkButton>}
@@ -173,7 +173,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=contacts`} className="text-primary hover:underline">All →</Link>}>
               {activeTeam.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
                 <ChartLine key={t.assignment.id}>
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-banner text-[9px] text-white">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
                   <span className="min-w-0 flex-1 truncate">{t.staff.firstName} {t.staff.lastName}</span>
                   <Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge>
                 </ChartLine>

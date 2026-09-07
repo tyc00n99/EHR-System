@@ -23,12 +23,12 @@ export function ServiceDot({ code, className }: { code: string; className?: stri
 /** The banner every screen of a person's record sits under. */
 export function PatientBanner({ name, initials, facts, chips, actions }: { name: string; initials: string; facts: ReactNode; chips?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="-mx-4 -mt-5 bg-banner px-4 py-3 text-white md:-mx-8 md:-mt-6 md:px-8 md:py-3.5">
+    <div className="-mx-4 -mt-5 border-b border-banner-line bg-banner px-4 py-3 md:-mx-8 md:-mt-6 md:px-8 md:py-3.5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-[13px] text-white font-medium">{initials}</span>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-medium text-primary-foreground">{initials}</span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[20px] font-medium leading-tight text-white">{name}</div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px] text-white/70">{facts}</div>
+          <div className="truncate text-[20px] font-medium leading-tight text-text-strong">{name}</div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px]">{facts}</div>
         </div>
         {chips && <div className="flex flex-wrap items-center gap-1.5">{chips}</div>}
         {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -39,7 +39,8 @@ export function PatientBanner({ name, initials, facts, chips, actions }: { name:
 
 /** A fact in the banner: quiet label, bright value. */
 export function BannerFact({ label, children }: { label?: string; children: ReactNode }) {
-  return <span>{label && <span className="text-white/50">{label} </span>}<span className="text-white">{children}</span></span>;
+  // The label is the quiet half; the value has to survive a glance, so it takes full-strength ink.
+  return <span>{label && <span className="text-muted-foreground">{label} </span>}<span className="text-text-strong">{children}</span></span>;
 }
 
 export function ChartGrid({ children }: { children: ReactNode }) {

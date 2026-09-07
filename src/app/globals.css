@@ -65,8 +65,8 @@
 
   --radius: 0.75rem;
   --radius-btn: 9999px;
-  --banner: #0f2942;
-  --banner-soft: #1b3d5e;
+  --banner: #dce7f5;
+  --banner-line: #b9cee8;
   --font-display: var(--font-serif);
   --background: #ffffff;
   --foreground: var(--text);
@@ -104,8 +104,8 @@
 
 /* ---- Tide: cool slate neutrals, white sidebar, clinical blue. Green is reserved for status. ---- */
 :root[data-theme="tide"] {
-  --banner: #0f2942;
-  --banner-soft: #1b3d5e;
+  --banner: #dce7f5;
+  --banner-line: #b9cee8;
   --gray-100: #f8fafc;
   --gray-200: #f1f5f9;
   --gray-300: #e2e8f0;
@@ -289,7 +289,7 @@
   --color-gray-900: var(--gray-900);
 
   --color-banner: var(--banner);
-  --color-banner-soft: var(--banner-soft);
+  --color-banner-line: var(--banner-line);
   --color-text: var(--text);
   --color-text-strong: var(--text-strong);
   --color-hint: var(--text-hint);
@@ -500,8 +500,8 @@ kbd { font-family: var(--font-mono); }
   --radius-btn: 0.5rem;
 }
 :root[data-theme="tide"] {
-  --banner: #0f2942;
-  --banner-soft: #1b3d5e;
+  --banner: #dce7f5;
+  --banner-line: #b9cee8;
   --nav: #f8fafb;
   --nav-group: #607381;
   --nav-active: #dce7f5;
