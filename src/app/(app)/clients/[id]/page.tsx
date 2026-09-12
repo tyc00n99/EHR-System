@@ -8,6 +8,7 @@ import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Not
 import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
 import { ClientPhoto } from "./client-photo";
+import { ProfileHistory } from "./profile-history";
 import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
@@ -23,7 +24,7 @@ import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { deadlinesFromServiceStart } from "@/lib/compliance";
-import { fmtDate, fmtDateNum, fmtDateTime, fmtDayTime, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
+import { fmtDate, fmtDateNum, fmtDateTime, fmtDayTime, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { getServiceType } from "@/lib/services";
@@ -449,32 +450,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               </div>
             ) : null,
             history: history.length > 0 ? (
-              <div>
-                <div className="overflow-x-auto rounded-[10px] border border-line">
-                  <table className="w-full min-w-[520px] border-collapse text-[12.5px]">
-                    <thead>
-                      <tr className="bg-sidebar text-left text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
-                        <th className="px-3 py-2 font-medium">Date</th>
-                        <th className="px-3 py-2 font-medium">Team member</th>
-                        <th className="px-3 py-2 font-medium">Event</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {history.map((h) => (
-                        <tr key={h.id} className="border-t border-line-soft">
-                          <td className="whitespace-nowrap px-3 py-2"><span className="ident text-muted-foreground">{fmtDateTime(h.at)}</span></td>
-                          <td className="whitespace-nowrap px-3 py-2 text-text">{h.actor}</td>
-                          <td className="px-3 py-2 text-text-strong">{h.event}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="mt-2.5 text-center text-[12px] text-muted-foreground">
-                  1 — {history.length} of {history.length} event{history.length === 1 ? "" : "s"}
-                  {history.length === 50 && " · newest 50"}
-                </p>
-              </div>
+              <ProfileHistory rows={history.map((h) => ({ id: h.id, at: fmtHistoryAt(h.at), sortAt: h.at.getTime(), actor: h.actor, event: h.event }))} />
             ) : null,
           }}
         />

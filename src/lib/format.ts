@@ -71,3 +71,10 @@ export function fmtLongDate(iso: string | null | undefined): string {
   if (!iso) return "";
   return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
 }
+
+/** "Sep 12, 2026 · 3:43 PM" — the stamp the profile history prints. */
+export function fmtHistoryAt(v: Date): string {
+  const d = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Chicago" }).format(v);
+  const t = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).format(v);
+  return `${d} · ${t}`;
+}

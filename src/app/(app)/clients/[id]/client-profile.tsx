@@ -63,7 +63,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
   return (
     <div className={cx("relative grid min-h-0 flex-1 gap-0", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
       {/* The section list scrolls on its own, so picking a section never moves the whole page. */}
-      <div className={cx("border-line py-4 lg:min-h-0 lg:overflow-y-auto lg:border-r lg:pr-4", wide && "hidden")}>
+      <div className={cx("border-line py-4 lg:min-h-0 lg:overflow-y-auto lg:pr-4", wide && "hidden")}>
         <div className="rounded-2xl bg-card-soft p-6">
           <div className="mb-4 flex items-center">
             <div className="text-[19px] font-semibold text-text-strong">General information</div>
@@ -114,15 +114,18 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         </nav>
       </div>
 
-      {/* Sits on the divider, like the chevron in the reference. */}
+      {/* The divider is the control: the whole line lights up, not just the small circle. */}
       <button
         type="button"
         onClick={() => setWide((v) => !v)}
         aria-label={wide ? "Show general information" : "Hide general information"}
         aria-expanded={!wide}
-        className={cx("absolute top-5 z-10 hidden size-5 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm hover:text-text-strong lg:flex", wide ? "left-0 -translate-x-1/2" : "left-[420px] -translate-x-1/2")}
+        className={cx("group absolute inset-y-0 z-10 hidden w-5 -translate-x-1/2 justify-center lg:flex", wide ? "left-0" : "left-[420px]")}
       >
-        <Icon.chevronRight size={12} className={wide ? "" : "rotate-180"} />
+        <span className="h-full w-px bg-line transition-colors group-hover:bg-primary" />
+        <span className="absolute top-5 flex size-6 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
+          <Icon.chevronRight size={13} className={wide ? "" : "rotate-180"} />
+        </span>
       </button>
 
       <div className={cx("min-w-0 py-5 lg:min-h-0 lg:overflow-y-auto", wide ? "lg:pl-5" : "lg:pl-8")}>

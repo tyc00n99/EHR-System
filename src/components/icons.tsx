@@ -38,6 +38,7 @@ export const Icon = {
   history: (p: P) => <I {...p}><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5M12 7v5l3 2" /></I>,
   plus: (p: P) => <I {...p}><path d="M12 5v14M5 12h14" /></I>,
   trash: (p: P) => <I {...p}><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6" /></I>,
+  sort: (p: P) => <I {...p}><path d="M8 5v14M8 5 5 8M8 5l3 3M16 19V5M16 19l3-3M16 19l-3-3" /></I>,
   copy: (p: P) => <I {...p}><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" /></I>,
   camera: (p: P) => <I {...p}><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="3.2" /></I>,
   checkCircle: (p: P) => <I {...p}><circle cx="12" cy="12" r="9" /><path d="m8.2 12.2 2.6 2.6 5-6" /></I>,
