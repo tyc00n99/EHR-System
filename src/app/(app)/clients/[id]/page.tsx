@@ -7,7 +7,7 @@ import { Icon } from "@/components/icons";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
 import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
-import { getClientProfile } from "@/db/profile-queries";
+import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
@@ -92,6 +92,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   ]);
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
+  const history = tab === "profile" ? await listProfileHistory(id) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
   const shiftMonth = (d: number) => { const x = new Date(Date.UTC(my, mm - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
@@ -137,8 +138,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     { key: "authorizations", label: "Authorizations", count: active.length, done: active.length > 0, alert: person.status === "active" && active.length === 0 },
     { key: "planning", label: track ? `Planning · ${track}` : "Planning", count: deadlines.length, done: deadlines.length > 0 },
     { key: "availability", label: "Availability", count: profile.availability.length, done: profile.availability.length > 0, editable: "availability", addLabel: "Add availability" },
+    { key: "history", label: "Profile history", count: 0, done: false },
   ];
-  const profileOutstanding = profileSections.filter((s) => !s.done).length;
+  const profileOutstanding = profileSections.filter((s) => !s.done && s.key !== "history").length;
 
   const tabs = [
     { key: "overview", label: "Overview" },
@@ -341,6 +343,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             authorizations: "No active authorization. Notes cannot be recorded or billed.",
             planning: "Set a service start date and a service type to compute planning deadlines.",
             availability: "No availability recorded. Scheduling has no idea when this person is free.",
+            history: history.length ? "" : "Nothing has been recorded against this profile yet.",
           }}
           entities={{
             contacts: profile.contacts.map((c) => ({
@@ -417,6 +420,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 { icon: "audit", label: "Statute", value: <span className="text-muted-foreground">{d.cite}</span> },
               ],
             })),
+            history: [],
             availability: profile.availability.map((a) => ({
               id: a.id,
               raw: { id: a.id, weekday: a.weekday, startTime: a.startTime, endTime: a.endTime, notes: a.notes },
@@ -433,6 +437,34 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[12.5px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
             authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[12.5px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
             planning: <p className="text-[11.5px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>,
+            history: history.length > 0 ? (
+              <div>
+                <div className="overflow-x-auto rounded-[10px] border border-line">
+                  <table className="w-full min-w-[520px] border-collapse text-[12.5px]">
+                    <thead>
+                      <tr className="bg-sidebar text-left text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                        <th className="px-3 py-2 font-medium">Date</th>
+                        <th className="px-3 py-2 font-medium">Team member</th>
+                        <th className="px-3 py-2 font-medium">Event</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {history.map((h) => (
+                        <tr key={h.id} className="border-t border-line-soft">
+                          <td className="whitespace-nowrap px-3 py-2"><span className="ident text-muted-foreground">{fmtDateTime(h.at)}</span></td>
+                          <td className="whitespace-nowrap px-3 py-2 text-text">{h.actor}</td>
+                          <td className="px-3 py-2 text-text-strong">{h.event}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-2.5 text-center text-[12px] text-muted-foreground">
+                  1 — {history.length} of {history.length} event{history.length === 1 ? "" : "s"}
+                  {history.length === 50 && " · newest 50"}
+                </p>
+              </div>
+            ) : null,
           }}
         />
       )}

@@ -133,7 +133,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         </div>
 
         {rows.length === 0 ? (
-          <p className="text-[12.5px] italic text-hint">{blanks[openKey] ?? "Nothing recorded yet."}</p>
+          blanks[openKey] === "" ? null : <p className="text-[12.5px] italic text-hint">{blanks[openKey] ?? "Nothing recorded yet."}</p>
         ) : (
           rows.map((e) => (
             <article key={e.id} className="mb-2.5 flex items-start gap-4 rounded-[10px] border border-line px-4 py-3.5 last:mb-0">

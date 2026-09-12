@@ -53,3 +53,65 @@ export async function ownsProfileRow(
   const rows = await db.select({ id: t.id }).from(t).where(and(eq(t.id, id), eq(t.personId, personId))).limit(1);
   return rows.length > 0;
 }
+
+export interface ProfileEvent { id: string; at: Date; actor: string; event: string }
+
+/** Tables whose rows belong to one person, keyed by the label the history should print. */
+const OWNED: Record<string, string> = {
+  client_contacts: "emergency contact",
+  client_funding_sources: "funding source",
+  client_locations: "care location",
+  client_availability: "availability",
+  client_diagnoses: "diagnosis",
+  assignments: "care team",
+  service_agreements: "authorization",
+  goals: "support plan goal",
+  medications: "medication",
+  client_documents: "document",
+};
+
+const VERB: Record<string, string> = { insert: "added", update: "updated", delete: "removed" };
+
+/**
+ * Everything that has been done to this person's record, newest first.
+ *
+ * Built from the audit log rather than a second history table, so it cannot drift from what was
+ * actually written. Rows belonging to a person are found through `personId` in the audit snapshot,
+ * which is why `audited()` stores the whole row.
+ */
+export async function listProfileHistory(personId: string, limit = 50): Promise<ProfileEvent[]> {
+  const db = await getDb();
+  const { and, desc, eq, inArray, or, sql } = await import("drizzle-orm");
+  const owner = sql`coalesce(${schema.auditLog.after} ->> 'personId', ${schema.auditLog.before} ->> 'personId')`;
+  const rows = await db
+    .select({
+      id: schema.auditLog.id,
+      at: schema.auditLog.at,
+      action: schema.auditLog.action,
+      tableName: schema.auditLog.tableName,
+      email: schema.users.email,
+      first: schema.staff.firstName,
+      last: schema.staff.lastName,
+    })
+    .from(schema.auditLog)
+    .leftJoin(schema.users, eq(schema.auditLog.actorUserId, schema.users.id))
+    .leftJoin(schema.staff, eq(schema.users.staffId, schema.staff.id))
+    .where(
+      or(
+        and(eq(schema.auditLog.tableName, "people"), eq(schema.auditLog.recordId, personId)),
+        and(inArray(schema.auditLog.tableName, Object.keys(OWNED)), sql`${owner} = ${personId}`),
+      ),
+    )
+    .orderBy(desc(schema.auditLog.at))
+    .limit(limit);
+
+  return rows.map((r) => ({
+    id: r.id,
+    at: r.at,
+    actor: r.first ? `${r.first} ${r.last}` : (r.email ?? "System"),
+    event:
+      r.tableName === "people"
+        ? r.action === "insert" ? "created new client" : "updated client details"
+        : `${VERB[r.action] ?? r.action} ${OWNED[r.tableName] ?? r.tableName}`,
+  }));
+}
