@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import type { Executor } from "@/db/audited";
 import { audited } from "@/db/audited";
 import { schema } from "@/db";
+import { encryptField } from "@/lib/crypto";
 import { hashPassword } from "@/lib/password";
 import { sendSms, signingCodeMessage, smsConfigured, toE164 } from "@/lib/sms";
 
@@ -11,8 +12,8 @@ export function generateClientCode(): string {
   return String(randomInt(0, 1_000_000)).padStart(6, "0");
 }
 
-/** How long a code stands before rotation offers to replace it. */
-export const CODE_ROTATION_DAYS = 14;
+/** How long a code stands before the weekly job replaces it. */
+export const CODE_ROTATION_DAYS = 7;
 
 export interface IssuedCode {
   code: string;
@@ -41,6 +42,8 @@ export async function issueClientCode(
     : { sent: false, reason: !number ? "No mobile number on the client record." : person.smsConsent === false ? "The client has not agreed to receive texts." : "Texting is not configured." };
   await w.update(schema.people, person.id, {
     signatureCodeHash: await hashPassword(code),
+    // Kept recoverable so an admin can read it back to a client who has forgotten it.
+    signatureCodeEncrypted: encryptField(code),
     signatureCodeSetAt: new Date(),
     signatureCodeSentAt: sms.sent ? new Date() : null,
     signatureCodeSentTo: sms.sent ? number : null,

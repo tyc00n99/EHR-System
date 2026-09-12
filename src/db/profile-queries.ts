@@ -111,7 +111,9 @@ export async function listProfileHistory(personId: string, limit = 50): Promise<
     actor: r.first ? `${r.first} ${r.last}` : (r.email ?? "System"),
     event:
       r.tableName === "people"
-        ? r.action === "insert" ? "created new client" : "updated client details"
+        ? r.action === "insert" ? "created new client"
+          : r.action === "reveal" ? "viewed the signing code"
+          : "updated client details"
         : `${VERB[r.action] ?? r.action} ${OWNED[r.tableName] ?? r.tableName}`,
   }));
 }

@@ -15,6 +15,7 @@ const KIND: Record<string, { label: string; icon: keyof typeof Icon }> = {
   compliance: { label: "Staff compliance", icon: "audit" },
   orientation: { label: "Orientation before unsupervised contact", icon: "clients" },
   code: { label: "Clients without a signing code", icon: "id" },
+  code_rotated: { label: "New signing codes to read out", icon: "id" },
   authorization: { label: "Authorizations running out", icon: "doc" },
 };
 

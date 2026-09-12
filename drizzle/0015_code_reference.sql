@@ -1,0 +1,1 @@
+ALTER TABLE "people" ADD COLUMN "signature_code_encrypted" text;

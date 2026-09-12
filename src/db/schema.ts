@@ -199,6 +199,12 @@ export const people = pgTable(
     consultEmail: text("consult_email"),
     /** Scrypt hash of the client's signing code. The person enters it to co-sign a shift note. */
     signatureCodeHash: text("signature_code_hash"),
+    /**
+     * The code, encrypted with DATA_ENCRYPTION_KEY, so an admin can read it back when the client
+     * forgets. The hash above is still what verification uses. Never select this into a page;
+     * go through `revealClientCode`, which is audited.
+     */
+    signatureCodeEncrypted: text("signature_code_encrypted"),
     signatureCodeSetAt: timestamp("signature_code_set_at", { withTimezone: true }),
     /** When the current code was last texted to the person, and where it went. */
     signatureCodeSentAt: timestamp("signature_code_sent_at", { withTimezone: true }),

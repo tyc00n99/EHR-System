@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
@@ -9,6 +10,7 @@ import { getPerson, getOrganization } from "@/db/queries";
 import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAgreement } from "@/lib/ai/extract-agreement";
 import { requireUser } from "@/lib/auth";
 import { issueClientCode } from "@/lib/client-code";
+import { decryptField } from "@/lib/crypto";
 import { hashPassword } from "@/lib/password";
 import { putFile } from "@/lib/storage";
 import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState, activityLibrarySchema } from "@/lib/validation";
@@ -44,7 +46,7 @@ export async function updatePerson(id: string, _prev: ActionState, fd: FormData)
   redirect(`/clients/${id}`);
 }
 
-/** Generates a new six-digit signing code for the person and returns it once. Only the hash is stored. */
+/** Generates a new six-digit signing code for the person. The hash verifies it; an encrypted copy lets an admin read it back. */
 export async function setClientCode(personId: string): Promise<{ code?: string; texted?: boolean; message?: string }> {
   const user = await requireUser(["admin", "supervisor"]);
   const person = await getPerson(personId);
@@ -54,6 +56,32 @@ export async function setClientCode(personId: string): Promise<{ code?: string; 
   const issued = await issueClientCode(db, user.id, { id: personId, firstName: person.firstName, phone: person.phone, smsConsent: person.smsConsent }, org.name);
   revalidatePath(`/clients/${personId}`);
   return { code: issued.code, texted: issued.texted, message: issued.texted ? undefined : issued.reason };
+}
+
+/**
+ * Reads back a client's current signing code.
+ *
+ * The code is a control against a caregiver signing on the client's behalf, so looking at one is a
+ * deliberate act: admins and supervisors only, and every reveal lands in the audit log against the
+ * client's record. Same treatment as a staff SSN.
+ */
+export async function revealClientCode(personId: string): Promise<{ code?: string; message?: string }> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  const [row] = await db
+    .select({ enc: schema.people.signatureCodeEncrypted, hash: schema.people.signatureCodeHash })
+    .from(schema.people)
+    .where(eq(schema.people.id, personId))
+    .limit(1);
+  if (!row) return { message: "Client not found." };
+  if (!row.hash) return { message: "No signing code has been issued yet." };
+  if (!row.enc) return { message: "This code was issued before codes were kept readable. Generate a new one to get a reference copy." };
+  await audited(db, { userId: user.id }).event("reveal", personId, "people", { field: "signatureCode" });
+  try {
+    return { code: decryptField(row.enc) };
+  } catch {
+    return { message: "The stored code could not be read. Generate a new one." };
+  }
 }
 
 export async function createAgreement(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {

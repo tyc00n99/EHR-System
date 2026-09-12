@@ -5,7 +5,7 @@ import { complianceSummary, evaluateCompliance } from "./credentials";
 import { currentPayPeriod } from "./pay-period";
 
 export interface AttentionItem {
-  kind: "unsigned" | "returned" | "manual" | "compliance" | "code" | "authorization" | "orientation" | "open" | "missed_shift";
+  kind: "unsigned" | "returned" | "manual" | "compliance" | "code" | "code_rotated" | "authorization" | "orientation" | "open" | "missed_shift";
   severity: "danger" | "warn" | "accent";
   title: string;
   detail: string;
@@ -44,6 +44,20 @@ export const attentionItems = cache(async function attentionItems(): Promise<Att
     for (const a of unoriented) items.push({ kind: "orientation", severity: "warn", title: `${s.firstName} ${s.lastName} not oriented to ${a.person.firstName} ${a.person.lastName}`, detail: "Required before unsupervised contact (245D.09, subd. 4a). Blocks clock-in.", href: `/staff/${s.id}` });
   }
   for (const p of people) if (p.status === "active" && !p.signatureCodeHash) items.push({ kind: "code", severity: "danger", title: `${p.firstName} ${p.lastName} has no signing code`, detail: "Visits cannot be signed until one is generated", href: `/clients/${p.id}` });
+  // A rotated code the client was not texted has to be read to them, so it surfaces here for a few
+  // days rather than changing silently under everyone.
+  const rotatedSince = new Date(Date.now() - 4 * 86_400_000);
+  for (const p of people) {
+    if (p.status !== "active" || !p.signatureCodeSetAt || p.signatureCodeSetAt < rotatedSince) continue;
+    if (p.signatureCodeSentAt && p.signatureCodeSentAt >= p.signatureCodeSetAt) continue;
+    items.push({
+      kind: "code_rotated",
+      severity: "warn",
+      title: `New signing code for ${p.firstName} ${p.lastName}`,
+      detail: "It was not texted, so read the new code to them before their next shift.",
+      href: `/clients/${p.id}`,
+    });
+  }
   for (const a of agreements) {
     if (a.agreement.status !== "active" || a.agreement.endDate < today) continue;
     const pct = Math.round((a.unitsUsed / a.agreement.authorizedUnits) * 100);

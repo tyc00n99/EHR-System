@@ -31,6 +31,7 @@ import { getServiceType } from "@/lib/services";
 import { DOCUMENT_CATEGORIES } from "@/lib/validation";
 import { AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
+import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DeleteDocument, DocumentUpload } from "./documents";
 import { VisitSheet } from "../../visits/record/visit-sheet";
 
@@ -207,7 +208,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             </ChartSection>
             {manage && (
               <ChartSection label="Signing code" action={<Rule name="code" />}>
-                <ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
+                <ClientCodePanel personId={id} manage={manage} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} rotatesOn={person.signatureCodeSetAt ? fmtDate(new Date(person.signatureCodeSetAt.getTime() + CODE_ROTATION_DAYS * 86_400_000)) : null} sentAt={person.signatureCodeSentAt ? fmtDate(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
               </ChartSection>
             )}
             {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
