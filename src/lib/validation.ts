@@ -387,3 +387,22 @@ export const diagnosisSchema = z.object({
   diagnosedOn: isoDate.optional(),
   isPrimary: z.boolean().default(false),
 });
+
+/** One availability window inside the schedule editor. */
+const availabilityWindow = z
+  .object({
+    weekday: z.coerce.number().int().min(0).max(6),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM"),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM"),
+  })
+  .refine((v) => v.endTime > v.startTime, { message: "Each window has to end after it starts", path: ["endTime"] });
+
+/** The whole schedule: the editor always saves every day together. */
+export const availabilityScheduleSchema = z
+  .object({
+    startDate: isoDate,
+    endDate: isoDate.optional(),
+    timeZone: z.string().min(1, "Pick a time zone").max(60),
+    windows: z.array(availabilityWindow).max(35),
+  })
+  .refine((v) => !v.endDate || v.endDate >= v.startDate, { message: "The end date cannot be before the start", path: ["endDate"] });

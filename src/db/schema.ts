@@ -724,7 +724,11 @@ export const clientLocations = pgTable(
   (t) => [index("client_locations_person_idx").on(t.personId)],
 );
 
-/** When a person is available to be scheduled. One row per weekday window. */
+/**
+ * When a person is available to be scheduled. One row per weekday window, so a day can hold more
+ * than one. The date range and time zone describe the whole schedule and are written identically
+ * on every row, because the editor always saves the set together.
+ */
 export const clientAvailability = pgTable(
   "client_availability",
   {
@@ -735,6 +739,11 @@ export const clientAvailability = pgTable(
     /** 24h "HH:MM". */
     startTime: text("start_time").notNull(),
     endTime: text("end_time").notNull(),
+    /** The window these hours apply from and until. */
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+    /** IANA zone the times are written in. */
+    timeZone: text("time_zone").notNull().default("America/Chicago"),
     notes: text("notes"),
     ...timestamps,
   },

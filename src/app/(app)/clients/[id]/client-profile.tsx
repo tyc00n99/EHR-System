@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/icons";
 import { Badge, cx } from "@/components/kit";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { deleteProfileRow, saveProfileRow, type SectionKey } from "./profile-actions";
+import { AvailabilityEditor, type Schedule } from "./availability-editor";
 import type { ActionState } from "@/lib/validation";
 
 /**
@@ -47,12 +48,15 @@ export interface ProfileProps {
   editHref: string;
   /** Drawn on whichever general row sets `avatar`. */
   avatarNode?: ReactNode;
+  /** The availability section edits the whole week at once, not one row at a time. */
+  schedule: Schedule;
 }
 
-export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref, avatarNode }: ProfileProps) {
+export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref, avatarNode, schedule }: ProfileProps) {
   const [openKey, setOpenKey] = useState(sections[0]?.key ?? "contacts");
   const [wide, setWide] = useState(false);
   const [drawer, setDrawer] = useState<{ section: SectionKey; row: Record<string, unknown> | null } | null>(null);
+  const [editingWeek, setEditingWeek] = useState(false);
   const current = sections.find((s) => s.key === openKey) ?? sections[0];
   const rows = entities[openKey] ?? [];
 
@@ -124,7 +128,16 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="text-[18px] font-semibold text-text-strong">{current?.label}</div>
           <div className="ml-auto flex items-center gap-2">
-            {manage && current?.editable && (
+            {manage && current?.key === "availability" && (
+              <button
+                type="button"
+                onClick={() => setEditingWeek(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-card px-3.5 text-[14.5px] font-medium text-text-strong hover:bg-hover"
+              >
+                <Icon.edit size={15} />Edit availability
+              </button>
+            )}
+            {manage && current?.editable && current.key !== "availability" && (
               <button
                 type="button"
                 onClick={() => setDrawer({ section: current.editable!, row: null })}
@@ -153,7 +166,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 ))}
               </div>
               {e.chips && <div className="flex shrink-0 flex-wrap gap-1.5">{e.chips}</div>}
-              {manage && current?.editable && e.raw && (
+              {manage && current?.editable && current.key !== "availability" && e.raw && (
                 <div className="flex shrink-0 gap-1.5">
                   <button type="button" onClick={() => setDrawer({ section: current.editable!, row: e.raw! })} aria-label="Edit" className="flex size-10 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.edit size={20} /></button>
                   <DeleteButton personId={personId} section={current.editable} id={e.id} />
@@ -165,6 +178,8 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
 
         {extras[openKey] && <div className="mt-4">{extras[openKey]}</div>}
       </div>
+
+      {editingWeek && <AvailabilityEditor personId={personId} initial={schedule} onDone={() => setEditingWeek(false)} />}
 
       {drawer && (
         <ProfileDrawer

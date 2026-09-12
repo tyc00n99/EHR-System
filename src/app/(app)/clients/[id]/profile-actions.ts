@@ -6,8 +6,9 @@ import { audited } from "@/db/audited";
 import { ownsProfileRow } from "@/db/profile-queries";
 import { canViewPerson } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
+import { eq } from "drizzle-orm";
 import {
-  availabilitySchema, contactSchema, diagnosisSchema, fieldErrors, formToObject, fundingSchema,
+  availabilityScheduleSchema, availabilitySchema, contactSchema, diagnosisSchema, fieldErrors, formToObject, fundingSchema,
   locationSchema, type ActionState,
 } from "@/lib/validation";
 
@@ -101,4 +102,38 @@ export async function deleteProfileRow(_prev: ActionState, fd: FormData): Promis
   await audited(db, { userId: user.id }).delete(SECTIONS[section].table, id);
   revalidatePath(`/clients/${personId}`);
   return { ok: true };
+}
+
+/**
+ * Saves a person's whole availability schedule at once.
+ *
+ * The editor shows every weekday together, so a partial write would leave the record describing a
+ * week nobody chose. The old rows go and the new set lands in one transaction, audited like any
+ * other change to the record.
+ */
+export async function saveAvailability(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const personId = String(fd.get("personId") ?? "");
+  if (!personId) return { error: "That form is missing which client it belongs to." };
+  const user = await authorize(personId);
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(String(fd.get("schedule") ?? "{}"));
+  } catch {
+    return { error: "The schedule could not be read. Reload and try again." };
+  }
+  const parsed = availabilityScheduleSchema.safeParse(payload);
+  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  const { startDate, endDate, timeZone, windows } = parsed.data;
+
+  const db = await getDb();
+  const w = audited(db, { userId: user.id });
+  const existing = await db.select({ id: schema.clientAvailability.id }).from(schema.clientAvailability).where(eq(schema.clientAvailability.personId, personId));
+  for (const row of existing) await w.delete(schema.clientAvailability, row.id);
+  for (const win of windows) {
+    await w.insert(schema.clientAvailability, { personId, weekday: win.weekday, startTime: win.startTime, endTime: win.endTime, startDate, endDate: endDate ?? null, timeZone });
+  }
+
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true, message: windows.length ? "Availability saved." : "Availability cleared." };
 }

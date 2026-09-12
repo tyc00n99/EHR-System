@@ -316,6 +316,14 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           personId={id}
           manage={manage}
           editHref={`/clients/${id}/edit`}
+          schedule={{
+            startDate: profile.availability[0]?.startDate ?? isoDay(0),
+            endDate: profile.availability[0]?.endDate ?? "",
+            timeZone: profile.availability[0]?.timeZone ?? "America/Chicago",
+            days: [0, 1, 2, 3, 4, 5, 6].map((d) =>
+              profile.availability.filter((a) => a.weekday === d).map((a) => ({ start: a.startTime, end: a.endTime })),
+            ),
+          }}
           avatarNode={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={false} size={52} />}
           general={[
             // The reference's five rows, in its order: no phone, no email, no PMI, no waiver.

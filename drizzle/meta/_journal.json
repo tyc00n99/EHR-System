@@ -99,6 +99,13 @@
       "when": 1789251381818,
       "tag": "0013_sex_at_birth",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789251986617,
+      "tag": "0014_availability_schedule",
+      "breakpoints": true
     }
   ]
 }
