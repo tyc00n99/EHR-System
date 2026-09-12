@@ -163,11 +163,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         name={fullName(person)}
         initials={`${person.firstName[0]}${person.lastName[0]}`}
         facts={<>
-          <BannerFact label="PMI"><span className="ident">{person.pmi}</span></BannerFact>
-          <BannerFact label="DOB"><span className="ident">{fmtDateNum(person.dob)}</span> · {age(person.dob)}y</BannerFact>
-          <BannerFact label="Waiver">{person.waiverProgram}</BannerFact>
-          <BannerFact>{person.county} County</BannerFact>
-          {person.serviceStartDate && <BannerFact label="Since"><span className="ident">{fmtDateNum(person.serviceStartDate)}</span></BannerFact>}
+          {person.serviceStartDate && <BannerFact>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></BannerFact>}
         </>}
         chips={<>
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}

@@ -25,12 +25,12 @@ export function PatientBanner({ name, initials, facts, chips, actions }: { name:
   return (
     <div className="-mx-4 -mt-5 border-b border-banner-line bg-banner px-4 py-3 md:-mx-8 md:-mt-6 md:px-8 md:py-3.5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-medium text-primary-foreground">{initials}</span>
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-[14px] font-semibold text-primary-foreground">{initials}</span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[20px] font-medium leading-tight text-text-strong">{name}</div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12.5px]">{facts}</div>
+          <div className="truncate text-[21px] font-semibold leading-tight tracking-[-0.01em] text-text-strong">{name}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[14.5px]">{facts}</div>
         </div>
-        {chips && <div className="flex flex-wrap items-center gap-1.5">{chips}</div>}
+        {chips && <div className="ml-auto flex flex-wrap items-center gap-2">{chips}</div>}
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
     </div>

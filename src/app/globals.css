@@ -329,7 +329,7 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
   --font-serif: var(--font-fraunces), "Fraunces", Georgia, serif;
   --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
 
@@ -407,8 +407,8 @@
 
 html {
   font-family: var(--font-sans);
-  font-size: 14px;
-  /* Montserrat is loaded at 400 and 500 only; never let the browser fake a heavier cut. */
+  /* The reference runs a 15px interface; ours was 14 and read noticeably tighter. */
+  font-size: 15px;
   font-synthesis-weight: none;
   line-height: 20px;
   color: var(--text);
@@ -516,7 +516,7 @@ kbd { font-family: var(--font-mono); }
   --ring: #0098c0;
   --radius: 0.75rem;
 }
-h1, h2 { font-weight: 500; }
+h1, h2 { font-weight: 600; }
 .figure { font-family: var(--font-sans); font-weight: 500; letter-spacing: -0.01em; }
 /* Identifiers keep the monospace: a PMI, a service code and a unit count should look like data. */
 .tabular-nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
@@ -524,9 +524,9 @@ h1, h2 { font-weight: 500; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
-/* Only 400 and 500 exist, so anything asking heavier renders at 500. Emphasis comes from
-   size, colour, and spacing instead of a weight the family does not have here. */
-.font-semibold, .font-bold, strong, b, th, h1, h2, h3, h4, h5, h6 { font-weight: 500; }
+/* Plus Jakarta Sans ships 400/500/600/700, so semibold is a real cut and nothing needs clamping. */
+.font-semibold, th { font-weight: 600; }
+.font-bold, strong, b { font-weight: 700; }
 
 /* Identifiers: PMI numbers, HCPCS codes, dates in tables, unit counts, money. */
 .ident { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }

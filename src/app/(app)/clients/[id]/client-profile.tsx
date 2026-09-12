@@ -59,7 +59,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
       <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
         <div className="rounded-[10px] border border-line bg-sidebar p-3.5">
           <div className="mb-2.5 flex items-center">
-            <div className="text-[13px] font-medium text-text-strong">General information</div>
+            <div className="text-[17px] font-semibold text-text-strong">General information</div>
             {manage && (
               <Link href={editHref} className="ml-auto text-muted-foreground hover:text-text-strong" aria-label="Edit general information">
                 <Icon.edit size={15} />
@@ -70,8 +70,8 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
             <div key={f.label} className="flex gap-2.5 py-1.5">
               {f.icon && <span className="mt-[3px] text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={14} />; })()}</span>}
               <div className="min-w-0">
-                <div className="text-[11px] text-muted-foreground">{f.label}</div>
-                <div className="text-[12.5px] text-text-strong">{f.value}</div>
+                <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
+                <div className="text-[15px] text-text-strong">{f.value}</div>
               </div>
             </div>
           ))}
@@ -87,7 +87,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 onClick={() => setOpenKey(s.key)}
                 aria-current={on ? "true" : undefined}
                 className={cx(
-                  "flex w-full items-center gap-2.5 border-b border-line-soft px-3 py-3 text-left text-[13.5px] transition-colors",
+                  "flex w-full items-center gap-2.5 border-b border-line-soft px-3 py-3.5 text-left text-[15px] transition-colors",
                   on ? "bg-primary-soft font-medium text-primary shadow-[inset_3px_0_0_var(--primary)]" : "text-text hover:bg-hover",
                 )}
               >
@@ -95,7 +95,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 {s.alert ? (
                   <span className="flex h-[17px] min-w-[18px] items-center justify-center rounded-full bg-danger-soft px-1.5 text-[10.5px] font-medium text-danger">!</span>
                 ) : s.count > 0 ? (
-                  <span className={cx("flex h-[19px] min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{s.count}</span>
+                  <span className={cx("flex h-[20px] min-w-[21px] items-center justify-center rounded-full px-1.5 text-[12px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{s.count}</span>
                 ) : null}
                 {s.done && <Icon.checkCircle size={16} className={cx("shrink-0", on ? "text-primary" : "text-ok")} />}
                 <Icon.chevronRight size={15} className="shrink-0 text-hint" />
@@ -118,13 +118,13 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
 
       <div className={cx("min-w-0 py-4", wide ? "lg:pl-4" : "lg:pl-5")}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <div className="text-[15px] font-medium text-text-strong">{current?.label}</div>
+          <div className="text-[18px] font-semibold text-text-strong">{current?.label}</div>
           <div className="ml-auto flex items-center gap-2">
             {manage && current?.editable && (
               <button
                 type="button"
                 onClick={() => setDrawer({ section: current.editable!, row: null })}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-card px-3 text-[12.5px] font-medium text-text-strong hover:bg-hover"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-card px-3.5 text-[14.5px] font-medium text-text-strong hover:bg-hover"
               >
                 <Icon.plus size={14} />{current.addLabel ?? "Add"}
               </button>
@@ -133,7 +133,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         </div>
 
         {rows.length === 0 ? (
-          blanks[openKey] === "" ? null : <p className="text-[12.5px] italic text-hint">{blanks[openKey] ?? "Nothing recorded yet."}</p>
+          blanks[openKey] === "" ? null : <p className="text-[14.5px] italic text-hint">{blanks[openKey] ?? "Nothing recorded yet."}</p>
         ) : (
           rows.map((e) => (
             <article key={e.id} className="mb-2.5 flex items-start gap-4 rounded-[10px] border border-line px-4 py-3.5 last:mb-0">
@@ -142,8 +142,8 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                   <div key={i} className="flex min-w-0 gap-2.5">
                     {f.icon && <span className="mt-[2px] shrink-0 text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
                     <div className="min-w-0">
-                      <div className="text-[11px] text-muted-foreground">{f.label}</div>
-                      <div className="text-[12.5px] text-text-strong">{f.value}</div>
+                      <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
+                      <div className="text-[15px] text-text-strong">{f.value}</div>
                     </div>
                   </div>
                 ))}

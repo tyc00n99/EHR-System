@@ -4,6 +4,14 @@ import "./globals.css";
 import { DEFAULT_THEME, THEME_BOOT } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
+// Plus Jakarta Sans, identified from the reference recording. Four real weights, so headings can
+// use 600 instead of leaning on size alone the way Montserrat's two cuts forced.
+const jakarta = localFont({ variable: "--font-jakarta", src: [
+  { path: "../fonts/PlusJakartaSans-400.woff2", weight: "400", style: "normal" },
+  { path: "../fonts/PlusJakartaSans-500.woff2", weight: "500", style: "normal" },
+  { path: "../fonts/PlusJakartaSans-600.woff2", weight: "600", style: "normal" },
+  { path: "../fonts/PlusJakartaSans-700.woff2", weight: "700", style: "normal" },
+] });
 const montserrat = localFont({ variable: "--font-montserrat", src: [
   { path: "../fonts/Montserrat-400.ttf", weight: "400" },
   { path: "../fonts/Montserrat-500.ttf", weight: "500" },
@@ -39,7 +47,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", publicSans.variable, fraunces.variable, inconsolata.variable, plexMono.variable, montserrat.variable)}>
+    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", publicSans.variable, fraunces.variable, inconsolata.variable, plexMono.variable, jakarta.variable, montserrat.variable)}>
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         {children}

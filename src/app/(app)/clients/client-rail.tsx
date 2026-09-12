@@ -67,7 +67,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
       <div className="sticky top-14 flex h-[calc(100vh-3.5rem)] flex-col">
         <div className="flex h-11 shrink-0 items-center gap-2 px-3">
           <Icon.clients size={15} className="shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text-strong">{label}</span>
+          <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-strong">{label}</span>
           <button
             type="button"
             onClick={() => set(false)}
@@ -133,7 +133,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                   {p.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                 </span>
                 <span className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className={cx("min-w-0 truncate text-[13px]", on ? "font-medium text-text-strong" : "text-text")}>{p.name}</span>
+                  <span className={cx("min-w-0 truncate text-[14.5px]", on ? "font-medium text-text-strong" : "text-text")}>{p.name}</span>
                   {p.status !== "active" && <span className="shrink-0 rounded bg-panel px-1.5 text-[10.5px] text-muted-foreground">{p.status}</span>}
                 </span>
                 {p.flagged && <span className="size-1.5 shrink-0 rounded-full bg-danger" title="Needs attention" />}
