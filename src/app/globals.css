@@ -301,6 +301,7 @@
   --color-page: var(--page);
   --color-sidebar: var(--sidebar);
   --color-panel: var(--panel);
+  --color-card: var(--card);
   --color-card-soft: var(--card-soft);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);

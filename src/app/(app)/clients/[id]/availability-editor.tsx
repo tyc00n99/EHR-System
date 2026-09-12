@@ -59,7 +59,7 @@ export function AvailabilityEditor({ personId, initial, onDone }: { personId: st
 
   return (
     <Sheet open onOpenChange={(o) => { if (!o) onDone(); }}>
-      <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-[620px]">
+      <SheetContent side="right" showCloseButton={false} className="w-full overflow-y-auto p-0 data-[side=right]:sm:max-w-[760px]">
         <SheetTitle className="sr-only">Edit availability</SheetTitle>
         <form action={submit} className="flex min-h-full flex-col">
           <div className="flex items-center gap-3 border-b border-line px-6 py-4">
@@ -116,10 +116,10 @@ export function AvailabilityEditor({ personId, initial, onDone }: { personId: st
                       ) : (
                         <div className="min-w-0 flex-1">
                           {windows.map((w, j) => (
-                            <div key={j} className="mb-2 flex flex-wrap items-center gap-2 last:mb-0">
-                              <input type="time" value={w.start} onChange={(e) => edit(i, j, "start", e.target.value)} className="h-9 w-[118px] rounded-lg border border-line bg-card px-2.5 text-[14px] text-text" aria-label={`${FULL[i]} window ${j + 1} starts`} />
+                            <div key={j} className="mb-2 flex flex-nowrap items-center gap-2 last:mb-0">
+                              <input type="time" value={w.start} onChange={(e) => edit(i, j, "start", e.target.value)} className="h-9 w-[140px] rounded-lg border border-line bg-card px-3 text-[14px] text-text" aria-label={`${FULL[i]} window ${j + 1} starts`} />
                               <span className="text-muted-foreground">-</span>
-                              <input type="time" value={w.end} onChange={(e) => edit(i, j, "end", e.target.value)} className="h-9 w-[118px] rounded-lg border border-line bg-card px-2.5 text-[14px] text-text" aria-label={`${FULL[i]} window ${j + 1} ends`} />
+                              <input type="time" value={w.end} onChange={(e) => edit(i, j, "end", e.target.value)} className="h-9 w-[140px] rounded-lg border border-line bg-card px-3 text-[14px] text-text" aria-label={`${FULL[i]} window ${j + 1} ends`} />
                               <button type="button" onClick={() => setDay(i, windows.filter((_, n) => n !== j))} aria-label={`Remove ${FULL[i]} window ${j + 1}`} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-danger-soft hover:text-danger">
                                 <Icon.trash size={17} />
                               </button>
@@ -177,7 +177,7 @@ function CopyTo({ from, onApply, onClose }: { from: number; onApply: (targets: n
   return (
     <>
       <button type="button" aria-label="Close" className="fixed inset-0 z-20 cursor-default" onClick={onClose} />
-      <div className="absolute right-0 top-full z-30 mt-1 w-56 rounded-xl border border-line bg-card p-4 shadow-lg">
+      <div className="absolute right-0 top-full z-40 mt-1 w-60 rounded-xl border border-line bg-page p-4 shadow-xl">
         <div className="mb-3 text-[14px] font-medium text-text-strong">Copy {FULL[from]} times to</div>
         <label className="flex items-center gap-2.5 pb-3 text-[14px] text-text">
           <input type="checkbox" checked={all} onChange={() => setPicked(all ? [] : others)} className="size-[18px] rounded border-line accent-[var(--primary)]" />
