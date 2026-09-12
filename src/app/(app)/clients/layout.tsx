@@ -21,6 +21,7 @@ export default async function ClientsLayout({ children }: { children: ReactNode 
     status: p.status,
     // One dot, one meaning: this person cannot sign a note yet.
     flagged: p.status === "active" && !p.signatureCodeHash,
+    photo: p.photoPath ? `/clients/${p.id}/photo?v=${p.photoUpdatedAt?.getTime() ?? 0}` : null,
   }));
   return (
     <div className="-mx-4 -my-5 flex md:-mx-8 md:-my-6">

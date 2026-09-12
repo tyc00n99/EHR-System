@@ -182,6 +182,10 @@ export const people = pgTable(
     guardianRelationship: text("guardian_relationship"),
     guardianPhone: text("guardian_phone"),
     guardianEmail: text("guardian_email"),
+    /** Storage path of the client's photo, or null. The bytes live in stored_files. */
+    photoPath: text("photo_path"),
+    /** Bumped on every upload so a replaced photo is not served from cache. */
+    photoUpdatedAt: timestamp("photo_updated_at", { withTimezone: true }),
     emergencyContactName: text("emergency_contact_name"),
     emergencyContactRelationship: text("emergency_contact_relationship"),
     emergencyContactPhone: text("emergency_contact_phone"),

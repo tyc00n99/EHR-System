@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
 import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
+import { ClientPhoto } from "./client-photo";
 import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
@@ -81,6 +82,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
   const org = await getOrganization();
+  // The query string busts the browser cache when the photo is replaced.
+  const photoSrc = person.photoPath ? `/clients/${id}/photo?v=${person.photoUpdatedAt?.getTime() ?? 0}` : null;
   const history = tab === "profile" ? await listProfileHistory(id) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
@@ -148,7 +151,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       ))}
       <PatientBanner
         name={fullName(person)}
-        initials={`${person.firstName[0]}${person.lastName[0]}`}
+        avatar={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={manage} size={44} />}
         facts={<>
           {person.serviceStartDate && <span>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></span>}
         </>}

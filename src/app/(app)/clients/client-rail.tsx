@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 
-export interface RailPerson { id: string; name: string; pmi: string; status: "active" | "intake" | "discharged"; flagged: boolean }
+export interface RailPerson { id: string; name: string; pmi: string; status: "active" | "intake" | "discharged"; flagged: boolean; photo: string | null }
 
 const KEY = "ehr.clients.panel";
 
@@ -129,8 +129,11 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 aria-current={on ? "page" : undefined}
                 className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2.5 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[9.5px] font-medium text-primary-foreground">
-                  {p.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-panel text-[10px] font-semibold text-text-strong">
+                  {p.photo
+                    // eslint-disable-next-line @next/next/no-img-element -- auth-gated route
+                    ? <img src={p.photo} alt="" width={28} height={28} className="size-full object-cover" />
+                    : p.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                 </span>
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <span className={cx("min-w-0 truncate text-[14.5px]", on ? "font-medium text-text-strong" : "text-text")}>{p.name}</span>
