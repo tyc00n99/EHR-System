@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { listAssignmentsForStaff, listPeople } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { can, requireUser } from "@/lib/auth";
 import { fullName } from "@/lib/format";
 import { ClientRail, type RailPerson } from "./client-rail";
 
@@ -24,7 +24,7 @@ export default async function ClientsLayout({ children }: { children: ReactNode 
   }));
   return (
     <div className="-mx-4 -my-5 flex md:-mx-8 md:-my-6">
-      <ClientRail people={rail} label={user.role === "dsp" ? "My clients" : "Clients"} />
+      <ClientRail people={rail} label={user.role === "dsp" ? "My clients" : "Clients"} canAdd={can(user, "manage_people")} />
       <div className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-6">{children}</div>
     </div>
   );

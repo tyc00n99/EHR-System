@@ -32,11 +32,10 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
           <Link
             key={d.href}
             href={d.href}
-            title={d.label}
             aria-label={d.label}
             aria-current={active ? "page" : undefined}
             className={cx(
-              "relative flex size-9 items-center justify-center rounded-md transition-colors",
+              "group relative flex size-9 items-center justify-center rounded-md transition-colors",
               active ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text-strong",
             )}
           >
@@ -46,6 +45,15 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
                 {badge > 99 ? "99+" : badge}
               </span>
             )}
+            {/* The label lives here rather than in `title`: the native tooltip takes a second to
+                appear and cannot be styled, which makes an icon-only rail feel unlabelled. */}
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-full z-40 ml-2 hidden whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-[12px] font-medium text-gray-100 shadow-md group-hover:block"
+            >
+              {d.label}
+            </span>
+            {active && <span aria-hidden className="absolute -right-2.5 size-1.5 rounded-full bg-primary" />}
           </Link>
         );
       })}

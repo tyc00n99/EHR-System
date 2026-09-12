@@ -2,46 +2,89 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 
 export interface RailPerson { id: string; name: string; pmi: string; status: "active" | "intake" | "discharged"; flagged: boolean }
 
+const KEY = "ehr.clients.panel";
+
 /**
- * The caseload, pinned. Working a queue of people means opening five records in a row, and a list
- * that throws you back to a full page between each one makes that five round trips instead of five
- * clicks. Selection lives in the URL, so the rail and the record can never disagree.
+ * The Clients module panel: the caseload, pinned beside the icon rail.
+ *
+ * Working a queue of people means opening five records in a row, and a list that throws you back to
+ * a full page between each one makes that five round trips instead of five clicks. Selection lives
+ * in the URL, so the panel and the record can never disagree. Closing it leaves a thin strip rather
+ * than nothing, because a control you cannot find again is not a control.
  */
-export function ClientRail({ people, label }: { people: RailPerson[]; label: string }) {
+export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; label: string; canAdd: boolean }) {
   const pathname = usePathname();
   const [q, setQ] = useState("");
+  const [open, setOpen] = useState(true);
   const openId = pathname.startsWith("/clients/") ? pathname.split("/")[2] : null;
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      try { setOpen(localStorage.getItem(KEY) !== "closed"); } catch { setOpen(true); }
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const set = (v: boolean) => { setOpen(v); try { localStorage.setItem(KEY, v ? "open" : "closed"); } catch {} };
+
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
     return t ? people.filter((p) => p.name.toLowerCase().includes(t) || p.pmi.includes(t)) : people;
   }, [people, q]);
 
-  // On the list itself the rail would be a second copy of the same five people, with a second
-  // search box. The rail exists for moving between records, so that is where it appears.
-  if (pathname === "/clients") return null;
+  if (!open) {
+    return (
+      <div className="hidden w-7 shrink-0 border-r border-line bg-sidebar md:block">
+        <div className="sticky top-14 flex h-[calc(100vh-3.5rem)] justify-center pt-3">
+          <button
+            type="button"
+            onClick={() => set(true)}
+            aria-label={`Show ${label.toLowerCase()} list`}
+            className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"
+          >
+            <Icon.chevronRight size={15} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <aside aria-label={label} className="hidden w-[248px] shrink-0 border-r border-line bg-sidebar md:block">
       <div className="sticky top-14 flex h-[calc(100vh-3.5rem)] flex-col">
-        <div className="flex h-10 shrink-0 items-center gap-2 border-b border-line px-3">
+        <div className="flex h-11 shrink-0 items-center gap-2 px-3">
+          <Icon.clients size={15} className="shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text-strong">{label}</span>
+          <button
+            type="button"
+            onClick={() => set(false)}
+            aria-label={`Hide ${label.toLowerCase()} list`}
+            className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"
+          >
+            <Icon.plus size={15} className="rotate-45" />
+          </button>
+        </div>
+
+        <div className="mx-3 mb-2 flex h-8 shrink-0 items-center gap-2 rounded-md border border-line bg-card px-2.5">
           <Icon.search size={14} className="shrink-0 text-hint" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={`Filter ${people.length} ${people.length === 1 ? "client" : "clients"}`}
-            aria-label="Filter clients"
+            placeholder="Search"
+            aria-label={`Search ${label.toLowerCase()}`}
             className="min-w-0 flex-1 bg-transparent text-[12.5px] text-text outline-none placeholder:text-hint"
           />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+
+        <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
           {shown.length === 0 ? (
-            <p className="px-3 py-4 text-[12.5px] text-muted-foreground">Nobody matches “{q}”.</p>
+            <p className="px-3 py-4 text-[12.5px] italic text-muted-foreground">{people.length === 0 ? "None found." : `Nobody matches “${q}”.`}</p>
           ) : shown.map((p) => {
             const on = p.id === openId;
             return (
@@ -66,6 +109,17 @@ export function ClientRail({ people, label }: { people: RailPerson[]; label: str
             );
           })}
         </div>
+
+        {canAdd && (
+          <div className="shrink-0 border-t border-line p-2.5">
+            <Link
+              href="/clients/new"
+              className="flex h-9 items-center justify-center gap-1.5 rounded-md bg-primary text-[13px] font-medium text-primary-foreground hover:bg-primary-hover"
+            >
+              <Icon.plus size={15} /> Add client
+            </Link>
+          </div>
+        )}
       </div>
     </aside>
   );
