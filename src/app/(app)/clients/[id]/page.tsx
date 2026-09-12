@@ -11,6 +11,7 @@ import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
+import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { NotesTab, type NoteRow } from "./notes-tab";
@@ -79,6 +80,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   ]);
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
+  const org = await getOrganization();
   const history = tab === "profile" ? await listProfileHistory(id) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
@@ -148,8 +150,18 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         name={fullName(person)}
         initials={`${person.firstName[0]}${person.lastName[0]}`}
         facts={<>
-          {person.serviceStartDate && <BannerFact>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></BannerFact>}
+          {person.serviceStartDate && <span>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></span>}
         </>}
+        chips={<>
+          {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
+          {/* The reference shows a sequential "ID: 1" here; ours is the PMI, which is the number
+              anyone dealing with this person actually quotes. */}
+          <span className="inline-flex h-[26px] items-center rounded-full border border-line px-2.5 text-[13.5px] text-muted-foreground">
+            PMI <span className="ident ml-1 text-text-strong">{person.pmi}</span>
+          </span>
+          {person.status === "active" && !person.signatureCodeHash && <Badge tone="danger">no signing code</Badge>}
+        </>}
+        actions={<span className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-line bg-card px-2.5 text-[13.5px] text-muted-foreground"><Icon.building size={14} />{org.name}</span>}
       />
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
 
@@ -301,7 +313,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           editHref={`/clients/${id}/edit`}
           general={[
             { icon: "user", label: "Full name", value: fullName(person) },
-            { icon: "flag", label: "Status", value: manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge> },
             { icon: "calendar", label: "Date of birth", value: <span className="ident">{fmtDate(person.dob)}</span> },
             { icon: "id", label: "PMI #", value: <span className="ident">{person.pmi}</span> },
             { icon: "pin", label: "Address", value: address || <span className="text-hint">Not recorded</span> },

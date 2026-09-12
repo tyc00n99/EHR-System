@@ -23,15 +23,15 @@ export function ServiceDot({ code, className }: { code: string; className?: stri
 /** The banner every screen of a person's record sits under. */
 export function PatientBanner({ name, initials, facts, chips, actions }: { name: string; initials: string; facts: ReactNode; chips?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="-mx-4 -mt-5 border-b border-banner-line bg-banner px-4 py-3 md:-mx-8 md:-mt-6 md:px-8 md:py-3.5">
+    <div className="mb-1 rounded-xl border border-line bg-card px-5 py-3.5">
+      {/* Name, since-date and the status pills read as one line in the reference, with the owning
+          organisation pushed hard right. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-[14px] font-semibold text-primary-foreground">{initials}</span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[21px] font-semibold leading-tight tracking-[-0.01em] text-text-strong">{name}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[14.5px]">{facts}</div>
-        </div>
-        {chips && <div className="ml-auto flex flex-wrap items-center gap-2">{chips}</div>}
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-panel text-[14px] font-semibold text-text-strong">{initials}</span>
+        <div className="text-[21px] font-semibold leading-tight tracking-[-0.01em] text-text-strong">{name}</div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[14.5px] text-muted-foreground">{facts}</div>
+        {chips && <div className="flex flex-wrap items-center gap-2">{chips}</div>}
+        {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
       </div>
     </div>
   );

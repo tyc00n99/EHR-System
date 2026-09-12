@@ -55,9 +55,9 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
   const rows = entities[openKey] ?? [];
 
   return (
-    <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[360px_minmax(0,1fr)]")}>
+    <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
       <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
-        <div className="rounded-xl border border-line bg-sidebar p-6">
+        <div className="rounded-2xl bg-panel p-6">
           <div className="mb-4 flex items-center">
             <div className="text-[17px] font-semibold text-text-strong">General information</div>
             {manage && (
@@ -77,7 +77,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
           ))}
         </div>
 
-        <nav aria-label="Profile sections" className="mt-3 border-t border-line">
+        <nav aria-label="Profile sections" className="mt-4">
           {sections.map((s) => {
             const on = s.key === openKey;
             return (
@@ -87,8 +87,8 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 onClick={() => setOpenKey(s.key)}
                 aria-current={on ? "true" : undefined}
                 className={cx(
-                  "flex w-full items-center gap-2.5 border-b border-line-soft px-3 py-3.5 text-left text-[15px] transition-colors",
-                  on ? "bg-primary-soft font-medium text-primary shadow-[inset_3px_0_0_var(--primary)]" : "text-text hover:bg-hover",
+                  "flex w-full items-center gap-2.5 border-b border-line-soft px-4 py-4 text-left text-[15px] transition-colors",
+                  on ? "rounded-r-md bg-primary-soft font-medium text-primary shadow-[inset_4px_0_0_var(--primary)]" : "text-text hover:bg-hover",
                 )}
               >
                 <span className="min-w-0 flex-1 truncate">{s.label}</span>
@@ -111,12 +111,12 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         onClick={() => setWide((v) => !v)}
         aria-label={wide ? "Show general information" : "Hide general information"}
         aria-expanded={!wide}
-        className={cx("absolute top-5 z-10 hidden size-5 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm hover:text-text-strong lg:flex", wide ? "left-0 -translate-x-1/2" : "left-[360px] -translate-x-1/2")}
+        className={cx("absolute top-5 z-10 hidden size-5 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm hover:text-text-strong lg:flex", wide ? "left-0 -translate-x-1/2" : "left-[420px] -translate-x-1/2")}
       >
         <Icon.chevronRight size={12} className={wide ? "" : "rotate-180"} />
       </button>
 
-      <div className={cx("min-w-0 py-4", wide ? "lg:pl-4" : "lg:pl-5")}>
+      <div className={cx("min-w-0 py-5", wide ? "lg:pl-5" : "lg:pl-8")}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="text-[18px] font-semibold text-text-strong">{current?.label}</div>
           <div className="ml-auto flex items-center gap-2">
