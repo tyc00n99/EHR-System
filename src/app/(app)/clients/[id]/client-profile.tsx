@@ -55,7 +55,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
   const rows = entities[openKey] ?? [];
 
   return (
-    <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
+    <div className={cx("relative grid gap-0", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
       <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
         <div className="rounded-2xl bg-card-soft p-6">
           <div className="mb-4 flex items-center">

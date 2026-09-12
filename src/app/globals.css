@@ -135,7 +135,7 @@
   --sidebar: #f8fafc;
   --panel: #f1f5f9;
   /* Filled cards on a white page need a step more contrast than --panel gives. */
-  --card-soft: #eaeef3;
+  --card-soft: #f1f4f8;
   --line: #e2e8f0;
   --line-soft: #eef2f6;
   --hover: rgba(15, 23, 42, 0.04);

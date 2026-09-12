@@ -151,7 +151,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       ))}
       <PatientBanner
         name={fullName(person)}
-        avatar={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={manage} size={44} />}
+        avatar={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={manage} size={36} />}
         facts={<>
           {person.serviceStartDate && <span>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></span>}
         </>}
