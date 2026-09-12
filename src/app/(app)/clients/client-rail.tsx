@@ -127,17 +127,14 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 key={p.id}
                 href={`/clients/${p.id}`}
                 aria-current={on ? "page" : undefined}
-                className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
+                className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2.5 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
               >
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[9.5px] font-medium text-primary-foreground">
                   {p.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className={cx("block truncate text-[12.5px]", on ? "font-medium text-text-strong" : "text-text")}>{p.name}</span>
-                  <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="ident">{p.pmi}</span>
-                    {p.status !== "active" && <span className="rounded bg-panel px-1 text-[10px]">{p.status}</span>}
-                  </span>
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className={cx("min-w-0 truncate text-[13px]", on ? "font-medium text-text-strong" : "text-text")}>{p.name}</span>
+                  {p.status !== "active" && <span className="shrink-0 rounded bg-panel px-1.5 text-[10.5px] text-muted-foreground">{p.status}</span>}
                 </span>
                 {p.flagged && <span className="size-1.5 shrink-0 rounded-full bg-danger" title="Needs attention" />}
               </Link>

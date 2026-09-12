@@ -87,7 +87,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 onClick={() => setOpenKey(s.key)}
                 aria-current={on ? "true" : undefined}
                 className={cx(
-                  "flex w-full items-center gap-2.5 border-b border-line-soft px-2.5 py-2.5 text-left text-[12.5px] transition-colors",
+                  "flex w-full items-center gap-2.5 border-b border-line-soft px-3 py-3 text-left text-[13.5px] transition-colors",
                   on ? "bg-primary-soft font-medium text-primary shadow-[inset_3px_0_0_var(--primary)]" : "text-text hover:bg-hover",
                 )}
               >
@@ -95,10 +95,10 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 {s.alert ? (
                   <span className="flex h-[17px] min-w-[18px] items-center justify-center rounded-full bg-danger-soft px-1.5 text-[10.5px] font-medium text-danger">!</span>
                 ) : s.count > 0 ? (
-                  <span className={cx("flex h-[17px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10.5px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{s.count}</span>
+                  <span className={cx("flex h-[19px] min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{s.count}</span>
                 ) : null}
-                {s.done && <Icon.check size={14} className={cx("shrink-0", on ? "text-primary" : "text-ok")} />}
-                <Icon.chevronRight size={14} className="shrink-0 text-hint" />
+                {s.done && <Icon.checkCircle size={16} className={cx("shrink-0", on ? "text-primary" : "text-ok")} />}
+                <Icon.chevronRight size={15} className="shrink-0 text-hint" />
               </button>
             );
           })}
@@ -140,7 +140,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               <div className="grid min-w-0 flex-1 gap-3">
                 {e.fields.map((f, i) => (
                   <div key={i} className="flex min-w-0 gap-2.5">
-                    {f.icon && <span className="mt-[3px] shrink-0 text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={14} />; })()}</span>}
+                    {f.icon && <span className="mt-[2px] shrink-0 text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
                     <div className="min-w-0">
                       <div className="text-[11px] text-muted-foreground">{f.label}</div>
                       <div className="text-[12.5px] text-text-strong">{f.value}</div>
