@@ -11,6 +11,7 @@ import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
+import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { NotesTab, type NoteRow } from "./notes-tab";
@@ -92,6 +93,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   ]);
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
+  const org = await getOrganization();
   const history = tab === "profile" ? await listProfileHistory(id) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
@@ -111,7 +113,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   // The right column answers "what do I do about this person", which is why the record is open.
   const soon = isoDay(60);
   const alerts: { tone: "danger" | "warn"; body: ReactNode; href?: string; cta?: string }[] = [];
-  if (person.status === "active" && !person.signatureCodeHash) alerts.push({ tone: "danger", body: <><span className="font-medium">No signing code has been issued.</span> Nobody can co-sign a note until one exists.</>, href: `/clients/${id}?tab=profile`, cta: "Issue a code" });
+  if (person.status === "active" && !person.signatureCodeHash) alerts.push({ tone: "danger", body: <><span className="font-medium">No signing code has been issued.</span> Nobody can co-sign a note until one exists.</>, href: `/clients/${id}`, cta: "Issue a code" });
   if (person.status === "active" && !person.phone) alerts.push({ tone: "warn", body: <><span className="font-medium">No mobile number on file,</span> so a signing code has nowhere to be sent.</>, href: `/clients/${id}/edit`, cta: "Add a number" });
   if (unsigned) alerts.push({ tone: "warn", body: <><span className="font-medium">{unsigned} note{unsigned === 1 ? " is" : "s are"} unsigned</span> in the periods shown.</>, href: `/clients/${id}?tab=notes`, cta: "Review them" });
   if (person.status === "active" && active.length === 0) alerts.push({ tone: "danger", body: <><span className="font-medium">No active authorization.</span> Notes cannot be recorded or billed.</>, href: `/clients/${id}/agreements/new`, cta: "Add an agreement" });
@@ -130,13 +132,11 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const profileSections: Section[] = [
     { key: "contacts", label: "Emergency contacts", count: profile.contacts.length, done: profile.contacts.length > 0, editable: "contacts", addLabel: "Add contact" },
     { key: "careteam", label: "Care team", count: activeTeam.length, done: activeTeam.length > 0 && activeTeam.every((t) => t.assignment.orientedOn), alert: activeTeam.some((t) => !t.assignment.orientedOn) },
-    { key: "code", label: "Signing code", count: 0, done: Boolean(person.signatureCodeHash), alert: person.status === "active" && !person.signatureCodeHash },
     { key: "diagnoses", label: "Medical information", count: profile.diagnoses.length, done: profile.diagnoses.length > 0, editable: "diagnoses", addLabel: "Add diagnosis" },
-    { key: "casemanager", label: "Case manager", count: person.caseManagerName ? 1 : 0, done: Boolean(person.caseManagerName) },
+    { key: "casemanager", label: "Referring providers", count: person.caseManagerName ? 1 : 0, done: Boolean(person.caseManagerName) },
     { key: "funding", label: "Funding sources", count: profile.funding.length, done: profile.funding.length > 0, editable: "funding", addLabel: "Add funding source" },
     { key: "locations", label: "Care locations", count: profile.locations.length, done: profile.locations.length > 0, editable: "locations", addLabel: "Add care location" },
     { key: "authorizations", label: "Authorizations", count: active.length, done: active.length > 0, alert: person.status === "active" && active.length === 0 },
-    { key: "planning", label: track ? `Planning · ${track}` : "Planning", count: deadlines.length, done: deadlines.length > 0 },
     { key: "availability", label: "Availability", count: profile.availability.length, done: profile.availability.length > 0, editable: "availability", addLabel: "Add availability" },
     { key: "history", label: "Profile history", count: 0, done: false },
   ];
@@ -144,11 +144,10 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
   const tabs = [
     { key: "overview", label: "Overview" },
-    { key: "lifeplan", label: "Support plan goals", count: goals.filter((g) => g.goal.status === "active").length },
-    { key: "notes", label: "Notes", count: noteCount },
-    { key: "authorizations", label: "Authorizations", count: active.length },
-    { key: "files", label: "Plans & files", count: documents.length },
-    { key: "medical", label: "Medical", count: meds.filter((m) => m.active).length || undefined },
+    { key: "lifeplan", label: "Programming", count: goals.filter((g) => g.goal.status === "active").length },
+    { key: "notes", label: "Sessions", count: noteCount },
+    { key: "files", label: "Documents", count: documents.length },
+    { key: "medical", label: "Reports", count: meds.filter((m) => m.active).length || undefined },
     { key: "profile", label: "Profile", count: profileOutstanding || undefined },
   ];
 
@@ -174,6 +173,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
           {!person.signatureCodeHash && person.status === "active" && <Badge tone="danger">no signing code</Badge>}
           {person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-muted-foreground">discharged {fmtDate(person.dischargedOn)}</span>}
+          <span className="inline-flex h-[22px] items-center gap-1.5 rounded-md border border-line bg-card px-2 text-[12px] text-muted-foreground"><Icon.building size={13} />{org.name}</span>
         </>}
         actions={<>
           {user.staffId && <LinkButton href="/clock" variant="primary"><Icon.clock size={14} />Clock in</LinkButton>}
@@ -216,6 +216,11 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 </>
               )}
             </ChartSection>
+            {manage && (
+              <ChartSection label="Signing code" action={<Rule name="code" />}>
+                <ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
+              </ChartSection>
+            )}
             {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
           </ChartCol>
 
@@ -335,13 +340,11 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           blanks={{
             contacts: "No emergency contact on file. At least one is expected before services start.",
             careteam: "Nobody is assigned to this person yet, so no one can clock in.",
-            code: "No signing code has been issued. Nobody can co-sign a note until one exists.",
             diagnoses: "No diagnosis recorded. Payers ask for the ICD-10 code that justifies the service.",
             casemanager: "No case manager recorded.",
             funding: "No funding source recorded. Add the payer behind these authorizations so claims know where to go.",
             locations: "No care location recorded, so notes fall back to the address on the record.",
             authorizations: "No active authorization. Notes cannot be recorded or billed.",
-            planning: "Set a service start date and a service type to compute planning deadlines.",
             availability: "No availability recorded. Scheduling has no idea when this person is free.",
             history: history.length ? "" : "Nothing has been recorded against this profile yet.",
           }}
@@ -365,7 +368,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               ],
               chips: t.assignment.orientedOn ? <Badge tone="ok">Cleared to work</Badge> : <Badge tone="danger">Blocks clock-in</Badge>,
             })),
-            code: [],
             diagnoses: profile.diagnoses.map((d) => ({
               id: d.id,
               raw: { id: d.id, icdCode: d.icdCode, description: d.description, diagnosedOn: d.diagnosedOn, isPrimary: d.isPrimary },
@@ -412,15 +414,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 { icon: "calendar", label: "Dates · rate", value: <><span className="ident">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[11.5px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
               ],
             })),
-            planning: deadlines.map((d) => ({
-              id: d.id,
-              fields: [
-                { icon: "flag", label: "Requirement", value: d.label },
-                { icon: "calendar", label: "Due", value: <span className={cx("ident", d.due < new Date() && "text-danger")}>{fmtDate(d.due)}</span> },
-                { icon: "audit", label: "Statute", value: <span className="text-muted-foreground">{d.cite}</span> },
-              ],
-            })),
-            history: [],
             availability: profile.availability.map((a) => ({
               id: a.id,
               raw: { id: a.id, weekday: a.weekday, startTime: a.startTime, endTime: a.endTime, notes: a.notes },
@@ -432,11 +425,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             })),
           } satisfies Record<string, Entity[]>}
           extras={{
-            code: <ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />,
             careteam: manage ? <Link href={`/staff`} className="text-[12.5px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
             diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[12.5px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
             authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[12.5px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
-            planning: <p className="text-[11.5px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>,
             history: history.length > 0 ? (
               <div>
                 <div className="overflow-x-auto rounded-[10px] border border-line">

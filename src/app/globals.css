@@ -65,8 +65,8 @@
 
   --radius: 0.75rem;
   --radius-btn: 9999px;
-  --banner: #dce7f5;
-  --banner-line: #b9cee8;
+  --banner: #ffffff;
+  --banner-line: #e2e8f0;
   --font-display: var(--font-serif);
   --background: #ffffff;
   --foreground: var(--text);
@@ -104,8 +104,8 @@
 
 /* ---- Tide: cool slate neutrals, white sidebar, clinical blue. Green is reserved for status. ---- */
 :root[data-theme="tide"] {
-  --banner: #dce7f5;
-  --banner-line: #b9cee8;
+  --banner: #ffffff;
+  --banner-line: #e2e8f0;
   --gray-100: #f8fafc;
   --gray-200: #f1f5f9;
   --gray-300: #e2e8f0;
@@ -119,7 +119,7 @@
   --blue-100: #f4f7fc;
   --blue-200: #dce7f5;
   --blue-300: #a9c3e2;
-  --blue-500: #4a7fc1;
+  --blue-500: #0098c0;
   --blue-600: #1d4e89;
   --blue-700: #173e6d;
 
@@ -170,10 +170,10 @@
   --card-foreground: var(--text);
   --popover: #ffffff;
   --popover-foreground: var(--text);
-  --primary: #1d4e89;
+  --primary: #0098c0;
   --primary-foreground: #ffffff;
-  --primary-hover: #173e6d;
-  --primary-soft: #dce7f5;
+  --primary-hover: #0081a5;
+  --primary-soft: #dff3fa;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
   --muted: var(--gray-200);
@@ -183,7 +183,7 @@
   --destructive: var(--danger);
   --border: var(--gray-300);
   --input: var(--gray-300);
-  --ring: #4a7fc1;
+  --ring: #0098c0;
   --chart-1: #1d4e89;
   --chart-2: #f59e0b;
   --chart-3: #6366f1;
@@ -500,8 +500,8 @@ kbd { font-family: var(--font-mono); }
   --radius-btn: 0.5rem;
 }
 :root[data-theme="tide"] {
-  --banner: #dce7f5;
-  --banner-line: #b9cee8;
+  --banner: #ffffff;
+  --banner-line: #e2e8f0;
   --nav: #f8fafb;
   --nav-group: #607381;
   --nav-active: #dce7f5;
@@ -509,11 +509,11 @@ kbd { font-family: var(--font-mono); }
   --nav-cta-border: #b9cee8;
   --text-muted: #526575;
   --text-hint: #697d8d;
-  --primary: #1d4e89;
-  --primary-hover: #173e6d;
-  --primary-soft: #dce7f5;
-  --blue-500: #4a7fc1;
-  --ring: #4a7fc1;
+  --primary: #0098c0;
+  --primary-hover: #0081a5;
+  --primary-soft: #dff3fa;
+  --blue-500: #0098c0;
+  --ring: #0098c0;
   --radius: 0.75rem;
 }
 h1, h2 { font-weight: 500; }
