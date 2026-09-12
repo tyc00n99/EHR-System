@@ -55,10 +55,10 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
   const rows = entities[openKey] ?? [];
 
   return (
-    <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[290px_minmax(0,1fr)]")}>
+    <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[360px_minmax(0,1fr)]")}>
       <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
-        <div className="rounded-[10px] border border-line bg-sidebar p-3.5">
-          <div className="mb-2.5 flex items-center">
+        <div className="rounded-xl border border-line bg-sidebar p-6">
+          <div className="mb-4 flex items-center">
             <div className="text-[17px] font-semibold text-text-strong">General information</div>
             {manage && (
               <Link href={editHref} className="ml-auto text-muted-foreground hover:text-text-strong" aria-label="Edit general information">
@@ -68,7 +68,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
           </div>
           {general.map((f) => (
             <div key={f.label} className="flex gap-2.5 py-1.5">
-              {f.icon && <span className="mt-[3px] text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={14} />; })()}</span>}
+              {f.icon && <span className="mt-[3px] text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
               <div className="min-w-0">
                 <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
                 <div className="text-[15px] text-text-strong">{f.value}</div>
@@ -111,7 +111,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         onClick={() => setWide((v) => !v)}
         aria-label={wide ? "Show general information" : "Hide general information"}
         aria-expanded={!wide}
-        className={cx("absolute top-5 z-10 hidden size-5 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm hover:text-text-strong lg:flex", wide ? "left-0 -translate-x-1/2" : "left-[290px] -translate-x-1/2")}
+        className={cx("absolute top-5 z-10 hidden size-5 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm hover:text-text-strong lg:flex", wide ? "left-0 -translate-x-1/2" : "left-[360px] -translate-x-1/2")}
       >
         <Icon.chevronRight size={12} className={wide ? "" : "rotate-180"} />
       </button>
@@ -151,7 +151,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               {e.chips && <div className="flex shrink-0 flex-wrap gap-1.5">{e.chips}</div>}
               {manage && current?.editable && e.raw && (
                 <div className="flex shrink-0 gap-1.5">
-                  <button type="button" onClick={() => setDrawer({ section: current.editable!, row: e.raw! })} aria-label="Edit" className="flex size-7 items-center justify-center rounded-md border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.edit size={14} /></button>
+                  <button type="button" onClick={() => setDrawer({ section: current.editable!, row: e.raw! })} aria-label="Edit" className="flex size-10 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.edit size={20} /></button>
                   <DeleteButton personId={personId} section={current.editable} id={e.id} />
                 </div>
               )}
@@ -183,7 +183,7 @@ function DeleteButton({ personId, section, id }: { personId: string; section: Se
     return r;
   }, {});
   if (!confirming) {
-    return <button type="button" onClick={() => setConfirming(true)} aria-label="Remove" className="flex size-7 items-center justify-center rounded-md border border-line text-muted-foreground hover:bg-danger-soft hover:text-danger"><Icon.trash size={14} /></button>;
+    return <button type="button" onClick={() => setConfirming(true)} aria-label="Remove" className="flex size-10 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-danger-soft hover:text-danger"><Icon.trash size={20} /></button>;
   }
   return (
     <form action={submit} className="flex items-center gap-1.5">

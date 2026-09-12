@@ -278,9 +278,9 @@ export function RecordHeader({ avatar, title, subtitle, chips, actions, crumbs }
 
 export function Tabs({ tabs, current, base }: { tabs: { key: string; label: string; count?: number }[]; current: string; base: string }) {
   return (
-    <div className="-mx-4 mb-6 flex gap-1 overflow-x-auto border-b border-line bg-page px-4 md:-mx-8 md:px-8">
+    <div className="-mx-4 mb-6 flex items-center gap-1.5 overflow-x-auto border-b border-line bg-page px-4 py-2 md:-mx-8 md:px-8">
       {tabs.map((t) => (
-        <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("-mb-px flex h-12 shrink-0 items-center gap-1.5 border-b-2 px-3.5 text-[16px] font-medium", current === t.key ? "border-primary text-text-strong" : "border-transparent text-muted-foreground hover:border-line-strong hover:text-text")}>
+        <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[16px] font-medium transition-colors", current === t.key ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text")}>
           {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[11px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}
         </Link>
       ))}

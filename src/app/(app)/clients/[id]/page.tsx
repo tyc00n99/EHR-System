@@ -4,14 +4,13 @@ import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icons";
-import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
+import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
 import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
 import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
-import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { NotesTab, type NoteRow } from "./notes-tab";
@@ -37,12 +36,6 @@ const visitTone = (s: string) => (s === "completed" ? "ok" : s === "void" ? "neu
 
 function daysAgo(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
 
-function age(dob: string) {
-  const d = new Date(dob + "T12:00:00"); const now = new Date();
-  let a = now.getFullYear() - d.getFullYear();
-  if (now < new Date(now.getFullYear(), d.getMonth(), d.getDate())) a -= 1;
-  return a;
-}
 
 function Ring({ used, total, size = 40 }: { used: number; total: number; size?: number }) {
   const p = total > 0 ? Math.min(100, Math.max(0, Math.round((used / total) * 100))) : 0;
@@ -51,13 +44,6 @@ function Ring({ used, total, size = 40 }: { used: number; total: number; size?: 
   return <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0" aria-label={`${p}% used`}><circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--gray-200)" strokeWidth="4" /><circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth="4" strokeDasharray={`${(p / 100) * c} ${c}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} /></svg>;
 }
 
-function Contact({ title, name, sub, phone, email }: { title: string; name: string | null; sub?: string | null; phone?: string | null; email?: string | null }) {
-  return (
-    <Card title={title} padded>
-      {name ? (<><div className="font-medium text-text-strong">{name}{sub && <span className="font-normal text-muted-foreground"> · {sub}</span>}</div><div className="mt-1.5 flex flex-col gap-1 text-[13px]">{phone && <a href={`tel:${phone}`} className="flex items-center gap-1.5 text-primary hover:underline"><Icon.phone size={13} />{phone}</a>}{email && <a href={`mailto:${email}`} className="flex items-center gap-1.5 text-primary hover:underline"><Icon.mail size={13} />{email}</a>}{!phone && !email && <span className="text-hint">No contact details</span>}</div></>) : <div className="text-[13px] text-muted-foreground">{title === "Guardian" ? "None on file. The person is their own legal representative." : "None on file."}</div>}
-    </Card>
-  );
-}
 
 export default async function ClientPage({ params, searchParams }: PageProps<"/clients/[id]">) {
   const user = await requireUser();
@@ -93,7 +79,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   ]);
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
-  const org = await getOrganization();
   const history = tab === "profile" ? await listProfileHistory(id) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
@@ -164,16 +149,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         initials={`${person.firstName[0]}${person.lastName[0]}`}
         facts={<>
           {person.serviceStartDate && <BannerFact>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></BannerFact>}
-        </>}
-        chips={<>
-          {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
-          {!person.signatureCodeHash && person.status === "active" && <Badge tone="danger">no signing code</Badge>}
-          {person.status === "discharged" && person.dischargedOn && <span className="text-[12.5px] text-muted-foreground">discharged {fmtDate(person.dischargedOn)}</span>}
-          <span className="inline-flex h-[22px] items-center gap-1.5 rounded-md border border-line bg-card px-2 text-[12px] text-muted-foreground"><Icon.building size={13} />{org.name}</span>
-        </>}
-        actions={<>
-          {user.staffId && <LinkButton href="/clock" variant="primary"><Icon.clock size={14} />Clock in</LinkButton>}
-          {manage && <LinkButton href={`/clients/${id}/edit`} variant="outline">Edit</LinkButton>}
         </>}
       />
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
@@ -326,6 +301,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           editHref={`/clients/${id}/edit`}
           general={[
             { icon: "user", label: "Full name", value: fullName(person) },
+            { icon: "flag", label: "Status", value: manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge> },
             { icon: "calendar", label: "Date of birth", value: <span className="ident">{fmtDate(person.dob)}</span> },
             { icon: "id", label: "PMI #", value: <span className="ident">{person.pmi}</span> },
             { icon: "pin", label: "Address", value: address || <span className="text-hint">Not recorded</span> },
@@ -354,7 +330,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 { icon: "phone", label: "Phone number", value: c.phone ? <a href={`tel:${c.phone}`} className="ident text-primary hover:underline">{c.phone}</a> : <span className="italic text-hint">Not recorded</span> },
                 { icon: "mail", label: "Email", value: c.email ? <a href={`mailto:${c.email}`} className="text-primary hover:underline">{c.email}</a> : <span className="italic text-hint">Not recorded</span> },
               ],
-              chips: <>{c.isPrimary && <Badge tone="accent">Call first</Badge>}{c.isLegalRepresentative && <Badge tone="warn">Legal rep</Badge>}</>,
+              chips: c.isLegalRepresentative ? <Badge tone="warn">Legal representative</Badge> : null,
             })),
             careteam: activeTeam.map((t) => ({
               id: t.assignment.id,
