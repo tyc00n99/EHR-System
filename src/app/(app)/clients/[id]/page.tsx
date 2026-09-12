@@ -23,7 +23,7 @@ import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { deadlinesFromServiceStart } from "@/lib/compliance";
-import { fmtDate, fmtDateNum, fmtDateTime, fmtDayTime, fmtMoney, fullName, isoDay } from "@/lib/format";
+import { fmtDate, fmtDateNum, fmtDateTime, fmtDayTime, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { getServiceType } from "@/lib/services";
@@ -32,6 +32,8 @@ import { AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
 import { DeleteDocument, DocumentUpload } from "./documents";
 import { VisitSheet } from "../../visits/record/visit-sheet";
+
+const SEX: Record<string, string> = { female: "Female", male: "Male", nonbinary: "Non-binary", other: "Other", undisclosed: "Undisclosed" };
 
 const statusTone = { active: "ok", intake: "accent", discharged: "neutral" } as const;
 const visitTone = (s: string) => (s === "completed" ? "ok" : s === "void" ? "neutral" : "accent") as "ok" | "neutral" | "accent";
@@ -314,13 +316,16 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           personId={id}
           manage={manage}
           editHref={`/clients/${id}/edit`}
+          avatarNode={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={false} size={52} />}
           general={[
-            { icon: "user", label: "Full name", value: fullName(person) },
-            { icon: "calendar", label: "Date of birth", value: <span className="ident">{fmtDate(person.dob)}</span> },
-            { icon: "id", label: "PMI #", value: <span className="ident">{person.pmi}</span> },
-            { icon: "pin", label: "Address", value: address || <span className="text-hint">Not recorded</span> },
-            { icon: "phone", label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="ident text-primary hover:underline">{person.phone}</a> : <span className="text-hint">Not recorded</span> },
-            { icon: "catalog", label: "Waiver", value: `${person.waiverProgram} · ${person.county} County` },
+            // The reference's five rows, in its order: no phone, no email, no PMI, no waiver.
+            // Those live in the banner and in Funding sources, so nothing is lost by leaving
+            // them out of a card whose job is "who is this person".
+            { label: "Full name", value: fullName(person), avatar: true },
+            { icon: "calendar", label: "Date of birth", value: fmtLongDate(person.dob) },
+            { icon: "user", label: "Sex at birth", value: person.sexAtBirth ? SEX[person.sexAtBirth] : <span className="font-normal text-hint">Not recorded</span> },
+            { icon: "pin", label: "Address", value: address || <span className="font-normal text-hint">Not recorded</span> },
+            { icon: "building", label: "Departments", value: org.name },
           ] satisfies Field[]}
           sections={profileSections}
           blanks={{

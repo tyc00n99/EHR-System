@@ -52,6 +52,7 @@ export const personSchema = z.object({
   lastName: z.string().min(1, "Required").max(100),
   preferredName: optionalText,
   dob: isoDate,
+  sexAtBirth: z.enum(["female", "male", "nonbinary", "other", "undisclosed"]).optional(),
   pmi: z.string().regex(/^\d{8}$/, "PMI number is 8 digits"),
   waiverProgram: z.enum(WAIVERS),
   county: z.string().min(1, "Required"),

@@ -1,0 +1,1 @@
+ALTER TABLE "people" ADD COLUMN "sex_at_birth" "gender";

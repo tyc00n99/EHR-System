@@ -92,6 +92,13 @@
       "when": 1789249323663,
       "tag": "0012_client_photo",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789251381818,
+      "tag": "0013_sex_at_birth",
+      "breakpoints": true
     }
   ]
 }

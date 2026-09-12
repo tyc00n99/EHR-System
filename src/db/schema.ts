@@ -171,6 +171,8 @@ export const people = pgTable(
     lastName: text("last_name").notNull(),
     preferredName: text("preferred_name"),
     dob: date("dob").notNull(),
+    /** Sex recorded at birth. Nullable: rows created before this existed have none. */
+    sexAtBirth: gender("sex_at_birth"),
     /** PMI number (PMI #), 8 digits. Goes to the aggregator and 837P loop 2010BA/NM109. */
     pmi: text("pmi").notNull(),
     waiverProgram: waiverProgram("waiver_program").notNull(),

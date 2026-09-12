@@ -20,6 +20,16 @@ export function PersonForm({ action, defaults, cancelHref }: { action: Action; d
         <Field label="Last name" error={e.lastName} className="col-span-1 md:col-span-2"><Input name="lastName" defaultValue={d.lastName} required /></Field>
         <Field label="Preferred name" error={e.preferredName} className="col-span-2 md:col-span-2"><Input name="preferredName" defaultValue={d.preferredName ?? ""} /></Field>
         <Field label="Date of birth" error={e.dob} className="md:col-span-2"><Input name="dob" type="date" defaultValue={d.dob ?? ""} required /></Field>
+        <Field label="Sex at birth" error={e.sexAtBirth} className="md:col-span-2">
+          <Select name="sexAtBirth" defaultValue={d.sexAtBirth ?? ""}>
+            <option value="">Not recorded</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="nonbinary">Non-binary</option>
+            <option value="other">Other</option>
+            <option value="undisclosed">Undisclosed</option>
+          </Select>
+        </Field>
         <Field label="PMI #" error={e.pmi} hint="8-digit PMI number from the DHS eligibility record" className="md:col-span-2"><Input name="pmi" inputMode="numeric" pattern="[0-9]{8}" defaultValue={d.pmi} required /></Field>
         <Field label="Waiver program" error={e.waiverProgram} className="md:col-span-2">
           <Select name="waiverProgram" defaultValue={d.waiverProgram ?? "CADI"}>{WAIVERS.map((w) => <option key={w} value={w}>{w}</option>)}</Select>

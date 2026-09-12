@@ -30,7 +30,7 @@ export interface Section {
   addLabel?: string;
 }
 
-export interface Field { icon?: IconName; label: string; value: ReactNode }
+export interface Field { icon?: IconName; label: string; value: ReactNode; /** Render the person's avatar in place of the row icon, as the reference does on Full name. */ avatar?: boolean }
 export interface Entity { id: string; fields: Field[]; chips?: ReactNode; raw?: Record<string, unknown> }
 
 export interface ProfileProps {
@@ -45,9 +45,11 @@ export interface ProfileProps {
   /** Extra content under the cards, for sections that link out. */
   extras: Record<string, ReactNode>;
   editHref: string;
+  /** Drawn on whichever general row sets `avatar`. */
+  avatarNode?: ReactNode;
 }
 
-export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref }: ProfileProps) {
+export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref, avatarNode }: ProfileProps) {
   const [openKey, setOpenKey] = useState(sections[0]?.key ?? "contacts");
   const [wide, setWide] = useState(false);
   const [drawer, setDrawer] = useState<{ section: SectionKey; row: Record<string, unknown> | null } | null>(null);
@@ -59,7 +61,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
       <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
         <div className="rounded-2xl bg-card-soft p-6">
           <div className="mb-4 flex items-center">
-            <div className="text-[17px] font-semibold text-text-strong">General information</div>
+            <div className="text-[19px] font-semibold text-text-strong">General information</div>
             {manage && (
               <Link href={editHref} className="ml-auto text-muted-foreground hover:text-text-strong" aria-label="Edit general information">
                 <Icon.edit size={15} />
@@ -67,11 +69,13 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
             )}
           </div>
           {general.map((f) => (
-            <div key={f.label} className="flex gap-2.5 py-1.5">
-              {f.icon && <span className="mt-[3px] text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
+            <div key={f.label} className="flex items-center gap-3.5 py-3">
+              {f.avatar
+                ? <span className="shrink-0">{avatarNode}</span>
+                : f.icon && <span className="shrink-0 self-start pt-[2px] text-text-strong">{(() => { const I = Icon[f.icon]; return <I size={20} />; })()}</span>}
               <div className="min-w-0">
-                <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
-                <div className="min-w-0 break-words text-[15px] text-text-strong">{f.value}</div>
+                <div className="text-[15px] leading-snug text-muted-foreground">{f.label}</div>
+                <div className="min-w-0 break-words text-[15px] font-medium leading-snug text-text-strong">{f.value}</div>
               </div>
             </div>
           ))}

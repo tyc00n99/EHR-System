@@ -65,3 +65,9 @@ export function fmtDayTime(at: Date): string {
   const g = (t: string) => p.find((x) => x.type === t)?.value ?? "";
   return `${g("month")}/${g("day")} ${g("hour")}:${g("minute")}${g("dayPeriod").toLowerCase()[0]}`;
 }
+
+/** "June 5, 2017" — the long form the client profile prints, in the sans face, not the mono one. */
+export function fmtLongDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
+}
