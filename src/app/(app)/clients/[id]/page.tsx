@@ -126,7 +126,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     { key: "contacts", label: "Emergency contacts", count: profile.contacts.length, done: profile.contacts.length > 0, editable: "contacts", addLabel: "Add contact" },
     { key: "careteam", label: "Care team", count: activeTeam.length, done: activeTeam.length > 0 && activeTeam.every((t) => t.assignment.orientedOn), alert: activeTeam.some((t) => !t.assignment.orientedOn) },
     { key: "diagnoses", label: "Medical information", count: profile.diagnoses.length, done: profile.diagnoses.length > 0, editable: "diagnoses", addLabel: "Add diagnosis" },
-    { key: "casemanager", label: "Referring providers", count: person.caseManagerName ? 1 : 0, done: Boolean(person.caseManagerName) },
+    { key: "casemanager", label: "Referring Agency", count: person.caseManagerName ? 1 : 0, done: Boolean(person.caseManagerName) },
     { key: "funding", label: "Funding sources", count: profile.funding.length, done: profile.funding.length > 0, editable: "funding", addLabel: "Add funding source" },
     { key: "locations", label: "Care locations", count: profile.locations.length, done: profile.locations.length > 0, editable: "locations", addLabel: "Add care location" },
     { key: "authorizations", label: "Authorizations", count: active.length, done: active.length > 0, alert: person.status === "active" && active.length === 0 },
