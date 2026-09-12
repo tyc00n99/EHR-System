@@ -70,11 +70,11 @@ export function ChartLine({ children, className }: { children: ReactNode; classN
 
 export function ChartFacts({ items }: { items: { label: string; value: ReactNode }[] }) {
   return (
-    <dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-[12.5px]">
+    <dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-[12.5px] [overflow-wrap:anywhere]">
       {items.map((i) => (
         <div key={i.label} className="contents">
           <dt className="text-muted-foreground">{i.label}</dt>
-          <dd className="m-0 text-text-strong">{i.value ?? <span className="text-hint">—</span>}</dd>
+          <dd className="m-0 min-w-0 break-words text-text-strong">{i.value ?? <span className="text-hint">—</span>}</dd>
         </div>
       ))}
     </dl>

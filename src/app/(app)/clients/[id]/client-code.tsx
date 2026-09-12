@@ -23,7 +23,7 @@ export function ClientCodePanel({ personId, hasCode, setAt, sentAt, sentTo, phon
           <span className="text-[12.5px] leading-4 text-ok">New signing code. Give it to the person now; it is not shown again.</span>
         </div>
       ) : (
-        <p className="text-[13px] text-muted-foreground">{hasCode ? `Code set ${setAt}${sentAt ? `, texted to ${sentTo}` : phone ? ", not texted yet" : ". No mobile number on file, so read it to the client"}. The person enters it on the staff phone to sign each shift note.` : "No signing code yet. Without one the person cannot sign shift notes."}</p>
+        <p className="text-[13px] text-muted-foreground">{hasCode ? `Code set ${setAt}${sentAt ? `, texted to ${sentTo}` : phone ? ", not texted yet" : ""}. The person enters it on the staff phone to sign each shift note.` : "No signing code yet. Without one the person cannot sign shift notes."}</p>
       )}
       {msg && <p className="mt-2 text-[13px] text-danger">{msg}</p>}
       {!sentAt && (

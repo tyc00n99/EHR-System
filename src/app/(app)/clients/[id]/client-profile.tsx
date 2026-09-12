@@ -57,7 +57,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
   return (
     <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
       <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
-        <div className="rounded-2xl bg-panel p-6">
+        <div className="rounded-2xl bg-card-soft p-6">
           <div className="mb-4 flex items-center">
             <div className="text-[17px] font-semibold text-text-strong">General information</div>
             {manage && (
@@ -71,7 +71,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               {f.icon && <span className="mt-[3px] text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
               <div className="min-w-0">
                 <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
-                <div className="text-[15px] text-text-strong">{f.value}</div>
+                <div className="min-w-0 break-words text-[15px] text-text-strong">{f.value}</div>
               </div>
             </div>
           ))}
@@ -143,7 +143,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                     {f.icon && <span className="mt-[2px] shrink-0 text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
                     <div className="min-w-0">
                       <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
-                      <div className="text-[15px] text-text-strong">{f.value}</div>
+                      <div className="min-w-0 break-words text-[15px] text-text-strong">{f.value}</div>
                     </div>
                   </div>
                 ))}

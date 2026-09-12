@@ -200,6 +200,8 @@ async function main() {
     address1: "42 Elm St",
     city: "St. Paul",
     zip: "55102",
+    signatureCodeHash: await hashPassword("615042"),
+    signatureCodeSetAt: new Date(),
     status: "active",
     serviceStartDate: "2026-05-01",
   });
@@ -214,6 +216,8 @@ async function main() {
     address1: "915 Concord St S",
     city: "South St Paul",
     zip: "55075",
+    signatureCodeHash: await hashPassword("308871"),
+    signatureCodeSetAt: new Date(),
     status: "active",
     serviceStartDate: "2026-08-03",
   });

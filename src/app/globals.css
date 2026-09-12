@@ -36,6 +36,8 @@
   --page-bg: #f0efeb;
   --sidebar: #f8f7f3;
   --panel: #f0efeb;
+  /* Filled cards; every theme inherits this unless it sets its own. */
+  --card-soft: color-mix(in srgb, var(--panel) 92%, #000);
   --line: #d6d1c7;
   --line-soft: #e8e4dc;
   --hover: rgba(27, 24, 24, 0.04);
@@ -129,9 +131,11 @@
   --text-hint: #94a3b8;
 
   --page: #ffffff;
-  --page-bg: #f4f6f8;
+  --page-bg: #ffffff;
   --sidebar: #f8fafc;
   --panel: #f1f5f9;
+  /* Filled cards on a white page need a step more contrast than --panel gives. */
+  --card-soft: #eaeef3;
   --line: #e2e8f0;
   --line-soft: #eef2f6;
   --hover: rgba(15, 23, 42, 0.04);
@@ -297,6 +301,7 @@
   --color-page: var(--page);
   --color-sidebar: var(--sidebar);
   --color-panel: var(--panel);
+  --color-card-soft: var(--card-soft);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
   --color-hover: var(--hover);
