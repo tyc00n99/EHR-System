@@ -18,7 +18,6 @@ export function DocumentUpload({ personId }: { personId: string }) {
           <input type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.heic,.doc,.docx,.txt,application/pdf,image/*" className="block h-9 w-full text-[13px] file:mr-3 file:h-9 file:rounded-md file:border file:border-line file:bg-page file:px-3 file:text-[13px] file:font-medium hover:file:bg-hover" />
         </Field>
         <Field label="Effective date" error={e.effectiveOn} className="md:col-span-2"><Input name="effectiveOn" type="date" /></Field>
-        <Field label="Note for staff" error={e.note} className="col-span-2 md:col-span-5"><Textarea name="note" className="min-h-14" placeholder="What staff should know before opening this" /></Field>
         <div className="flex items-end md:col-span-1"><Button type="submit" variant="secondary" disabled={pending} className="h-9 w-full">{pending ? "Uploading…" : "Upload"}</Button></div>
       </div>
     </form>

@@ -32,10 +32,10 @@ const plexMono = localFont({ variable: "--font-plex-mono", src: [
 ] });
 
 export const metadata: Metadata = {
-  title: { default: "245D EHR", template: "%s · 245D EHR" },
+  title: { default: "Sonder Homecare", template: "%s · Sonder Homecare" },
   description: "Electronic health record for Minnesota 245D-licensed providers",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "245D EHR" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Sonder Homecare" },
 };
 
 export const viewport: Viewport = {

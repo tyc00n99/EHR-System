@@ -13,7 +13,7 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">D</span>
-          <span className="text-lg font-semibold tracking-tight text-text-strong">245D EHR</span>
+          <span className="text-lg font-semibold tracking-tight text-text-strong">Sonder Homecare</span>
         </div>
         <div className="rounded-xl border border-line bg-card p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <h2>Log in</h2>

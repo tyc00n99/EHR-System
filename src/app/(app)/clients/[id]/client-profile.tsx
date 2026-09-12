@@ -50,10 +50,14 @@ export interface ProfileProps {
   avatarNode?: ReactNode;
   /** The availability section edits the whole week at once, not one row at a time. */
   schedule: Schedule;
+  /** Section to open on arrival, so a link can point at one. */
+  initialSection?: string;
 }
 
-export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref, avatarNode, schedule }: ProfileProps) {
-  const [openKey, setOpenKey] = useState(sections[0]?.key ?? "contacts");
+export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref, avatarNode, schedule, initialSection }: ProfileProps) {
+  const [openKey, setOpenKey] = useState(
+    initialSection && sections.some((s) => s.key === initialSection) ? initialSection : sections[0]?.key ?? "contacts",
+  );
   const [wide, setWide] = useState(false);
   const [drawer, setDrawer] = useState<{ section: SectionKey; row: Record<string, unknown> | null } | null>(null);
   const [editingWeek, setEditingWeek] = useState(false);

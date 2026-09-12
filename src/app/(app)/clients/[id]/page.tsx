@@ -183,7 +183,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 { label: "Emergency", value: profile.contacts[0] ? <>{profile.contacts[0].name}{profile.contacts[0].phone && <div className="ident text-muted-foreground">{profile.contacts[0].phone}</div>}</> : <Link href={`/clients/${id}?tab=profile`} className="text-hint hover:underline">None on file</Link> },
               ]} />
             </ChartSection>
-            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile`} className="text-primary hover:underline">All →</Link>}>
+            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="text-primary hover:underline">All →</Link>}>
               {activeTeam.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
                 <ChartLine key={t.assignment.id}>
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
@@ -317,6 +317,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           personId={id}
           manage={manage}
           editHref={`/clients/${id}/edit`}
+          initialSection={typeof sp.section === "string" ? sp.section : undefined}
           schedule={{
             startDate: profile.availability[0]?.startDate ?? isoDay(0),
             endDate: profile.availability[0]?.endDate ?? "",

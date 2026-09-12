@@ -4,7 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
 import type { ActionState } from "@/lib/validation";
-import { createMedication, setMedicationActive } from "../goal-actions";
+import { createMedication, deleteMedication, setMedicationActive } from "../goal-actions";
 import { recordMedAdmin } from "../../visits/record-actions";
 
 export interface MedView { id: string; name: string; dose: string; route: string; frequency: string; times: string[]; instructions: string | null; prescriber: string | null; startDate: string; endDate: string | null; active: boolean }
@@ -74,7 +74,17 @@ export function Medical({ personId, meds, admins, month, monthLabel, prevHref, n
       )}
 
       {meds.some((m) => !m.active) && (
-        <details className="rounded-lg border border-line bg-card"><summary className="cursor-pointer px-4 py-2.5 text-[13px] text-muted-foreground">Discontinued medications ({meds.filter((m) => !m.active).length})</summary><ul className="divide-y divide-line-soft border-t border-line-soft">{meds.filter((m) => !m.active).map((m) => <li key={m.id} className="flex items-center justify-between px-4 py-2 text-[13px]"><span>{m.name} {m.dose} · {m.frequency}</span><span className="text-muted-foreground">ended {m.endDate}</span>{manage && <button disabled={pending} onClick={() => start(() => setMedicationActive(m.id, personId, true))} className="text-primary hover:underline">Reactivate</button>}</li>)}</ul></details>
+        <details className="rounded-lg border border-line bg-card"><summary className="cursor-pointer px-4 py-2.5 text-[13px] text-muted-foreground">Discontinued medications ({meds.filter((m) => !m.active).length})</summary><ul className="divide-y divide-line-soft border-t border-line-soft">{meds.filter((m) => !m.active).map((m) => <li key={m.id} className="flex items-center justify-between px-4 py-2 text-[13px]"><span>{m.name} {m.dose} · {m.frequency}</span><span className="text-muted-foreground">ended {m.endDate}</span>{manage && <span className="flex items-center gap-3">
+  <button disabled={pending} onClick={() => start(() => setMedicationActive(m.id, personId, true))} className="text-primary hover:underline">Reactivate</button>
+  <button
+    disabled={pending}
+    onClick={() => {
+      if (!confirm(`Delete ${m.name} from this record? This is for a medication added by mistake — it cannot be undone.`)) return;
+      start(async () => { const r = await deleteMedication(m.id, personId); if (!r.ok && r.error) alert(r.error); });
+    }}
+    className="text-danger hover:underline"
+  >Delete</button>
+</span>}</li>)}</ul></details>
       )}
       {manage && active.length > 0 && <div className="flex flex-wrap gap-2 text-[12.5px]">{active.map((m) => <button key={m.id} disabled={pending} onClick={() => { if (confirm(`Discontinue ${m.name}?`)) start(() => setMedicationActive(m.id, personId, false)); }} className="rounded-md border border-line bg-page px-2.5 py-1 text-muted-foreground hover:text-danger">Discontinue {m.name}</button>)}</div>}
       {manage && <NewMedication personId={personId} />}

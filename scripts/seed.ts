@@ -32,7 +32,7 @@ async function main() {
   const w = audited(db, { userId: null });
 
   const org = await w.insert(organizations, {
-    name: "245D EHR",
+    name: "Sonder Homecare",
     taxId: "41-0000000",
     umpi: "A000000000",
     licenseNumber: "1234567",

@@ -1,5 +1,6 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
@@ -60,4 +61,33 @@ export async function setMedicationActive(id: string, personId: string, active: 
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.medications, id, { active, ...(active ? {} : { endDate: new Date().toISOString().slice(0, 10) }) });
   revalidatePath(`/clients/${personId}`);
+}
+
+/**
+ * Deletes a medication outright, for the case it was added by mistake.
+ *
+ * Refuses once doses have been recorded against it: those administrations are the MAR, and a
+ * medication someone actually gave is history, not a typo. Discontinuing is the right move there,
+ * which is why that stays.
+ */
+export async function deleteMedication(id: string, personId: string): Promise<{ ok: boolean; error?: string }> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  const [med] = await db.select({ id: schema.medications.id, name: schema.medications.name })
+    .from(schema.medications)
+    .where(and(eq(schema.medications.id, id), eq(schema.medications.personId, personId)))
+    .limit(1);
+  if (!med) return { ok: false, error: "That medication is no longer on this record." };
+
+  const given = await db.select({ id: schema.medicationAdministrations.id })
+    .from(schema.medicationAdministrations)
+    .where(eq(schema.medicationAdministrations.medicationId, id))
+    .limit(1);
+  if (given.length > 0) {
+    return { ok: false, error: `${med.name} has doses recorded against it, so it cannot be deleted. Discontinue it instead — the MAR has to keep what was given.` };
+  }
+
+  await audited(db, { userId: user.id }).delete(schema.medications, id);
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true };
 }
