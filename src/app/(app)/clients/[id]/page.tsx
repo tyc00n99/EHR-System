@@ -344,7 +344,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             funding: "No funding source recorded. Add the payer behind these authorizations so claims know where to go.",
             locations: "No care location recorded, so notes fall back to the address on the record.",
             authorizations: "No active authorization. Notes cannot be recorded or billed.",
-            availability: "No availability recorded. Scheduling has no idea when this person is free.",
+            availability: profile.availability.length ? "" : "No availability recorded. Scheduling has no idea when this person is free.",
             history: history.length ? "" : "Nothing has been recorded against this profile yet.",
           }}
           entities={{
@@ -413,20 +413,41 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 { icon: "calendar", label: "Dates · rate", value: <><span className="ident">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[11.5px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
               ],
             })),
-            availability: profile.availability.map((a) => ({
-              id: a.id,
-              raw: { id: a.id, weekday: a.weekday, startTime: a.startTime, endTime: a.endTime, notes: a.notes },
-              fields: [
-                { icon: "calendar", label: "Day", value: dayName[a.weekday] },
-                { icon: "clock", label: "Window", value: <span className="ident">{hhmm(a.startTime)} – {hhmm(a.endTime)}</span> },
-                { icon: "doc", label: "Notes", value: a.notes ?? <span className="italic text-hint">None</span> },
-              ],
-            })),
+            availability: [],
           } satisfies Record<string, Entity[]>}
           extras={{
             careteam: manage ? <Link href={`/staff`} className="text-[12.5px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
             diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[12.5px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
             authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[12.5px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
+            availability: profile.availability.length > 0 ? (
+              <div>
+                <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px]">
+                  <Icon.calendar size={17} className="text-muted-foreground" />
+                  <span className="text-muted-foreground">From</span>
+                  <span className="ident font-medium text-text-strong">{fmtDate(profile.availability[0].startDate)}</span>
+                  <span className="text-muted-foreground">to</span>
+                  <span className="ident font-medium text-text-strong">{profile.availability[0].endDate ? fmtDate(profile.availability[0].endDate) : "open"}</span>
+                  <span className="ml-2 text-muted-foreground">Last updated</span>
+                  <span className="ident text-muted-foreground">{fmtDate(profile.availability[0].updatedAt)}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+                  {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+                    const windows = profile.availability.filter((a) => a.weekday === d);
+                    return (
+                      <div key={d} className={cx("rounded-lg border px-3 py-2.5 text-center", windows.length ? "border-line bg-card" : "border-line-soft bg-panel")}>
+                        <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-text-strong">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]}</div>
+                        <div className="mt-2 border-t border-line-soft pt-2 text-[13px]">
+                          {windows.length === 0
+                            ? <span className="text-hint">Unavailable</span>
+                            : windows.map((w) => <div key={w.id} className="ident text-text-strong">{hhmm(w.startTime)} – {hhmm(w.endTime)}</div>)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-[13px] text-muted-foreground">Times shown in Central Time — Minnesota.</p>
+              </div>
+            ) : null,
             history: history.length > 0 ? (
               <div>
                 <div className="overflow-x-auto rounded-[10px] border border-line">

@@ -21,21 +21,19 @@ export interface Schedule { startDate: string; endDate: string; timeZone: string
 const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const FULL = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/** The zones a Minnesota provider plausibly needs, named the way a scheduler says them. */
-const ZONES: [string, string][] = [
-  ["America/Chicago", "Central Time — Chicago, Houston, San Antonio, Dallas"],
-  ["America/New_York", "Eastern Time — New York, Detroit, Atlanta"],
-  ["America/Denver", "Mountain Time — Denver, Salt Lake City"],
-  ["America/Phoenix", "Arizona — Phoenix"],
-  ["America/Los_Angeles", "Pacific Time — Los Angeles, Seattle"],
-];
+/**
+ * A 245D licence is a Minnesota licence, so every client is served on Central time. It is shown
+ * rather than chosen: a dropdown with one option is a decision nobody gets to make.
+ */
+const ZONE = "America/Chicago";
+const ZONE_LABEL = "Central Time — Minnesota";
 
 const DEFAULT_WINDOW: Window = { start: "09:00", end: "17:00" };
 
 export function AvailabilityEditor({ personId, initial, onDone }: { personId: string; initial: Schedule; onDone: () => void }) {
   const [startDate, setStartDate] = useState(initial.startDate);
   const [endDate, setEndDate] = useState(initial.endDate);
-  const [timeZone, setTimeZone] = useState(initial.timeZone);
+  const timeZone = ZONE;
   const [days, setDays] = useState<Window[][]>(initial.days);
   const [copyFrom, setCopyFrom] = useState<number | null>(null);
 
@@ -86,12 +84,10 @@ export function AvailabilityEditor({ personId, initial, onDone }: { personId: st
               </label>
             </div>
 
-            <label className="mt-4 block">
-              <span className="mb-1.5 block text-[14px] font-medium text-text-strong">Time zone <span className="text-danger">*</span></span>
-              <select value={timeZone} onChange={(e) => setTimeZone(e.target.value)} className="h-10 w-full rounded-lg border border-line bg-card px-3 text-[14px] text-text">
-                {ZONES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-            </label>
+            <div className="mt-4">
+              <span className="mb-1.5 block text-[14px] font-medium text-text-strong">Time zone</span>
+              <div className="flex h-10 items-center rounded-lg border border-line bg-panel px-3 text-[14px] text-muted-foreground">{ZONE_LABEL}</div>
+            </div>
 
             <div className="mt-6">
               {days.map((windows, i) => {
