@@ -87,7 +87,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const org = await getOrganization();
   // The query string busts the browser cache when the photo is replaced.
   const photoSrc = person.photoPath ? `/clients/${id}/photo?v=${person.photoUpdatedAt?.getTime() ?? 0}` : null;
-  const history = tab === "profile" ? await listProfileHistory(id) : [];
+  const history = tab === "profile" ? await listProfileHistory(id, 500) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
   const shiftMonth = (d: number) => { const x = new Date(Date.UTC(my, mm - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
@@ -140,7 +140,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     { key: "lifeplan", label: "Programming", count: goals.filter((g) => g.goal.status === "active").length },
     { key: "notes", label: "Sessions", count: noteCount },
     { key: "files", label: "Documents", count: documents.length },
-    { key: "medical", label: "Reports", count: meds.filter((m) => m.active).length || undefined },
+    { key: "medical", label: "Medication", count: person.medicationSupport ? meds.filter((m) => m.active).length || undefined : undefined },
     { key: "profile", label: "Profile", count: profileOutstanding || undefined },
   ];
 
@@ -307,9 +307,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
       {tab === "medical" && (
         <><div className="mb-3"><MedicationSupportToggle personId={id} on={person.medicationSupport} manage={manage} /></div>
-        <Medical personId={id} month={month} monthLabel={monthLabel} prevHref={`/clients/${id}?tab=medical&month=${shiftMonth(-1)}`} nextHref={`/clients/${id}?tab=medical&month=${shiftMonth(1)}`} manage={manage} canRecord={Boolean(user.staffId) || manage} today={new Date().toISOString().slice(0, 10)}
+        {person.medicationSupport && <Medical personId={id} month={month} monthLabel={monthLabel} prevHref={`/clients/${id}?tab=medical&month=${shiftMonth(-1)}`} nextHref={`/clients/${id}?tab=medical&month=${shiftMonth(1)}`} manage={manage} canRecord={Boolean(user.staffId) || manage} today={new Date().toISOString().slice(0, 10)}
           meds={meds.map((m) => ({ id: m.id, name: m.name, dose: m.dose, route: m.route, frequency: m.frequency, times: m.times, instructions: m.instructions, prescriber: m.prescriber, startDate: m.startDate, endDate: m.endDate, active: m.active }))}
-          admins={admins.map((a) => ({ medicationId: a.medicationId, date: a.scheduledDate, time: a.scheduledTime, status: a.status, note: a.note }))} /></>
+          admins={admins.map((a) => ({ medicationId: a.medicationId, date: a.scheduledDate, time: a.scheduledTime, status: a.status, note: a.note }))} />}</>
       )}
 
       {tab === "profile" && (
