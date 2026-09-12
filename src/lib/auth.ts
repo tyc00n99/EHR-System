@@ -11,6 +11,20 @@ import { verifyPassword } from "./password";
 export const SESSION_COOKIE = "ehr_session";
 const SESSION_HOURS = 24 * 30; // 30 days; sessions are revocable server-side (users.active, sessions table)
 
+/**
+ * Whether this deployment asks for a password.
+ *
+ * Off by default so the hosted link opens straight into the app. Everyone then arrives as the
+ * first admin, which means every record — PMI numbers, dates of birth, addresses, medications —
+ * is readable by anyone holding the URL. That is fine for the sample data in the seed, and it is a
+ * reportable breach the day a real client is entered, so set REQUIRE_LOGIN=1 in Vercel before
+ * anyone real goes in. Signing in still works either way: /login stays reachable, which is how you
+ * look at the app as a supervisor or a caregiver.
+ */
+export function loginRequired(): boolean {
+  return process.env.REQUIRE_LOGIN === "1";
+}
+
 export type Role = (typeof schema.userRole.enumValues)[number];
 
 export interface CurrentUser {
@@ -21,7 +35,8 @@ export interface CurrentUser {
   staffName: string | null;
 }
 
-export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+/** The user a real session cookie names, with no open-access fallback. */
+export const getSessionUser = cache(async (): Promise<CurrentUser | null> => {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -49,6 +64,27 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     staffId: r.staffId,
     staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null,
   };
+});
+
+/** The account an open-access visitor arrives as: the first active admin on the org. */
+const firstAdmin = cache(async (): Promise<CurrentUser | null> => {
+  const db = await getDb();
+  const rows = await db
+    .select({ id: schema.users.id, email: schema.users.email, role: schema.users.role, staffId: schema.users.staffId, firstName: schema.staff.firstName, lastName: schema.staff.lastName })
+    .from(schema.users)
+    .leftJoin(schema.staff, eq(schema.users.staffId, schema.staff.id))
+    .where(and(eq(schema.users.role, "admin"), eq(schema.users.active, true)))
+    .limit(1);
+  const r = rows[0];
+  if (!r) return null;
+  return { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null };
+});
+
+/** Who this request counts as. Falls back to the admin when the login is turned off. */
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  const signedIn = await getSessionUser();
+  if (signedIn) return signedIn;
+  return loginRequired() ? null : await firstAdmin();
 });
 
 /** Redirects to /login when signed out, or to / when the role is not allowed. */

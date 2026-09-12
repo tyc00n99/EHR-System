@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Log in" };
 
 export default async function LoginPage() {
-  if (await getCurrentUser()) redirect("/");
+  // Only a real session skips the form. With the login turned off you can still come here on
+  // purpose and sign in as a supervisor or a caregiver to see the app the way they do.
+  if (await getSessionUser()) redirect("/");
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar px-4">
       <div className="w-full max-w-sm">

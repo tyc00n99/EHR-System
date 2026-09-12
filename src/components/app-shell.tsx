@@ -13,7 +13,7 @@ import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeMenuItems } from "@/components/theme-switcher";
 import { gearGroups, type NavCounts } from "@/lib/nav";
-import { signOut, type CurrentUser } from "@/lib/auth";
+import { loginRequired, signOut, type CurrentUser } from "@/lib/auth";
 
 async function logout() {
   "use server";
@@ -54,6 +54,12 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          {/* An open deployment must never be mistaken for a locked one. */}
+          {!loginRequired() && (
+            <span title="This link opens without a password, so anyone who has it can read every record. Set REQUIRE_LOGIN=1 to turn the login back on." className="hidden h-8 items-center rounded-md border border-warn/40 bg-warn-soft px-2.5 text-[12px] font-medium text-warn lg:flex">
+              No password
+            </span>
+          )}
           {gear.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="outline" size="sm" aria-label="Agency setup and reports" className="hidden h-8 gap-1 rounded-md sm:inline-flex" />}><Settings className="size-4" /><ChevronDown className="size-3.5 text-gray-400" /></DropdownMenuTrigger>
@@ -83,7 +89,9 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
               <DropdownMenuItem render={<Link href="/services" />}><FileText className="size-4" /> 245D service types</DropdownMenuItem>
               <ThemeMenuItems />
               <DropdownMenuSeparator />
-              <form action={logout}><DropdownMenuItem render={<button type="submit" className="w-full" />}><LogOut className="size-4" /> Log out</DropdownMenuItem></form>
+              {loginRequired()
+                ? <form action={logout}><DropdownMenuItem render={<button type="submit" className="w-full" />}><LogOut className="size-4" /> Log out</DropdownMenuItem></form>
+                : <DropdownMenuItem render={<Link href="/login" />}><LogOut className="size-4" /> Sign in as someone else</DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
