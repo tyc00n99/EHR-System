@@ -40,7 +40,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
 
   return (
     <aside aria-label={label} className="hidden w-[248px] shrink-0 border-r border-line bg-sidebar md:block">
-      <div className="sticky top-14 flex h-[calc(100vh-3.5rem)] flex-col">
+      <div className="flex h-full flex-col">
         <div className="flex h-11 shrink-0 items-center gap-2 px-3">
           <Icon.clients size={15} className="shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-strong">{label}</span>

@@ -26,7 +26,7 @@ const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" 
 export function AppShell({ user, orgName, counts, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
   const gear = gearGroups(user.role);
   return (
-    <div className="flex min-h-screen bg-page-bg">
+    <div className="flex h-screen overflow-hidden bg-page-bg">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 
       <SideRail
@@ -75,14 +75,14 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
         </>}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/* No top bar: the reference puts everything in the rail, so the record starts at the very
           top of the page. ⌘K still works — the palette stays mounted, just not drawn. */}
       <div className="sr-only"><CommandPalette entries={palette} role={user.role} /></div>
 
       <Suspense fallback={null}><SectionNav role={user.role} counts={counts} /></Suspense>
 
-      <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-5 md:px-8 md:py-6">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 md:px-8 md:py-6">{children}</main>
       <MobileNav role={user.role} review={counts.review} />
       </div>
       <Suspense fallback={null}><NotePreview /></Suspense>

@@ -144,7 +144,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   ];
 
   return (
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
       {openVisit && <VisitSheet id={openVisit} />}
       {newCode && (newCode === "texted" ? (
         <Notice tone="ok">Signing code texted to {person.firstName}. Staff never see it.</Notice>

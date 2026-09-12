@@ -24,9 +24,9 @@ export default async function ClientsLayout({ children }: { children: ReactNode 
     photo: p.photoPath ? `/clients/${p.id}/photo?v=${p.photoUpdatedAt?.getTime() ?? 0}` : null,
   }));
   return (
-    <div className="-mx-4 -my-5 flex md:-mx-8 md:-my-6">
+    <div className="-mx-4 -my-5 flex min-h-0 flex-1 md:-mx-8 md:-my-6">
       <ClientRail people={rail} label={user.role === "dsp" ? "My clients" : "Clients"} canAdd={can(user, "manage_people")} />
-      <div className="min-w-0 flex-1 px-4 py-5 md:px-8 md:py-6">{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-5 md:px-8 md:py-6">{children}</div>
     </div>
   );
 }
