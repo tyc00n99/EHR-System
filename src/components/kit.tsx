@@ -278,7 +278,7 @@ export function RecordHeader({ avatar, title, subtitle, chips, actions, crumbs }
 
 export function Tabs({ tabs, current, base }: { tabs: { key: string; label: string; count?: number }[]; current: string; base: string }) {
   return (
-    <div className="-mx-4 mb-5 flex items-center gap-1.5 overflow-x-auto bg-page px-4 py-2 md:-mx-8 md:px-8">
+    <div className="-mx-4 mb-5 flex shrink-0 items-center gap-1.5 overflow-x-auto bg-page px-4 py-2 md:-mx-8 md:px-8">
       {tabs.map((t) => (
         <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[16px] font-medium transition-colors", current === t.key ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text")}>
           {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[11px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}

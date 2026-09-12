@@ -23,7 +23,7 @@ export function ServiceDot({ code, className }: { code: string; className?: stri
 /** The banner every screen of a person's record sits under. */
 export function PatientBanner({ name, avatar, facts, chips, actions }: { name: string; avatar: ReactNode; facts: ReactNode; chips?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="mb-1 rounded-xl border border-line bg-card px-4 py-2.5">
+    <div className="mb-1 shrink-0 rounded-xl border border-line bg-card px-4 py-2.5">
       {/* Name, since-date and the status pills read as one line in the reference, with the owning
           organisation pushed hard right. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
