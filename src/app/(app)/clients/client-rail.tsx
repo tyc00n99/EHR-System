@@ -22,6 +22,9 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
   const pathname = usePathname();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(true);
+  // The status filters used to sit in a row above the page. They belong with the list they filter.
+  const [filtering, setFiltering] = useState(false);
+  const [status, setStatus] = useState<"all" | RailPerson["status"]>("all");
   const openId = pathname.startsWith("/clients/") ? pathname.split("/")[2] : null;
 
   useEffect(() => {
@@ -35,8 +38,12 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
 
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return t ? people.filter((p) => p.name.toLowerCase().includes(t) || p.pmi.includes(t)) : people;
-  }, [people, q]);
+    return people.filter((p) => {
+      if (status !== "all" && p.status !== status) return false;
+      return !t || p.name.toLowerCase().includes(t) || p.pmi.includes(t);
+    });
+  }, [people, q, status]);
+  const countOf = (s: RailPerson["status"]) => people.filter((p) => p.status === s).length;
 
   if (!open) {
     return (
@@ -71,16 +78,44 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
           </button>
         </div>
 
-        <div className="mx-3 mb-2 flex h-8 shrink-0 items-center gap-2 rounded-md border border-line bg-card px-2.5">
-          <Icon.search size={14} className="shrink-0 text-hint" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search"
-            aria-label={`Search ${label.toLowerCase()}`}
-            className="min-w-0 flex-1 bg-transparent text-[12.5px] text-text outline-none placeholder:text-hint"
-          />
+        <div className="mx-3 mb-2 flex shrink-0 items-center gap-1.5">
+          <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-line bg-card px-2.5">
+            <Icon.search size={14} className="shrink-0 text-hint" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search"
+              aria-label={`Search ${label.toLowerCase()}`}
+              className="min-w-0 flex-1 bg-transparent text-[12.5px] text-text outline-none placeholder:text-hint"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setFiltering((v) => !v)}
+            aria-pressed={filtering}
+            aria-label="Filter by status"
+            className={cx("flex size-8 shrink-0 items-center justify-center rounded-md border transition-colors",
+              status !== "all" || filtering ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-muted-foreground hover:bg-hover")}
+          >
+            <Icon.filter size={14} />
+          </button>
         </div>
+        {filtering && (
+          <div className="mx-3 mb-2 flex shrink-0 flex-wrap gap-1">
+            {([["all", "All"], ["active", "Active"], ["intake", "Intake"], ["discharged", "Discharged"]] as const).map(([k, l]) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setStatus(k)}
+                aria-pressed={status === k}
+                className={cx("rounded-full border px-2 py-0.5 text-[11px] transition-colors",
+                  status === k ? "border-primary bg-primary-soft font-medium text-primary" : "border-line bg-card text-muted-foreground hover:bg-hover")}
+              >
+                {l} {k === "all" ? people.length : countOf(k)}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
           {shown.length === 0 ? (

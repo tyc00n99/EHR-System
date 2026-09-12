@@ -1,29 +1,29 @@
-import { Card, PageHeader } from "@/components/kit";
-import { getDb, schema } from "@/db";
 import { listAssignmentsForStaff, listPeople } from "@/db/queries";
-import { can, requireUser } from "@/lib/auth";
-import { fmtDate, fullName } from "@/lib/format";
-import { ClientsTable, type ClientRow } from "./clients-table";
+import { requireUser } from "@/lib/auth";
 
 export const metadata = { title: "Clients" };
 
-export default async function ClientsPage({ searchParams }: PageProps<"/clients">) {
+/**
+ * The Clients module has no list page of its own: the caseload lives in the panel beside the rail,
+ * so repeating it here would be the same names twice on one screen. What is left is a greeting and
+ * the one number worth knowing before you pick somebody.
+ */
+export default async function ClientsPage() {
   const user = await requireUser();
-  const sp = await searchParams;
-  const status = typeof sp.status === "string" && ["active", "intake", "discharged"].includes(sp.status) ? (sp.status as ClientRow["status"]) : null;
-  const manage = can(user, "manage_people");
   const people = user.role === "dsp"
     ? (user.staffId ? (await listAssignmentsForStaff(user.staffId)).filter((a) => a.assignment.active).map((a) => a.person) : [])
     : await listPeople();
-  const db = await getDb();
-  const teams = await db.select({ personId: schema.assignments.personId, first: schema.staff.firstName, last: schema.staff.lastName, active: schema.assignments.active }).from(schema.assignments).innerJoin(schema.staff, (await import("drizzle-orm")).eq(schema.assignments.staffId, schema.staff.id));
-  const teamFor = (id: string) => teams.filter((t) => t.personId === id && t.active).map((t) => `${t.first} ${t.last[0]}.`).join(", ");
-  const allRows: ClientRow[] = people.map((p) => ({ id: p.id, name: fullName(p), pmi: p.pmi, waiver: p.waiverProgram, county: p.county, caseManager: p.caseManagerName, serviceStart: fmtDate(p.serviceStartDate), status: p.status, hasCode: Boolean(p.signatureCodeHash), team: teamFor(p.id) }));
-  const rows = status ? allRows.filter((r) => r.status === status) : allRows;
+  const active = people.filter((p) => p.status === "active").length;
+  const firstName = user.staffName?.split(" ")[0] ?? user.email.split("@")[0];
+
   return (
-    <div>
-      <PageHeader title={user.role === "dsp" ? "My clients" : "Clients"} meta={<span>{status ? `${rows.length} ${status}` : `${allRows.length} people served · ${allRows.filter((r) => r.status === "active").length} active`}</span>} />
-      <Card><ClientsTable rows={rows} manage={manage} showChips={user.role === "dsp"} /></Card>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+      <p className="text-[28px] font-medium tracking-tight text-primary">Welcome, {firstName}</p>
+      <p className="mt-3 max-w-sm text-[13.5px] text-muted-foreground">
+        {people.length === 0
+          ? "No clients yet. Add the first one from the list on the left."
+          : <>{people.length} {people.length === 1 ? "person" : "people"} served · {active} active. Pick someone from the list to open their record.</>}
+      </p>
     </div>
   );
 }

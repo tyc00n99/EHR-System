@@ -14,7 +14,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // Every number in the top bar and the section row comes from the list the bell already builds,
   // so the two can never disagree and nothing extra is queried to draw the nav.
   const of = (kind: string) => items.filter((i) => i.kind === kind).length;
-  const status = (s: string) => people.filter((p) => p.status === s).length;
   const counts: NavCounts = office
     ? {
         review: items.length,
@@ -24,10 +23,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         missed: of("missed_shift"),
         compliance: of("compliance"),
         authorizations: of("authorization"),
-        clientsAll: people.length,
-        clientsActive: status("active"),
-        clientsIntake: status("intake"),
-        clientsDischarged: status("discharged"),
       }
     : NO_COUNTS;
 

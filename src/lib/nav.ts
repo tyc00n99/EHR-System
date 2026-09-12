@@ -20,15 +20,10 @@ export interface NavCounts {
   missed: number;
   compliance: number;
   authorizations: number;
-  clientsAll: number;
-  clientsActive: number;
-  clientsIntake: number;
-  clientsDischarged: number;
 }
 
 export const NO_COUNTS: NavCounts = {
-  review: 0, unsigned: 0, returned: 0, manual: 0, missed: 0, compliance: 0,
-  authorizations: 0, clientsAll: 0, clientsActive: 0, clientsIntake: 0, clientsDischarged: 0,
+  review: 0, unsigned: 0, returned: 0, manual: 0, missed: 0, compliance: 0, authorizations: 0,
 };
 
 export interface Destination {
@@ -69,6 +64,7 @@ export function gearGroups(role: Role): GearGroup[] {
   const runItems: GearGroup["items"] = [
     ...(role === "admin" ? [{ href: "/owner", label: "Agency performance", icon: "trend" as IconName }] : []),
     { href: "/staff", label: "Staff", icon: "staff" },
+    { href: "/agreements", label: "Authorizations", icon: "doc" },
     { href: "/compliance", label: "Compliance", icon: "audit" },
     { href: "/reports", label: "Reports", icon: "chart" },
   ];
@@ -99,16 +95,6 @@ const param = (key: string, value: string) => (_path: string, p: URLSearchParams
  */
 export function sectionRow(pathname: string, role: Role, c: NavCounts): SectionEntry[] | null {
   if (role === "dsp") return null;
-
-  if (pathname === "/clients" || pathname.startsWith("/agreements")) {
-    return [
-      { href: "/clients", label: "All clients", count: c.clientsAll, match: (p, q) => p === "/clients" && !q.get("status") },
-      { href: "/clients?status=active", label: "Active", count: c.clientsActive, match: (p, q) => p === "/clients" && q.get("status") === "active" },
-      { href: "/clients?status=intake", label: "Intake", count: c.clientsIntake, match: (p, q) => p === "/clients" && q.get("status") === "intake" },
-      { href: "/clients?status=discharged", label: "Discharged", count: c.clientsDischarged, match: (p, q) => p === "/clients" && q.get("status") === "discharged" },
-      { href: "/agreements", label: "Authorizations", count: c.authorizations || undefined, hot: c.authorizations > 0, match: (p) => p.startsWith("/agreements") },
-    ];
-  }
 
   if (pathname === "/visits" || pathname === "/notes") {
     return [

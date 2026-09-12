@@ -49,13 +49,14 @@ export interface ProfileProps {
 
 export function ClientProfile({ personId, manage, general, sections, entities, blanks, extras, editHref }: ProfileProps) {
   const [openKey, setOpenKey] = useState(sections[0]?.key ?? "contacts");
+  const [wide, setWide] = useState(false);
   const [drawer, setDrawer] = useState<{ section: SectionKey; row: Record<string, unknown> | null } | null>(null);
   const current = sections.find((s) => s.key === openKey) ?? sections[0];
   const rows = entities[openKey] ?? [];
 
   return (
-    <div className="grid gap-0 border-t border-line lg:grid-cols-[290px_minmax(0,1fr)]">
-      <div className="border-line py-4 lg:border-r lg:pr-4">
+    <div className={cx("relative grid gap-0 border-t border-line", wide ? "lg:grid-cols-1" : "lg:grid-cols-[290px_minmax(0,1fr)]")}>
+      <div className={cx("border-line py-4 lg:border-r lg:pr-4", wide && "hidden")}>
         <div className="rounded-[10px] border border-line bg-sidebar p-3.5">
           <div className="mb-2.5 flex items-center">
             <div className="text-[13px] font-medium text-text-strong">General information</div>
@@ -104,7 +105,18 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         </nav>
       </div>
 
-      <div className="min-w-0 py-4 lg:pl-5">
+      {/* Sits on the divider, like the chevron in the reference. */}
+      <button
+        type="button"
+        onClick={() => setWide((v) => !v)}
+        aria-label={wide ? "Show general information" : "Hide general information"}
+        aria-expanded={!wide}
+        className={cx("absolute top-5 z-10 hidden size-5 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm hover:text-text-strong lg:flex", wide ? "left-0 -translate-x-1/2" : "left-[290px] -translate-x-1/2")}
+      >
+        <Icon.chevronRight size={12} className={wide ? "" : "rotate-180"} />
+      </button>
+
+      <div className={cx("min-w-0 py-4", wide ? "lg:pl-4" : "lg:pl-5")}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="text-[15px] font-medium text-text-strong">{current?.label}</div>
           <div className="ml-auto flex items-center gap-2">
@@ -112,7 +124,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               <button
                 type="button"
                 onClick={() => setDrawer({ section: current.editable!, row: null })}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-[12.5px] font-medium text-primary-foreground hover:bg-primary-hover"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-card px-3 text-[12.5px] font-medium text-text-strong hover:bg-hover"
               >
                 <Icon.plus size={14} />{current.addLabel ?? "Add"}
               </button>
@@ -125,7 +137,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         ) : (
           rows.map((e) => (
             <article key={e.id} className="mb-2.5 flex items-start gap-4 rounded-[10px] border border-line px-4 py-3.5 last:mb-0">
-              <div className="grid min-w-0 flex-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid min-w-0 flex-1 gap-3">
                 {e.fields.map((f, i) => (
                   <div key={i} className="flex min-w-0 gap-2.5">
                     {f.icon && <span className="mt-[3px] shrink-0 text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={14} />; })()}</span>}
