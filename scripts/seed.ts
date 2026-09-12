@@ -218,6 +218,44 @@ async function main() {
     serviceStartDate: "2026-08-03",
   });
 
+  // The administrative record behind each person: what the Profile tab is a checklist of. Casey is
+  // deliberately complete, Taylor deliberately is not, so the ticks and the blanks both show.
+  const { clientContacts, clientFundingSources, clientLocations, clientAvailability, clientDiagnoses } = schema;
+  const contact = (personId: string, name: string, relationship: string, phone: string, email: string | null, isPrimary = true, isLegalRepresentative = false) =>
+    w.insert(clientContacts, { personId, name, relationship, phone, email, isPrimary, isLegalRepresentative });
+  await contact(jordan.id, "Marcus Abelard", "Father", "(612) 555-0163", "marcus.abelard@example.com", true, true);
+  await contact(jordan.id, "Renata Abelard", "Sister", "(612) 555-0188", null, false);
+  await contact(riley.id, "Karin Bergstrom", "Mother", "(651) 555-0124", "karin.b@example.com");
+  await contact(casey.id, "Lorna Dahl", "Sister", "(651) 555-0148", null);
+  await contact(casey.id, "Ade Fashola", "Neighbour", "(651) 555-0177", null, false);
+
+  const funding = (personId: string, payer: string, waiver: "CADI" | "BI" | "DD" | "EW" | "CFSS" | "CAC", memberId: string, startDate: string) =>
+    w.insert(clientFundingSources, { personId, payer, waiver, memberId, priority: "primary", startDate });
+  await funding(jordan.id, "Minnesota Health Care Programs (MA)", "CADI", "12345678", "2026-07-01");
+  await funding(riley.id, "Minnesota Health Care Programs (MA)", "DD", "23456789", "2026-08-15");
+  await funding(casey.id, "Minnesota Health Care Programs (MA)", "BI", "34567890", "2026-05-01");
+
+  const place = (personId: string, type: "home" | "community" | "day_program", posCode: string, address1: string, city: string, zip: string, isDefault = true, label: string | null = null) =>
+    w.insert(clientLocations, { personId, type, posCode, address1, city, state: "MN", zip, isDefault, label });
+  await place(jordan.id, "home", "12", "1420 Girard Ave N", "Minneapolis", "55411");
+  await place(jordan.id, "community", "99", "Webber Park Library", "Minneapolis", "55412", false, "Library programme");
+  await place(riley.id, "home", "12", "58 Maple Ln", "Roseville", "55113");
+  await place(casey.id, "home", "12", "42 Elm St", "St. Paul", "55102");
+
+  const free = (personId: string, weekday: number, startTime: string, endTime: string, notes: string | null = null) =>
+    w.insert(clientAvailability, { personId, weekday, startTime, endTime, notes });
+  for (const d of [1, 2, 3, 4, 5]) await free(jordan.id, d, "15:00", "20:00", "Day programme until 2:30pm");
+  for (const d of [0, 6]) await free(jordan.id, d, "09:00", "17:00");
+  for (const d of [1, 3, 5]) await free(casey.id, d, "09:00", "13:00");
+  await free(casey.id, 2, "14:00", "17:00", "Prefers afternoons on Tuesdays");
+
+  const dx = (personId: string, icdCode: string, description: string, diagnosedOn: string, isPrimary = false) =>
+    w.insert(clientDiagnoses, { personId, icdCode, description, diagnosedOn, isPrimary });
+  await dx(jordan.id, "F84.0", "Autistic disorder", "2012-03-14", true);
+  await dx(jordan.id, "F41.1", "Generalised anxiety disorder", "2019-11-02");
+  await dx(riley.id, "F70", "Mild intellectual disabilities", "2010-06-21", true);
+  await dx(casey.id, "S06.2X9S", "Diffuse traumatic brain injury, sequela", "2024-01-30", true);
+
   // Service agreements: every client carries several service types so the progress-notes export has something to show for each.
   const sa = (personId: string, programId: string | null, agreementNumber: string, code: string, modifiers: string[], authorizedUnits: number, unitRate: string, startDate: string, endDate: string, county: string) =>
     w.insert(serviceAgreements, { personId, programId, agreementNumber, serviceCode: code, modifiers, authorizedUnits, unitRate, unitMinutes: 15, startDate, endDate, authorizingCounty: county });

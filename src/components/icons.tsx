@@ -37,6 +37,7 @@ export const Icon = {
   building: (p: P) => <I {...p}><rect x="4" y="3" width="16" height="18" rx="1.5" /><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-3h4v3" /></I>,
   history: (p: P) => <I {...p}><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5M12 7v5l3 2" /></I>,
   plus: (p: P) => <I {...p}><path d="M12 5v14M5 12h14" /></I>,
+  trash: (p: P) => <I {...p}><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6" /></I>,
   check: (p: P) => <I {...p}><path d="M5 12l4 4 10-10" /></I>,
   edit: (p: P) => <I {...p}><path d="M4 20h4l10-10-4-4L4 16z" /><path d="M12 8l4 4" /></I>,
   inbox: (p: P) => <I {...p}><path d="M4 4h16v16H4z" /><path d="M4 14h5l1.5 2h3L15 14h5" /></I>,

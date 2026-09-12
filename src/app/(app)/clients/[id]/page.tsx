@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
 import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
+import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
+import { getClientProfile } from "@/db/profile-queries";
 import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
@@ -89,6 +91,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     listMedAdmins(id, `${month}-01`, monthEnd),
   ]);
   const noteCount = await countNotes(id);
+  const profile = await getClientProfile(id);
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
   const shiftMonth = (d: number) => { const x = new Date(Date.UTC(my, mm - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
@@ -107,7 +110,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   // The right column answers "what do I do about this person", which is why the record is open.
   const soon = isoDay(60);
   const alerts: { tone: "danger" | "warn"; body: ReactNode; href?: string; cta?: string }[] = [];
-  if (person.status === "active" && !person.signatureCodeHash) alerts.push({ tone: "danger", body: <><span className="font-medium">No signing code has been issued.</span> Nobody can co-sign a note until one exists.</>, href: `/clients/${id}?tab=contacts`, cta: "Issue a code" });
+  if (person.status === "active" && !person.signatureCodeHash) alerts.push({ tone: "danger", body: <><span className="font-medium">No signing code has been issued.</span> Nobody can co-sign a note until one exists.</>, href: `/clients/${id}?tab=profile`, cta: "Issue a code" });
   if (person.status === "active" && !person.phone) alerts.push({ tone: "warn", body: <><span className="font-medium">No mobile number on file,</span> so a signing code has nowhere to be sent.</>, href: `/clients/${id}/edit`, cta: "Add a number" });
   if (unsigned) alerts.push({ tone: "warn", body: <><span className="font-medium">{unsigned} note{unsigned === 1 ? " is" : "s are"} unsigned</span> in the periods shown.</>, href: `/clients/${id}?tab=notes`, cta: "Review them" });
   if (person.status === "active" && active.length === 0) alerts.push({ tone: "danger", body: <><span className="font-medium">No active authorization.</span> Notes cannot be recorded or billed.</>, href: `/clients/${id}/agreements/new`, cta: "Add an agreement" });
@@ -118,6 +121,25 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   }
   for (const t of team.filter((x) => x.assignment.active && !x.assignment.orientedOn)) alerts.push({ tone: "warn", body: <><span className="font-medium">{t.staff.firstName} {t.staff.lastName} is not oriented</span> to this person, which blocks clock-in.</>, href: `/staff/${t.staff.id}`, cta: "Record orientation" });
 
+  // Everything the Profile tab is a checklist of, built once so the tab badge and the section list
+  // agree about what is still missing.
+  const posLabel: Record<string, string> = { home: "Home", community: "Community", day_program: "Day program", residential: "Residential site", school: "School", telehealth: "Telehealth", other: "Other" };
+  const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const hhmm = (t: string) => { const [h, m] = t.split(":").map(Number); const ap = h >= 12 ? "PM" : "AM"; return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${ap}`; };
+  const profileSections: Section[] = [
+    { key: "contacts", label: "Emergency contacts", count: profile.contacts.length, done: profile.contacts.length > 0, editable: "contacts", addLabel: "Add contact" },
+    { key: "careteam", label: "Care team", count: activeTeam.length, done: activeTeam.length > 0 && activeTeam.every((t) => t.assignment.orientedOn), alert: activeTeam.some((t) => !t.assignment.orientedOn) },
+    { key: "code", label: "Signing code", count: 0, done: Boolean(person.signatureCodeHash), alert: person.status === "active" && !person.signatureCodeHash },
+    { key: "diagnoses", label: "Medical information", count: profile.diagnoses.length + meds.filter((m) => m.active).length, done: profile.diagnoses.length > 0, editable: "diagnoses", addLabel: "Add diagnosis" },
+    { key: "casemanager", label: "Case manager", count: person.caseManagerName ? 1 : 0, done: Boolean(person.caseManagerName) },
+    { key: "funding", label: "Funding sources", count: profile.funding.length, done: profile.funding.length > 0, editable: "funding", addLabel: "Add funding source" },
+    { key: "locations", label: "Care locations", count: profile.locations.length, done: profile.locations.length > 0, editable: "locations", addLabel: "Add care location" },
+    { key: "authorizations", label: "Authorizations", count: active.length, done: active.length > 0, alert: person.status === "active" && active.length === 0 },
+    { key: "planning", label: track ? `Planning · ${track}` : "Planning", count: deadlines.length, done: deadlines.length > 0 },
+    { key: "availability", label: "Availability", count: profile.availability.length, done: profile.availability.length > 0, editable: "availability", addLabel: "Add availability" },
+  ];
+  const profileOutstanding = profileSections.filter((s) => !s.done).length;
+
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "lifeplan", label: "Support plan goals", count: goals.filter((g) => g.goal.status === "active").length },
@@ -125,7 +147,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     { key: "authorizations", label: "Authorizations", count: active.length },
     { key: "files", label: "Plans & files", count: documents.length },
     { key: "medical", label: "Medical", count: meds.filter((m) => m.active).length || undefined },
-    { key: "contacts", label: "Care team & contacts" },
+    { key: "profile", label: "Profile", count: profileOutstanding || undefined },
   ];
 
   return (
@@ -161,16 +183,16 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       {tab === "overview" && (
         <ChartGrid>
           <ChartCol>
-            <ChartSection label="Demographics" action={<Link href={`/clients/${id}?tab=contacts`} className="text-primary hover:underline">Contacts →</Link>}>
+            <ChartSection label="Demographics" action={<Link href={`/clients/${id}?tab=profile`} className="text-primary hover:underline">Profile →</Link>}>
               <ChartFacts items={[
                 { label: "Address", value: address || null },
                 { label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="ident text-primary hover:underline">{person.phone}</a> : <Link href={`/clients/${id}/edit`} className="text-hint hover:underline">Add a number</Link> },
                 { label: "Email", value: person.email ? <a href={`mailto:${person.email}`} className="text-primary hover:underline">{person.email}</a> : null },
                 { label: "Case mgr", value: person.caseManagerName },
-                { label: "Emergency", value: person.emergencyContactName ? <>{person.emergencyContactName}{person.emergencyContactPhone && <div className="ident text-muted-foreground">{person.emergencyContactPhone}</div>}</> : <span className="text-hint">None on file</span> },
+                { label: "Emergency", value: profile.contacts[0] ? <>{profile.contacts[0].name}{profile.contacts[0].phone && <div className="ident text-muted-foreground">{profile.contacts[0].phone}</div>}</> : <Link href={`/clients/${id}?tab=profile`} className="text-hint hover:underline">None on file</Link> },
               ]} />
             </ChartSection>
-            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=contacts`} className="text-primary hover:underline">All →</Link>}>
+            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile`} className="text-primary hover:underline">All →</Link>}>
               {activeTeam.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
                 <ChartLine key={t.assignment.id}>
                   <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
@@ -294,16 +316,127 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           admins={admins.map((a) => ({ medicationId: a.medicationId, date: a.scheduledDate, time: a.scheduledTime, status: a.status, note: a.note }))} /></>
       )}
 
-      {tab === "contacts" && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Contact title="Emergency contact" name={person.emergencyContactName} sub={person.emergencyContactRelationship} phone={person.emergencyContactPhone} email={person.emergencyContactEmail} />
-          <Contact title="Guardian" name={person.guardianName} sub={person.guardianRelationship} phone={person.guardianPhone} email={person.guardianEmail} />
-          <Contact title="County case manager" name={person.caseManagerName} phone={person.caseManagerPhone} email={person.caseManagerEmail} />
-          <Contact title="Consultation Services provider" name={person.consultProviderName} sub={person.consultContactName} phone={person.consultPhone} email={person.consultEmail} />
-          <Card title="Care team" padded>{team.length === 0 ? <p className="text-[13px] text-muted-foreground">No caregivers assigned. Assign from the staff record.</p> : <ul className="space-y-2">{team.map((t) => <li key={t.assignment.id} className="flex items-center justify-between text-[13px]"><Link href={`/staff/${t.staff.id}`} className="font-medium text-text-strong hover:underline">{t.staff.firstName} {t.staff.lastName}</Link>{t.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}</Card>
-          {manage && <Card title="Signing code" titleAfter={<Rule name="code" />} padded><ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} /></Card>}
-        </div>
+      {tab === "profile" && (
+        <ClientProfile
+          personId={id}
+          manage={manage}
+          editHref={`/clients/${id}/edit`}
+          general={[
+            { icon: "user", label: "Full name", value: fullName(person) },
+            { icon: "calendar", label: "Date of birth", value: <span className="ident">{fmtDate(person.dob)}</span> },
+            { icon: "id", label: "PMI #", value: <span className="ident">{person.pmi}</span> },
+            { icon: "pin", label: "Address", value: address || <span className="text-hint">Not recorded</span> },
+            { icon: "phone", label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="ident text-primary hover:underline">{person.phone}</a> : <span className="text-hint">Not recorded</span> },
+            { icon: "catalog", label: "Waiver", value: `${person.waiverProgram} · ${person.county} County` },
+          ] satisfies Field[]}
+          sections={profileSections}
+          blanks={{
+            contacts: "No emergency contact on file. At least one is expected before services start.",
+            careteam: "Nobody is assigned to this person yet, so no one can clock in.",
+            code: "No signing code has been issued. Nobody can co-sign a note until one exists.",
+            diagnoses: "No diagnosis recorded. Payers ask for the ICD-10 code that justifies the service.",
+            casemanager: "No case manager recorded.",
+            funding: "No funding source recorded. Add the payer behind these authorizations so claims know where to go.",
+            locations: "No care location recorded, so notes fall back to the address on the record.",
+            authorizations: "No active authorization. Notes cannot be recorded or billed.",
+            planning: "Set a service start date and a service type to compute planning deadlines.",
+            availability: "No availability recorded. Scheduling has no idea when this person is free.",
+          }}
+          entities={{
+            contacts: profile.contacts.map((c) => ({
+              id: c.id,
+              raw: { id: c.id, name: c.name, relationship: c.relationship, phone: c.phone, email: c.email, notes: c.notes, isPrimary: c.isPrimary, isLegalRepresentative: c.isLegalRepresentative },
+              fields: [
+                { icon: "user", label: "Contact name", value: c.name },
+                { icon: "tag", label: "Relationship", value: c.relationship },
+                { icon: "phone", label: "Phone number", value: c.phone ? <a href={`tel:${c.phone}`} className="ident text-primary hover:underline">{c.phone}</a> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "mail", label: "Email", value: c.email ? <a href={`mailto:${c.email}`} className="text-primary hover:underline">{c.email}</a> : <span className="italic text-hint">Not recorded</span> },
+              ],
+              chips: <>{c.isPrimary && <Badge tone="accent">Call first</Badge>}{c.isLegalRepresentative && <Badge tone="warn">Legal rep</Badge>}</>,
+            })),
+            careteam: activeTeam.map((t) => ({
+              id: t.assignment.id,
+              fields: [
+                { icon: "staff", label: "Caregiver", value: <Link href={`/staff/${t.staff.id}`} className="text-primary hover:underline">{t.staff.firstName} {t.staff.lastName}</Link> },
+                { icon: "check", label: "Oriented", value: t.assignment.orientedOn ? <span className="ident">{fmtDate(t.assignment.orientedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
+              ],
+              chips: t.assignment.orientedOn ? <Badge tone="ok">Cleared to work</Badge> : <Badge tone="danger">Blocks clock-in</Badge>,
+            })),
+            code: [],
+            diagnoses: profile.diagnoses.map((d) => ({
+              id: d.id,
+              raw: { id: d.id, icdCode: d.icdCode, description: d.description, diagnosedOn: d.diagnosedOn, isPrimary: d.isPrimary },
+              fields: [
+                { icon: "code", label: "ICD-10", value: <span className="ident">{d.icdCode}</span> },
+                { icon: "doc", label: "Description", value: d.description },
+                { icon: "calendar", label: "Diagnosed", value: d.diagnosedOn ? <span className="ident">{fmtDate(d.diagnosedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
+              ],
+              chips: d.isPrimary ? <Badge tone="accent">Primary</Badge> : null,
+            })),
+            casemanager: person.caseManagerName ? [{
+              id: "cm",
+              fields: [
+                { icon: "user", label: "Case manager", value: person.caseManagerName },
+                { icon: "phone", label: "Phone", value: person.caseManagerPhone ? <span className="ident">{person.caseManagerPhone}</span> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "mail", label: "Email", value: person.caseManagerEmail ?? <span className="italic text-hint">Not recorded</span> },
+                { icon: "building", label: "County", value: `${person.county} County` },
+              ],
+            }] : [],
+            funding: profile.funding.map((f) => ({
+              id: f.id,
+              raw: { id: f.id, payer: f.payer, waiver: f.waiver, memberId: f.memberId, priority: f.priority, startDate: f.startDate, endDate: f.endDate, notes: f.notes },
+              fields: [
+                { icon: "money", label: "Payer", value: f.payer },
+                { icon: "id", label: "Member ID", value: f.memberId ? <span className="ident">{f.memberId}</span> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "calendar", label: "Effective", value: <span className="ident">{fmtDate(f.startDate)}{f.endDate ? ` – ${fmtDate(f.endDate)}` : " – open"}</span> },
+              ],
+              chips: <>{f.waiver && <Badge tone="neutral">{f.waiver}</Badge>}<Badge tone={f.priority === "primary" ? "accent" : "neutral"}>{f.priority}</Badge></>,
+            })),
+            locations: profile.locations.map((l) => ({
+              id: l.id,
+              raw: { id: l.id, type: l.type, label: l.label, address1: l.address1, address2: l.address2, city: l.city, state: l.state, zip: l.zip, posCode: l.posCode, isDefault: l.isDefault },
+              fields: [
+                { icon: "sites", label: "Location type", value: `${posLabel[l.type] ?? l.type} (${l.posCode})` },
+                { icon: "pin", label: "Address", value: [l.address1, l.address2, [l.city, l.state, l.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ") || <span className="italic text-hint">Not recorded</span> },
+              ],
+              chips: l.isDefault ? <Badge tone="accent">Default</Badge> : null,
+            })),
+            authorizations: active.map(({ agreement: a, unitsUsed }) => ({
+              id: a.id,
+              fields: [
+                { icon: "doc", label: "Service", value: <Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{labelForCode(a.serviceCode, a.modifiers)}</Link> },
+                { icon: "units", label: "Units", value: <><span className="ident">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of <span className="ident">{a.authorizedUnits.toLocaleString()}</span> left<UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></> },
+                { icon: "calendar", label: "Dates · rate", value: <><span className="ident">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[11.5px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
+              ],
+            })),
+            planning: deadlines.map((d) => ({
+              id: d.id,
+              fields: [
+                { icon: "flag", label: "Requirement", value: d.label },
+                { icon: "calendar", label: "Due", value: <span className={cx("ident", d.due < new Date() && "text-danger")}>{fmtDate(d.due)}</span> },
+                { icon: "audit", label: "Statute", value: <span className="text-muted-foreground">{d.cite}</span> },
+              ],
+            })),
+            availability: profile.availability.map((a) => ({
+              id: a.id,
+              raw: { id: a.id, weekday: a.weekday, startTime: a.startTime, endTime: a.endTime, notes: a.notes },
+              fields: [
+                { icon: "calendar", label: "Day", value: dayName[a.weekday] },
+                { icon: "clock", label: "Window", value: <span className="ident">{hhmm(a.startTime)} – {hhmm(a.endTime)}</span> },
+                { icon: "doc", label: "Notes", value: a.notes ?? <span className="italic text-hint">None</span> },
+              ],
+            })),
+          } satisfies Record<string, Entity[]>}
+          extras={{
+            code: <ClientCodePanel personId={id} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} sentAt={person.signatureCodeSentAt ? fmtDateTime(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />,
+            careteam: manage ? <Link href={`/staff`} className="text-[12.5px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
+            diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[12.5px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
+            authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[12.5px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
+            planning: <p className="text-[11.5px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>,
+          }}
+        />
       )}
+
     </div>
   );
 }

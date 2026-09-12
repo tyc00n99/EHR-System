@@ -45,6 +45,12 @@ export const gender = pgEnum("gender", ["female", "male", "nonbinary", "other", 
 
 export const documentCategory = pgEnum("document_category", ["support_plan", "iapp", "treatment_goals", "other"]);
 
+/** Where a person is served. The number is the CMS place-of-service code that rides on the claim. */
+export const locationType = pgEnum("location_type", ["home", "community", "day_program", "residential", "school", "telehealth", "other"]);
+
+/** Which payer pays first when a person has more than one. */
+export const fundingPriority = pgEnum("funding_priority", ["primary", "secondary", "tertiary"]);
+
 export const goalStatus = pgEnum("goal_status", ["active", "met", "discontinued"]);
 export const goalResponse = pgEnum("goal_response", ["yes", "no", "na"]);
 export const interactionLevel = pgEnum("interaction_level", ["low", "medium", "high"]);
@@ -645,6 +651,106 @@ export const auditLog = pgTable(
   (t) => [index("audit_record_idx").on(t.tableName, t.recordId), index("audit_at_idx").on(t.at)],
 );
 
+/**
+ * The administrative record behind a person: the tables the Profile tab is a checklist of.
+ *
+ * Each one is a list rather than a column on `people`, because every one of them is genuinely
+ * plural — a person has two emergency contacts, loses a waiver and gains another, is served at
+ * home on weekdays and in the community at weekends.
+ */
+
+/** Emergency contacts. Replaces the single contact that used to live on `people`. */
+export const clientContacts = pgTable(
+  "client_contacts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    relationship: text("relationship").notNull(),
+    phone: text("phone"),
+    email: text("email"),
+    /** Ring this one first. */
+    isPrimary: boolean("is_primary").notNull().default(false),
+    /** True where the contact can make decisions, which changes who has to sign what. */
+    isLegalRepresentative: boolean("is_legal_representative").notNull().default(false),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("client_contacts_person_idx").on(t.personId)],
+);
+
+/** Who pays, and in what order. */
+export const clientFundingSources = pgTable(
+  "client_funding_sources",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    payer: text("payer").notNull(),
+    waiver: waiverProgram("waiver"),
+    memberId: text("member_id"),
+    priority: fundingPriority("priority").notNull().default("primary"),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date"),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("client_funding_person_idx").on(t.personId)],
+);
+
+/** Where this person is served, and the place-of-service code that goes on the claim. */
+export const clientLocations = pgTable(
+  "client_locations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    type: locationType("type").notNull().default("home"),
+    label: text("label"),
+    address1: text("address1"),
+    address2: text("address2"),
+    city: text("city"),
+    state: text("state").notNull().default("MN"),
+    zip: text("zip"),
+    /** CMS place of service, e.g. 12 for the person's home. */
+    posCode: text("pos_code").notNull().default("12"),
+    isDefault: boolean("is_default").notNull().default(false),
+    ...timestamps,
+  },
+  (t) => [index("client_locations_person_idx").on(t.personId)],
+);
+
+/** When a person is available to be scheduled. One row per weekday window. */
+export const clientAvailability = pgTable(
+  "client_availability",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    /** 0 = Sunday, matching Date.getDay() and the shift weekday picker. */
+    weekday: integer("weekday").notNull(),
+    /** 24h "HH:MM". */
+    startTime: text("start_time").notNull(),
+    endTime: text("end_time").notNull(),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("client_availability_person_idx").on(t.personId)],
+);
+
+/** Diagnoses, with the ICD-10 code a payer will ask for. */
+export const clientDiagnoses = pgTable(
+  "client_diagnoses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id").notNull().references(() => people.id, { onDelete: "cascade" }),
+    icdCode: text("icd_code").notNull(),
+    description: text("description").notNull(),
+    diagnosedOn: date("diagnosed_on"),
+    /** The one that justifies the service, printed first wherever diagnoses are listed. */
+    isPrimary: boolean("is_primary").notNull().default(false),
+    ...timestamps,
+  },
+  (t) => [index("client_diagnoses_person_idx").on(t.personId)],
+);
+
 // ---------- inferred types ----------
 
 export type Organization = typeof organizations.$inferSelect;
@@ -668,3 +774,10 @@ export type MedicationAdministration = typeof medicationAdministrations.$inferSe
 export type DocumentCategory = (typeof documentCategory.enumValues)[number];
 export type StaffCredential = typeof staffCredentials.$inferSelect;
 export type CredentialType = (typeof credentialType.enumValues)[number];
+export type ClientContact = typeof clientContacts.$inferSelect;
+export type ClientFundingSource = typeof clientFundingSources.$inferSelect;
+export type ClientLocation = typeof clientLocations.$inferSelect;
+export type ClientAvailability = typeof clientAvailability.$inferSelect;
+export type ClientDiagnosis = typeof clientDiagnoses.$inferSelect;
+export type LocationType = (typeof locationType.enumValues)[number];
+export type FundingPriority = (typeof fundingPriority.enumValues)[number];

@@ -31,6 +31,10 @@ export function fieldErrors(err: z.ZodError): FieldErrors {
 export interface ActionState {
   errors?: FieldErrors;
   message?: string;
+  /** The write went through. Drawers close on this. */
+  ok?: boolean;
+  /** Something went wrong that is not about one field. */
+  error?: string;
 }
 
 const optionalText = z.string().max(200).optional();
@@ -329,4 +333,56 @@ export const medAdminSchema = z.object({
   status: z.enum(["given", "refused", "held", "missed"]),
   note: z.string().max(500).optional(),
   visitId: z.uuid().optional(),
+});
+
+/**
+ * The Profile tab's records. Each drawer posts one of these; every field the DHS or a payer will
+ * ask for is required, and everything else is optional so a half-known record can still be saved.
+ */
+export const contactSchema = z.object({
+  name: z.string().min(1, "Add a name").max(120),
+  relationship: z.string().min(1, "How are they related?").max(80),
+  phone: optionalText,
+  email: z.string().email("Use a valid email").optional(),
+  notes: z.string().max(500).optional(),
+  isPrimary: z.boolean().default(false),
+  isLegalRepresentative: z.boolean().default(false),
+});
+
+export const fundingSchema = z.object({
+  payer: z.string().min(1, "Name the payer").max(120),
+  waiver: z.enum(["CADI", "BI", "DD", "EW", "CFSS", "CAC"]).optional(),
+  memberId: optionalText,
+  priority: z.enum(["primary", "secondary", "tertiary"]).default("primary"),
+  startDate: isoDate,
+  endDate: isoDate.optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export const locationSchema = z.object({
+  type: z.enum(["home", "community", "day_program", "residential", "school", "telehealth", "other"]).default("home"),
+  label: optionalText,
+  address1: optionalText,
+  address2: optionalText,
+  city: optionalText,
+  state: z.string().length(2).default("MN"),
+  zip: z.string().regex(/^\d{5}(-\d{4})?$/, "Use a ZIP code").optional(),
+  posCode: z.string().regex(/^\d{2}$/, "Place of service is two digits").default("12"),
+  isDefault: z.boolean().default(false),
+});
+
+export const availabilitySchema = z
+  .object({
+    weekday: z.coerce.number().int().min(0).max(6),
+    startTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM"),
+    endTime: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM"),
+    notes: z.string().max(300).optional(),
+  })
+  .refine((v) => v.endTime > v.startTime, { message: "The end has to be after the start", path: ["endTime"] });
+
+export const diagnosisSchema = z.object({
+  icdCode: z.string().min(2, "Add the ICD-10 code").max(10).transform((s) => s.toUpperCase()),
+  description: z.string().min(1, "Describe the diagnosis").max(200),
+  diagnosedOn: isoDate.optional(),
+  isPrimary: z.boolean().default(false),
 });
