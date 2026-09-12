@@ -44,7 +44,7 @@ async function main() {
 
   const ssn = (digits: string) => ({ ssnEncrypted: encryptField(digits), ssnLast4: digits.slice(-4) });
   const admin = await w.insert(staff, {
-    firstName: "Ayub",
+    firstName: "Mustafa",
     lastName: "Sultan",
     dob: "1988-05-14",
     gender: "male",
