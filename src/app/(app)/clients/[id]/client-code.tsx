@@ -30,6 +30,7 @@ export function ClientCodePanel({
       if (r.code) { setCode(r.code); setFresh(true); }
       if (r.texted) toast.success("New code texted to the client.");
       else if (r.message) toast.message(r.message);
+      if (r.referenceError) toast.error("The code works, but it could not be saved for later reference. Read it out now.");
     });
   };
 

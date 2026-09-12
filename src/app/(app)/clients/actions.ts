@@ -11,7 +11,6 @@ import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAg
 import { requireUser } from "@/lib/auth";
 import { issueClientCode } from "@/lib/client-code";
 import { decryptField } from "@/lib/crypto";
-import { hashPassword } from "@/lib/password";
 import { putFile } from "@/lib/storage";
 import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState, activityLibrarySchema } from "@/lib/validation";
 
@@ -47,7 +46,7 @@ export async function updatePerson(id: string, _prev: ActionState, fd: FormData)
 }
 
 /** Generates a new six-digit signing code for the person. The hash verifies it; an encrypted copy lets an admin read it back. */
-export async function setClientCode(personId: string): Promise<{ code?: string; texted?: boolean; message?: string }> {
+export async function setClientCode(personId: string): Promise<{ code?: string; texted?: boolean; message?: string; referenceError?: string }> {
   const user = await requireUser(["admin", "supervisor"]);
   const person = await getPerson(personId);
   if (!person) return { message: "Client not found." };
@@ -55,7 +54,7 @@ export async function setClientCode(personId: string): Promise<{ code?: string; 
   const org = await getOrganization();
   const issued = await issueClientCode(db, user.id, { id: personId, firstName: person.firstName, phone: person.phone, smsConsent: person.smsConsent }, org.name);
   revalidatePath(`/clients/${personId}`);
-  return { code: issued.code, texted: issued.texted, message: issued.texted ? undefined : issued.reason };
+  return { code: issued.code, texted: issued.texted, message: issued.texted ? undefined : issued.reason, referenceError: issued.referenceError };
 }
 
 /**

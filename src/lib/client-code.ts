@@ -20,6 +20,8 @@ export interface IssuedCode {
   /** True when the person was texted, so the caller knows whether staff must read it out. */
   texted: boolean;
   reason?: string;
+  /** Set when the code was issued but could not be stored for later reference. */
+  referenceError?: string;
 }
 
 /**
@@ -40,13 +42,23 @@ export async function issueClientCode(
   const sms = canText
     ? await sendSms(number!, signingCodeMessage(orgName, person.firstName, code))
     : { sent: false, reason: !number ? "No mobile number on the client record." : person.smsConsent === false ? "The client has not agreed to receive texts." : "Texting is not configured." };
+  // The hash is what signing checks, so it is issued even when the readable reference cannot be
+  // written. Losing the reference is an inconvenience; refusing to issue a code stops the client
+  // signing their next note.
+  let reference: string | null = null;
+  let referenceError: string | undefined;
+  try {
+    reference = encryptField(code);
+  } catch (e) {
+    referenceError = e instanceof Error ? e.message : "The signing code could not be stored for later reference.";
+  }
   await w.update(schema.people, person.id, {
     signatureCodeHash: await hashPassword(code),
     // Kept recoverable so an admin can read it back to a client who has forgotten it.
-    signatureCodeEncrypted: encryptField(code),
+    signatureCodeEncrypted: reference,
     signatureCodeSetAt: new Date(),
     signatureCodeSentAt: sms.sent ? new Date() : null,
     signatureCodeSentTo: sms.sent ? number : null,
   });
-  return { code, texted: sms.sent, reason: sms.reason };
+  return { code, texted: sms.sent, reason: sms.reason, referenceError };
 }

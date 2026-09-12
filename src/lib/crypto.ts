@@ -5,9 +5,16 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
  * (SSN). AES-256-GCM with a key from DATA_ENCRYPTION_KEY (64 hex characters).
  */
 function key(): Buffer {
-  const hex = process.env.DATA_ENCRYPTION_KEY;
-  if (!hex || !/^[0-9a-f]{64}$/i.test(hex)) throw new Error("DATA_ENCRYPTION_KEY is missing or not 64 hex characters. See .env.example.");
-  return Buffer.from(hex, "hex");
+  // Trimmed and unquoted because a key pasted into a hosting dashboard usually arrives with a
+  // trailing newline or a pair of quotes attached, and a key that is right but untrimmed looks
+  // exactly like a key that is missing. The length is named in the error for the same reason:
+  // "got 65 characters" tells you it is the newline, without printing the key itself.
+  const raw = process.env.DATA_ENCRYPTION_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (!raw) throw new Error("DATA_ENCRYPTION_KEY is not set. See .env.example.");
+  if (!/^[0-9a-f]{64}$/i.test(raw)) {
+    throw new Error(`DATA_ENCRYPTION_KEY must be 64 hex characters; got ${raw.length} character${raw.length === 1 ? "" : "s"}. See .env.example.`);
+  }
+  return Buffer.from(raw, "hex");
 }
 
 export function encryptField(plain: string): string {
