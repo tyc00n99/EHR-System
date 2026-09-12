@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Palette } from "lucide-react";
-import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 export const DEFAULT_THEME = "tide";
 const STORAGE_KEY = "ehr.theme.v2";
@@ -21,7 +21,7 @@ export function ThemeMenuItems() {
   return (
     <>
       <DropdownMenuSeparator />
-      <DropdownMenuLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Palette className="size-3.5" /> Appearance</DropdownMenuLabel>
+      <DropdownMenuGroup><DropdownMenuLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Palette className="size-3.5" /> Appearance</DropdownMenuLabel></DropdownMenuGroup>
       {THEMES.map((t) => (
         <DropdownMenuItem key={t.key} onClick={() => pick(t.key)} closeOnClick={false}>
           <span className="flex-1"><span className="block">{t.label}</span><span className="block text-[11.5px] text-muted-foreground">{t.hint}</span></span>
