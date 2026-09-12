@@ -153,14 +153,14 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
           blanks[openKey] === "" ? null : <p className="text-[14.5px] italic text-hint">{blanks[openKey] ?? "Nothing recorded yet."}</p>
         ) : (
           rows.map((e) => (
-            <article key={e.id} className="mb-2.5 flex items-start gap-4 rounded-[10px] border border-line px-4 py-3.5 last:mb-0">
+            <article key={e.id} className="mb-3 flex max-w-[680px] items-start gap-4 rounded-xl border border-line px-5 py-4 transition-colors last:mb-0 hover:border-primary hover:bg-primary-soft">
               <div className="grid min-w-0 flex-1 gap-3">
                 {e.fields.map((f, i) => (
                   <div key={i} className="flex min-w-0 gap-2.5">
                     {f.icon && <span className="mt-[2px] shrink-0 text-muted-foreground">{(() => { const I = Icon[f.icon]; return <I size={17} />; })()}</span>}
                     <div className="min-w-0">
                       <div className="text-[13.5px] text-muted-foreground">{f.label}</div>
-                      <div className="min-w-0 break-words text-[15px] text-text-strong">{f.value}</div>
+                      <div className="min-w-0 break-words text-[15px] font-semibold text-text-strong">{f.value}</div>
                     </div>
                   </div>
                 ))}

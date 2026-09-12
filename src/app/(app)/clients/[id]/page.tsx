@@ -354,8 +354,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               fields: [
                 { icon: "user", label: "Contact name", value: c.name },
                 { icon: "tag", label: "Relationship", value: c.relationship },
-                { icon: "phone", label: "Phone number", value: c.phone ? <a href={`tel:${c.phone}`} className="ident text-primary hover:underline">{c.phone}</a> : <span className="italic text-hint">Not recorded</span> },
-                { icon: "mail", label: "Email", value: c.email ? <a href={`mailto:${c.email}`} className="text-primary hover:underline">{c.email}</a> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "phone", label: "Phone number", value: c.phone ? <a href={`tel:${c.phone}`} className="ident hover:underline">{c.phone}</a> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "mail", label: "Email", value: c.email ? <a href={`mailto:${c.email}`} className="hover:underline">{c.email}</a> : <span className="italic text-hint">Not recorded</span> },
               ],
               chips: c.isLegalRepresentative ? <Badge tone="warn">Legal representative</Badge> : null,
             })),
