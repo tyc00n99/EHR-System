@@ -524,7 +524,8 @@ kbd { font-family: var(--font-mono); }
   --ring: #0098c0;
   --radius: 0.75rem;
 }
-h1, h2 { font-weight: 600; }
+/* This later block wins over the one above it, so the heading weight has to be set twice. */
+h1, h2 { font-weight: 700; }
 .figure { font-family: var(--font-sans); font-weight: 500; letter-spacing: -0.01em; }
 /* Identifiers keep the monospace: a PMI, a service code and a unit count should look like data. */
 .tabular-nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
