@@ -104,7 +104,7 @@ export function ActionItems({ label, groups }: { label: string; groups: ActionGr
 
             {!closed && (
               g.items.length === 0 ? (
-                <p className="px-1 text-[13px] italic leading-snug text-muted-foreground">{g.empty}</p>
+                <p className="px-1 text-[12px] italic leading-[1.35] text-muted-foreground">{g.empty}</p>
               ) : (
                 <ul className="space-y-1.5">
                   {g.items.map((it) => (
