@@ -20,6 +20,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 // ---------- enums ----------
 
@@ -44,6 +45,18 @@ export const auditAction = pgEnum("audit_action", ["insert", "update", "delete",
 export const gender = pgEnum("gender", ["female", "male", "nonbinary", "other", "undisclosed"]);
 
 export const documentCategory = pgEnum("document_category", ["support_plan", "iapp", "treatment_goals", "other"]);
+export const staffDocumentCategory = pgEnum("staff_document_category", [
+  "background_study",        // consent form, NETStudy clearance letter
+  "training_certificate",    // certificates, training acknowledgments, the annual training record
+  "orientation",             // the orientation record
+  "license",                 // driver's license, auto insurance, professional licenses
+  "identification",          // I-9 supporting documents, SSN card
+  "employment_form",         // application, acceptance, I-9, direct deposit
+  "tax_form",                // W-4, MN W-4
+  "policy_acknowledgment",   // handbook receipt, confidentiality, roles and responsibilities
+  "evaluation",              // performance evaluations
+  "other",
+]);
 
 /** Where a person is served. The number is the CMS place-of-service code that rides on the claim. */
 export const locationType = pgEnum("location_type", ["home", "community", "day_program", "residential", "school", "telehealth", "other"]);
@@ -496,6 +509,36 @@ export const assignments = pgTable(
 );
 
 /** Training, certifications, and clearances per staff member (245D.09, 245C). */
+/**
+ * Files kept on a staff member: the background study, certificates, tax and employment forms.
+ * A document can hang off one credential row so the certificate sits beside the training it proves.
+ * Bytes live in stored_files, like every other upload; this row is the index.
+ */
+export const staffDocuments = pgTable(
+  "staff_documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    staffId: uuid("staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "cascade" }),
+    category: staffDocumentCategory("category").notNull(),
+    title: text("title").notNull(),
+    fileName: text("file_name").notNull(),
+    filePath: text("file_path").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    /** The credential this file is evidence for, when it is. Cleared, not cascaded, if that row goes. */
+    credentialId: uuid("credential_id").references((): AnyPgColumn => staffCredentials.id, { onDelete: "set null" }),
+    note: text("note"),
+    uploadedBy: uuid("uploaded_by")
+      .notNull()
+      .references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("staff_documents_staff_idx").on(t.staffId), index("staff_documents_credential_idx").on(t.credentialId)],
+);
+export type StaffDocument = typeof staffDocuments.$inferSelect;
+
 export const staffCredentials = pgTable(
   "staff_credentials",
   {

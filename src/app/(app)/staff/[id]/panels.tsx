@@ -3,6 +3,7 @@
 import { useActionState, useState, useTransition } from "react";
 import { Badge, Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import { addAssignment, addCredential, createLogin, deleteCredential, endAssignment, markOriented, updateLogin } from "../actions";
+import { deleteStaffDocument, uploadStaffDocument } from "../document-actions";
 
 /* ---------- credentials ---------- */
 
@@ -19,7 +20,8 @@ export function CredentialForm({ staffId, types }: { staffId: string; types: { t
         <Field label="Expires on" error={e.expiresOn} hint="Certificates and licenses" className="md:col-span-2"><Input name="expiresOn" type="date" /></Field>
         <Field label="Hours" error={e.hours} hint="Training time" className="md:col-span-1"><Input name="hours" type="number" step="0.5" min={0} /></Field>
         <div className="flex items-end md:col-span-1"><Button type="submit" variant="secondary" disabled={pending} className="h-9 w-full">{pending ? "Saving…" : "Add"}</Button></div>
-        <Field label="Note" error={e.note} className="md:col-span-6"><Textarea name="note" className="min-h-14" placeholder="Provider, certificate number, or what was covered" /></Field>
+        <Field label="Attach the certificate" error={e.file} hint="PDF or photo of the certificate, clearance letter, or card" className="md:col-span-3"><Input name="file" type="file" accept=".pdf,image/*,.doc,.docx" className="h-9 pt-1.5 text-[13px] file:mr-2 file:rounded file:border-0 file:bg-panel file:px-2 file:py-0.5 file:text-[13px]" /></Field>
+        <Field label="Note" error={e.note} className="md:col-span-3"><Textarea name="note" className="min-h-14" placeholder="Provider, certificate number, or what was covered" /></Field>
       </div>
     </form>
   );
@@ -100,4 +102,28 @@ export function LoginPanel({ staffId, login, defaultEmail, isSelf }: { staffId: 
       <Button type="submit" variant="outline" disabled={updating} className="w-full">{updating ? "Saving…" : "Save login"}</Button>
     </form>
   );
+}
+
+/* ---------- documents ---------- */
+
+export function DocumentForm({ staffId, categories }: { staffId: string; categories: { value: string; label: string }[] }) {
+  const [state, submit, pending] = useActionState(uploadStaffDocument.bind(null, staffId), {});
+  const e = state.errors ?? {};
+  return (
+    <form action={submit} key={state.ok ? "done" : "editing"}>
+      <FormError message={state.ok ? undefined : state.message} />
+      <div className="grid gap-3 md:grid-cols-6">
+        <Field label="Category" error={e.category} className="md:col-span-2"><Select name="category" defaultValue="training_certificate">{categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</Select></Field>
+        <Field label="Title" error={e.title} className="md:col-span-4"><Input name="title" placeholder="Background study clearance, I-9, MN W-4, Employee handbook receipt…" required /></Field>
+        <Field label="File" error={e.file} hint="PDF, photo, or Word document, up to 25 MB" className="md:col-span-3"><Input name="file" type="file" accept=".pdf,image/*,.doc,.docx" required className="h-9 pt-1.5 text-[13px] file:mr-2 file:rounded file:border-0 file:bg-panel file:px-2 file:py-0.5 file:text-[13px]" /></Field>
+        <Field label="Note" error={e.note} className="md:col-span-2"><Input name="note" placeholder="Optional" /></Field>
+        <div className="flex items-end md:col-span-1"><Button type="submit" variant="secondary" disabled={pending} className="h-9 w-full">{pending ? "Filing…" : "Add"}</Button></div>
+      </div>
+    </form>
+  );
+}
+
+export function DeleteDocument({ id, staffId }: { id: string; staffId: string }) {
+  const [pending, start] = useTransition();
+  return <button disabled={pending} onClick={() => { if (confirm("Remove this document? The file is deleted with it.")) start(() => deleteStaffDocument(id, staffId)); }} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">Remove</button>;
 }

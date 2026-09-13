@@ -574,3 +574,9 @@ export async function notesDetailForVisits(personId: string, visitIds: string[],
   for (const a of adm) admins.set(a.date, [...(admins.get(a.date) ?? []), { name: a.name, dose: a.dose, time: a.time, status: a.status }]);
   return { responses, admins, edits: new Map(ed.map((e) => [e.visitId, e.n])), approvers: new Map(appr.map((a) => [a.visitId, a.name])) };
 }
+
+/** A staff member's documents, newest first, with the credential each one is attached to. */
+export async function listStaffDocuments(staffId: string) {
+  const db = await getDb();
+  return db.select().from(schema.staffDocuments).where(eq(schema.staffDocuments.staffId, staffId)).orderBy(desc(schema.staffDocuments.createdAt));
+}

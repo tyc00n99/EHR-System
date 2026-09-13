@@ -9,6 +9,8 @@ import { requireUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { decryptField, encryptField, formatSsn } from "@/lib/crypto";
 import { credentialSchema, fieldErrors, formToObject, loginSchema, staffSchema, type ActionState } from "@/lib/validation";
+import { categoryForCredential } from "@/lib/staff-documents";
+import { storeStaffFile } from "./document-actions";
 
 function normalize(fd: FormData) {
   const o = formToObject(fd);
@@ -82,9 +84,22 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
   const user = await requireUser(["admin", "supervisor"]);
   const parsed = credentialSchema.safeParse({ ...formToObject(fd), staffId });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  // The certificate itself, when one was attached. Checked before the row is written so a bad
+  // file does not leave a credential behind with nothing to back it.
+  const file = fd.get("file");
+  const attached = file instanceof File && file.size > 0 ? file : null;
   const db = await getDb();
   const { hours, ...rest } = parsed.data;
-  await audited(db, { userId: user.id }).insert(schema.staffCredentials, { ...rest, hours: hours != null ? hours.toFixed(1) : null });
+  const row = await audited(db, { userId: user.id }).insert(schema.staffCredentials, { ...rest, hours: hours != null ? hours.toFixed(1) : null });
+  if (attached) {
+    const stored = await storeStaffFile(user.id, staffId, attached, {
+      category: categoryForCredential(rest.type), title: rest.title, credentialId: row.id,
+    });
+    if (stored.error) {
+      await audited(db, { userId: user.id }).delete(schema.staffCredentials, row.id);
+      return { errors: { file: stored.error } };
+    }
+  }
   revalidatePath(`/staff/${staffId}`);
   revalidatePath("/staff");
   revalidatePath("/me");
