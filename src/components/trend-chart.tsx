@@ -19,7 +19,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
 
   return (
     <div className="relative">
-      <div className="mb-2 flex items-center gap-4 px-1 text-[12px] text-muted-foreground">
+      <div className="mb-2 flex items-center gap-4 px-1 text-[13px] text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-1)" }} />Billable</span>
         <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--chart-2)" }} />Gross pay</span>
       </div>
@@ -44,7 +44,7 @@ export function TrendChart({ points }: { points: TrendPoint[] }) {
         {h && hover != null && <line x1={x(hover)} x2={x(hover)} y1={padT} y2={H - padB} stroke="var(--gray-400)" strokeDasharray="3 3" />}
       </svg>
       {h && hover != null && (
-        <div className="pointer-events-none absolute top-8 rounded-md border border-line bg-card px-3 py-2 text-[12px] shadow-[var(--shadow-md)]" style={{ left: `${(x(hover) / W) * 100}%`, transform: hover > points.length / 2 ? "translateX(-110%)" : "translateX(12px)" }}>
+        <div className="pointer-events-none absolute top-8 rounded-md border border-line bg-card px-3 py-2 text-[13px] shadow-[var(--shadow-md)]" style={{ left: `${(x(hover) / W) * 100}%`, transform: hover > points.length / 2 ? "translateX(-110%)" : "translateX(12px)" }}>
           <div className="font-medium text-text-strong">{h.label}</div>
           <div className="mt-1 flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-1)" }} />Billable {money(h.revenue)}</div>
           <div className="flex items-center gap-1.5 tabular-nums"><span className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-2)" }} />Gross pay {money(h.labor)}</div>

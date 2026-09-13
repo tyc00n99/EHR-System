@@ -35,18 +35,18 @@ export function Medical({ personId, meds, admins, month, monthLabel, prevHref, n
         <a href={prevHref} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</a>
         <span className="text-[13px] font-medium text-text-strong">{monthLabel}</span>
         <a href={nextHref} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</a>
-        <span className="ml-auto flex flex-wrap gap-3 text-[12.5px] text-muted-foreground"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-ok" />Given {stats.given ?? 0}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-warn" />Refused/held {(stats.refused ?? 0) + (stats.held ?? 0)}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-danger" />Missed {stats.missed ?? 0}</span></span>
+        <span className="ml-auto flex flex-wrap gap-3 text-[13px] text-muted-foreground"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-ok" />Given {stats.given ?? 0}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-warn" />Refused/held {(stats.refused ?? 0) + (stats.held ?? 0)}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-danger" />Missed {stats.missed ?? 0}</span></span>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]">
         {active.length === 0 ? <p className="px-5 py-8 text-center text-[13px] text-muted-foreground">No active medications. {manage ? "Add one below to start the MAR." : ""}</p> : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[12.5px]">
+            <table className="w-full border-collapse text-[13px]">
               <thead className="bg-sidebar"><tr><th className="sticky left-0 z-10 bg-sidebar px-4 py-2 text-left font-medium text-muted-foreground">Medication</th><th className="px-2 py-2 text-left font-medium text-muted-foreground">Time</th>{days.map((d) => <th key={d} className={cx("w-7 py-2 text-center font-medium tabular-nums", `${month}-${String(d).padStart(2, "0")}` === today ? "text-primary" : "text-muted-foreground")}>{d}</th>)}</tr></thead>
               <tbody>
                 {active.flatMap((m) => m.times.map((t, ti) => (
                   <tr key={`${m.id}-${t}`} className="border-t border-line-soft">
-                    {ti === 0 && <td rowSpan={m.times.length} className="sticky left-0 z-10 bg-card px-4 py-2 align-top"><div className="font-medium text-text-strong">💊 {m.name}</div><div className="text-[12px] text-muted-foreground">{m.dose} · {m.route} · {m.frequency}</div>{m.instructions && <div className="text-[11.5px] text-muted-foreground">{m.instructions}</div>}</td>}
+                    {ti === 0 && <td rowSpan={m.times.length} className="sticky left-0 z-10 bg-card px-4 py-2 align-top"><div className="font-medium text-text-strong">💊 {m.name}</div><div className="text-[13px] text-muted-foreground">{m.dose} · {m.route} · {m.frequency}</div>{m.instructions && <div className="text-[13px] text-muted-foreground">{m.instructions}</div>}</td>}
                     <td className="whitespace-nowrap px-2 py-2 tabular-nums text-muted-foreground">{t}</td>
                     {days.map((d) => {
                       const date = `${month}-${String(d).padStart(2, "0")}`;
@@ -86,7 +86,7 @@ export function Medical({ personId, meds, admins, month, monthLabel, prevHref, n
   >Delete</button>
 </span>}</li>)}</ul></details>
       )}
-      {manage && active.length > 0 && <div className="flex flex-wrap gap-2 text-[12.5px]">{active.map((m) => <button key={m.id} disabled={pending} onClick={() => { if (confirm(`Discontinue ${m.name}?`)) start(() => setMedicationActive(m.id, personId, false)); }} className="rounded-md border border-line bg-page px-2.5 py-1 text-muted-foreground hover:text-danger">Discontinue {m.name}</button>)}</div>}
+      {manage && active.length > 0 && <div className="flex flex-wrap gap-2 text-[13px]">{active.map((m) => <button key={m.id} disabled={pending} onClick={() => { if (confirm(`Discontinue ${m.name}?`)) start(() => setMedicationActive(m.id, personId, false)); }} className="rounded-md border border-line bg-page px-2.5 py-1 text-muted-foreground hover:text-danger">Discontinue {m.name}</button>)}</div>}
       {manage && <NewMedication personId={personId} />}
     </div>
   );

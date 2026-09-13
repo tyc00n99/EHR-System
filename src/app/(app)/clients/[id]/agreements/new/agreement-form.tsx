@@ -82,7 +82,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
                     <div className="font-medium">{ex.extracted ? `Read ${ex.documentName}. Check the fields below before saving.` : `Attached ${ex.documentName}.`}</div>
                     {ex.pmiMismatch && <div className="mt-0.5 text-danger">The PMI on the letter ({ex.extracted?.pmi}) does not match this client. Make sure you picked the right client.</div>}
                     {ex.extracted && (
-                      <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[12.5px] sm:grid-cols-2">
+                      <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[13px] sm:grid-cols-2">
                         {ex.extracted.recipientName && <span>Recipient: {ex.extracted.recipientName}</span>}
                         {ex.extracted.effectiveDate && <span>Agreement dates: {ex.extracted.effectiveDate} to {ex.extracted.throughDate ?? "?"}</span>}
                         {ex.extracted.caseManagerName && <span>Case manager: {ex.extracted.caseManagerName}{ex.extracted.caseManagerPhone ? ` · ${ex.extracted.caseManagerPhone}` : ""}</span>}
@@ -90,15 +90,15 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
                         {ex.extracted.providerName && <span>Issued to: {ex.extracted.providerName}{ex.extracted.providerId ? ` (${ex.extracted.providerId})` : ""}</span>}
                       </div>
                     )}
-                    {ex.extracted?.notes && <div className="mt-1 text-[12.5px]">Reviewer note: {ex.extracted.notes}</div>}
+                    {ex.extracted?.notes && <div className="mt-1 text-[13px]">Reviewer note: {ex.extracted.notes}</div>}
                   </div>
                 </div>
                 {ex.extracted && ex.extracted.lines.length > 1 && (
                   <div className="mt-2 border-t border-ok/20 pt-2">
-                    <div className="mb-1 text-[12px] font-medium">This letter has {ex.extracted.lines.length} service lines. Choose the one to save as this agreement:</div>
+                    <div className="mb-1 text-[13px] font-medium">This letter has {ex.extracted.lines.length} service lines. Choose the one to save as this agreement:</div>
                     <div className="flex flex-wrap gap-1.5">
                       {ex.extracted.lines.map((l, i) => (
-                        <button key={i} type="button" onClick={() => { setLineIdx(i); applyLine(ex.extracted!, i); }} className={cx("rounded-md border px-2 py-1 text-[12px]", i === lineIdx ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
+                        <button key={i} type="button" onClick={() => { setLineIdx(i); applyLine(ex.extracted!, i); }} className={cx("rounded-md border px-2 py-1 text-[13px]", i === lineIdx ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
                           Line {l.lineNumber ?? i + 1} · {l.procedureCode} {l.modifiers.join(" ")} · {l.quantity ?? "?"} units{l.status && !/approved/i.test(l.status) ? ` · ${l.status}` : ""}
                         </button>
                       ))}
@@ -139,7 +139,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
             <span className="mb-1.5 block text-[13px] font-medium text-text">Modifiers <span className="font-normal text-muted-foreground">· up to four</span></span>
             <details className="group relative">
               <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-line bg-page px-3 hover:border-gray-400 [&::-webkit-details-marker]:hidden">
-                {modifiers.length === 0 ? <span className="text-hint">No modifiers</span> : modifiers.map((m) => <span key={m} className="rounded bg-panel px-1.5 py-0.5 text-xs font-medium tabular-nums text-gray-700">{m}</span>)}
+                {modifiers.length === 0 ? <span className="text-hint">No modifiers</span> : modifiers.map((m) => <span key={m} className="rounded bg-panel px-1.5 py-0.5 text-[13px] font-medium tabular-nums text-gray-700">{m}</span>)}
                 <span className="ml-auto text-muted-foreground">▾</span>
               </summary>
               <div className="absolute left-0 top-10 z-20 max-h-72 w-full overflow-y-auto rounded-lg border border-line bg-card p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] md:w-[28rem]">
@@ -152,7 +152,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
                 ))}
               </div>
             </details>
-            {e.modifiers && <span className="mt-1.5 block text-xs text-danger">{e.modifiers}</span>}
+            {e.modifiers && <span className="mt-1.5 block text-[13px] text-danger">{e.modifiers}</span>}
             <div className="mt-2 text-[13px] text-muted-foreground">Claim line: <span className="font-medium tabular-nums text-text-strong">{serviceCode || "—"}{modifiers.length ? ` ${modifiers.join(" ")}` : ""}</span></div>
           </div>
         </FormSection>

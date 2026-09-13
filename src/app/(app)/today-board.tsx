@@ -70,15 +70,15 @@ export function TodayBoard({ shifts }: { shifts: BoardShift[] }) {
               const t = TONE[s.status];
               const isLate = s.status === "scheduled" && s.startMin < now;
               return (
-                <Link key={s.id} href={`/scheduling?shift=${s.id}`} scroll={false} className="grid grid-cols-[minmax(0,176px)_120px_1fr] items-center gap-4 px-5 py-2.5 hover:bg-hover">
+                <Link key={s.id} href={`/scheduling?shift=${s.id}`} scroll={false} className="grid grid-cols-[minmax(0,176px)_145px_1fr] items-center gap-4 px-5 py-2.5 hover:bg-hover">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="truncate text-[13.5px] font-medium text-text-strong">{s.staff}</span>
-                      {isLate && <span className="rounded bg-danger-soft px-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-danger">late</span>}
+                      {isLate && <span className="rounded bg-danger-soft px-1.5 text-[13px] font-semibold uppercase tracking-wide text-danger">late</span>}
                     </div>
-                    <div className="truncate text-[12px] text-muted-foreground">{s.client} · {s.service}</div>
+                    <div className="truncate text-[13px] text-muted-foreground">{s.client} · {s.service}</div>
                   </div>
-                  <div className="whitespace-nowrap font-mono text-[11.5px] text-muted-foreground">{s.startLabel} – {s.endLabel}</div>
+                  <div className="whitespace-nowrap font-mono text-[13px] text-muted-foreground">{s.startLabel} – {s.endLabel}</div>
                   <div className="relative h-8 rounded-md border border-line-soft bg-sidebar">
                     <div className={cx("absolute inset-y-1 rounded", t.block)} style={{ left: `${pct(s.startMin)}%`, width: `${Math.max(2, pct(s.endMin) - pct(s.startMin))}%` }} title={`${s.startLabel} – ${s.endLabel} · ${t.label}`} />
                     {nowVisible && <div className="absolute -inset-y-0.5 w-0.5 bg-danger" style={{ left: `${pct(now)}%` }} aria-hidden />}
@@ -88,19 +88,19 @@ export function TodayBoard({ shifts }: { shifts: BoardShift[] }) {
             })}
           </div>
 
-          <div className="grid grid-cols-[minmax(0,176px)_120px_1fr] gap-4 px-5 pt-1">
+          <div className="grid grid-cols-[minmax(0,176px)_145px_1fr] gap-4 px-5 pt-1">
             <div />
             <div />
             <div className="relative h-4">
               {hours.map((h) => (
-                <span key={h} className="absolute -translate-x-1/2 font-mono text-[10.5px] text-muted-foreground" style={{ left: `${pct(h * 60)}%` }}>
+                <span key={h} className="absolute -translate-x-1/2 font-mono text-[13px] text-muted-foreground" style={{ left: `${pct(h * 60)}%` }}>
                   {h === 12 ? "12p" : h > 12 ? `${h - 12}p` : `${h}a`}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-soft px-5 py-2.5 text-[12px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-soft px-5 py-2.5 text-[13px] text-muted-foreground">
             {(["scheduled", "in_progress", "completed"] as const).map((k) => (
               <span key={k} className="flex items-center gap-1.5"><span className={cx("h-2.5 w-2.5 rounded-sm", TONE[k].dot)} />{TONE[k].label}</span>
             ))}

@@ -52,22 +52,22 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
           <div className="grid gap-2 sm:grid-cols-3">
             {INTERACTION_LEVELS.map(([v, label, hint]) => (
               <button key={v} type="button" onClick={() => setInteraction(v)} className={cx("rounded-md border px-3 py-2 text-left", interaction === v ? "border-primary bg-primary-soft" : "border-line bg-card hover:bg-hover")}>
-                <div className={cx("text-[13px] font-medium", interaction === v ? "text-primary" : "text-text-strong")}>{label}</div><div className="text-[12px] text-muted-foreground">{hint}</div>
+                <div className={cx("text-[13px] font-medium", interaction === v ? "text-primary" : "text-text-strong")}>{label}</div><div className="text-[13px] text-muted-foreground">{hint}</div>
               </button>
             ))}
           </div>
-          {e.interactionLevel && <div className="mt-1 text-xs text-danger">{e.interactionLevel}</div>}
+          {e.interactionLevel && <div className="mt-1 text-[13px] text-danger">{e.interactionLevel}</div>}
         </section>
 
         <section>
           <div className="mb-2 text-[13px] font-semibold text-text-strong">Skills worked on</div>
           <div className="flex flex-wrap gap-1.5">
-            {skillsOptions.map((s) => <button key={s} type="button" onClick={() => toggleSkill(s)} className={cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium", skills.includes(s) ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-hover")}>{skills.includes(s) && <Check className="size-3.5" />}{s}</button>)}
+            {skillsOptions.map((s) => <button key={s} type="button" onClick={() => toggleSkill(s)} className={cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium", skills.includes(s) ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-hover")}>{skills.includes(s) && <Check className="size-3.5" />}{s}</button>)}
           </div>
         </section>
 
         <section>
-          <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-semibold text-text-strong">Daily activities</span><span className="text-[12px] text-muted-foreground">Pick each activity you did with {personFirst}</span></div>
+          <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-semibold text-text-strong">Daily activities</span><span className="text-[13px] text-muted-foreground">Pick each activity you did with {personFirst}</span></div>
           <Select value="" onChange={(ev) => { const a = ev.target.value; if (a && !activities.includes(a)) setActivities((cur) => [...cur, a]); }} className="h-9">
             <option value="">Add an activity…</option>
             {activityOptions.filter((a) => !activities.includes(a)).map((a) => <option key={a} value={a}>{a}</option>)}
@@ -90,17 +90,17 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
             <div className="space-y-3">
               {Object.entries(grouped).map(([goal, qs]) => (
                 <div key={goal} className="rounded-md border border-line bg-card">
-                  <div className="border-b border-line-soft bg-sidebar px-3 py-1.5 text-[12px] font-medium text-text-strong">{goal}</div>
+                  <div className="border-b border-line-soft bg-sidebar px-3 py-1.5 text-[13px] font-medium text-text-strong">{goal}</div>
                   {qs.map((q) => (
                     <div key={q.id} className="border-b border-line-soft px-3 py-2.5 last:border-b-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="min-w-0 flex-1 text-[13px]">{q.prompt}</span>
                         <div className="flex gap-1">
-                          {(["yes", "no", "na"] as const).map((v) => <button key={v} type="button" onClick={() => setAnswers((a) => ({ ...a, [q.id]: a[q.id] === v ? "" : v }))} className={cx("h-7 rounded-md border px-2.5 text-[12px] font-medium", answers[q.id] === v ? (v === "yes" ? "border-ok bg-ok-soft text-ok" : v === "no" ? "border-danger bg-danger-soft text-danger" : "border-line bg-panel text-text") : "border-line bg-page text-muted-foreground hover:bg-hover")}>{v === "na" ? "N/A" : v[0].toUpperCase() + v.slice(1)}</button>)}
+                          {(["yes", "no", "na"] as const).map((v) => <button key={v} type="button" onClick={() => setAnswers((a) => ({ ...a, [q.id]: a[q.id] === v ? "" : v }))} className={cx("h-7 rounded-md border px-2.5 text-[13px] font-medium", answers[q.id] === v ? (v === "yes" ? "border-ok bg-ok-soft text-ok" : v === "no" ? "border-danger bg-danger-soft text-danger" : "border-line bg-panel text-text") : "border-line bg-page text-muted-foreground hover:bg-hover")}>{v === "na" ? "N/A" : v[0].toUpperCase() + v.slice(1)}</button>)}
                         </div>
                       </div>
                       <input type="hidden" name={`goal_${q.id}`} value={answers[q.id] ?? ""} />
-                      {answers[q.id] && <Input name={`goalnote_${q.id}`} value={notes[q.id] ?? ""} onChange={(ev) => setNotes((n) => ({ ...n, [q.id]: ev.target.value }))} placeholder="Optional detail" className="mt-2 h-8 text-[12.5px]" />}
+                      {answers[q.id] && <Input name={`goalnote_${q.id}`} value={notes[q.id] ?? ""} onChange={(ev) => setNotes((n) => ({ ...n, [q.id]: ev.target.value }))} placeholder="Optional detail" className="mt-2 h-8 text-[13px]" />}
                     </div>
                   ))}
                 </div>
@@ -110,7 +110,7 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
         )}
 
         <section>
-          <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-text-strong">Progress review</div><Button type="button" variant="secondary" onClick={draft} disabled={drafting} className="h-7 gap-1.5 text-[12px]">{drafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}{drafting ? "Drafting…" : "Draft from what I marked"}</Button></div>
+          <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-text-strong">Progress review</div><Button type="button" variant="secondary" onClick={draft} disabled={drafting} className="h-7 gap-1.5 text-[13px]">{drafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}{drafting ? "Drafting…" : "Draft from what I marked"}</Button></div>
           <Field label="" error={e.shiftNote} hint={`What ${personFirst} did, the support provided, and progress toward goals. Objective, past tense.`}>
             <Textarea name="shiftNote" value={note} onChange={(ev) => setNote(ev.target.value)} className="min-h-32" placeholder={`${personFirst} …`} />
           </Field>
@@ -152,11 +152,11 @@ export function SignaturePanel({ visitId, status, clientSignedAt, unsignedReason
             <span className="text-muted-foreground">accepted once the caregiver submits.</span>
           )}
           {canApprove && hasNote && (returnedAt ? (
-            <Button className="h-7 text-[12px]" disabled={pending} onClick={() => run(() => acceptNote(visitId))}>Accept</Button>
+            <Button className="h-7 text-[13px]" disabled={pending} onClick={() => run(() => acceptNote(visitId))}>Accept</Button>
           ) : approvedAt ? (
             <span className="flex items-center gap-1.5">
-              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="What needs fixing?" className="h-7 w-52 text-[12px]" />
-              <Button variant="outline" className="h-7 text-[12px]" disabled={pending || reason.trim().length < 3} onClick={() => run(async () => { const r = await returnNote(visitId, reason); if (!r.errors) setReason(""); return r; })}>Return</Button>
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="What needs fixing?" className="h-7 w-52 text-[13px]" />
+              <Button variant="outline" className="h-7 text-[13px]" disabled={pending || reason.trim().length < 3} onClick={() => run(async () => { const r = await returnNote(visitId, reason); if (!r.errors) setReason(""); return r; })}>Return</Button>
             </span>
           ) : null)}
         </li>
@@ -183,9 +183,9 @@ export function MedsDue({ visitId, personId, date, meds, admins, readOnly }: { v
       <ul className="divide-y divide-line-soft">
         {slots.map(({ m, t, a }) => (
           <li key={`${m.id}-${t}`} className="flex flex-wrap items-center gap-2 px-4 py-2 text-[13px]">
-            <span className="w-12 shrink-0 tabular-nums text-muted-foreground">{t}</span><span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{m.name}</span><span className="block text-[12px] text-muted-foreground">{m.dose}</span></span>
+            <span className="w-12 shrink-0 tabular-nums text-muted-foreground">{t}</span><span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{m.name}</span><span className="block text-[13px] text-muted-foreground">{m.dose}</span></span>
             {a ? <Badge tone={a.status === "given" ? "ok" : a.status === "missed" ? "danger" : "warn"}>{a.status}</Badge> : null}
-            {!readOnly && (<span className="flex gap-1">{(["given", "refused", "held"] as const).map((s) => <button key={s} disabled={pending} onClick={() => record(m.id, t, s)} className={cx("h-7 rounded-md border px-2 text-[12px] font-medium disabled:opacity-50", a?.status === s ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{s[0].toUpperCase() + s.slice(1)}</button>)}</span>)}
+            {!readOnly && (<span className="flex gap-1">{(["given", "refused", "held"] as const).map((s) => <button key={s} disabled={pending} onClick={() => record(m.id, t, s)} className={cx("h-7 rounded-md border px-2 text-[13px] font-medium disabled:opacity-50", a?.status === s ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{s[0].toUpperCase() + s.slice(1)}</button>)}</span>)}
           </li>
         ))}
       </ul>

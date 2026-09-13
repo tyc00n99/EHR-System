@@ -65,7 +65,7 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
               {active.map((a) => (
                 <div key={a.assignment.id} className="flex items-center gap-3 rounded-lg border border-line bg-card px-4 py-3">
                   <Link href={`/clients/${a.person.id}`} className="flex min-w-0 flex-1 items-center gap-3 hover:underline">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-[12px] font-semibold text-gray-100">{a.person.firstName[0]}{a.person.lastName[0]}</span>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-[13px] font-semibold text-gray-100">{a.person.firstName[0]}{a.person.lastName[0]}</span>
                     <span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{fullName(a.person)}</span><span className="block truncate text-[13px] text-muted-foreground">{a.assignment.orientedOn ? `${a.person.waiverProgram} · ${a.person.city ?? a.person.county} · plans and files` : "Orientation pending"}</span></span>
                   </Link>
                   <Link href="/clock" aria-label={`Clock in with ${fullName(a.person)}`} className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary hover:bg-blue-300/40"><Icon.clock size={18} /></Link>
@@ -83,8 +83,8 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
             {todayShifts.slice(0, 6).map((sh) => (
               <li key={sh.shift.id}>
                 <Link href={`/scheduling?week=${sh.shift.startAt.toISOString().slice(0, 10)}&shift=${sh.shift.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-hover">
-                  <span className="w-28 shrink-0 text-[12.5px] tabular-nums text-muted-foreground">{new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).format(sh.shift.startAt)}</span>
-                  <span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{sh.personFirst} {sh.personLast}</span><span className="block truncate text-[12.5px] text-muted-foreground">{labelForCode(sh.serviceCode, sh.modifiers)}</span></span>
+                  <span className="w-28 shrink-0 text-[13px] tabular-nums text-muted-foreground">{new Intl.DateTimeFormat("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).format(sh.shift.startAt)}</span>
+                  <span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{sh.personFirst} {sh.personLast}</span><span className="block truncate text-[13px] text-muted-foreground">{labelForCode(sh.serviceCode, sh.modifiers)}</span></span>
                   <Badge tone={sh.shift.status === "completed" ? "ok" : sh.shift.status === "missed" ? "danger" : sh.shift.status === "cancelled" ? "neutral" : "accent"}>{sh.shift.status.replace("_", " ")}</Badge>
                 </Link>
               </li>
@@ -143,7 +143,7 @@ function Metric({ label, hint, value, of, note, tone, href }: { label: string; h
         <span className="figure text-[26px] leading-none text-text-strong">{value}</span>
         {of && <span className="text-[15px] text-muted-foreground">/ {of}</span>}
       </div>
-      {note && <div className={cx("mt-1.5 text-[12.5px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
+      {note && <div className={cx("mt-1.5 text-[13px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
     </Link>
   );
 }
@@ -191,7 +191,7 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
     <div className="mx-auto max-w-6xl">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">Your workspace</p>
+          <p className="mb-1 text-[13px] font-semibold uppercase tracking-widest text-primary">Your workspace</p>
           <h1 className="leading-9">{first ? `Today, ${first}` : "Today at your agency"}</h1>
           <p className="mt-1 text-[13px] text-muted-foreground">{today()} · Pay period {period.label}</p>
         </div>
@@ -229,15 +229,15 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
           <Metric label="Returned for correction" hint="Notes a supervisor sent back. Everything else is accepted when the caregiver submits it." value={counts.returned} note={counts.returned ? "Caregivers need to fix these" : "Nothing sent back"} tone={counts.returned ? "warn" : "ok"} href="/attention?kind=returned" />
           <Metric label="Unsigned by client" hint="Completed notes without the client's signing code. These cannot be billed." value={unsignedToReview} note={unsignedToReview ? "Signature or reason needed" : "No missing signature evidence"} tone={unsignedToReview ? "danger" : "ok"} href="/attention?kind=unsigned" />
         </div>
-        <div className="border-t border-line-soft px-5 py-2.5 text-[12.5px] text-muted-foreground">Pay period {period.label}. Authorizations used: {used.toLocaleString()} of {authorized.toLocaleString()} units across {activeAgreements.length} active agreement{activeAgreements.length === 1 ? "" : "s"}. <Link href="/billing" className="text-primary hover:underline">Billing</Link></div>
+        <div className="border-t border-line-soft px-5 py-2.5 text-[13px] text-muted-foreground">Pay period {period.label}. Authorizations used: {used.toLocaleString()} of {authorized.toLocaleString()} units across {activeAgreements.length} active agreement{activeAgreements.length === 1 ? "" : "s"}. <Link href="/billing" className="text-primary hover:underline">Billing</Link></div>
       </section>
 
       <Card className="mb-6" title="Today on the board" description={boardShifts.length ? `${boardShifts.filter((b) => b.status === "in_progress").length} clocked in · ${boardShifts.filter((b) => b.status === "completed").length} finished · ${boardShifts.length} shifts` : "Every shift today, against the clock"} actions={<Link href="/scheduling" className="text-[13px] font-medium text-primary hover:underline">Scheduling</Link>}>
         <TodayBoard shifts={boardShifts} />
       </Card>
       <div className="mb-6">
-        <Card title="Recent notes" description="Open a note to preview its document" actions={<Link href="/visits" className="text-xs font-medium text-primary">All notes →</Link>}>
-          {recentNotes.length === 0 ? <Empty icon="doc" title="No notes yet" /> : <ul className="divide-y divide-line-soft">{recentNotes.map(({ visit: v, personFirst, personLast, staffFirst, staffLast }) => <li key={v.id}><Link href={`/?note=${v.id}`} scroll={false} className="flex items-center gap-3 px-5 py-3 hover:bg-hover"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-xs font-semibold text-primary">{personFirst[0]}{personLast[0]}</span><span className="min-w-0 flex-1"><span className="block font-medium">{personFirst} {personLast}</span><span className="block text-[13px] text-muted-foreground">{staffFirst} {staffLast} · {fmtDateTime(v.clockInAt)}</span></span><Badge tone={v.returnedAt ? "warn" : v.status === "completed" ? "ok" : "neutral"}>{v.returnedAt ? "Returned" : v.status.replace("_", " ")}</Badge></Link></li>)}</ul>}
+        <Card title="Recent notes" description="Open a note to preview its document" actions={<Link href="/visits" className="text-[13px] font-medium text-primary">All notes →</Link>}>
+          {recentNotes.length === 0 ? <Empty icon="doc" title="No notes yet" /> : <ul className="divide-y divide-line-soft">{recentNotes.map(({ visit: v, personFirst, personLast, staffFirst, staffLast }) => <li key={v.id}><Link href={`/?note=${v.id}`} scroll={false} className="flex items-center gap-3 px-5 py-3 hover:bg-hover"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-[13px] font-semibold text-primary">{personFirst[0]}{personLast[0]}</span><span className="min-w-0 flex-1"><span className="block font-medium">{personFirst} {personLast}</span><span className="block text-[13px] text-muted-foreground">{staffFirst} {staffLast} · {fmtDateTime(v.clockInAt)}</span></span><Badge tone={v.returnedAt ? "warn" : v.status === "completed" ? "ok" : "neutral"}>{v.returnedAt ? "Returned" : v.status.replace("_", " ")}</Badge></Link></li>)}</ul>}
         </Card>
       </div>
       {user.role === "admin" && steps.some((step) => !step.done) && <GetStarted steps={steps} />}

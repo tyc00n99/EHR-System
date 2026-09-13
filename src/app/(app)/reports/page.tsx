@@ -44,8 +44,8 @@ export default async function ReportsPage() {
                 <li key={p.index} className="flex items-center justify-between gap-3 px-5 py-2.5">
                   <span className="text-[13px]">{i === 0 ? "Current period" : "Pay period"} <span className="text-muted-foreground">· {p.label}</span></span>
                   <span className="flex items-center gap-1">
-                    <DownloadButton href={`/reports/${r.file}.pdf?period=${p.startDate}`} icon="doc" className="h-7 px-2.5 text-[12.5px]">PDF</DownloadButton>
-                    <Link href={`/reports/${r.file}.csv?period=${p.startDate}`} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-btn)] border border-line px-2.5 text-[12.5px] font-medium text-text hover:bg-hover"><Icon.download size={13} />CSV</Link>
+                    <DownloadButton href={`/reports/${r.file}.pdf?period=${p.startDate}`} icon="doc" className="h-7 px-2.5 text-[13px]">PDF</DownloadButton>
+                    <Link href={`/reports/${r.file}.csv?period=${p.startDate}`} className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium text-text hover:bg-hover"><Icon.download size={13} />CSV</Link>
                   </span>
                 </li>
               ))}

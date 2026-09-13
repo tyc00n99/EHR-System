@@ -30,7 +30,7 @@ export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
             <Ic size={15} />
             <span className="hidden lg:inline">{d.label}</span>
             {badge > 0 && (
-              <span className="ml-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-medium text-white">{badge}</span>
+              <span className="ml-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1.5 text-[13px] font-medium text-white">{badge}</span>
             )}
           </Link>
         );
@@ -64,7 +64,7 @@ export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) 
           >
             {e.label}
             {e.count != null && (
-              <span className={cx("inline-flex h-[17px] items-center rounded-full border px-1.5 text-[11px] tabular-nums", e.hot ? "border-danger/30 bg-danger-soft text-danger" : "border-line bg-panel text-muted-foreground")}>{e.count}</span>
+              <span className={cx("inline-flex h-[17px] items-center rounded-full border px-1.5 text-[13px] tabular-nums", e.hot ? "border-danger/30 bg-danger-soft text-danger" : "border-line bg-panel text-muted-foreground")}>{e.count}</span>
             )}
           </Link>
         );

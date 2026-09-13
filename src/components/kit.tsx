@@ -34,8 +34,8 @@ export function Field({ label, error, hint, children, className }: { label: stri
     <label className={cx("block min-w-0", className)}>
       <span className="mb-1.5 block text-[13px] font-medium text-text">{label}</span>
       {children}
-      {hint && !error && <span className="mt-1.5 block text-xs leading-4 text-muted-foreground">{hint}</span>}
-      {error && <span className="mt-1.5 block text-xs leading-4 text-danger">{error}</span>}
+      {hint && !error && <span className="mt-1.5 block text-[13px] leading-4 text-muted-foreground">{hint}</span>}
+      {error && <span className="mt-1.5 block text-[13px] leading-4 text-danger">{error}</span>}
     </label>
   );
 }
@@ -194,7 +194,7 @@ const badges = {
 export type Tone = keyof typeof badges;
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
-  return <span className={cx("inline-flex h-5 items-center rounded px-1.5 text-xs font-medium leading-none whitespace-nowrap", badges[tone])}>{children}</span>;
+  return <span className={cx("inline-flex h-5 items-center rounded px-1.5 text-[13px] font-medium leading-none whitespace-nowrap", badges[tone])}>{children}</span>;
 }
 
 /* ---------- tables ---------- */
@@ -208,7 +208,7 @@ export function Table({ children }: { children: ReactNode }) {
 }
 
 export function Th({ children, className, align = "left" }: { children?: ReactNode; className?: string; align?: "left" | "right" }) {
-  return <th className={cx("h-9 whitespace-nowrap px-4 font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
+  return <th className={cx("h-9 whitespace-nowrap px-4 font-mono text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
 }
 
 export function Td({ children, className, align = "left", strong, wrap }: { children?: ReactNode; className?: string; align?: "left" | "right"; strong?: boolean; wrap?: boolean }) {
@@ -281,7 +281,7 @@ export function Tabs({ tabs, current, base }: { tabs: { key: string; label: stri
     <div className="-mx-4 mb-5 flex shrink-0 items-center gap-1.5 overflow-x-auto bg-page px-4 py-2 md:-mx-8 md:px-8">
       {tabs.map((t) => (
         <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[17.5px] font-medium transition-colors", current === t.key ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text")}>
-          {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[11px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}
+          {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[13px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}
         </Link>
       ))}
     </div>
@@ -299,7 +299,7 @@ export function Toolbar({ action, q, placeholder, chips, count, children, hidden
       </form>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
-          {chips.map((c) => <Link key={c.key} href={c.href} className={cx("inline-flex h-7 items-center rounded-full border px-2.5 text-xs font-medium", c.active ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{c.label}</Link>)}
+          {chips.map((c) => <Link key={c.key} href={c.href} className={cx("inline-flex h-7 items-center rounded-full border px-2.5 text-[13px] font-medium", c.active ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{c.label}</Link>)}
         </div>
       )}
       {count && <span className="text-[13px] text-muted-foreground">{count}</span>}
@@ -327,9 +327,9 @@ export function Kpi({ label, value, note, tone, spark, href }: { label: string; 
   const body = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-[12.5px] font-medium text-muted-foreground">{label}</div>
+        <div className="text-[13px] font-medium text-muted-foreground">{label}</div>
         <div className="figure mt-1.5 text-[28px] leading-none text-text-strong">{value}</div>
-        {note && <div className={cx("mt-2 text-[12.5px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
+        {note && <div className={cx("mt-2 text-[13px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
       </div>
       {spark && <Sparkline values={spark} />}
     </div>

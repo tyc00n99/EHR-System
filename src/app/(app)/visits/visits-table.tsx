@@ -35,7 +35,7 @@ export function VisitsTable({ rows, exportHref, state }: { rows: VisitRow[]; exp
       searchPlaceholder="Search client, caregiver, code…"
       rowHref={(r) => `?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)), note: r.id })}`}
       chips={state ? undefined : <FilterChips value={chip} onChange={setChip} options={[{ key: "all", label: "All", count: rows.length }, { key: "unsigned", label: "Unsigned", count: rows.filter((r) => r.status === "completed" && !r.signed).length }, { key: "manual", label: "Manual", count: rows.filter((r) => r.manual).length }, { key: "open", label: "In progress", count: rows.filter((r) => r.status === "in_progress").length }]} />}
-      actions={exportHref && <a href={exportHref} className="inline-flex h-8 items-center rounded-md border border-line bg-page px-3 text-[12.5px] font-medium hover:bg-hover">Export CSV</a>}
+      actions={exportHref && <a href={exportHref} className="inline-flex h-8 items-center rounded-md border border-line bg-page px-3 text-[13px] font-medium hover:bg-hover">Export CSV</a>}
       emptyTitle="No notes match"
       initialSorting={[{ id: "clockInIso", desc: true }]}
       dense

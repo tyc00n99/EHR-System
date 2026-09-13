@@ -143,9 +143,9 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
 
         <Card title="Where the risk sits" description="Counts behind this period's numbers. The review queue has the detail." actions={<Link href="/attention" className="text-[13px] font-medium text-primary hover:underline">Review queue</Link>}>
           <div className="grid grid-cols-3 divide-x divide-line-soft text-center">
-            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{nonCompliant.length}</div><div className="text-[11.5px] text-muted-foreground">staff out of compliance</div></div>
-            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{now.atRisk.filter((l) => !l.signed).length}</div><div className="text-[11.5px] text-muted-foreground">unsigned visits</div></div>
-            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{open.length}</div><div className="text-[11.5px] text-muted-foreground">clocked in now</div></div>
+            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{nonCompliant.length}</div><div className="text-[13px] text-muted-foreground">staff out of compliance</div></div>
+            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{now.atRisk.filter((l) => !l.signed).length}</div><div className="text-[13px] text-muted-foreground">unsigned visits</div></div>
+            <div className="px-3 py-2"><div className="figure text-[20px] text-text-strong">{open.length}</div><div className="text-[13px] text-muted-foreground">clocked in now</div></div>
           </div>
         </Card>
       </div>

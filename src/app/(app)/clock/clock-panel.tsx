@@ -115,7 +115,7 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
         </Select>
       </Field>
       <fieldset>
-        <legend className="mb-1 block text-xs font-medium text-muted-foreground">Planned tasks</legend>
+        <legend className="mb-1 block text-[13px] font-medium text-muted-foreground">Planned tasks</legend>
         <div className="divide-y divide-line-soft rounded-md border border-line">
           {tasks.map((t) => (
             <Checkbox key={t.code} name="tasks[]" value={t.code} label={t.label} className="py-3" />
@@ -131,7 +131,7 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
       <Button type="submit" className="h-12 w-full text-base" disabled={pending || locating || !oriented}>
         {locating ? "Getting your location…" : pending ? "Clocking in…" : "Clock in"}
       </Button>
-      <p className="text-center text-xs text-muted-foreground">Your location is recorded at clock-in and clock-out for electronic visit verification.</p>
+      <p className="text-center text-[13px] text-muted-foreground">Your location is recorded at clock-in and clock-out for electronic visit verification.</p>
     </form>
   );
 }
@@ -155,7 +155,7 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
       <FormError message={gpsError ?? state.message} />
       {open.tasks.length > 0 && (
         <fieldset>
-          <legend className="mb-1 block text-xs font-medium text-muted-foreground">Tasks completed</legend>
+          <legend className="mb-1 block text-[13px] font-medium text-muted-foreground">Tasks completed</legend>
           <div className="divide-y divide-line-soft rounded-md border border-line">
             {open.tasks.map((t) => (
               <Checkbox key={t.code} name="completedTasks[]" value={t.code} defaultChecked={t.completed} label={t.label} className="py-3" />

@@ -54,9 +54,9 @@ export function ClientCodePanel({
   if (!hasCode) {
     return (
       <div>
-        <p className="text-[12.5px] text-muted-foreground">No signing code yet. Without one this person cannot sign a shift note.</p>
+        <p className="text-[13px] text-muted-foreground">No signing code yet. Without one this person cannot sign a shift note.</p>
         {manage && (
-          <button type="button" onClick={generate} disabled={pending} className="mt-2 inline-flex h-8 items-center rounded-md bg-primary px-3 text-[12.5px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
+          <button type="button" onClick={generate} disabled={pending} className="mt-2 inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">
             {pending ? "Generating…" : "Generate a code"}
           </button>
         )}
@@ -83,9 +83,9 @@ export function ClientCodePanel({
         )}
       </div>
 
-      {fresh && <p className="mt-1.5 text-[12px] text-ok">New code. Give it to the person now.</p>}
+      {fresh && <p className="mt-1.5 text-[13px] text-ok">New code. Give it to the person now.</p>}
 
-      <dl className="mt-2.5 grid grid-cols-[78px_minmax(0,1fr)] gap-x-2 gap-y-1 text-[12px]">
+      <dl className="mt-2.5 grid grid-cols-[78px_minmax(0,1fr)] gap-x-2 gap-y-1 text-[13px]">
         <dt className="text-muted-foreground">Set</dt>
         <dd className="ident m-0 text-text-strong">{setAt}</dd>
         {rotatesOn && (<>
@@ -94,10 +94,10 @@ export function ClientCodePanel({
         </>)}
       </dl>
 
-      <p className={cx("mt-2 text-[12px]", delivery.tone === "ok" ? "text-muted-foreground" : "text-warn")}>{delivery.text}</p>
+      <p className={cx("mt-2 text-[13px]", delivery.tone === "ok" ? "text-muted-foreground" : "text-warn")}>{delivery.text}</p>
 
       {manage && (
-        <button type="button" onClick={generate} disabled={pending} className="mt-2.5 inline-flex h-8 items-center rounded-md border border-line bg-card px-3 text-[12.5px] font-medium text-text-strong hover:bg-hover disabled:opacity-60">
+        <button type="button" onClick={generate} disabled={pending} className="mt-2.5 inline-flex h-8 items-center rounded-md border border-line bg-card px-3 text-[13px] font-medium text-text-strong hover:bg-hover disabled:opacity-60">
           {pending ? "Generating…" : "Generate a new code"}
         </button>
       )}

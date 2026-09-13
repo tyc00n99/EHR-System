@@ -42,7 +42,7 @@ export function ProfileHistory({ rows }: { rows: HistoryRow[] }) {
           type="button"
           onClick={() => { setSort((s) => ({ col, desc: s.col === col ? !s.desc : true })); setPage(0); }}
           aria-sort={on ? (sort.desc ? "descending" : "ascending") : "none"}
-          className={cx("inline-flex items-center gap-1 text-[12px] transition-colors", on ? "text-text-strong" : "text-muted-foreground hover:text-text-strong")}
+          className={cx("inline-flex items-center gap-1 text-[13px] transition-colors", on ? "text-text-strong" : "text-muted-foreground hover:text-text-strong")}
         >
           {label}
           {on
@@ -56,7 +56,7 @@ export function ProfileHistory({ rows }: { rows: HistoryRow[] }) {
   return (
     <div className="max-w-[820px]">
       <div className="overflow-x-auto rounded-lg border border-line">
-        <table className="w-full min-w-[520px] border-collapse text-[12.5px]">
+        <table className="w-full min-w-[520px] border-collapse text-[13px]">
           <thead className="bg-panel">
             <tr>{head("at", "Date", "w-[170px]")}{head("actor", "Team member", "w-[150px]")}{head("event", "Event")}</tr>
           </thead>
@@ -72,17 +72,17 @@ export function ProfileHistory({ rows }: { rows: HistoryRow[] }) {
         </table>
       </div>
 
-      <p className="mt-2 text-center text-[12px] text-muted-foreground">
+      <p className="mt-2 text-center text-[13px] text-muted-foreground">
         {from + 1} — {from + shown.length} of {rows.length} event{rows.length === 1 ? "" : "s"}
       </p>
 
       <div className="mt-2 flex items-center gap-3">
-        <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+        <label className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
           Load
           <select
             value={size}
             onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
-            className="h-7 rounded-md border border-line bg-card px-1.5 text-[12px] text-text"
+            className="h-7 rounded-md border border-line bg-card px-1.5 text-[13px] text-text"
           >
             {SIZES.map((n) => <option key={n} value={n}>{n} rows</option>)}
           </select>
@@ -99,7 +99,7 @@ export function ProfileHistory({ rows }: { rows: HistoryRow[] }) {
             >
               <Icon.chevronLeft size={13} />
             </button>
-            <span className="ident min-w-[52px] text-center text-[12px] text-muted-foreground">{current + 1} / {pages}</span>
+            <span className="ident min-w-[52px] text-center text-[13px] text-muted-foreground">{current + 1} / {pages}</span>
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}

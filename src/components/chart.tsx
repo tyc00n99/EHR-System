@@ -55,8 +55,8 @@ export function ChartSection({ label, action, children }: { label: string; actio
   return (
     <section className="mb-4 border-line pb-4 last:mb-0 last:border-0 last:pb-0 [&+&]:border-t [&+&]:pt-4">
       <div className="mb-2 flex items-baseline gap-3">
-        <div className="text-[10.5px] font-medium uppercase tracking-[0.11em] text-hint">{label}</div>
-        {action && <div className="ml-auto text-[12px]">{action}</div>}
+        <div className="text-[13px] font-medium uppercase tracking-[0.11em] text-hint">{label}</div>
+        {action && <div className="ml-auto text-[13px]">{action}</div>}
       </div>
       {children}
     </section>
@@ -65,12 +65,12 @@ export function ChartSection({ label, action, children }: { label: string; actio
 
 /** One row in a chart section. Dividers, not borders — a list, not a stack of cards. */
 export function ChartLine({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx("flex items-center gap-2.5 border-b border-line-soft py-1.5 text-[12.5px] last:border-0", className)}>{children}</div>;
+  return <div className={cx("flex items-center gap-2.5 border-b border-line-soft py-1.5 text-[13px] last:border-0", className)}>{children}</div>;
 }
 
 export function ChartFacts({ items }: { items: { label: string; value: ReactNode }[] }) {
   return (
-    <dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-[12.5px] [overflow-wrap:anywhere]">
+    <dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-[13px] [overflow-wrap:anywhere]">
       {items.map((i) => (
         <div key={i.label} className="contents">
           <dt className="text-muted-foreground">{i.label}</dt>
@@ -84,7 +84,7 @@ export function ChartFacts({ items }: { items: { label: string; value: ReactNode
 /** Something to act on, with the reason spelled out. */
 export function ChartAlert({ tone, children, action }: { tone: "danger" | "warn"; children: ReactNode; action?: ReactNode }) {
   return (
-    <div className={cx("mb-2 rounded-md border-l-[3px] px-2.5 py-2 text-[12px] leading-snug last:mb-0", tone === "danger" ? "border-danger bg-danger-soft text-danger" : "border-warn bg-warn-soft text-warn")}>
+    <div className={cx("mb-2 rounded-md border-l-[3px] px-2.5 py-2 text-[13px] leading-snug last:mb-0", tone === "danger" ? "border-danger bg-danger-soft text-danger" : "border-warn bg-warn-soft text-warn")}>
       <div>{children}</div>
       {action && <div className="mt-1.5">{action}</div>}
     </div>

@@ -21,10 +21,10 @@ export function ThemeMenuItems() {
   return (
     <>
       <DropdownMenuSeparator />
-      <DropdownMenuGroup><DropdownMenuLabel className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"><Palette className="size-3.5" /> Appearance</DropdownMenuLabel></DropdownMenuGroup>
+      <DropdownMenuGroup><DropdownMenuLabel className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground"><Palette className="size-3.5" /> Appearance</DropdownMenuLabel></DropdownMenuGroup>
       {THEMES.map((t) => (
         <DropdownMenuItem key={t.key} onClick={() => pick(t.key)} closeOnClick={false}>
-          <span className="flex-1"><span className="block">{t.label}</span><span className="block text-[11.5px] text-muted-foreground">{t.hint}</span></span>
+          <span className="flex-1"><span className="block">{t.label}</span><span className="block text-[13px] text-muted-foreground">{t.hint}</span></span>
           {theme === t.key && <Check className="size-4 text-primary" />}
         </DropdownMenuItem>
       ))}

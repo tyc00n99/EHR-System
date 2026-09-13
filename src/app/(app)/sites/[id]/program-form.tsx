@@ -30,7 +30,7 @@ export function ProgramForm({ action }: { action: (p: ActionState, fd: FormData)
 export function ProgramToggle({ id, siteId, active }: { id: string; siteId: string; active: boolean }) {
   const [pending, start] = useTransition();
   return (
-    <button disabled={pending} onClick={() => start(() => toggleProgram(id, siteId, !active))} className="text-xs font-medium text-primary hover:underline disabled:opacity-50">
+    <button disabled={pending} onClick={() => start(() => toggleProgram(id, siteId, !active))} className="text-[13px] font-medium text-primary hover:underline disabled:opacity-50">
       {active ? "Deactivate" : "Activate"}
     </button>
   );

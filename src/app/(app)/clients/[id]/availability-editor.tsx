@@ -75,12 +75,12 @@ export function AvailabilityEditor({ personId, initial, onDone }: { personId: st
               <label className="block">
                 <span className="mb-1.5 block text-[14px] font-medium text-text-strong">Start date <span className="text-danger">*</span></span>
                 <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-10 w-full rounded-lg border border-line bg-card px-3 text-[14px] text-text" />
-                {state.errors?.startDate && <span className="mt-1 block text-[12.5px] text-danger">{state.errors.startDate}</span>}
+                {state.errors?.startDate && <span className="mt-1 block text-[13px] text-danger">{state.errors.startDate}</span>}
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-[14px] font-medium text-text-strong">End date</span>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-10 w-full rounded-lg border border-line bg-card px-3 text-[14px] text-text" />
-                {state.errors?.endDate && <span className="mt-1 block text-[12.5px] text-danger">{state.errors.endDate}</span>}
+                {state.errors?.endDate && <span className="mt-1 block text-[13px] text-danger">{state.errors.endDate}</span>}
               </label>
             </div>
 

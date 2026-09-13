@@ -35,13 +35,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">
         <span className="text-[13px] text-muted-foreground">Service code</span>
-        <Link href={codeHref("")} className={cx("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium", code ? "border-line bg-page text-text hover:bg-hover" : "border-primary bg-primary-soft text-primary")}>
+        <Link href={codeHref("")} className={cx("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[13px] font-medium", code ? "border-line bg-page text-text hover:bg-hover" : "border-primary bg-primary-soft text-primary")}>
           All<span className="tabular-nums opacity-70">{all.length}</span>
         </Link>
         {codes.map((c) => {
           const n = all.filter((l) => l.serviceCode === c).length;
           return (
-            <Link key={c} href={codeHref(c)} title={labelForCode(c, [])} className={cx("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[12.5px] font-medium", code === c ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
+            <Link key={c} href={codeHref(c)} title={labelForCode(c, [])} className={cx("inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[13px] font-medium", code === c ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
               <span className="font-mono">{c}</span><span className="tabular-nums opacity-70">{n}</span>
             </Link>
           );
@@ -52,7 +52,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         <Card title="Ready to bill" description="Grouped by client. One row per note becomes one 837P service line." actions={<Badge tone="ok">{ready.length} lines</Badge>}>
           {byClient.length === 0 ? <Empty icon="money" title="Nothing ready in this period" /> : byClient.map((c) => (
             <div key={c.personId} className="border-b border-line-soft last:border-b-0">
-              <div className="flex items-center justify-between bg-sidebar px-5 py-1.5 text-[12px]"><Link href={`/clients/${c.personId}`} className="font-semibold text-text-strong hover:underline">{c.name}</Link><span className="tabular-nums text-muted-foreground">{c.lines.length} line{c.lines.length === 1 ? "" : "s"} · {fmtMoney(total(c.lines))}</span></div>
+              <div className="flex items-center justify-between bg-sidebar px-5 py-1.5 text-[13px]"><Link href={`/clients/${c.personId}`} className="font-semibold text-text-strong hover:underline">{c.name}</Link><span className="tabular-nums text-muted-foreground">{c.lines.length} line{c.lines.length === 1 ? "" : "s"} · {fmtMoney(total(c.lines))}</span></div>
               <Table>
                 <Thead><Th>Service</Th><Th>Code</Th><Th align="right">Units</Th><Th align="right">Rate</Th><Th align="right">Amount</Th><Th>Rendered by</Th></Thead>
                 <tbody>{c.lines.map((l) => <Tr key={l.visitId}><Td><Link href={`/visits/${l.visitId}`} className="hover:underline">{labelForCode(l.serviceCode, [])}</Link></Td><Td className="tabular-nums">{l.serviceCode}</Td><Td align="right">{l.units}</Td><Td align="right">{fmtMoney(l.unitRate)}</Td><Td align="right" strong>{fmtMoney(l.units * l.unitRate)}</Td><Td className="text-muted-foreground">{l.staffName}</Td></Tr>)}</tbody>
@@ -63,7 +63,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         <div className="space-y-4">
           <Card title="On hold" description="Fix these before the claim run" actions={<Badge tone={hold.length ? "warn" : "ok"}>{hold.length}</Badge>}>
             {hold.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">Nothing held.</p> : (
-              <ul className="divide-y divide-line-soft">{hold.map((l) => <li key={l.visitId}><Link href={`/visits/${l.visitId}`} className="flex items-center justify-between gap-3 px-5 py-2.5 hover:bg-hover"><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{l.personName}</span><span className="block text-[12.5px] text-muted-foreground">{!l.signed ? "Not signed by client" : "Manual entry pending EVV"} · {fmtMoney(l.units * l.unitRate)}</span></span><Badge tone={!l.signed ? "danger" : "warn"}>{!l.signed ? "unsigned" : "manual"}</Badge></Link></li>)}</ul>
+              <ul className="divide-y divide-line-soft">{hold.map((l) => <li key={l.visitId}><Link href={`/visits/${l.visitId}`} className="flex items-center justify-between gap-3 px-5 py-2.5 hover:bg-hover"><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{l.personName}</span><span className="block text-[13px] text-muted-foreground">{!l.signed ? "Not signed by client" : "Manual entry pending EVV"} · {fmtMoney(l.units * l.unitRate)}</span></span><Badge tone={!l.signed ? "danger" : "warn"}>{!l.signed ? "unsigned" : "manual"}</Badge></Link></li>)}</ul>
             )}
           </Card>
           <Card title="Claim run" padded>

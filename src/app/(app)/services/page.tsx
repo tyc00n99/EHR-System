@@ -18,7 +18,7 @@ export default function ServicesPage() {
         {CATEGORIES.map((cat) => {
           const items = SERVICE_TYPES.filter((s) => s.category === cat.key);
           return (
-            <Card key={cat.key} title={cat.title} description={cat.blurb} actions={<span className="text-xs text-muted-foreground">{cat.cite} · {items.length} services</span>}>
+            <Card key={cat.key} title={cat.title} description={cat.blurb} actions={<span className="text-[13px] text-muted-foreground">{cat.cite} · {items.length} services</span>}>
               <Table>
                 <Thead><Th>Service</Th><Th>Waivers</Th><Th>Planning</Th><Th>Cite</Th></Thead>
                 <tbody>
@@ -26,20 +26,20 @@ export default function ServicesPage() {
                     const rows = items.filter((s) => s.group === g);
                     if (rows.length === 0) return null;
                     return [
-                      <tr key={`${g}-h`} className="border-t border-line-soft bg-sidebar"><td colSpan={4} className="px-5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-500">{GROUP_LABELS[g]}</td></tr>,
+                      <tr key={`${g}-h`} className="border-t border-line-soft bg-sidebar"><td colSpan={4} className="px-5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-gray-500">{GROUP_LABELS[g]}</td></tr>,
                       ...rows.map((s) => (
                         <Tr key={s.id}>
                           <Td wrap>
                             <div className="font-medium text-text-strong">{s.name}</div>
-                            {s.note && <div className="mt-0.5 max-w-md text-xs leading-4 text-muted-foreground">{s.note}</div>}
+                            {s.note && <div className="mt-0.5 max-w-md text-[13px] leading-4 text-muted-foreground">{s.note}</div>}
                           </Td>
                           <Td wrap>
                             {s.waivers.length === 0 ? <span className="text-muted-foreground">Non-waiver</span> : (
-                              <span className="flex flex-wrap gap-1">{s.waivers.map((w) => <span key={w} title={WAIVER_NAMES[w]} className="rounded bg-panel px-1.5 py-0.5 text-xs font-medium text-gray-700">{w}</span>)}</span>
+                              <span className="flex flex-wrap gap-1">{s.waivers.map((w) => <span key={w} title={WAIVER_NAMES[w]} className="rounded bg-panel px-1.5 py-0.5 text-[13px] font-medium text-gray-700">{w}</span>)}</span>
                             )}
                           </Td>
                           <Td><Badge tone={s.planningTrack === "245D.071" ? "accent" : "ok"}>{s.planningTrack}</Badge></Td>
-                          <Td className="whitespace-nowrap text-xs text-muted-foreground">{s.cite}</Td>
+                          <Td className="whitespace-nowrap text-[13px] text-muted-foreground">{s.cite}</Td>
                         </Tr>
                       )),
                     ];

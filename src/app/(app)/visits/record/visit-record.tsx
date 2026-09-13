@@ -29,9 +29,9 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
   return (
     <div className="flex min-h-full flex-col">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-nav px-5 py-3 text-white">
-        <div className="min-w-0 flex-1"><div className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/60">Service record</div><div className="truncate text-[15px] font-semibold">{fullName(person)} <span className="font-normal text-white/70">· {labelForCode(v.serviceCode, v.modifiers)}</span></div></div>
-        <a href={`/visits/${v.id}/note.pdf`} target="_blank" rel="noreferrer" className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12.5px] text-white/80 hover:bg-white/10"><FileDown className="size-3.5" /> PDF</a>
-        {!inSheet ? null : <Link href={`/visits/${v.id}`} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[12.5px] text-white/80 hover:bg-white/10"><ExternalLink className="size-3.5" /> Full page</Link>}
+        <div className="min-w-0 flex-1"><div className="text-[13px] font-medium uppercase tracking-[0.08em] text-white/60">Service record</div><div className="truncate text-[15px] font-semibold">{fullName(person)} <span className="font-normal text-white/70">· {labelForCode(v.serviceCode, v.modifiers)}</span></div></div>
+        <a href={`/visits/${v.id}/note.pdf`} target="_blank" rel="noreferrer" className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-white/80 hover:bg-white/10"><FileDown className="size-3.5" /> PDF</a>
+        {!inSheet ? null : <Link href={`/visits/${v.id}`} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-white/80 hover:bg-white/10"><ExternalLink className="size-3.5" /> Full page</Link>}
         {inSheet && <CloseSheetButton><X className="size-4" /></CloseSheetButton>}
       </div>
 
@@ -49,8 +49,8 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
 
       <div className="grid gap-5 px-5 py-5">
         <section className="grid gap-2 text-[13px] sm:grid-cols-2">
-          <div className="rounded-md border border-line bg-card px-3 py-2"><div className="text-[11.5px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Clock in</div><div className="mt-0.5 font-medium text-text-strong">{fmtDateTime(v.clockInAt)}</div>{v.clockInLat != null && <a href={`https://www.google.com/maps?q=${v.clockInLat},${v.clockInLng}`} target="_blank" rel="noreferrer" className="mt-0.5 flex items-center gap-1 text-[12px] text-primary hover:underline"><MapPin className="size-3" />{v.clockInLat.toFixed(4)}, {v.clockInLng.toFixed(4)}</a>}</div>
-          <div className="rounded-md border border-line bg-card px-3 py-2"><div className="text-[11.5px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Clock out</div><div className="mt-0.5 font-medium text-text-strong">{v.clockOutAt ? fmtDateTime(v.clockOutAt) : "Still in progress"}</div>{v.clockOutLat != null && v.clockOutLng != null && <a href={`https://www.google.com/maps?q=${v.clockOutLat},${v.clockOutLng}`} target="_blank" rel="noreferrer" className="mt-0.5 flex items-center gap-1 text-[12px] text-primary hover:underline"><MapPin className="size-3" />{v.clockOutLat.toFixed(4)}, {v.clockOutLng.toFixed(4)}</a>}</div>
+          <div className="rounded-md border border-line bg-card px-3 py-2"><div className="text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Clock in</div><div className="mt-0.5 font-medium text-text-strong">{fmtDateTime(v.clockInAt)}</div>{v.clockInLat != null && <a href={`https://www.google.com/maps?q=${v.clockInLat},${v.clockInLng}`} target="_blank" rel="noreferrer" className="mt-0.5 flex items-center gap-1 text-[13px] text-primary hover:underline"><MapPin className="size-3" />{v.clockInLat.toFixed(4)}, {v.clockInLng.toFixed(4)}</a>}</div>
+          <div className="rounded-md border border-line bg-card px-3 py-2"><div className="text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Clock out</div><div className="mt-0.5 font-medium text-text-strong">{v.clockOutAt ? fmtDateTime(v.clockOutAt) : "Still in progress"}</div>{v.clockOutLat != null && v.clockOutLng != null && <a href={`https://www.google.com/maps?q=${v.clockOutLat},${v.clockOutLng}`} target="_blank" rel="noreferrer" className="mt-0.5 flex items-center gap-1 text-[13px] text-primary hover:underline"><MapPin className="size-3" />{v.clockOutLat.toFixed(4)}, {v.clockOutLng.toFixed(4)}</a>}</div>
         </section>
 
         {r.meds.length > 0 && <MedsDue visitId={v.id} personId={person.id} date={v.clockInAt.toISOString().slice(0, 10)} meds={r.meds.map((m) => ({ id: m.id, name: m.name, dose: m.dose, times: m.times }))} admins={r.admins.map((a) => ({ medicationId: a.medicationId, time: a.scheduledTime, status: a.status }))} readOnly={locked} />}
@@ -68,7 +68,7 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
 
         <SignaturePanel visitId={v.id} status={v.status} clientSignedAt={v.clientSignedAt ? fmtDateTime(v.clientSignedAt) : null} unsignedReason={v.clientUnsignedReason} staffSignedAt={v.staffSignedAt ? fmtDateTime(v.staffSignedAt) : null} approvedAt={v.approvedAt ? fmtDateTime(v.approvedAt) : null} approverEmail={r.approverEmail} canApprove={office} hasNote={Boolean(v.shiftNote)} returnedAt={v.returnedAt ? fmtDateTime(v.returnedAt) : null} returnedBy={r.returnedByName} returnReason={v.returnReason} />
 
-        <section className="text-[12.5px] text-muted-foreground">
+        <section className="text-[13px] text-muted-foreground">
           <div className="flex flex-wrap gap-x-4 gap-y-1"><span>Authorization {agreement.agreementNumber}</span><span>PMI {v.pmi}</span><span>{v.renderingIdType.toUpperCase()} {v.renderingId}</span><span>POS {v.placeOfService}</span>{edits.length > 0 && <span>{edits.length} edit{edits.length === 1 ? "" : "s"}</span>}</div>
           {v.manualEntry && <div className="mt-1">Manual entry: {v.manualEntryReason}</div>}
           {v.returnedAt ? <div className="mt-1 text-warn">Returned for correction {fmtDateTime(v.returnedAt)}{v.returnReason ? `: ${v.returnReason}` : ""}</div> : v.approvedAt ? <div className="mt-1 flex items-center gap-1 text-ok"><CheckCircle2 className="size-3.5" /> Accepted {fmtDateTime(v.approvedAt)}{r.approverEmail ? ` by ${r.approverEmail}` : ""}</div> : null}

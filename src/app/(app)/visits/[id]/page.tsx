@@ -98,7 +98,7 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
                   <li key={edit.id} className="px-5 py-3">
                     <div className="flex items-baseline justify-between gap-3 text-[13px] text-muted-foreground"><span>{editorEmail}</span><span className="tabular-nums">{fmtDateTime(edit.editedAt)}</span></div>
                     <div className="mt-0.5 font-medium text-text-strong">{edit.reason}</div>
-                    <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
+                    <ul className="mt-1.5 space-y-0.5 text-[13px] text-muted-foreground">
                       {Object.entries(edit.changes).map(([k, c]) => (
                         <li key={k} className="tabular-nums"><span className="font-medium text-text">{k}</span> {fmtChange(c.from)} → {fmtChange(c.to)}</li>
                       ))}

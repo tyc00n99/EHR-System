@@ -33,8 +33,8 @@ export function AgreementEditForm({ action, defaults, cancelHref }: { action: (p
         {codeKey === OTHER && <Field label="HCPCS code" className="md:col-span-2"><Input value={otherCode} onChange={(ev) => setOtherCode(ev.target.value)} className="uppercase" maxLength={5} /></Field>}
         <div className="col-span-2 md:col-span-6">
           <span className="mb-1.5 block text-[13px] font-medium text-text">Modifiers</span>
-          <div className="flex flex-wrap gap-1.5">{MODIFIERS.map((m) => <button key={m.code} type="button" title={m.meaning} onClick={() => toggleMod(m.code)} className={cx("h-7 rounded-full border px-2.5 font-mono text-[12px] font-medium", modifiers.includes(m.code) ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{m.code}</button>)}</div>
-          {e.modifiers && <span className="mt-1 block text-xs text-danger">{e.modifiers}</span>}
+          <div className="flex flex-wrap gap-1.5">{MODIFIERS.map((m) => <button key={m.code} type="button" title={m.meaning} onClick={() => toggleMod(m.code)} className={cx("h-7 rounded-full border px-2.5 font-mono text-[13px] font-medium", modifiers.includes(m.code) ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{m.code}</button>)}</div>
+          {e.modifiers && <span className="mt-1 block text-[13px] text-danger">{e.modifiers}</span>}
         </div>
         <Field label="Authorized units" error={e.authorizedUnits} hint="15-minute units" className="md:col-span-2"><Input name="authorizedUnits" type="number" min={1} step={1} defaultValue={defaults.authorizedUnits} required /></Field>
         <Field label="Rate per unit" error={e.unitRate} className="md:col-span-2"><Input name="unitRate" type="number" min={0.01} step={0.01} defaultValue={defaults.unitRate} required /></Field>

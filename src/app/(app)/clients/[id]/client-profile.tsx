@@ -106,9 +106,9 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               >
                 <span className="min-w-0 flex-1 truncate">{s.label}</span>
                 {s.alert ? (
-                  <span className="flex h-[17px] min-w-[18px] items-center justify-center rounded-full bg-danger-soft px-1.5 text-[10.5px] font-medium text-danger">!</span>
+                  <span className="flex h-[17px] min-w-[18px] items-center justify-center rounded-full bg-danger-soft px-1.5 text-[13px] font-medium text-danger">!</span>
                 ) : s.count > 0 ? (
-                  <span className={cx("flex h-[20px] min-w-[21px] items-center justify-center rounded-full px-1.5 text-[12px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{s.count}</span>
+                  <span className={cx("flex h-[20px] min-w-[21px] items-center justify-center rounded-full px-1.5 text-[13px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{s.count}</span>
                 ) : null}
                 {s.done && <Icon.checkCircle size={16} className={cx("shrink-0", on ? "text-primary" : "text-ok")} />}
                 <Icon.chevronRight size={15} className="shrink-0 text-hint" />
@@ -217,8 +217,8 @@ function DeleteButton({ personId, section, id }: { personId: string; section: Se
       <input type="hidden" name="personId" value={personId} />
       <input type="hidden" name="section" value={section} />
       <input type="hidden" name="id" value={id} />
-      <button type="submit" disabled={pending} className="h-7 rounded-md bg-danger px-2 text-[11.5px] font-medium text-white disabled:opacity-60">{pending ? "Removing…" : "Remove"}</button>
-      <button type="button" onClick={() => setConfirming(false)} className="h-7 px-1.5 text-[11.5px] text-muted-foreground hover:text-text-strong">Cancel</button>
+      <button type="submit" disabled={pending} className="h-7 rounded-md bg-danger px-2 text-[13px] font-medium text-white disabled:opacity-60">{pending ? "Removing…" : "Remove"}</button>
+      <button type="button" onClick={() => setConfirming(false)} className="h-7 px-1.5 text-[13px] text-muted-foreground hover:text-text-strong">Cancel</button>
     </form>
   );
 }
@@ -331,25 +331,25 @@ function ProfileDrawer({ personId, section, row, onDone }: { personId: string; s
             {spec.fields.map((f) => (
               <div key={f.name} className={f.half ? "col-span-1" : "col-span-2"}>
                 {f.type === "checkbox" ? (
-                  <label className="flex items-center gap-2 text-[12.5px] text-text">
+                  <label className="flex items-center gap-2 text-[13px] text-text">
                     <input type="checkbox" name={f.name} value="true" defaultChecked={value(f.name) === "true"} className="size-4 rounded border-line accent-[var(--primary)]" />
                     {f.label}
                   </label>
                 ) : (
                   <>
-                    <label htmlFor={`f-${f.name}`} className="mb-1 block text-[11.5px] text-text">
+                    <label htmlFor={`f-${f.name}`} className="mb-1 block text-[13px] text-text">
                       {f.label}{f.required && <span className="text-danger"> *</span>}
                     </label>
                     {f.type === "select" ? (
-                      <select id={`f-${f.name}`} name={f.name} defaultValue={value(f.name)} className="h-8 w-full rounded-md border border-line bg-card px-2 text-[12.5px] text-text">
+                      <select id={`f-${f.name}`} name={f.name} defaultValue={value(f.name)} className="h-8 w-full rounded-md border border-line bg-card px-2 text-[13px] text-text">
                         {(f.options ?? []).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                       </select>
                     ) : f.type === "textarea" ? (
-                      <textarea id={`f-${f.name}`} name={f.name} rows={3} defaultValue={value(f.name)} placeholder={f.placeholder} className="w-full rounded-md border border-line bg-card px-2 py-1.5 text-[12.5px] text-text placeholder:text-hint" />
+                      <textarea id={`f-${f.name}`} name={f.name} rows={3} defaultValue={value(f.name)} placeholder={f.placeholder} className="w-full rounded-md border border-line bg-card px-2 py-1.5 text-[13px] text-text placeholder:text-hint" />
                     ) : (
-                      <input id={`f-${f.name}`} name={f.name} type={f.type ?? "text"} defaultValue={value(f.name)} placeholder={f.placeholder} className="h-8 w-full rounded-md border border-line bg-card px-2 text-[12.5px] text-text placeholder:text-hint" />
+                      <input id={`f-${f.name}`} name={f.name} type={f.type ?? "text"} defaultValue={value(f.name)} placeholder={f.placeholder} className="h-8 w-full rounded-md border border-line bg-card px-2 text-[13px] text-text placeholder:text-hint" />
                     )}
-                    {state.errors?.[f.name] && <p className="mt-1 text-[11.5px] text-danger">{state.errors[f.name]}</p>}
+                    {state.errors?.[f.name] && <p className="mt-1 text-[13px] text-danger">{state.errors[f.name]}</p>}
                   </>
                 )}
               </div>
@@ -357,8 +357,8 @@ function ProfileDrawer({ personId, section, row, onDone }: { personId: string; s
           </div>
 
           <div className="mt-auto flex items-center gap-4 border-t border-line px-5 py-3.5">
-            <button type="submit" disabled={pending} className="inline-flex h-8 items-center rounded-md bg-primary px-3.5 text-[12.5px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">{pending ? "Saving…" : "Save"}</button>
-            <button type="button" onClick={onDone} className="text-[12.5px] text-muted-foreground hover:text-text-strong">Cancel</button>
+            <button type="submit" disabled={pending} className="inline-flex h-8 items-center rounded-md bg-primary px-3.5 text-[13px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">{pending ? "Saving…" : "Save"}</button>
+            <button type="button" onClick={onDone} className="text-[13px] text-muted-foreground hover:text-text-strong">Cancel</button>
           </div>
         </form>
       </SheetContent>

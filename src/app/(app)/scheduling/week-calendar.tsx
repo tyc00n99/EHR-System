@@ -38,7 +38,7 @@ export function WeekCalendar({ start, today, shifts, baseHref, canCreate }: { st
   return (
     <div className="overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]">
       {colors.size > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line-soft bg-sidebar px-4 py-2 text-[12.5px]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-line-soft bg-sidebar px-4 py-2 text-[13px]">
           <span className="text-muted-foreground">Caregivers</span>
           {[...colors.entries()].map(([id, c]) => <span key={id} className="inline-flex items-center gap-1.5 text-text"><span className={cx("h-2.5 w-2.5 rounded-sm", c.dot)} />{c.name}</span>)}
         </div>
@@ -47,14 +47,14 @@ export function WeekCalendar({ start, today, shifts, baseHref, canCreate }: { st
         <div className="border-r border-line-soft" />
         {days.map((d) => { const isToday = d === today; const count = shifts.filter((s) => s.date === d && s.status !== "cancelled").length; return (
           <div key={d} className={cx("border-r border-line-soft px-2 py-2 text-center last:border-r-0", isToday && "bg-primary-soft/50")}>
-            <div className={cx("text-[11px] font-medium uppercase tracking-wide", isToday ? "text-primary" : "text-muted-foreground")}>{dayName.format(new Date(d + "T12:00:00Z"))}</div>
+            <div className={cx("text-[13px] font-medium uppercase tracking-wide", isToday ? "text-primary" : "text-muted-foreground")}>{dayName.format(new Date(d + "T12:00:00Z"))}</div>
             <div className={cx("text-[18px] font-semibold tabular-nums", isToday ? "text-primary" : "text-text-strong")}>{Number(d.slice(8))}</div>
-            <div className="text-[11px] text-muted-foreground">{count ? `${count} shift${count === 1 ? "" : "s"}` : "—"}</div>
+            <div className="text-[13px] text-muted-foreground">{count ? `${count} shift${count === 1 ? "" : "s"}` : "—"}</div>
           </div>
         ); })}
       </div>
       <div className="relative grid overflow-y-auto" style={{ gridTemplateColumns: "56px repeat(7, minmax(0, 1fr))", maxHeight: 640 }}>
-        <div className="border-r border-line-soft">{HOURS.map((h) => <div key={h} className="pr-2 text-right text-[11px] text-muted-foreground" style={{ height: ROW }}><span className="relative -top-2">{h === 12 ? "12 pm" : h > 12 ? `${h - 12} pm` : `${h} am`}</span></div>)}</div>
+        <div className="border-r border-line-soft">{HOURS.map((h) => <div key={h} className="pr-2 text-right text-[13px] text-muted-foreground" style={{ height: ROW }}><span className="relative -top-2">{h === 12 ? "12 pm" : h > 12 ? `${h - 12} pm` : `${h} am`}</span></div>)}</div>
         {days.map((d) => (
           <div key={d} className="relative border-r border-line-soft last:border-r-0">
             {HOURS.map((h) => canCreate ? <Link key={h} href={`${baseHref}&new=1&date=${d}`} className="block border-b border-line-soft hover:bg-hover" style={{ height: ROW }} /> : <div key={h} className="border-b border-line-soft" style={{ height: ROW }} />)}
@@ -63,9 +63,9 @@ export function WeekCalendar({ start, today, shifts, baseHref, canCreate }: { st
               const cancelled = s.status === "cancelled", done = s.status === "completed", missed = s.status === "missed";
               return (
                 <Link key={s.id} href={`${baseHref}&shift=${s.id}`} scroll={false} className={cx("absolute left-1 right-1 overflow-hidden rounded-md border-l-[3px] px-2 py-1 text-text-strong hover:brightness-110", colors.get(s.staffId)?.block ?? "bg-gray-500/20 border-gray-500", cancelled && "opacity-40 line-through", missed && "ring-2 ring-danger", done && "opacity-80")} style={{ top, height }}>
-                  <div className="truncate text-[11px] font-semibold leading-4">{fmt.format(new Date(s.start))} · {s.client}</div>
-                  <div className="truncate text-[11px] leading-4 text-muted-foreground">{s.staff}</div>
-                  {height > 44 && <div className="truncate text-[10.5px] leading-4 text-muted-foreground">{s.service}</div>}
+                  <div className="truncate text-[13px] font-semibold leading-4">{fmt.format(new Date(s.start))} · {s.client}</div>
+                  <div className="truncate text-[13px] leading-4 text-muted-foreground">{s.staff}</div>
+                  {height > 44 && <div className="truncate text-[13px] leading-4 text-muted-foreground">{s.service}</div>}
                 </Link>
               );
             })}

@@ -24,7 +24,7 @@ export function CommandPalette({ entries, role }: { entries: PaletteEntry[]; rol
   return (
     <>
       <button onClick={() => setOpen(true)} className="hidden h-9 w-full max-w-md items-center gap-2 rounded-md border border-line bg-gray-100 px-3 text-[13px] text-hint hover:bg-page md:flex">
-        <Search className="size-3.5 text-gray-400" /><span className="flex-1 text-left">Search clients, staff, agreements…</span><kbd className="rounded border border-line bg-page px-1.5 font-mono text-[10.5px] text-muted-foreground">⌘K</kbd>
+        <Search className="size-3.5 text-gray-400" /><span className="flex-1 text-left">Search clients, staff, agreements…</span><kbd className="rounded border border-line bg-page px-1.5 font-mono text-[13px] text-muted-foreground">⌘K</kbd>
       </button>
       {open && <CommandDialog open onOpenChange={setOpen} title="Search" description="Jump to a client, staff member, or page">
         <Command>
@@ -33,12 +33,12 @@ export function CommandPalette({ entries, role }: { entries: PaletteEntry[]; rol
           <CommandEmpty>No matches.</CommandEmpty>
           {office && entries.some((e) => e.group === "Clients") && (
             <CommandGroup heading="Clients">
-              {entries.filter((e) => e.group === "Clients").map((e) => <CommandItem key={e.id} value={`${e.label} ${e.hint ?? ""}`} onSelect={() => go(e.href)}><Users className="size-4 text-gray-500" /><span>{e.label}</span>{e.hint && <span className="ml-auto text-xs text-muted-foreground">{e.hint}</span>}</CommandItem>)}
+              {entries.filter((e) => e.group === "Clients").map((e) => <CommandItem key={e.id} value={`${e.label} ${e.hint ?? ""}`} onSelect={() => go(e.href)}><Users className="size-4 text-gray-500" /><span>{e.label}</span>{e.hint && <span className="ml-auto text-[13px] text-muted-foreground">{e.hint}</span>}</CommandItem>)}
             </CommandGroup>
           )}
           {office && entries.some((e) => e.group === "Staff") && (
             <CommandGroup heading="Staff">
-              {entries.filter((e) => e.group === "Staff").map((e) => <CommandItem key={e.id} value={`${e.label} ${e.hint ?? ""}`} onSelect={() => go(e.href)}><UserSquare2 className="size-4 text-gray-500" /><span>{e.label}</span>{e.hint && <span className="ml-auto text-xs text-muted-foreground">{e.hint}</span>}</CommandItem>)}
+              {entries.filter((e) => e.group === "Staff").map((e) => <CommandItem key={e.id} value={`${e.label} ${e.hint ?? ""}`} onSelect={() => go(e.href)}><UserSquare2 className="size-4 text-gray-500" /><span>{e.label}</span>{e.hint && <span className="ml-auto text-[13px] text-muted-foreground">{e.hint}</span>}</CommandItem>)}
             </CommandGroup>
           )}
           <CommandSeparator />

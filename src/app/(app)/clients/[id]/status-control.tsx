@@ -19,9 +19,9 @@ export function StatusControl({ personId, status }: { personId: string; status: 
   };
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<button disabled={pending} className={cx("inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-xs font-medium disabled:opacity-60", TONE[status])} />}>{LABEL[status]} <ChevronDown className="size-3" /></DropdownMenuTrigger>
+      <DropdownMenuTrigger render={<button disabled={pending} className={cx("inline-flex h-6 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium disabled:opacity-60", TONE[status])} />}>{LABEL[status]} <ChevronDown className="size-3" /></DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
-        {(Object.keys(LABEL) as (keyof typeof LABEL)[]).map((k) => <DropdownMenuItem key={k} onClick={() => change(k)} className={k === status ? "font-medium" : ""}>{LABEL[k]}{k === "discharged" && <span className="ml-auto text-[11px] text-muted-foreground">records the date</span>}</DropdownMenuItem>)}
+        {(Object.keys(LABEL) as (keyof typeof LABEL)[]).map((k) => <DropdownMenuItem key={k} onClick={() => change(k)} className={k === status ? "font-medium" : ""}>{LABEL[k]}{k === "discharged" && <span className="ml-auto text-[13px] text-muted-foreground">records the date</span>}</DropdownMenuItem>)}
       </DropdownMenuContent>
     </DropdownMenu>
   );

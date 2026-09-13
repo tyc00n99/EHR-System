@@ -28,7 +28,7 @@ export function ShiftSheet({ shift, office }: { shift: { id: string; status: str
     <Sheet open onOpenChange={(o) => { if (!o) close(); }}>
       <SheetContent side="right" className="w-full p-0 sm:max-w-md" showCloseButton={false}>
         <SheetTitle className="sr-only">Shift</SheetTitle>
-        <div className="flex items-center gap-3 bg-nav px-5 py-3 text-white"><div className="min-w-0 flex-1"><div className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/60">Shift</div><div className="truncate text-[15px] font-semibold">{shift.client}</div></div><button onClick={close} aria-label="Close" className="flex h-8 w-8 items-center justify-center rounded-md text-white/80 hover:bg-white/10"><X className="size-4" /></button></div>
+        <div className="flex items-center gap-3 bg-nav px-5 py-3 text-white"><div className="min-w-0 flex-1"><div className="text-[13px] font-medium uppercase tracking-[0.08em] text-white/60">Shift</div><div className="truncate text-[15px] font-semibold">{shift.client}</div></div><button onClick={close} aria-label="Close" className="flex h-8 w-8 items-center justify-center rounded-md text-white/80 hover:bg-white/10"><X className="size-4" /></button></div>
         <div className="space-y-4 px-5 py-5 text-[13px]">
           <div className="flex flex-wrap gap-1"><Badge tone={shift.status === "completed" ? "ok" : shift.status === "cancelled" ? "neutral" : shift.status === "missed" ? "danger" : shift.status === "in_progress" ? "accent" : "accent"}>{shift.status.replace("_", " ")}</Badge>{shift.seriesId && <Badge>repeats weekly</Badge>}</div>
           <dl className="space-y-2">

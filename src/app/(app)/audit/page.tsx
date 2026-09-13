@@ -27,8 +27,8 @@ export default async function AuditPage() {
                     <Td className="whitespace-nowrap tabular-nums text-muted-foreground">{fmtDateTime(a.at)}</Td>
                     <Td>{actorEmail ?? <span className="text-hint">system</span>}</Td>
                     <Td><Badge tone={actionTone[a.action]}>{a.action}</Badge></Td>
-                    <Td className="font-mono text-xs">{a.tableName}</Td>
-                    <Td className="font-mono text-xs text-muted-foreground">{a.recordId?.slice(0, 8)}</Td>
+                    <Td className="font-mono text-[13px]">{a.tableName}</Td>
+                    <Td className="font-mono text-[13px] text-muted-foreground">{a.recordId?.slice(0, 8)}</Td>
                     <Td wrap className="text-[13px] text-muted-foreground">{changed.join(", ")}</Td>
                   </Tr>
                 );

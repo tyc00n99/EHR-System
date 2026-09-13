@@ -28,7 +28,7 @@ export default async function SitesPage() {
                       <li key={p.id} className="flex items-center justify-between gap-3 px-5 py-2.5">
                         <div className="min-w-0">
                           <div className={`truncate font-medium ${p.active ? "text-text-strong" : "text-hint line-through"}`}>{p.name}</div>
-                          <div className="truncate text-xs text-muted-foreground">{t.name}</div>
+                          <div className="truncate text-[13px] text-muted-foreground">{t.name}</div>
                         </div>
                         <Badge tone={t.category === "intensive" ? "accent" : "ok"}>{t.category}</Badge>
                       </li>

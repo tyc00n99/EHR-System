@@ -35,7 +35,7 @@ export default async function MePage() {
                 { icon: "mail", label: "Email", value: s.email },
                 { icon: "calendar", label: "Hired", value: fmtDate(s.hireDate) },
               ]} />
-              <p className="mt-3 text-xs text-muted-foreground">Ask an administrator to change these.</p>
+              <p className="mt-3 text-[13px] text-muted-foreground">Ask an administrator to change these.</p>
             </Card>
           )}
           <Card title="Change password" padded><PasswordForm /></Card>

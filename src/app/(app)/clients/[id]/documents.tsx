@@ -26,5 +26,5 @@ export function DocumentUpload({ personId }: { personId: string }) {
 
 export function DeleteDocument({ id, personId }: { id: string; personId: string }) {
   const [pending, start] = useTransition();
-  return <button disabled={pending} onClick={() => { if (confirm("Delete this file? Staff will no longer be able to open it.")) start(() => deleteClientDocument(id, personId)); }} className="text-xs font-medium text-danger hover:underline disabled:opacity-50">Delete</button>;
+  return <button disabled={pending} onClick={() => { if (confirm("Delete this file? Staff will no longer be able to open it.")) start(() => deleteClientDocument(id, personId)); }} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">Delete</button>;
 }

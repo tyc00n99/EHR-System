@@ -54,7 +54,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search"
               aria-label={`Search ${label.toLowerCase()}`}
-              className="min-w-0 flex-1 bg-transparent text-[12.5px] text-text outline-none placeholder:text-hint"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-text outline-none placeholder:text-hint"
             />
           </div>
           <button
@@ -76,7 +76,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 type="button"
                 onClick={() => setStatus(k)}
                 aria-pressed={status === k}
-                className={cx("rounded-full border px-2 py-0.5 text-[11px] transition-colors",
+                className={cx("rounded-full border px-2 py-0.5 text-[13px] transition-colors",
                   status === k ? "border-primary bg-primary-soft font-medium text-primary" : "border-line bg-card text-muted-foreground hover:bg-hover")}
               >
                 {l} {k === "all" ? people.length : countOf(k)}
@@ -87,7 +87,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
 
         <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
           {shown.length === 0 ? (
-            <p className="px-3 py-4 text-[12.5px] italic text-muted-foreground">{people.length === 0 ? "None found." : `Nobody matches “${q}”.`}</p>
+            <p className="px-3 py-4 text-[13px] italic text-muted-foreground">{people.length === 0 ? "None found." : `Nobody matches “${q}”.`}</p>
           ) : shown.map((p) => {
             const on = p.id === openId;
             return (
@@ -97,7 +97,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 aria-current={on ? "page" : undefined}
                 className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2.5 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
               >
-                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-panel text-[10px] font-semibold text-text-strong">
+                <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-panel text-[13px] font-semibold text-text-strong">
                   {p.photo
                     // eslint-disable-next-line @next/next/no-img-element -- auth-gated route
                     ? <img src={p.photo} alt="" width={28} height={28} className="size-full object-cover" />
@@ -105,7 +105,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 </span>
                 <span className="flex min-w-0 flex-1 items-center gap-2">
                   <span className={cx("min-w-0 truncate text-[14.5px]", on ? "font-medium text-text-strong" : "text-text")}>{p.name}</span>
-                  {p.status !== "active" && <span className="shrink-0 rounded bg-panel px-1.5 text-[10.5px] text-muted-foreground">{p.status}</span>}
+                  {p.status !== "active" && <span className="shrink-0 rounded bg-panel px-1.5 text-[13px] text-muted-foreground">{p.status}</span>}
                 </span>
                 {p.flagged && <span className="size-1.5 shrink-0 rounded-full bg-danger" title="Needs attention" />}
               </Link>

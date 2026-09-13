@@ -78,7 +78,7 @@ export function AttentionList({ groups, initialKind = "all" }: { groups: Group[]
             <Select aria-label="Priority" value={severity} disabled={pending} onChange={(e) => { setSeverity(e.target.value); resetSelection(); }} className="sm:w-40"><option value="all">All priorities</option><option value="danger">High priority</option><option value="warn">Needs review</option><option value="accent">Information</option></Select>
           </div>
         </div>
-        <p role="status" className="mt-3 text-xs text-muted-foreground">{visibleCount} matching items · Grouped by issue; high priority first within each group.</p>
+        <p role="status" className="mt-3 text-[13px] text-muted-foreground">{visibleCount} matching items · Grouped by issue; high priority first within each group.</p>
       </Card>
       {filtered.length === 0 && <Card><Empty icon="search" title="No matching items" action={<Button variant="outline" onClick={() => { setQuery(""); setKind("all"); setSeverity("all"); resetSelection(); }}>Clear filters</Button>}>Try another name, issue type, or priority.</Empty></Card>}
       {filtered.map((g) => {
@@ -94,7 +94,7 @@ export function AttentionList({ groups, initialKind = "all" }: { groups: Group[]
             actions={
               <span className="flex items-center gap-2">
                 {selectable.length > 1 && (
-                  <button type="button" disabled={pending} onClick={() => toggleAll(g.kind, selectable)} className="text-[12.5px] font-medium text-primary hover:underline">
+                  <button type="button" disabled={pending} onClick={() => toggleAll(g.kind, selectable)} className="text-[13px] font-medium text-primary hover:underline">
                     {selectable.every((r) => sel.has(r.id!)) ? "Clear" : "Select all matching"}
                   </button>
                 )}
@@ -118,7 +118,7 @@ export function AttentionList({ groups, initialKind = "all" }: { groups: Group[]
                         <span className="block font-medium text-text-strong">{r.title}</span>
                         {r.detail && <span className="block text-[13px] text-muted-foreground">{r.detail}</span>}
                       </span>
-                      <span className={cx("hidden shrink-0 rounded px-2 py-0.5 text-xs sm:inline", r.severity === "danger" ? "bg-danger-soft text-danger" : "bg-warn-soft text-warn")}>{r.severity === "danger" ? "High priority" : "Review"}</span>
+                      <span className={cx("hidden shrink-0 rounded px-2 py-0.5 text-[13px] sm:inline", r.severity === "danger" ? "bg-danger-soft text-danger" : "bg-warn-soft text-warn")}>{r.severity === "danger" ? "High priority" : "Review"}</span>
                       <Icon.chevronRight size={16} className="mt-1 shrink-0 text-gray-400" />
                     </Link>
                   </li>
@@ -129,7 +129,7 @@ export function AttentionList({ groups, initialKind = "all" }: { groups: Group[]
             {g.rows.length > 8 && <div className="border-t border-line-soft px-4 py-2"><Button variant="ghost" onClick={() => setExpanded((x) => ({ ...x, [g.kind]: !x[g.kind] }))}>{expanded[g.kind] ? "Show fewer" : `Show all ${g.rows.length} matching items`}</Button></div>}
             {bulk && sel.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 border-t border-line-soft bg-sidebar px-5 py-3">
-                <span className="text-[13px] font-medium text-text-strong">{sel.size} selected</span><p className="w-full text-xs text-muted-foreground">{bulk.hint}</p>
+                <span className="text-[13px] font-medium text-text-strong">{sel.size} selected</span><p className="w-full text-[13px] text-muted-foreground">{bulk.hint}</p>
                 {bulk.needsReason && confirming !== g.kind && <Input aria-label={bulk.needsReason} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={bulk.needsReason} className="h-8 w-64 text-[13px]" />}
                 {confirming === g.kind ? (
                   <>

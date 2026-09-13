@@ -186,16 +186,16 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               ]} />
             </ChartSection>
             <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="text-primary hover:underline">All →</Link>}>
-              {activeTeam.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
+              {activeTeam.length === 0 ? <p className="text-[13px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
                 <ChartLine key={t.assignment.id}>
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[9px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
                   <span className="min-w-0 flex-1 truncate">{t.staff.firstName} {t.staff.lastName}</span>
                   <Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge>
                 </ChartLine>
               ))}
             </ChartSection>
             <ChartSection label={track ? `Planning · ${track}` : "Planning"} action={<Rule name="planning" />}>
-              {deadlines.length === 0 ? <p className="text-[12.5px] text-muted-foreground">{person.serviceStartDate ? "Add an agreement with a service type to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
+              {deadlines.length === 0 ? <p className="text-[13px] text-muted-foreground">{person.serviceStartDate ? "Add an agreement with a service type to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
                 <>
                   {deadlines.map((d) => { const overdue = d.due < new Date(); return (
                     <ChartLine key={d.id} className="items-start">
@@ -203,7 +203,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                       <span className={cx("ident shrink-0", overdue ? "text-danger" : "text-muted-foreground")}>{fmtDateNum(d.due.toISOString())}</span>
                     </ChartLine>
                   ); })}
-                  <p className="mt-2 text-[11.5px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>
+                  <p className="mt-2 text-[13px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>
                 </>
               )}
             </ChartSection>
@@ -223,10 +223,10 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 <Link key={a.id} href={`/clients/${id}/agreements/${a.id}`} className="block border-b border-line-soft py-2 last:border-0 hover:bg-hover">
                   <div className="flex items-baseline gap-2.5">
                     <ServiceDot code={a.serviceCode} className="translate-y-[-1px]" />
-                    <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
-                    <span className="ident text-[12px] text-muted-foreground">{fmtMoney(a.unitRate)}/u</span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
+                    <span className="ident text-[13px] text-muted-foreground">{fmtMoney(a.unitRate)}/u</span>
                   </div>
-                  <div className="ml-[18px] mt-0.5 text-[11.5px] text-muted-foreground">
+                  <div className="ml-[18px] mt-0.5 text-[13px] text-muted-foreground">
                     <span className="ident">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
                     {" · "}<span className="ident text-text-strong">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
                     {" · through "}<span className="ident">{fmtDateNum(a.endDate)}</span>
@@ -236,7 +236,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               ))}
             </ChartSection>
             <ChartSection label="Recent notes" action={<Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">All {noteCount} →</Link>}>
-              {visits.length === 0 ? <p className="text-[12.5px] text-muted-foreground">No notes in the periods shown. <Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">Look further back</Link>.</p> : visits.slice(0, 8).map(({ visit: v, staffFirst, staffLast }) => (
+              {visits.length === 0 ? <p className="text-[13px] text-muted-foreground">No notes in the periods shown. <Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">Look further back</Link>.</p> : visits.slice(0, 8).map(({ visit: v, staffFirst, staffLast }) => (
                 <ChartLine key={v.id}>
                   <ServiceDot code={v.serviceCode} />
                   <Link href={`/clients/${id}?note=${v.id}`} scroll={false} className="ident w-[92px] shrink-0 whitespace-nowrap text-muted-foreground hover:underline">{fmtDayTime(v.clockInAt)}</Link>
@@ -250,7 +250,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           <ChartCol>
             <ChartSection label={alerts.length ? `Needs attention · ${alerts.length}` : "Needs attention"}>
               {alerts.length === 0 ? (
-                <p className="text-[12.5px] text-muted-foreground">Nothing outstanding. Notes are signed, the authorizations have room, and the team is oriented.</p>
+                <p className="text-[13px] text-muted-foreground">Nothing outstanding. Notes are signed, the authorizations have room, and the team is oriented.</p>
               ) : alerts.map((a, i) => <ChartAlert key={i} tone={a.tone} action={a.href && <Link href={a.href} className="font-medium underline underline-offset-2">{a.cta}</Link>}>{a.body}</ChartAlert>)}
             </ChartSection>
             <ChartSection label="This pay period">
@@ -268,7 +268,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           {agreements.length === 0 ? <Empty icon="doc" title="No service agreements yet" /> : (
             <Table>
               <Thead><Th>Agreement</Th><Th>Service</Th><Th>Units</Th><Th align="right">Rate</Th><Th>Dates</Th><Th>County</Th><Th>Status</Th><Th /></Thead>
-              <tbody>{agreements.map(({ agreement: a, unitsUsed }) => <Tr key={a.id} muted={a.status !== "active"}><Td strong><Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{a.agreementNumber}</Link>{a.documentPath && <a href={`/agreements/${a.id}/document`} target="_blank" rel="noreferrer" className="ml-2 text-xs font-normal text-muted-foreground hover:underline">PDF</a>}</Td><Td>{labelForCode(a.serviceCode, a.modifiers)}<div className="text-xs text-muted-foreground tabular-nums">{a.serviceCode} {a.modifiers.join(" ")}</div></Td><Td><span className="flex items-center gap-2"><Ring used={unitsUsed} total={a.authorizedUnits} size={26} /><span className="tabular-nums">{unitsUsed.toLocaleString()} / {a.authorizedUnits.toLocaleString()}</span></span></Td><Td align="right">{fmtMoney(a.unitRate)}</Td><Td className="text-muted-foreground">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</Td><Td>{a.authorizingCounty}</Td><Td><Badge tone={a.status === "active" ? "ok" : a.status === "cancelled" ? "danger" : "neutral"}>{a.status}</Badge></Td><Td align="right"><span className="flex justify-end gap-3">{manage && <Link href={`/clients/${id}/agreements/${a.id}`} className="text-xs font-medium text-primary hover:underline">Edit</Link>}{manage && <AgreementStatusButton id={a.id} personId={id} status={a.status} />}</span></Td></Tr>)}</tbody>
+              <tbody>{agreements.map(({ agreement: a, unitsUsed }) => <Tr key={a.id} muted={a.status !== "active"}><Td strong><Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{a.agreementNumber}</Link>{a.documentPath && <a href={`/agreements/${a.id}/document`} target="_blank" rel="noreferrer" className="ml-2 text-[13px] font-normal text-muted-foreground hover:underline">PDF</a>}</Td><Td>{labelForCode(a.serviceCode, a.modifiers)}<div className="text-[13px] text-muted-foreground tabular-nums">{a.serviceCode} {a.modifiers.join(" ")}</div></Td><Td><span className="flex items-center gap-2"><Ring used={unitsUsed} total={a.authorizedUnits} size={26} /><span className="tabular-nums">{unitsUsed.toLocaleString()} / {a.authorizedUnits.toLocaleString()}</span></span></Td><Td align="right">{fmtMoney(a.unitRate)}</Td><Td className="text-muted-foreground">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</Td><Td>{a.authorizingCounty}</Td><Td><Badge tone={a.status === "active" ? "ok" : a.status === "cancelled" ? "danger" : "neutral"}>{a.status}</Badge></Td><Td align="right"><span className="flex justify-end gap-3">{manage && <Link href={`/clients/${id}/agreements/${a.id}`} className="text-[13px] font-medium text-primary hover:underline">Edit</Link>}{manage && <AgreementStatusButton id={a.id} personId={id} status={a.status} />}</span></Td></Tr>)}</tbody>
             </Table>
           )}
         </Card>
@@ -289,8 +289,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           {documents.length === 0 ? <p className="px-5 py-6 text-center text-[13px] text-muted-foreground">No files yet. {manage ? "Upload the support plan, the IAPP, and treatment goals below." : "Your supervisor has not uploaded plans for this person yet."}</p> : (
             DOCUMENT_CATEGORIES.map(([cat, label]) => { const docs = documents.filter((d) => d.doc.category === cat); if (!docs.length) return null; return (
               <div key={cat} className="border-b border-line-soft last:border-b-0">
-                <div className="bg-sidebar px-5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-gray-500">{label}</div>
-                <ul className="divide-y divide-line-soft">{docs.map(({ doc, uploaderEmail }) => <li key={doc.id} className="flex flex-wrap items-center gap-3 px-5 py-3"><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-3 hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-panel text-gray-600"><Icon.doc size={18} /></span><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{doc.title}</span><span className="block truncate text-[13px] text-muted-foreground">{doc.effectiveOn ? `Effective ${fmtDate(doc.effectiveOn)} · ` : ""}{doc.fileName} · {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB{manage ? ` · ${uploaderEmail}` : ""}</span>{doc.note && <span className="mt-0.5 block text-[13px] text-text">{doc.note}</span>}</span></a><PreviewButton href={`/clients/${id}/documents/${doc.id}`} title={doc.title} mime={doc.mimeType} /><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center rounded-full bg-primary-soft px-2.5 text-xs font-medium text-primary hover:bg-blue-300/40">Open</a>{manage && <DeleteDocument id={doc.id} personId={id} />}</li>)}</ul>
+                <div className="bg-sidebar px-5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-gray-500">{label}</div>
+                <ul className="divide-y divide-line-soft">{docs.map(({ doc, uploaderEmail }) => <li key={doc.id} className="flex flex-wrap items-center gap-3 px-5 py-3"><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-3 hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-panel text-gray-600"><Icon.doc size={18} /></span><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{doc.title}</span><span className="block truncate text-[13px] text-muted-foreground">{doc.effectiveOn ? `Effective ${fmtDate(doc.effectiveOn)} · ` : ""}{doc.fileName} · {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB{manage ? ` · ${uploaderEmail}` : ""}</span>{doc.note && <span className="mt-0.5 block text-[13px] text-text">{doc.note}</span>}</span></a><PreviewButton href={`/clients/${id}/documents/${doc.id}`} title={doc.title} mime={doc.mimeType} /><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center rounded-full bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-blue-300/40">Open</a>{manage && <DeleteDocument id={doc.id} personId={id} />}</li>)}</ul>
               </div>
             ); })
           )}
@@ -414,15 +414,15 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               fields: [
                 { icon: "doc", label: "Service", value: <Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{labelForCode(a.serviceCode, a.modifiers)}</Link> },
                 { icon: "units", label: "Units", value: <><span className="ident">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of <span className="ident">{a.authorizedUnits.toLocaleString()}</span> left<UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></> },
-                { icon: "calendar", label: "Dates · rate", value: <><span>{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[11.5px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
+                { icon: "calendar", label: "Dates · rate", value: <><span>{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[13px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
               ],
             })),
             availability: [],
           } satisfies Record<string, Entity[]>}
           extras={{
-            careteam: manage ? <Link href={`/staff`} className="text-[12.5px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
-            diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[12.5px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
-            authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[12.5px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
+            careteam: manage ? <Link href={`/staff`} className="text-[13px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
+            diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[13px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
+            authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[13px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
             availability: profile.availability.length > 0 ? (
               <div>
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px]">
@@ -439,7 +439,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                     const windows = profile.availability.filter((a) => a.weekday === d);
                     return (
                       <div key={d} className={cx("rounded-lg border px-3 py-2.5 text-center", windows.length ? "border-line bg-card" : "border-line-soft bg-panel")}>
-                        <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-text-strong">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]}</div>
+                        <div className="text-[13px] font-semibold uppercase tracking-[0.08em] text-text-strong">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d]}</div>
                         <div className="mt-2 border-t border-line-soft pt-2 text-[13px]">
                           {windows.length === 0
                             ? <span className="text-hint">Unavailable</span>

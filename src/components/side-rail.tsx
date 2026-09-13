@@ -21,7 +21,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
 
   return (
     <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-14 shrink-0 flex-col items-center gap-1 border-r border-line bg-sidebar py-2.5 md:flex">
-      <Link href="/" title={orgName} className="mb-1.5 flex size-8 items-center justify-center rounded-md bg-primary text-[12px] font-medium text-primary-foreground">
+      <Link href="/" title={orgName} className="mb-1.5 flex size-8 items-center justify-center rounded-md bg-primary text-[13px] font-medium text-primary-foreground">
         D
       </Link>
       {primaryNav(role).map((d) => {
@@ -41,7 +41,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
           >
             <Ic size={18} />
             {badge > 0 && (
-              <span className="absolute right-1 top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-danger px-1 text-[9.5px] font-medium leading-none text-white">
+              <span className="absolute right-1 top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-medium leading-none text-white">
                 {badge > 99 ? "99+" : badge}
               </span>
             )}
@@ -50,7 +50,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
             {!active && (
               <span
                 role="tooltip"
-                className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-[12px] font-medium text-gray-100 shadow-lg group-hover:block"
+                className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-[13px] font-medium text-gray-100 shadow-lg group-hover:block"
               >
                 {d.label}
               </span>

@@ -27,7 +27,7 @@ export function CredentialForm({ staffId, types }: { staffId: string; types: { t
 
 export function DeleteCredential({ id, staffId }: { id: string; staffId: string }) {
   const [pending, start] = useTransition();
-  return <button disabled={pending} onClick={() => { if (confirm("Remove this credential record?")) start(() => deleteCredential(id, staffId)); }} className="text-xs font-medium text-danger hover:underline disabled:opacity-50">Remove</button>;
+  return <button disabled={pending} onClick={() => { if (confirm("Remove this credential record?")) start(() => deleteCredential(id, staffId)); }} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">Remove</button>;
 }
 
 /* ---------- assignments ---------- */
@@ -46,13 +46,13 @@ export function AssignmentPanel({ staffId, assignments, candidates }: { staffId:
           {active.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
               <div className="min-w-0 flex-1">
-                <div className="font-medium text-text-strong">{a.name} <span className="text-xs font-normal text-muted-foreground tabular-nums">PMI {a.pmi}</span></div>
+                <div className="font-medium text-text-strong">{a.name} <span className="text-[13px] font-normal text-muted-foreground tabular-nums">PMI {a.pmi}</span></div>
                 <div className="text-[13px] text-muted-foreground">{a.orientedOn ? `Oriented to this person ${a.orientedOn}` : "Not yet oriented to this person's plan and needs"}</div>
               </div>
               {a.orientedOn ? <Badge tone="ok">oriented</Badge> : (
-                <button disabled={pending} onClick={() => start(() => markOriented(a.id, staffId))} className="inline-flex h-7 items-center rounded-md bg-primary-soft px-2.5 text-xs font-medium text-primary hover:bg-blue-300/40 disabled:opacity-50">Mark oriented today</button>
+                <button disabled={pending} onClick={() => start(() => markOriented(a.id, staffId))} className="inline-flex h-7 items-center rounded-md bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-blue-300/40 disabled:opacity-50">Mark oriented today</button>
               )}
-              <button disabled={pending} onClick={() => { if (confirm(`End ${a.name}'s assignment?`)) start(() => endAssignment(a.id, staffId)); }} className="text-xs font-medium text-danger hover:underline disabled:opacity-50">End</button>
+              <button disabled={pending} onClick={() => { if (confirm(`End ${a.name}'s assignment?`)) start(() => endAssignment(a.id, staffId)); }} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">End</button>
             </li>
           ))}
         </ul>

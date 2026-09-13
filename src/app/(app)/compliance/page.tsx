@@ -21,17 +21,17 @@ export default async function CompliancePage() {
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
-            <thead className="bg-sidebar"><tr><th className="sticky left-0 z-10 bg-sidebar px-5 py-2 text-left text-xs font-medium text-muted-foreground">Staff</th>{columns.map((c) => <th key={c.type} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"><span className="block max-w-28 leading-4">{c.label}</span></th>)}</tr></thead>
+            <thead className="bg-sidebar"><tr><th className="sticky left-0 z-10 bg-sidebar px-5 py-2 text-left text-[13px] font-medium text-muted-foreground">Staff</th>{columns.map((c) => <th key={c.type} className="px-3 py-2 text-left text-[13px] font-medium text-muted-foreground"><span className="block max-w-28 leading-4">{c.label}</span></th>)}</tr></thead>
             <tbody>
               {rows.map(({ s, items }) => (
                 <tr key={s.id} className="border-t border-line-soft">
-                  <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-5 py-2.5"><Link href={`/staff/${s.id}`} className="font-medium text-text-strong hover:underline">{s.lastName}, {s.firstName}</Link><div className="text-xs text-muted-foreground">{s.title}</div></td>
+                  <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-5 py-2.5"><Link href={`/staff/${s.id}`} className="font-medium text-text-strong hover:underline">{s.lastName}, {s.firstName}</Link><div className="text-[13px] text-muted-foreground">{s.title}</div></td>
                   {columns.map((c) => {
                     const i = items.find((x) => x.type === c.type);
-                    if (!i) return <td key={c.type} className="px-3 py-2.5 text-xs text-hint">—</td>;
+                    if (!i) return <td key={c.type} className="px-3 py-2.5 text-[13px] text-hint">—</td>;
                     return (
                       <td key={c.type} className="px-3 py-2.5">
-                        <Link href={`/staff/${s.id}?tab=compliance`} title={i.detail} className={cx("inline-flex h-7 min-w-14 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium", TONE[i.status] === "ok" ? "bg-ok-soft text-ok" : TONE[i.status] === "warn" ? "bg-warn-soft text-warn" : "bg-danger-soft text-danger")}>
+                        <Link href={`/staff/${s.id}?tab=compliance`} title={i.detail} className={cx("inline-flex h-7 min-w-14 items-center justify-center gap-1 rounded-md px-2 text-[13px] font-medium", TONE[i.status] === "ok" ? "bg-ok-soft text-ok" : TONE[i.status] === "warn" ? "bg-warn-soft text-warn" : "bg-danger-soft text-danger")}>
                           {SHORT[i.status]}{i.due && i.status !== "ok" && <span className="font-normal opacity-80">· {fmtDate(i.due).replace(/, \d{4}$/, "")}</span>}
                         </Link>
                       </td>

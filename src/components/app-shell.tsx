@@ -46,7 +46,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
                 {gear.map((g, i) => (
                   <DropdownMenuGroup key={g.label}>
                     {i > 0 && <DropdownMenuSeparator />}
-                    <DropdownMenuLabel className="text-[10.5px] font-medium uppercase tracking-[0.11em] text-hint">{g.label}</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-[13px] font-medium uppercase tracking-[0.11em] text-hint">{g.label}</DropdownMenuLabel>
                     {g.items.map((it) => {
                       const Ic = Icon[it.icon];
                       return <DropdownMenuItem key={it.href} render={<Link href={it.href} />}><Ic size={16} /> {it.label}</DropdownMenuItem>;
@@ -61,7 +61,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
               <Avatar name={user.staffName ?? user.email} size={26} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="right" className="w-60">
-              <DropdownMenuGroup><DropdownMenuLabel><div className="truncate text-[13px] font-medium text-text-strong">{user.staffName ?? user.email}</div><div className="truncate text-xs font-normal text-muted-foreground">{user.email} · {ROLE_LABEL[user.role]}</div></DropdownMenuLabel></DropdownMenuGroup>
+              <DropdownMenuGroup><DropdownMenuLabel><div className="truncate text-[13px] font-medium text-text-strong">{user.staffName ?? user.email}</div><div className="truncate text-[13px] font-normal text-muted-foreground">{user.email} · {ROLE_LABEL[user.role]}</div></DropdownMenuLabel></DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link href="/me" />}><User className="size-4" /> My profile</DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/services" />}><FileText className="size-4" /> 245D service types</DropdownMenuItem>
