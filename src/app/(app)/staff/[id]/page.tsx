@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
 import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listStaffAvailability, listStaffDocuments, listVisits } from "@/db/queries";
@@ -7,11 +6,12 @@ import { requireUser } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
 import { GENDERS } from "@/lib/validation";
-import { AssignmentPanel, DeleteDocument, DocumentForm, LoginPanel } from "./panels";
+import { DeleteDocument, DocumentForm, LoginPanel } from "./panels";
 import { PersonnelFile } from "./personnel-file";
 import { NoteRows } from "./note-rows";
 import { NoteFilters } from "./note-filters";
 import { StaffAvailabilityButton } from "./availability-panel";
+import { ManageAssignments } from "./manage-assignments";
 import { AvailabilityCards } from "@/components/availability-cards";
 import { isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
@@ -26,7 +26,9 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const user = await requireUser(["admin", "supervisor"]);
   const { id } = await params;
   const sp = await searchParams;
-  const tab = typeof sp.tab === "string" ? sp.tab : "overview";
+  // A tab that no longer exists (the old Clients tab, bookmarked) lands on Overview, not on nothing.
+  const KNOWN_TABS = ["overview", "compliance", "visits", "login"];
+  const tab = typeof sp.tab === "string" && KNOWN_TABS.includes(sp.tab) ? sp.tab : "overview";
   const clientFilter = typeof sp.client === "string" ? sp.client : "";
   const codeFilter = typeof sp.code === "string" ? sp.code : "";
   const s = await getStaff(id);
@@ -54,7 +56,6 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "compliance", label: "Compliance", count: summary.overdue + summary.dueSoon || undefined },
-    { key: "clients", label: "Clients", count: activeAssignments.length },
     { key: "visits", label: "Notes", count: visits.length },
     ...(user.role === "admin" ? [{ key: "login", label: "Login" }] : []),
   ];
@@ -94,7 +95,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
             <Card title="Compliance at a glance" actions={<Link href={`/staff/${id}?tab=compliance`} className="text-[13px] font-medium text-primary hover:underline">Details</Link>}>
               <ul className="grid gap-px sm:grid-cols-2">{items.map((i) => <li key={i.type} className="flex items-center justify-between gap-3 px-5 py-2.5"><span className="truncate text-[13px]">{i.label}</span><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge></li>)}</ul>
             </Card>
-            <Card title="Assigned clients" actions={<Link href={`/staff/${id}?tab=clients`} className="text-[13px] font-medium text-primary hover:underline">Manage</Link>}>
+            <Card title="Assigned clients" actions={<ManageAssignments staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />}>
               {activeAssignments.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No clients assigned.</p> : <ul className="divide-y divide-line-soft">{activeAssignments.map((a) => <li key={a.assignment.id} className="flex items-center justify-between px-5 py-2.5"><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}
             </Card>
           </div>
@@ -111,12 +112,6 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
             <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">File a document</div><DocumentForm staffId={id} categories={[...STAFF_DOCUMENT_CATEGORIES]} /></div>
           </Card>
         </div>
-      )}
-
-      {tab === "clients" && (
-        <Card title="Assigned clients" titleAfter={<Rule name="orientation" />} description="Caregivers can only clock in with people assigned to them, after orientation to that person.">
-          <AssignmentPanel staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />
-        </Card>
       )}
 
       {tab === "visits" && (
