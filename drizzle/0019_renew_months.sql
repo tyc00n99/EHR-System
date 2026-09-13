@@ -1,0 +1,1 @@
+ALTER TABLE "staff_credentials" ADD COLUMN "renew_months" integer;

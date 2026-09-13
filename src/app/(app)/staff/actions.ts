@@ -90,7 +90,10 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
   const attached = file instanceof File && file.size > 0 ? file : null;
   // Every personnel-file item except the date of hire has to be backed by a document, so a row
   // cannot be written without one. The licensor reads the paper, not the row.
-  if (!attached) return { errors: { file: "Attach the document that shows this" } };
+  // "Meets position requirements" may be shown by a written source instead (a diploma on file,
+  // years of experience per the application); everything else needs the paper.
+  if (!attached && parsed.data.type !== "position_requirements") return { errors: { file: "Attach the document that shows this" } };
+  if (!attached && parsed.data.type === "position_requirements" && !parsed.data.note?.trim()) return { errors: { note: "Say how they meet the requirements, or attach the document" } };
   const db = await getDb();
   const { hours, ...rest } = parsed.data;
   const row = await audited(db, { userId: user.id }).insert(schema.staffCredentials, { ...rest, hours: hours != null ? hours.toFixed(1) : null });

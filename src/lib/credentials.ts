@@ -5,7 +5,7 @@
 import type { CredentialType, StaffCredential } from "@/db/schema";
 
 export const CREDENTIAL_TYPES: { type: CredentialType; label: string; cite: string; renews: "never" | "annual" | "expiry" }[] = [
-  { type: "application", label: "Completed application", cite: "245D.095, subd. 3", renews: "never" },
+  { type: "application", label: "Completed employment application", cite: "245D.095, subd. 3", renews: "never" },
   { type: "duties_acknowledgment", label: "Job duties acknowledgment", cite: "245D.095, subd. 3", renews: "never" },
   { type: "position_requirements", label: "Meets position requirements", cite: "245D.095, subd. 3", renews: "never" },
   { type: "qualifications", label: "Staff qualifications", cite: "245D.09, subd. 3", renews: "never" },
@@ -74,17 +74,14 @@ export function evaluateCompliance(hireDate: string, rows: StaffCredential[], to
   const maltDue = malt ? addYear(malt.completedOn) : hireDate;
   items.push({ type: "maltreatment_reporting", label: "Maltreatment reporting training", cite: "245D.09, subd. 4(5)", status: malt ? statusFor(maltDue, today) : "missing", due: maltDue, detail: malt ? `Renews ${maltDue}` : "Within 72 hours of first direct contact, then annually." });
 
-  const firstAid = latest("first_aid");
-  const firstAidCurrent = Boolean(firstAid?.expiresOn && firstAid.expiresOn >= today);
   const annual = latest("annual_training");
   const annualDue = annual ? addYear(annual.completedOn) : addYear(hireDate);
-  items.push({ type: "annual_training", label: "Annual training", cite: "245D.09, subd. 5", status: statusFor(annualDue, today), due: annualDue, detail: `${annual ? `Last ${annual.completedOn}${annual.hours ? ` · ${annual.hours} h` : ""}. ` : ""}Due ${annualDue}.${firstAidCurrent ? " First aid topic covered by current certificate." : ""}` });
+  items.push({ type: "annual_training", label: "Annual training", cite: "245D.09, subd. 5", status: statusFor(annualDue, today), due: annualDue, detail: `${annual ? `Last ${annual.completedOn}${annual.hours ? ` · ${annual.hours} h` : ""}. ` : ""}Due ${annualDue}.` });
 
-  for (const type of ["first_aid", "cpr", "drivers_license", "auto_insurance"] as const) {
-    const row = latest(type);
-    if (!row) { if (type === "first_aid") items.push({ type, label: credentialLabel(type), cite: "245D.09, subd. 5", status: "missing", due: null, detail: "Optional, but a current certificate replaces the annual first aid topic." }); continue; }
-    items.push({ type, label: credentialLabel(type), cite: "", status: row.expiresOn ? statusFor(row.expiresOn, today) : "ok", due: row.expiresOn, detail: row.expiresOn ? `Expires ${row.expiresOn}` : `Completed ${row.completedOn}` });
-  }
+  // Only the driver's licence is tracked beyond the statutory items (Sept 13, 2026: the user
+  // removed first aid, CPR and auto insurance from the file).
+  const dl = latest("drivers_license");
+  if (dl) items.push({ type: "drivers_license", label: credentialLabel("drivers_license"), cite: "", status: dl.expiresOn ? statusFor(dl.expiresOn, today) : "ok", due: dl.expiresOn, detail: dl.expiresOn ? `Expires ${dl.expiresOn}` : `Completed ${dl.completedOn}` });
   return items;
 }
 

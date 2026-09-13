@@ -22,6 +22,7 @@ export interface PersonnelRecord {
   expiresOn: string | null;
   hours: string | null;
   instructor: string | null;
+  renewMonths: number | null;
   note: string | null;
   createdAt: string;
   documents: PersonnelDoc[];
@@ -51,18 +52,19 @@ export interface PersonnelItem {
 const DAY = 86_400_000;
 const SOON_DAYS = 30;
 const addDays = (iso: string, days: number) => new Date(new Date(iso + "T12:00:00Z").getTime() + days * DAY).toISOString().slice(0, 10);
-const addYear = (iso: string) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCFullYear(d.getUTCFullYear() + 1); return d.toISOString().slice(0, 10); };
+const addMonths = (iso: string, months: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + months); return d.toISOString().slice(0, 10); };
+const addYear = (iso: string) => addMonths(iso, 12);
 const dueStatus = (due: string, today: string): PersonnelStatus => (due < today ? "overdue" : addDays(today, SOON_DAYS) >= due ? "due_soon" : "ok");
 
 const GROUPS = { employment: "Employment", training: "Qualifications, orientation, training", background: "Background study · chapter 245C", contact: "Direct contact · employees hired after Jan 1, 2014", extras: "Licences and other certificates" };
 
-interface Spec { type: CredentialType; group: string; required: boolean; needsInstructor?: boolean; renews: "never" | "annual" | "expiry"; cite?: string }
+interface Spec { type: CredentialType; group: string; required: boolean; needsInstructor?: boolean; renews: "never" | "annual" | "expiry"; cite?: string; /** Satisfied by a written source when no document is attached. */ sourceOk?: boolean }
 
 /** The licensor's order, then the licence-holder extras. */
 const SPECS: Spec[] = [
   { type: "application", group: GROUPS.employment, required: true, renews: "never" },
   { type: "duties_acknowledgment", group: GROUPS.employment, required: true, renews: "never" },
-  { type: "position_requirements", group: GROUPS.employment, required: true, renews: "never" },
+  { type: "position_requirements", group: GROUPS.employment, required: true, renews: "never", sourceOk: true },
   { type: "qualifications", group: GROUPS.training, required: true, renews: "never" },
   { type: "orientation", group: GROUPS.training, required: true, renews: "never", needsInstructor: true },
   { type: "maltreatment_reporting", group: GROUPS.training, required: true, renews: "annual", needsInstructor: true },
@@ -72,10 +74,7 @@ const SPECS: Spec[] = [
   { type: "background_study_results", group: GROUPS.background, required: true, renews: "never" },
   { type: "first_supervised_contact", group: GROUPS.contact, required: true, renews: "never" },
   { type: "first_unsupervised_contact", group: GROUPS.contact, required: true, renews: "never" },
-  { type: "first_aid", group: GROUPS.extras, required: false, renews: "expiry" },
-  { type: "cpr", group: GROUPS.extras, required: false, renews: "expiry" },
   { type: "drivers_license", group: GROUPS.extras, required: false, renews: "expiry" },
-  { type: "auto_insurance", group: GROUPS.extras, required: false, renews: "expiry" },
   { type: "other", group: GROUPS.extras, required: false, renews: "expiry" },
 ];
 
@@ -90,7 +89,7 @@ export function buildPersonnelFile(hireDate: string, rows: StaffCredential[], do
     docs.filter((d) => d.credentialId === credentialId).map((d) => ({ id: d.id, title: d.title, fileName: d.fileName, createdAt: d.createdAt.toISOString().slice(0, 10) }));
   const records = (type: CredentialType): PersonnelRecord[] =>
     rows.filter((r) => r.type === type).sort((a, b) => (a.completedOn < b.completedOn ? 1 : -1))
-      .map((r) => ({ id: r.id, completedOn: r.completedOn, expiresOn: r.expiresOn, hours: r.hours, instructor: r.instructor, note: r.note, createdAt: r.createdAt.toISOString().slice(0, 10), documents: docsFor(r.id) }));
+      .map((r) => ({ id: r.id, completedOn: r.completedOn, expiresOn: r.expiresOn, hours: r.hours, instructor: r.instructor, renewMonths: r.renewMonths, note: r.note, createdAt: r.createdAt.toISOString().slice(0, 10), documents: docsFor(r.id) }));
 
   const items: PersonnelItem[] = [{
     key: "hire", group: GROUPS.employment, label: "Date of hire", cite: "245D.095, subd. 3", renews: "never", required: true,
@@ -102,7 +101,7 @@ export function buildPersonnelFile(hireDate: string, rows: StaffCredential[], do
   for (const spec of SPECS) {
     const recs = records(spec.type);
     const latest = recs[0];
-    const documented = Boolean(latest && latest.documents.length > 0);
+    const documented = Boolean(latest && (latest.documents.length > 0 || (spec.sourceOk && latest.note?.trim())));
     let status: PersonnelStatus;
     let due: string | null = null;
     let detail: string;
@@ -113,15 +112,19 @@ export function buildPersonnelFile(hireDate: string, rows: StaffCredential[], do
       else if (spec.type === "annual_training") { due = addYear(hireDate); status = dueStatus(due, today); detail = `Twelve hours due each year from hire; first by ${fmtDate(due)}.`; }
       else if (spec.type === "evaluation") { due = addYear(hireDate); status = dueStatus(due, today); detail = `Annual; first due ${fmtDate(due)}.`; }
       else if (spec.type === "maltreatment_reporting") { status = "missing"; due = hireDate; detail = "Within 72 hours of first direct contact, then annually."; }
-      else if (!spec.required) { status = "optional"; detail = spec.type === "first_aid" ? "Optional; a current certificate replaces the annual first aid topic." : "Not recorded."; }
+      else if (!spec.required) { status = "optional"; detail = "Not recorded."; }
       else { status = "missing"; detail = "Nothing on file."; }
     } else if (!documented) {
       status = "undocumented";
-      detail = `Recorded ${fmtDate(latest.completedOn)}, but no document is attached. Attach the paper that shows it.`;
+      detail = spec.sourceOk
+        ? `Recorded ${fmtDate(latest.completedOn)} with neither a document nor a source. Attach the paper, or note how they meet the requirements.`
+        : `Recorded ${fmtDate(latest.completedOn)}, but no document is attached. Attach the paper that shows it.`;
     } else if (spec.renews === "annual") {
-      due = addYear(latest.completedOn);
+      // Evaluations may run quarterly; the record says so. Everything else renews yearly.
+      const months = latest.renewMonths ?? 12;
+      due = addMonths(latest.completedOn, months);
       status = dueStatus(due, today);
-      detail = `Last ${fmtDate(latest.completedOn)}${latest.hours ? ` · ${latest.hours} h` : ""}${latest.instructor ? ` · ${latest.instructor}` : ""}. Due again ${fmtDate(due)}.`;
+      detail = `Last ${fmtDate(latest.completedOn)}${latest.hours ? ` · ${latest.hours} h` : ""}${latest.instructor ? ` · ${latest.instructor}` : ""}${months === 3 ? " · quarterly" : ""}. Due again ${fmtDate(due)}.`;
     } else if (spec.renews === "expiry" && latest.expiresOn) {
       due = latest.expiresOn;
       status = dueStatus(due, today);

@@ -259,6 +259,7 @@ export const credentialSchema = z
     expiresOn: isoDate.optional(),
     hours: z.coerce.number().min(0).max(999).optional(),
     instructor: z.string().max(120).optional(),
+    renewMonths: z.coerce.number().int().refine((n) => n === 3 || n === 12, "Quarterly or annually").optional(),
     note: z.string().max(1000).optional(),
   })
   .refine((c) => !c.expiresOn || c.expiresOn >= c.completedOn, { message: "Expiry must be after completion", path: ["expiresOn"] })

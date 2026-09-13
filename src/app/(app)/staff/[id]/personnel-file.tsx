@@ -135,7 +135,8 @@ function Detail({ staffId, item }: { staffId: string; item: PersonnelItem }) {
               </div>
             )}
           </dd>
-          {latest.note && (<><dt className="text-muted-foreground">Note</dt><dd className="m-0 text-text">{latest.note}</dd></>)}
+          {latest.renewMonths && (<><dt className="text-muted-foreground">Frequency</dt><dd className="m-0 text-text">{latest.renewMonths === 3 ? "Quarterly" : "Annually"}</dd></>)}
+          {latest.note && (<><dt className="text-muted-foreground">{item.type === "position_requirements" ? "Source" : "Note"}</dt><dd className="m-0 text-text">{latest.note}</dd></>)}
           <dt className="text-muted-foreground">Recorded</dt>
           <dd className="m-0 text-muted-foreground">{fmtDate(latest.createdAt)} <RemoveRecord id={latest.id} staffId={staffId} /></dd>
         </>)}
@@ -173,6 +174,7 @@ function RecordForm({ staffId, item, onDone }: { staffId: string; item: Personne
     else if (state.message) toast.error(state.message);
   }, [state, onDone]);
   const dated = item.renews === "expiry";
+  const sourceOk = item.type === "position_requirements";
   const dateLabel = item.type === "background_study" ? "Date submitted" : item.type === "background_study_results" ? "Date results received from DHS" : item.type?.startsWith("first_") ? "Date of first contact" : "Date completed";
 
   return (
@@ -215,13 +217,32 @@ function RecordForm({ staffId, item, onDone }: { staffId: string; item: Personne
             <input name="note" required placeholder="Jordan Abelard · supervised by Maria Peters" className={field} />
           </div>
         )}
+        {item.type === "evaluation" && (
+          <div>
+            <Label required>Frequency</Label>
+            <select name="renewMonths" defaultValue="12" className={field}>
+              <option value="12">Annually</option>
+              <option value="3">Quarterly</option>
+            </select>
+            <p className="mt-1 text-[13px] text-muted-foreground">Sets when the next one is due.</p>
+          </div>
+        )}
         <div className="md:col-span-2">
-          <Label required>Document</Label>
-          <input name="file" type="file" required accept=".pdf,image/*,.doc,.docx" className={fileField} />
-          <p className="mt-1 text-[13px] text-muted-foreground">The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper.</p>
+          <Label required={!sourceOk}>Document</Label>
+          <input name="file" type="file" required={!sourceOk} accept=".pdf,image/*,.doc,.docx" className={fileField} />
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            {sourceOk ? "Optional here: attach the diploma, licence or resume if there is one, or describe the source below." : "The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper."}
+          </p>
           {e.file && <p className="mt-1 text-[13px] text-danger">{e.file}</p>}
         </div>
-        {!item.type?.startsWith("first_") && (
+        {sourceOk && (
+          <div className="md:col-span-2">
+            <Label required>Source</Label>
+            <input name="note" placeholder="How they meet the requirements — e.g. HS diploma on file; 2 years' experience per the application" className={field} />
+            {e.note && <p className="mt-1 text-[13px] text-danger">{e.note}</p>}
+          </div>
+        )}
+        {!sourceOk && !item.type?.startsWith("first_") && (
           <div className="md:col-span-2">
             <Label>Note</Label>
             <input name="note" placeholder="Provider, certificate number, or what was covered" className={field} />

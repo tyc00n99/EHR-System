@@ -563,6 +563,8 @@ export const staffCredentials = pgTable(
     hours: numeric("hours", { precision: 5, scale: 1 }),
     /** The trainer or instructor. A training record without one does not satisfy the licensor. */
     instructor: text("instructor"),
+    /** Months until this record is due again, when the agency chooses (evaluations: 3 or 12). */
+    renewMonths: integer("renew_months"),
     note: text("note"),
     ...timestamps,
   },
