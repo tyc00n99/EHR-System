@@ -16,6 +16,16 @@ export interface ProfileRecord {
   diagnoses: schema.ClientDiagnosis[];
 }
 
+/**
+ * Every client's weekly availability in one read, for the schedule grid. The grid needs to mark
+ * days nobody is available on across the whole caseload, and one query per client would be a
+ * query per row per week.
+ */
+export async function listAllAvailability(): Promise<schema.ClientAvailability[]> {
+  const db = await getDb();
+  return db.select().from(schema.clientAvailability).orderBy(asc(schema.clientAvailability.weekday));
+}
+
 export async function getClientProfile(personId: string): Promise<ProfileRecord> {
   const db = await getDb();
   const [contacts, funding, locations, availability, diagnoses] = await Promise.all([

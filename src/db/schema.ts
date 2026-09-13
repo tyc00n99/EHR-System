@@ -92,8 +92,26 @@ export const organizations = pgTable("organizations", {
   state: text("state").default("MN"),
   zip: text("zip"),
   phone: text("phone"),
+  /** Calendar settings: the window the schedule draws, as whole hours in Central time. */
+  scheduleStartHour: integer("schedule_start_hour").notNull().default(6),
+  scheduleEndHour: integer("schedule_end_hour").notNull().default(21),
+  /** 0 = Sunday. The weekdays the schedule shows at all. */
+  scheduleDays: integer("schedule_days").array().notNull().default([0, 1, 2, 3, 4, 5, 6]),
   ...timestamps,
 });
+
+/**
+ * Cancellation reasons, editable in Schedule settings. A fixed list in code would be simpler, but
+ * an agency that keeps its own reasons is the reason the reference makes them editable, and the
+ * reason is what shows up later when someone asks why the units were not delivered.
+ */
+export const cancellationReasons = pgTable("cancellation_reasons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  label: text("label").notNull(),
+  active: boolean("active").notNull().default(true),
+  ...timestamps,
+});
+export type CancellationReason = typeof cancellationReasons.$inferSelect;
 
 // ---------- staff ----------
 
@@ -570,6 +588,12 @@ export const shifts = pgTable(
     endAt: timestamp("end_at", { withTimezone: true }).notNull(),
     status: shiftStatus("status").notNull().default("scheduled"),
     note: text("note"),
+    /** Why a cancelled shift was cancelled, and who called it off. The reference keeps a cancelled
+     *  event on the schedule in red rather than deleting it, and so do we: the cancellation is the
+     *  record, and a deleted row cannot answer "why was nobody there on Tuesday". */
+    cancelledBy: text("cancelled_by"),
+    cancelReasonId: uuid("cancel_reason_id"),
+    cancelNote: text("cancel_note"),
     /** Shifts created together by "repeat weekly" share a series id. */
     seriesId: uuid("series_id"),
     createdBy: uuid("created_by").references(() => users.id),

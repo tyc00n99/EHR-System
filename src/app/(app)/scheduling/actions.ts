@@ -86,3 +86,85 @@ export async function markMissed(id: string): Promise<ActionState> {
   revalidatePath("/scheduling");
   return { message: "Marked missed." };
 }
+
+/** The reasons offered in the bulk-cancel form and in Schedule settings. */
+export async function listCancellationReasons() {
+  const db = await getDb();
+  return db.select().from(schema.cancellationReasons).orderBy(schema.cancellationReasons.label);
+}
+
+/**
+ * Bulk cancel, the reference's one bulk action. A cancelled event stays on the schedule in red and
+ * can be rebooked — deleting it would erase the fact that the visit was meant to happen, which is
+ * exactly what a county reviewer asks about.
+ */
+export async function bulkCancelShifts(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const ids = fd.getAll("ids[]").map(String).filter(Boolean);
+  const cancelledBy = String(fd.get("cancelledBy") ?? "");
+  const reasonId = String(fd.get("cancelReasonId") ?? "");
+  const note = String(fd.get("cancelNote") ?? "").slice(0, 500);
+  if (!ids.length) return { message: "Select at least one event to cancel." };
+  if (!cancelledBy) return { errors: { cancelledBy: "Say who cancelled" } };
+  if (!reasonId) return { errors: { cancelReasonId: "Choose a reason" } };
+
+  const db = await getDb();
+  const w = audited(db, { userId: user.id });
+  let done = 0;
+  for (const id of ids) {
+    const [row] = await db.select().from(shifts).where(eq(shifts.id, id)).limit(1);
+    if (!row || row.status === "cancelled" || row.status === "completed") continue;
+    await w.update(shifts, id, { status: "cancelled", cancelledBy, cancelReasonId: reasonId, cancelNote: note || null });
+    done++;
+  }
+  revalidatePath("/scheduling");
+  return { message: done ? `${done} event${done === 1 ? "" : "s"} cancelled.` : "Nothing was cancelled — those events are already cancelled or completed.", ok: true };
+}
+
+/** Schedule settings: the cancellation reason list. */
+export async function saveCancellationReason(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin"]);
+  const id = String(fd.get("id") ?? "");
+  const label = String(fd.get("label") ?? "").trim().slice(0, 80);
+  if (!label) return { errors: { label: "Give the reason a name" } };
+  const db = await getDb();
+  const w = audited(db, { userId: user.id });
+  if (id) await w.update(schema.cancellationReasons, id, { label });
+  else await w.insert(schema.cancellationReasons, { label });
+  revalidatePath("/scheduling/settings");
+  return { ok: true, message: id ? "Reason renamed." : "Reason added." };
+}
+
+export async function deleteCancellationReason(id: string): Promise<{ message?: string }> {
+  const user = await requireUser(["admin"]);
+  const db = await getDb();
+  // A reason already written onto a cancelled shift is retired rather than removed, so the history
+  // still reads back. Only an unused one is actually deleted.
+  const [used] = await db.select({ id: shifts.id }).from(shifts).where(eq(shifts.cancelReasonId, id)).limit(1);
+  const w = audited(db, { userId: user.id });
+  if (used) await w.update(schema.cancellationReasons, id, { active: false });
+  else await w.delete(schema.cancellationReasons, id);
+  revalidatePath("/scheduling/settings");
+  return { message: used ? "That reason is on past cancellations, so it was retired rather than deleted." : "Reason deleted." };
+}
+
+/** Schedule settings: which days and hours the calendar draws. */
+export async function saveCalendarSettings(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin"]);
+  const start = Number(fd.get("scheduleStartHour"));
+  const end = Number(fd.get("scheduleEndHour"));
+  const days = fd.getAll("days[]").map(Number).filter((n) => n >= 0 && n <= 6);
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end > 24 || end <= start) {
+    return { errors: { scheduleEndHour: "The day has to end after it starts" } };
+  }
+  if (!days.length) return { errors: { days: "Show at least one day" } };
+  const db = await getDb();
+  const [org] = await db.select().from(schema.organizations).limit(1);
+  if (!org) return { message: "No organisation on file." };
+  await audited(db, { userId: user.id }).update(schema.organizations, org.id, {
+    scheduleStartHour: start, scheduleEndHour: end, scheduleDays: [...new Set(days)].sort((a, b) => a - b),
+  });
+  revalidatePath("/scheduling");
+  revalidatePath("/scheduling/settings");
+  return { ok: true, message: "Calendar settings saved." };
+}

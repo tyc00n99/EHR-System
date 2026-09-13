@@ -1,55 +1,200 @@
-import Link from "next/link";
-import { PageHeader } from "@/components/kit";
-import { listClockableAgreements, listShifts, listStaff, getShift } from "@/db/queries";
+import { listAllAvailability } from "@/db/profile-queries";
+import { getOrganization, listAgreementsWithUsage, listPeople, listShifts, listSitesWithPrograms, listStaff, getShift } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
+import { fmtDayTime, fromLocalInput } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { chicagoDate } from "@/lib/pay-period";
-import { fromLocalInput } from "@/lib/format";
-import { WeekCalendar, type CalShift } from "./week-calendar";
-import { NewShiftSheet, ShiftSheet } from "./shift-sheet";
+import { ActionItems, type ActionGroup } from "./action-items";
+import { MonthGrid } from "./month-grid";
+import { ScheduleGrid, type GridDay, type GridEvent, type GridRow } from "./schedule-grid";
+import { ScheduleToolbar, type ToolbarState } from "./schedule-toolbar";
+import { ShiftSheet } from "./shift-sheet";
 
-export const metadata = { title: "Scheduling" };
+export const metadata = { title: "Schedule" };
 
-function addDays(iso: string, n: number) { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
-function weekStart(iso: string) { const d = new Date(iso + "T12:00:00Z"); return addDays(iso, -d.getUTCDay()); }
+/** Calendar arithmetic on yyyy-mm-dd, in Chicago, without pulling a date library in. */
+const addDays = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const weekStart = (iso: string) => addDays(iso, -new Date(iso + "T12:00:00Z").getUTCDay());
+const monthStart = (iso: string) => iso.slice(0, 8) + "01";
+const dayOfWeek = (iso: string) => new Date(iso + "T12:00:00Z").getUTCDay();
+const fmt = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-US", { ...o, timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
+const shortTime = (d: Date) => new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).format(d).replace(" AM", "a").replace(" PM", "p");
 
 export default async function SchedulingPage({ searchParams }: PageProps<"/scheduling">) {
   const user = await requireUser();
   const sp = await searchParams;
+  const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
+
   const today = chicagoDate(new Date());
-  const start = weekStart(typeof sp.week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.week) ? sp.week : today);
-  const end = addDays(start, 6);
-  const staffFilter = typeof sp.staff === "string" ? sp.staff : user.role === "dsp" ? (user.staffId ?? undefined) : undefined;
-  const [rows, staffRows, agreements, openShift] = await Promise.all([
-    listShifts(fromLocalInput(`${start}T00:00`), fromLocalInput(`${addDays(end, 1)}T00:00`), { staffId: staffFilter }),
-    user.role === "dsp" ? [] : listStaff(true),
-    user.role === "dsp" ? [] : listClockableAgreements(),
-    typeof sp.shift === "string" ? getShift(sp.shift) : null,
+  const mode = one("mode") === "team" ? "team" : "clients";
+  const view = one("view") === "daily" ? "daily" : one("view") === "monthly" ? "monthly" : "weekly";
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(one("date")) ? one("date") : today;
+  const dept = one("dept");
+  const q = one("q").trim().toLowerCase();
+
+  // The window the whole screen works from: one day, a Sunday week, or a whole month.
+  const from = view === "daily" ? date : view === "weekly" ? weekStart(date) : monthStart(date);
+  const to = view === "daily" ? date : view === "weekly" ? addDays(from, 6) : addDays(addDays(from, 32).slice(0, 8) + "01", -1);
+  const step = view === "daily" ? 1 : view === "weekly" ? 7 : 30;
+
+  const [rows, people, staffRows, agreements, sites, availability, org, openShift] = await Promise.all([
+    listShifts(fromLocalInput(`${from}T00:00`), fromLocalInput(`${addDays(to, 1)}T00:00`), user.role === "dsp" ? { staffId: user.staffId ?? undefined } : {}),
+    listPeople(),
+    listStaff(true),
+    listAgreementsWithUsage(),
+    listSitesWithPrograms(),
+    listAllAvailability(),
+    getOrganization(),
+    one("shift") ? getShift(one("shift")) : null,
   ]);
-  const shiftsView: CalShift[] = rows.map((r) => ({ id: r.shift.id, date: chicagoDate(r.shift.startAt), start: r.shift.startAt.toISOString(), end: r.shift.endAt.toISOString(), status: r.shift.status, client: `${r.personFirst} ${r.personLast}`, staff: `${r.staffFirst} ${r.staffLast}`, staffId: r.shift.staffId, service: labelForCode(r.serviceCode, r.modifiers), code: r.serviceCode }));
-  const label = `${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(start + "T12:00:00Z"))} – ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(end + "T12:00:00Z"))}`;
-  const q = (week: string, extra: Record<string, string> = {}) => `/scheduling?${new URLSearchParams({ week, ...(staffFilter && user.role !== "dsp" ? { staff: staffFilter } : {}), ...extra })}`;
-  const office = user.role !== "dsp";
-  const totalHours = rows.filter((r) => r.shift.status !== "cancelled").reduce((n, r) => n + (r.shift.endAt.getTime() - r.shift.startAt.getTime()) / 3_600_000, 0);
+
+  const manage = user.role !== "dsp";
+
+  // Days along the top. Monthly hands its own grid the same range.
+  const span = view === "daily" ? 1 : view === "weekly" ? 7 : 0;
+  const shown = org?.scheduleDays?.length ? org.scheduleDays : [0, 1, 2, 3, 4, 5, 6];
+  const days: GridDay[] = Array.from({ length: span }, (_, i) => {
+    const d = addDays(from, i);
+    // The reference writes the weekday first — "Sun 6", not "6 Sun".
+    return { date: d, label: `${fmt(d, { weekday: "short" })} ${Number(d.slice(8))}`, today: d === today };
+  }).filter((d) => view === "daily" || shown.includes(dayOfWeek(d.date)));
+
+  const events: GridEvent[] = rows.map((r) => ({
+    id: r.shift.id,
+    date: chicagoDate(r.shift.startAt),
+    rowId: mode === "team" ? r.shift.staffId : r.shift.personId,
+    time: `${shortTime(r.shift.startAt)} – ${shortTime(r.shift.endAt)}`,
+    title: mode === "team" ? `${r.personFirst} ${r.personLast}` : `${r.staffFirst} ${r.staffLast}`,
+    service: labelForCode(r.serviceCode, r.modifiers),
+    code: r.serviceCode,
+    status: r.shift.status,
+  }));
+
+  // Days a client has no availability window at all, drawn as the reference's grey "Unavailable".
+  const covered = new Map<string, Set<number>>();
+  for (const a of availability) {
+    if (!covered.has(a.personId)) covered.set(a.personId, new Set());
+    covered.get(a.personId)!.add(a.weekday);
+  }
+  const offDays = (personId: string) => {
+    const set = covered.get(personId);
+    if (!set) return [];
+    return days.filter((d) => !set.has(dayOfWeek(d.date))).map((d) => d.date);
+  };
+
+  // "Departments" are our 245D sites. A client belongs to one through the programs their
+  // authorizations are written against, which is the only link between a person and a site.
+  const deptPrograms = new Set((sites.find((s) => s.id === dept)?.programs ?? []).map((pr) => pr.id));
+  const inDept = new Set(agreements.filter((a) => a.agreement.programId && deptPrograms.has(a.agreement.programId)).map((a) => a.agreement.personId));
+
+  const matches = (name: string) => !q || name.toLowerCase().includes(q);
+  const gridRows: GridRow[] = mode === "team"
+    ? staffRows
+        .filter((s) => matches(`${s.firstName} ${s.lastName}`))
+        .map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, meta: s.title ?? undefined, href: `/staff/${s.id}` }))
+    : people
+        .filter((p) => p.status !== "discharged")
+        .filter((p) => matches(`${p.firstName} ${p.lastName}`))
+        .filter((p) => !dept || inDept.has(p.id))
+        .map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, href: `/clients/${p.id}`, unavailable: offDays(p.id) }));
+
+  // Action items. Four fixed categories, as in the reference, filled from what we actually hold.
+  const cancelled = rows.filter((r) => r.shift.status === "cancelled");
+  const notEligible = rows.filter((r) => r.shift.status === "scheduled" && !staffRows.some((s) => s.id === r.shift.staffId));
+  const agreementById = new Map(agreements.map((a) => [a.agreement.id, a]));
+  const authTrouble = rows.filter((r) => {
+    const a = agreementById.get(r.shift.serviceAgreementId);
+    if (!a) return true;
+    const d = chicagoDate(r.shift.startAt);
+    return a.agreement.status !== "active" || d < a.agreement.startDate || d > a.agreement.endDate;
+  });
+  const heavy = agreements.filter((a) => a.agreement.status === "active" && a.agreement.authorizedUnits > 0 && a.unitsUsed / a.agreement.authorizedUnits >= 0.75);
+
+  const groups: ActionGroup[] = [
+    {
+      key: "cancellations",
+      label: "Cancellations",
+      empty: "There are no cancellations in the current timeframe and filters",
+      items: cancelled.map((r) => ({ id: r.shift.id, title: `${r.personFirst} ${r.personLast}`, detail: `${fmtDayTime(r.shift.startAt)} · ${r.staffFirst} ${r.staffLast}`, href: `/scheduling?shift=${r.shift.id}` })),
+    },
+    {
+      key: "unassigned",
+      label: "Unassigned",
+      empty: "There are no unassigned events in the current timeframe and filters",
+      items: notEligible.map((r) => ({ id: r.shift.id, title: `${r.personFirst} ${r.personLast}`, detail: `${fmtDayTime(r.shift.startAt)} · the caregiver is no longer active`, href: `/scheduling?shift=${r.shift.id}` })),
+    },
+    {
+      key: "authIssues",
+      label: "Authorization issues",
+      empty: "There are no authorization issues in the current timeframe and filters",
+      items: authTrouble.map((r) => ({ id: r.shift.id, title: `${r.personFirst} ${r.personLast}`, detail: `${fmtDayTime(r.shift.startAt)} · outside the authorization dates`, href: `/clients/${r.shift.personId}?tab=profile&section=authorizations` })),
+    },
+    {
+      key: "authUtilisation",
+      label: "Authorization utilization",
+      empty: "There are no authorizations near their limit in the current timeframe and filters",
+      items: heavy.map((a) => ({ id: a.agreement.id, title: `${a.personFirst} ${a.personLast}`, detail: `${Math.round((a.unitsUsed / a.agreement.authorizedUnits) * 100)}% of ${a.agreement.serviceCode} units used`, href: `/clients/${a.agreement.personId}?tab=profile&section=authorizations` })),
+    },
+  ];
+
+  const href = (patch: Record<string, string>) => {
+    const p = new URLSearchParams({ mode, view, date, ...(dept ? { dept } : {}), ...(q ? { q } : {}), ...patch });
+    return `/scheduling?${p}`;
+  };
+  const rangeLabel = view === "daily"
+    ? fmt(from, { weekday: "short", month: "short", day: "numeric" })
+    : view === "monthly"
+      ? fmt(from, { month: "long", year: "numeric" })
+      : `${fmt(from, { month: "short", day: "numeric" })} - ${fmt(to, { month: "short", day: "numeric" })}`;
+
+  const state: ToolbarState = {
+    mode, view, date,
+    rangeLabel,
+    prev: href({ date: addDays(from, -step) }),
+    next: href({ date: addDays(from, step) }),
+    today: href({ date: today }),
+    dept, q,
+  };
 
   return (
-    <div>
-      {openShift && <ShiftSheet shift={{ id: openShift.shift.id, status: openShift.shift.status, start: openShift.shift.startAt.toISOString(), end: openShift.shift.endAt.toISOString(), note: openShift.shift.note, seriesId: openShift.shift.seriesId, client: `${openShift.person.firstName} ${openShift.person.lastName}`, personId: openShift.person.id, staff: `${openShift.staff.firstName} ${openShift.staff.lastName}`, staffId: openShift.staff.id, service: labelForCode(openShift.agreement.serviceCode, openShift.agreement.modifiers), agreementNumber: openShift.agreement.agreementNumber, visitId: openShift.visit?.id ?? null }} office={office} />}
-      {sp.new === "1" && office && <NewShiftSheet defaultDate={typeof sp.date === "string" ? sp.date : today} staff={staffRows.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))} agreements={agreements.map((a) => ({ id: a.agreement.id, personId: a.person.id, personName: `${a.person.firstName} ${a.person.lastName}`, label: `${labelForCode(a.agreement.serviceCode, a.agreement.modifiers)} (${a.agreement.serviceCode}${a.agreement.modifiers.length ? " " + a.agreement.modifiers.join(" ") : ""}) · SA ${a.agreement.agreementNumber}` }))} />}
-      <PageHeader title="Scheduling" meta={<span>{rows.filter((r) => r.shift.status !== "cancelled").length} shifts · {totalHours.toFixed(1)} scheduled hours this week{user.role === "dsp" ? " · your schedule" : ""}</span>} actions={office && <Link href={q(start, { new: "1" })} className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary-hover">New shift</Link>} />
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Link href={q(today)} className="inline-flex h-8 items-center rounded-md border border-line bg-page px-3 text-[13px] font-medium hover:bg-hover">Today</Link>
-        <Link href={q(addDays(start, -7))} aria-label="Previous week" className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-page hover:bg-hover">‹</Link>
-        <Link href={q(addDays(start, 7))} aria-label="Next week" className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-page hover:bg-hover">›</Link>
-        <span className="ml-1 text-[16px] font-semibold text-text-strong">{label}</span>
-        {office && (
-          <form className="ml-auto flex items-center gap-2" action="/scheduling"><input type="hidden" name="week" value={start} />
-            <select name="staff" defaultValue={staffFilter ?? ""} className="h-8 rounded-md border border-line bg-page px-2 text-[13px]"><option value="">All caregivers</option>{staffRows.map((s) => <option key={s.id} value={s.id}>{s.firstName} {s.lastName}</option>)}</select>
-            <button className="h-8 rounded-md border border-line bg-page px-3 text-[13px] font-medium hover:bg-hover">Filter</button>
-          </form>
+    <div className="flex min-h-0 flex-1 flex-col">
+      {openShift && (
+        <ShiftSheet
+          shift={{
+            id: openShift.shift.id, status: openShift.shift.status,
+            start: openShift.shift.startAt.toISOString(), end: openShift.shift.endAt.toISOString(),
+            note: openShift.shift.note, seriesId: openShift.shift.seriesId,
+            client: `${openShift.person.firstName} ${openShift.person.lastName}`, personId: openShift.person.id,
+            staff: `${openShift.staff.firstName} ${openShift.staff.lastName}`, staffId: openShift.staff.id,
+            service: labelForCode(openShift.agreement.serviceCode, openShift.agreement.modifiers),
+            agreementNumber: openShift.agreement.agreementNumber, visitId: openShift.visit?.id ?? null,
+          }}
+          office={manage}
+        />
+      )}
+
+      <ScheduleToolbar
+        state={state}
+        departments={sites.map((s) => ({ id: s.id, name: s.name }))}
+        canManage={manage}
+        alerts={groups.reduce((n, g) => n + g.items.length, 0)}
+      />
+
+      <div className="flex min-h-0 flex-1">
+        <ActionItems label={rangeLabel} groups={groups} />
+        {view === "monthly" ? (
+          <MonthGrid from={from} today={today} events={events} baseHref={href({})} />
+        ) : (
+          <ScheduleGrid
+            rows={gridRows}
+            days={days}
+            events={events}
+            axisLabel={mode === "team" ? "Team" : "Clients"}
+            emptyLabel={mode === "team" ? "No caregivers match these filters." : "No clients match these filters."}
+            canCreate={manage}
+          />
         )}
       </div>
-      <WeekCalendar start={start} today={today} shifts={shiftsView} baseHref={q(start)} canCreate={office} />
     </div>
   );
 }
