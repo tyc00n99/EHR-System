@@ -15,6 +15,7 @@ export const Icon = {
   clock: (p: P) => <I {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></I>,
   visits: (p: P) => <I {...p}><path d="M4 6h16M4 12h16M4 18h10" /></I>,
   clients: (p: P) => <I {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2" /></I>,
+  team: (p: P) => <I {...p}><circle cx="12" cy="5" r="2.5" /><path d="M12 7.5V11M5 15v-1.5a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1V15" /><circle cx="5" cy="18" r="2.5" /><circle cx="12" cy="18" r="2.5" /><circle cx="19" cy="18" r="2.5" /><path d="M12 11v4.5" /></I>,
   staff: (p: P) => <I {...p}><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M9 3v4M15 3v4M8 12h8M8 16h5" /></I>,
   sites: (p: P) => <I {...p}><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 10h4a1 1 0 0 1 1 1v10M8 8h3M8 12h3M8 16h3M4 21h17" /></I>,
   audit: (p: P) => <I {...p}><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /><path d="M9 12l2 2 4-4" /></I>,

@@ -264,3 +264,11 @@ From a 101-second recording of Passage Health's scheduling module. The shape is 
 - **Chosen filters sit in the field as grey chips** (Sept 13, 2026), as the reference draws them: `Chip` in `schedule-toolbar.tsx`, used by the departments `ChipSelect` and by the participant search once a name is picked. The chip's ✕ clears that field alone. The search value is passed through **with its casing** (`qRaw`) — lowercasing it for matching broke the chip, which compares against the real name.
 - The collapsed Action Items strip uses 26px icons and a 22px chevron, at the user's request; the open panel keeps 16px beside its 15px headings.
 
+## Team module (September 13, 2026)
+From a recording of the reference's Team module, which is its Clients module with the roster in place of the caseload. Built the same way here, deliberately file for file:
+- **Team is on the rail** (`nav.ts`, between Clients and Schedule, admin and supervisor) with a new org-chart glyph `Icon.team`; Staff left the gear menu. The rail is now seven destinations for an admin, six for a supervisor.
+- `staff/team-rail.tsx` is `client-rail.tsx` with the roster: same 248px panel, same header/search/filter row, same avatar rows and pinned add button ("Add team member"). The filter chips are All / Active / Inactive / **Out of compliance**, and the one red dot a row can carry means overdue compliance items — the roster's equivalent of the caseload's missing-signing-code dot.
+- `staff/layout.tsx` mounts it under every Team screen and, like Clients, the panel returns null the moment a record is open so the record gets the full width. The rail's Team icon is the way back.
+- `/staff` is a greeting, as `/clients` is. **The sortable staff table (`staff-table.tsx`) is gone** with its compliance and rendering-ID columns; `/compliance` is where those are acted on and still has them.
+- After adding a route-group layout, `tsc` can fail on `.next/dev/types/validator.ts` disagreeing with `.next/types/routes` about `LayoutRoutes` until a build regenerates them. Run the build, then `tsc` again, before believing the error.
+

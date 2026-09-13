@@ -4,8 +4,8 @@ import type { IconName } from "@/components/icons";
  * The whole navigation, in one place, so the top bar, the section row, the gear menu and the
  * phone's tab bar can never disagree about what a role is allowed to open.
  *
- * Shape decided September 2026: a caregiver gets four destinations, a supervisor five, an admin
- * six. Everything an office user opens a few times a month lives behind the gear instead of
+ * Shape decided September 2026: a caregiver gets four destinations, a supervisor six, an admin
+ * seven (Team joined the rail on Sept 13, mirroring the reference's Team module). Everything an office user opens a few times a month lives behind the gear instead of
  * competing with Clients for the same glance.
  */
 
@@ -49,6 +49,7 @@ export function primaryNav(role: Role): Destination[] {
   return [
     { href: "/", label: "Today", icon: "home" },
     { href: "/clients", label: "Clients", icon: "clients", also: ["/agreements"] },
+    { href: "/staff", label: "Team", icon: "team" },
     { href: "/scheduling", label: "Schedule", icon: "calendar" },
     { href: "/visits", label: "Notes", icon: "visits", also: ["/notes", "/clock"] },
     ...(role === "admin" ? [{ href: "/billing", label: "Billing", icon: "money" as IconName }] : []),
@@ -63,7 +64,6 @@ export function gearGroups(role: Role): GearGroup[] {
   if (role === "dsp") return [];
   const runItems: GearGroup["items"] = [
     ...(role === "admin" ? [{ href: "/owner", label: "Agency performance", icon: "trend" as IconName }] : []),
-    { href: "/staff", label: "Staff", icon: "staff" },
     { href: "/agreements", label: "Authorizations", icon: "doc" },
     { href: "/compliance", label: "Compliance", icon: "audit" },
     { href: "/reports", label: "Reports", icon: "chart" },
