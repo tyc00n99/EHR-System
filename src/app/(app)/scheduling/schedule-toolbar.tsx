@@ -47,6 +47,65 @@ const STATUSES = [
 const FOCUS = "focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-soft focus:border-primary focus:ring-4 focus:ring-primary-soft";
 const CONTROL = cx("own-focus rounded-lg border border-line bg-card text-[14.5px] text-text transition-[box-shadow,border-color]", FOCUS);
 
+/** A chosen value sits inside the field as a grey chip with its own ✕, as the reference draws it. */
+function Chip({ label, onClear, clearLabel }: { label: string; onClear: () => void; clearLabel: string }) {
+  return (
+    <span className="flex h-7 max-w-full items-center gap-2 rounded-md bg-card-soft px-2.5 text-[14.5px] text-text-strong">
+      <span className="truncate">{label}</span>
+      <button type="button" onClick={onClear} aria-label={clearLabel} className="text-[13px] text-muted-foreground hover:text-text-strong">✕</button>
+    </span>
+  );
+}
+
+/** The departments field: placeholder, or the chosen department as a chip, with a list underneath. */
+function ChipSelect({ value, options, placeholder, onChange }: { value: string; options: Participant[]; placeholder: string; onChange: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const chosen = options.find((o) => o.id === value);
+
+  useEffect(() => {
+    const away = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, []);
+
+  return (
+    <div ref={box} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={placeholder}
+        className={cx(CONTROL, "flex h-10 w-[320px] items-center gap-2 px-2 text-left", open && "border-primary ring-4 ring-primary-soft")}
+      >
+        {chosen ? (
+          <Chip label={chosen.name} clearLabel={`Clear ${chosen.name}`} onClear={() => { setOpen(false); onChange(""); }} />
+        ) : (
+          <span className="px-1 text-hint">{placeholder}</span>
+        )}
+        <Icon.sort size={13} className="ml-auto shrink-0 text-muted-foreground" />
+      </button>
+      {open && (
+        <div role="listbox" className="absolute left-0 top-full z-30 mt-1.5 w-full rounded-lg border border-line bg-card py-1.5 shadow-lg">
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="option"
+              aria-selected={o.id === value}
+              onClick={() => { setOpen(false); onChange(o.id); }}
+              className={cx("block w-full px-3 py-1.5 text-left text-[14.5px] hover:bg-hover", o.id === value ? "text-primary" : "text-text-strong")}
+            >
+              {o.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ScheduleToolbar({
   state, departments, participants, services, careTeam, canManage, alerts,
 }: {
@@ -106,10 +165,7 @@ export function ScheduleToolbar({
       </div>
 
       <div className="mt-3.5 flex flex-wrap items-center gap-2.5 border-b border-line pb-3.5">
-        <select value={state.dept} onChange={(e) => go({ dept: e.target.value })} aria-label="Departments" className={cx(CONTROL, "h-10 w-[320px] px-3")}>
-          <option value="">Select departments</option>
-          {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-        </select>
+        <ChipSelect value={state.dept} options={departments} placeholder="Select departments" onChange={(dept) => go({ dept })} />
 
         <ParticipantSearch value={state.q} participants={participants} onPick={(q) => go({ q })} />
 
@@ -165,6 +221,8 @@ function ParticipantSearch({ value, participants, onPick }: { value: string; par
     return () => document.removeEventListener("mousedown", away);
   }, []);
 
+  // Once a name has been picked it sits in the field as a chip; typing starts again from empty.
+  const picked = [...participants.clients, ...participants.team].find((p) => p.name === value);
   const needle = text.trim().toLowerCase();
   const hit = (p: Participant) => !needle || p.name.toLowerCase().includes(needle);
   const groups = [
@@ -177,27 +235,34 @@ function ParticipantSearch({ value, participants, onPick }: { value: string; par
     <div ref={box} className="relative">
       <form
         onSubmit={(e) => { e.preventDefault(); setOpen(false); onPick(text.trim()); }}
-        className={cx(CONTROL, "flex h-10 w-[330px] items-center px-3")}
+        className={cx(CONTROL, "flex h-10 w-[330px] items-center gap-2 px-2")}
       >
-        <input
-          value={text}
-          onChange={(e) => { setText(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          placeholder="Search for event participants"
-          aria-label="Search for event participants"
-          role="combobox"
-          aria-expanded={open}
-          aria-controls="participant-results"
-          className="min-w-0 flex-1 bg-transparent text-[14.5px] text-text outline-none placeholder:text-hint"
-        />
-        {text ? (
+        {picked ? (
+          <>
+            <Chip label={picked.name} clearLabel={`Clear ${picked.name}`} onClear={() => { setText(""); setOpen(false); onPick(""); }} />
+            <input aria-label="Search for event participants" readOnly value="" className="sr-only" />
+          </>
+        ) : (
+          <input
+            value={text}
+            onChange={(e) => { setText(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            placeholder="Search for event participants"
+            aria-label="Search for event participants"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls="participant-results"
+            className="min-w-0 flex-1 bg-transparent text-[14.5px] text-text outline-none placeholder:text-hint"
+          />
+        )}
+        {!picked && text ? (
           <button type="button" onClick={() => { setText(""); setOpen(false); onPick(""); }} aria-label="Clear search" className="text-muted-foreground hover:text-text-strong">✕</button>
         ) : (
-          <Icon.sort size={13} className="text-muted-foreground" />
+          <Icon.sort size={13} className="ml-auto shrink-0 text-muted-foreground" />
         )}
       </form>
 
-      {open && (
+      {open && !picked && (
         <div id="participant-results" role="listbox" className="absolute left-0 top-full z-30 mt-1.5 max-h-80 w-full overflow-y-auto rounded-lg border border-line bg-card py-2 shadow-lg">
           {!any && <p className="px-4 py-2 text-[14px] text-muted-foreground">No one matches.</p>}
           {groups.map((g) => g.rows.length > 0 && (

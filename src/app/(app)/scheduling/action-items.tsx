@@ -44,16 +44,16 @@ export function ActionItems({ label, groups }: { label: string; groups: ActionGr
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Show action items"
-          className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"
+          className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"
         >
-          <Icon.chevronRight size={18} />
+          <Icon.chevronRight size={22} />
         </button>
         {groups.map((g) => {
           const t = TONE[g.key];
           const I = Icon[t.icon];
           return (
             <span key={g.key} title={`${g.label}${g.items.length ? ` · ${g.items.length}` : ""}`} className={cx("relative", t.color)}>
-              <I size={20} />
+              <I size={26} />
               {g.items.length > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">
                   {g.items.length}

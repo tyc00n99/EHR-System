@@ -30,7 +30,8 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   const view = one("view") === "daily" ? "daily" : one("view") === "monthly" ? "monthly" : "weekly";
   const date = /^\d{4}-\d{2}-\d{2}$/.test(one("date")) ? one("date") : today;
   const dept = one("dept");
-  const q = one("q").trim().toLowerCase();
+  const qRaw = one("q").trim();
+  const q = qRaw.toLowerCase();
   const codeF = one("code");
   const statusF = one("status");
   const staffF = one("staff");
@@ -153,7 +154,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     prev: href({ date: addDays(from, -step) }),
     next: href({ date: addDays(from, step) }),
     today: href({ date: today }),
-    dept, q, code: codeF, status: statusF, staff: staffF,
+    dept, q: qRaw, code: codeF, status: statusF, staff: staffF,
   };
   // The reference's "departments" list holds the organisation itself; ours is one agency.
   const departments = org ? [{ id: org.id, name: org.name }] : [];
