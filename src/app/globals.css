@@ -426,15 +426,17 @@ body {
   background: var(--page-bg);
 }
 
+/* The heading steps are measured off the reference, not chosen: each size is the one whose
+   rendered width matches theirs to within a percent at the same weight. See AGENTS.md. */
 h1, h2 {
   color: var(--text-strong);
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 700;
   font-variation-settings: "SOFT" 50;
 }
-h1 { font-size: 30px; line-height: 36px; letter-spacing: -0.02em; }
-h2 { font-size: 22px; line-height: 28px; letter-spacing: -0.015em; }
-h3 { color: var(--text-strong); font-size: 14px; line-height: 20px; font-weight: 500; }
+h1 { font-size: 26px; line-height: 32px; letter-spacing: -0.01em; }
+h2 { font-size: 21px; line-height: 28px; letter-spacing: -0.01em; }
+h3 { color: var(--text-strong); font-size: 17px; line-height: 24px; font-weight: 600; }
 
 /* Data reads in mono, the Hubble way: numbers, codes, times. */
 .tabular-nums { font-family: var(--font-mono); letter-spacing: 0; }

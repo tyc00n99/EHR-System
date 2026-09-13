@@ -157,7 +157,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         name={fullName(person)}
         avatar={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={manage} size={36} />}
         facts={<>
-          {person.serviceStartDate && <span>Client since <span className="ident">{fmtDate(person.serviceStartDate)}</span></span>}
+          {/* The reference prints this date in the sans face, not the mono one identifiers use. */}
+          {person.serviceStartDate && <span>Client since {fmtDate(person.serviceStartDate)}</span>}
         </>}
         chips={<>
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
@@ -357,7 +358,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               fields: [
                 { icon: "user", label: "Contact name", value: c.name },
                 { icon: "tag", label: "Relationship", value: c.relationship },
-                { icon: "phone", label: "Phone number", value: c.phone ? <a href={`tel:${c.phone}`} className="ident hover:underline">{c.phone}</a> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "phone", label: "Phone number", value: c.phone ? <a href={`tel:${c.phone}`} className="hover:underline">{c.phone}</a> : <span className="italic text-hint">Not recorded</span> },
                 { icon: "mail", label: "Email", value: c.email ? <a href={`mailto:${c.email}`} className="hover:underline">{c.email}</a> : <span className="italic text-hint">Not recorded</span> },
               ],
               chips: c.isLegalRepresentative ? <Badge tone="warn">Legal representative</Badge> : null,
@@ -366,7 +367,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               id: t.assignment.id,
               fields: [
                 { icon: "staff", label: "Caregiver", value: <Link href={`/staff/${t.staff.id}`} className="text-primary hover:underline">{t.staff.firstName} {t.staff.lastName}</Link> },
-                { icon: "check", label: "Oriented", value: t.assignment.orientedOn ? <span className="ident">{fmtDate(t.assignment.orientedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "check", label: "Oriented", value: t.assignment.orientedOn ? <span>{fmtDate(t.assignment.orientedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
               ],
               chips: t.assignment.orientedOn ? <Badge tone="ok">Cleared to work</Badge> : <Badge tone="danger">Blocks clock-in</Badge>,
             })),
@@ -376,7 +377,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               fields: [
                 { icon: "code", label: "ICD-10", value: <span className="ident">{d.icdCode}</span> },
                 { icon: "doc", label: "Description", value: d.description },
-                { icon: "calendar", label: "Diagnosed", value: d.diagnosedOn ? <span className="ident">{fmtDate(d.diagnosedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "calendar", label: "Diagnosed", value: d.diagnosedOn ? <span>{fmtDate(d.diagnosedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
               ],
               chips: d.isPrimary ? <Badge tone="accent">Primary</Badge> : null,
             })),
@@ -384,7 +385,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               id: "cm",
               fields: [
                 { icon: "user", label: "Case manager", value: person.caseManagerName },
-                { icon: "phone", label: "Phone", value: person.caseManagerPhone ? <span className="ident">{person.caseManagerPhone}</span> : <span className="italic text-hint">Not recorded</span> },
+                { icon: "phone", label: "Phone", value: person.caseManagerPhone ? <span>{person.caseManagerPhone}</span> : <span className="italic text-hint">Not recorded</span> },
                 { icon: "mail", label: "Email", value: person.caseManagerEmail ?? <span className="italic text-hint">Not recorded</span> },
                 { icon: "building", label: "County", value: `${person.county} County` },
               ],
@@ -395,7 +396,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               fields: [
                 { icon: "money", label: "Payer", value: f.payer },
                 { icon: "id", label: "Member ID", value: f.memberId ? <span className="ident">{f.memberId}</span> : <span className="italic text-hint">Not recorded</span> },
-                { icon: "calendar", label: "Effective", value: <span className="ident">{fmtDate(f.startDate)}{f.endDate ? ` – ${fmtDate(f.endDate)}` : " – open"}</span> },
+                { icon: "calendar", label: "Effective", value: <span>{fmtDate(f.startDate)}{f.endDate ? ` – ${fmtDate(f.endDate)}` : " – open"}</span> },
               ],
               chips: <>{f.waiver && <Badge tone="neutral">{f.waiver}</Badge>}<Badge tone={f.priority === "primary" ? "accent" : "neutral"}>{f.priority}</Badge></>,
             })),
@@ -413,7 +414,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               fields: [
                 { icon: "doc", label: "Service", value: <Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{labelForCode(a.serviceCode, a.modifiers)}</Link> },
                 { icon: "units", label: "Units", value: <><span className="ident">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of <span className="ident">{a.authorizedUnits.toLocaleString()}</span> left<UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></> },
-                { icon: "calendar", label: "Dates · rate", value: <><span className="ident">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[11.5px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
+                { icon: "calendar", label: "Dates · rate", value: <><span>{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[11.5px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
               ],
             })),
             availability: [],

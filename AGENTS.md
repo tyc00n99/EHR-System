@@ -213,3 +213,29 @@ The user asked for the client area to match the reference exactly. Done so far:
 - **A malformed `DATA_ENCRYPTION_KEY` crashed the record** the first time Generate was pressed in production (Sept 12, 2026): the key was set in Vercel but not 64 clean hex characters, `encryptField` threw, and the server action took the whole page down with "This page couldn't load". Two changes: `key()` in `crypto.ts` now trims whitespace and strips surrounding quotes before testing the value — a pasted key usually arrives with a newline attached, and an untrimmed key looked identical to a missing one — and its error names the observed **length** (never the value), so the log says "got 65 characters" and you know which mistake it was. `issueClientCode` wraps `encryptField` in try/catch and stores `null`: the hash is what signing checks, so a broken key must not stop a client getting a code. The panel toasts "The code works, but it could not be saved for later reference."
 - `vercel logs <url> --project ehr-system` is how a production 500 gets diagnosed; the Next.js digest shown on the error page (`ERROR 2240186455`) matches the `digest` field on the logged stack.
 
+## Type scale measured off the reference (September 12, 2026)
+The user recorded a tour of Passage Health's pages and asked for our type to match theirs per page. The sizes below were **measured, not guessed**, and the method is worth keeping because eyeballing a screen recording does not settle a 1px difference:
+- Frames come out of the recording at native resolution (3024x1964 = exactly 2x a 1512x982 desktop, so image px ÷ 2 = CSS px). `ffmpeg -ss <sec> -i <mov> -frames:v 1`.
+- `scripts/.lines.mjs` (scratch, not committed) reads a crop with `sharp`, thresholds ink at the midpoint between the darkest pixel and the page, groups inked rows into lines and inked columns into words, and returns each run's ink width. **The threshold must be the same on both sides** — a fixed threshold cuts more of the antialiased edge on grey text than on black, which made every grey label measure ~3% small and sent me chasing a font mismatch that was not there.
+- The same string is then rendered in our Plus Jakarta Sans on a canvas at 100px in each weight, ink-measured the same way, and the size follows: `size = 100 × (their_ink ÷ 2) ÷ our_ink_at_100px`. Calibrating the pipeline against our own text at known sizes returned 18.99px for a true 19px and 15.03px for a true 15px, so it is good to ~0.2%.
+- Matching is on **rendered width**, not on their CSS — if they run 22px with -0.02em tracking and we run 21px with none, the line occupies the same space and reads the same, which is what "the same font size" means on screen.
+
+Measured, with what we now use:
+| element | reference | ours |
+| --- | --- | --- |
+| base / form label / field value | 15px | 15px (unchanged) |
+| page title (`h1`) | 25.5–26.4px @600–700 | **26px/700** (was 30px/500) |
+| form group heading (`h2`) | 20.6–22.3px @700 | **21px/700** (was 22px/500) |
+| card title (`h3`, "General information") | 17.0px @600 | **17px/600** (was 15px/500, and 19px on the profile) |
+| record tab | 17.3–17.6px @500 | **17.5px/500** (was 16px) |
+| profile section title | 16.7px @600 | **16.5px/600** (was 18px) |
+| outlined "Add …" button | 16.5–16.9px @500 | **16.5px/500** (was 14.5px) |
+| record banner name | 19.2–19.7px @700 | **19px/700** (was 18.5px/600) |
+| banner meta ("Client since …") | 14.3px @400 | **14.5px/400** (was 13.5px, and monospaced) |
+| profile section list row | 14.9–15.2px | 15px (unchanged) |
+| table column header | 12.8px @500 | 13px (unchanged) |
+| table cell | 13.0px @400 | 13px (unchanged) |
+| report page title | 18.1–18.8px @700 | matches `h1` on those pages |
+Verification: our "Programming" tab and our "General information" now measure **223px and 322px of ink at 2x — the same numbers as theirs, to the pixel**.
+- **The reference has no monospaced face.** Phone numbers and dates inside the profile's entity cards, and the banner's "Client since" date, moved to the sans face to match. Codes (ICD-10, HCPCS), member IDs, unit counts and money stay in IBM Plex Mono — that was the user's own earlier decision about identifiers and the reference has no counterpart for them.
+

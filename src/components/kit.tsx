@@ -68,7 +68,7 @@ export function FormSection({ title, titleAfter, description, children }: { titl
   return (
     <section className="grid gap-4 border-t border-line-soft py-7 first:border-t-0 first:pt-0 md:grid-cols-[200px_1fr] md:gap-10">
       <div>
-        <h3 className="flex items-center gap-1.5 text-[15px]">{title}{titleAfter}</h3>
+        <h3 className="flex items-center gap-1.5 text-[17px] font-semibold">{title}{titleAfter}</h3>
         {description && <p className="mt-1 text-[13px] leading-5 text-muted-foreground">{description}</p>}
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-6">{children}</div>
@@ -101,7 +101,7 @@ export function PageHeader({ eyebrow, icon, title, meta, actions }: { eyebrow?: 
           {icon}
           <div className="min-w-0">
             <h1 className="truncate">{title}</h1>
-            {meta && <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">{meta}</div>}
+            {meta && <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-muted-foreground">{meta}</div>}
           </div>
         </div>
         {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
@@ -280,7 +280,7 @@ export function Tabs({ tabs, current, base }: { tabs: { key: string; label: stri
   return (
     <div className="-mx-4 mb-5 flex shrink-0 items-center gap-1.5 overflow-x-auto bg-page px-4 py-2 md:-mx-8 md:px-8">
       {tabs.map((t) => (
-        <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[16px] font-medium transition-colors", current === t.key ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text")}>
+        <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[17.5px] font-medium transition-colors", current === t.key ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text")}>
           {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[11px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}
         </Link>
       ))}

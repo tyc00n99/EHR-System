@@ -70,7 +70,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
       <div className={cx("border-line py-4 lg:min-h-0 lg:overflow-y-auto lg:pr-4", wide && "hidden")}>
         <div className="rounded-2xl bg-card-soft p-6">
           <div className="mb-4 flex items-center">
-            <div className="text-[19px] font-semibold text-text-strong">General information</div>
+            <div className="text-[17px] font-semibold text-text-strong">General information</div>
             {manage && (
               <Link href={editHref} className="ml-auto text-muted-foreground hover:text-text-strong" aria-label="Edit general information">
                 <Icon.edit size={15} />
@@ -134,13 +134,13 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
 
       <div className={cx("min-w-0 py-5 lg:min-h-0 lg:overflow-y-auto", wide ? "lg:pl-5" : "lg:pl-8")}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <div className="text-[18px] font-semibold text-text-strong">{current?.label}</div>
+          <div className="text-[16.5px] font-semibold text-text-strong">{current?.label}</div>
           <div className="ml-auto flex items-center gap-2">
             {manage && current?.key === "availability" && (
               <button
                 type="button"
                 onClick={() => setEditingWeek(true)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-card px-3.5 text-[14.5px] font-medium text-text-strong hover:bg-hover"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-card px-3.5 text-[16.5px] font-medium text-text-strong hover:bg-hover"
               >
                 <Icon.edit size={15} />Edit availability
               </button>
@@ -149,7 +149,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               <button
                 type="button"
                 onClick={() => setDrawer({ section: current.editable!, row: null })}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-card px-3.5 text-[14.5px] font-medium text-text-strong hover:bg-hover"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-line bg-card px-3.5 text-[16.5px] font-medium text-text-strong hover:bg-hover"
               >
                 <Icon.plus size={14} />{current.addLabel ?? "Add"}
               </button>
