@@ -455,6 +455,10 @@ kbd { font-family: var(--font-mono); }
   outline: 2px solid var(--blue-500);
   outline-offset: 2px;
 }
+/* For controls that draw their own focus ring (the schedule toolbar's teal border + soft blue
+   halo). This rule is unlayered on purpose: Tailwind's `outline-none` lives in a layer and loses
+   to the unlayered rule above, so it cannot switch the default outline off by itself. */
+.own-focus:focus-visible, .own-focus :focus-visible { outline: none; }
 
 .dark {
   --background: oklch(0.145 0 0);

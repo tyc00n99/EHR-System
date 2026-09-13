@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { createShifts } from "../actions";
@@ -61,6 +62,14 @@ export function EventForm({
   const [weekdays, setWeekdays] = useState<number[]>([]);
 
   const forClient = useMemo(() => agreements.filter((a) => a.personId === personId), [agreements, personId]);
+
+  useEffect(() => {
+    if (!state.ok || !state.message) return;
+    // A compliance warning rides on the success message; it deserves to be seen, not swallowed.
+    if (state.message.includes("overdue")) toast.warning(state.message, { duration: 8000 });
+    else toast.success(state.message);
+    router.push("/scheduling");
+  }, [state, router]);
   const timed = Boolean(date && start && end);
   const err = (k: string) => state.errors?.[k];
 
@@ -84,7 +93,7 @@ export function EventForm({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="max-w-[1180px]">
-          {state.message && <p className="mb-4 rounded-lg border border-danger bg-danger-soft px-3 py-2 text-[14px] text-danger">{state.message}</p>}
+          {state.message && !state.ok && <p className="mb-4 rounded-lg border border-danger bg-danger-soft px-3 py-2 text-[14px] text-danger">{state.message}</p>}
 
           <h2 className="mb-3 text-[21px] leading-none">Event details</h2>
 

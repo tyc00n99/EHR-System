@@ -1,5 +1,5 @@
 import { listAllAvailability } from "@/db/profile-queries";
-import { getOrganization, listAgreementsWithUsage, listPeople, listShifts, listSitesWithPrograms, listStaff, getShift } from "@/db/queries";
+import { getOrganization, listAgreementsWithUsage, listPeople, listShifts, listStaff, getShift } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { fmtDayTime, fromLocalInput } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
@@ -31,18 +31,20 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   const date = /^\d{4}-\d{2}-\d{2}$/.test(one("date")) ? one("date") : today;
   const dept = one("dept");
   const q = one("q").trim().toLowerCase();
+  const codeF = one("code");
+  const statusF = one("status");
+  const staffF = one("staff");
 
   // The window the whole screen works from: one day, a Sunday week, or a whole month.
   const from = view === "daily" ? date : view === "weekly" ? weekStart(date) : monthStart(date);
   const to = view === "daily" ? date : view === "weekly" ? addDays(from, 6) : addDays(addDays(from, 32).slice(0, 8) + "01", -1);
   const step = view === "daily" ? 1 : view === "weekly" ? 7 : 30;
 
-  const [rows, people, staffRows, agreements, sites, availability, org, openShift] = await Promise.all([
+  const [rows, people, staffRows, agreements, availability, org, openShift] = await Promise.all([
     listShifts(fromLocalInput(`${from}T00:00`), fromLocalInput(`${addDays(to, 1)}T00:00`), user.role === "dsp" ? { staffId: user.staffId ?? undefined } : {}),
     listPeople(),
     listStaff(true),
     listAgreementsWithUsage(),
-    listSitesWithPrograms(),
     listAllAvailability(),
     getOrganization(),
     one("shift") ? getShift(one("shift")) : null,
@@ -59,7 +61,10 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     return { date: d, label: `${fmt(d, { weekday: "short" })} ${Number(d.slice(8))}`, today: d === today };
   }).filter((d) => view === "daily" || shown.includes(dayOfWeek(d.date)));
 
-  const events: GridEvent[] = rows.map((r) => ({
+  const visible = rows.filter((r) =>
+    (!codeF || r.serviceCode === codeF) && (!statusF || r.shift.status === statusF) && (!staffF || r.shift.staffId === staffF),
+  );
+  const events: GridEvent[] = visible.map((r) => ({
     id: r.shift.id,
     date: chicagoDate(r.shift.startAt),
     rowId: mode === "team" ? r.shift.staffId : r.shift.personId,
@@ -82,11 +87,6 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     return days.filter((d) => !set.has(dayOfWeek(d.date))).map((d) => d.date);
   };
 
-  // "Departments" are our 245D sites. A client belongs to one through the programs their
-  // authorizations are written against, which is the only link between a person and a site.
-  const deptPrograms = new Set((sites.find((s) => s.id === dept)?.programs ?? []).map((pr) => pr.id));
-  const inDept = new Set(agreements.filter((a) => a.agreement.programId && deptPrograms.has(a.agreement.programId)).map((a) => a.agreement.personId));
-
   const matches = (name: string) => !q || name.toLowerCase().includes(q);
   const gridRows: GridRow[] = mode === "team"
     ? staffRows
@@ -95,7 +95,6 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     : people
         .filter((p) => p.status !== "discharged")
         .filter((p) => matches(`${p.firstName} ${p.lastName}`))
-        .filter((p) => !dept || inDept.has(p.id))
         .map((p) => ({ id: p.id, name: `${p.firstName} ${p.lastName}`, href: `/clients/${p.id}`, unavailable: offDays(p.id) }));
 
   // Action items. Four fixed categories, as in the reference, filled from what we actually hold.
@@ -138,7 +137,8 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   ];
 
   const href = (patch: Record<string, string>) => {
-    const p = new URLSearchParams({ mode, view, date, ...(dept ? { dept } : {}), ...(q ? { q } : {}), ...patch });
+    const p = new URLSearchParams({ mode, view, date, dept, q, code: codeF, status: statusF, staff: staffF, ...patch });
+    for (const [k, v] of [...p.entries()]) if (!v) p.delete(k);
     return `/scheduling?${p}`;
   };
   const rangeLabel = view === "daily"
@@ -153,8 +153,16 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     prev: href({ date: addDays(from, -step) }),
     next: href({ date: addDays(from, step) }),
     today: href({ date: today }),
-    dept, q,
+    dept, q, code: codeF, status: statusF, staff: staffF,
   };
+  // The reference's "departments" list holds the organisation itself; ours is one agency.
+  const departments = org ? [{ id: org.id, name: org.name }] : [];
+  const seen = new Set<string>();
+  const services = rows
+    .map((r) => ({ code: r.serviceCode, label: labelForCode(r.serviceCode, r.modifiers) }))
+    .filter((x) => !seen.has(x.code) && seen.add(x.code))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const teamList = staffRows.map((st) => ({ id: st.id, name: `${st.firstName} ${st.lastName}` }));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -175,7 +183,13 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
 
       <ScheduleToolbar
         state={state}
-        departments={sites.map((s) => ({ id: s.id, name: s.name }))}
+        departments={departments}
+        participants={{
+          clients: people.filter((pp) => pp.status !== "discharged").map((pp) => ({ id: pp.id, name: `${pp.firstName} ${pp.lastName}` })),
+          team: teamList,
+        }}
+        services={services}
+        careTeam={teamList}
         canManage={manage}
         alerts={groups.reduce((n, g) => n + g.items.length, 0)}
       />

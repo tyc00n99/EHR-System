@@ -13,16 +13,22 @@ import { fieldErrors, formToObject, shiftSchema, type ActionState } from "@/lib/
 
 const { shifts } = schema;
 
-/** Eligibility per 245D: assigned, oriented to the person, and not out of compliance. */
-async function checkEligibility(staffId: string, personId: string): Promise<string | null> {
+/**
+ * Eligibility per 245D. Two things stop a shift being made at all: the caregiver must be assigned
+ * to the person and must have been oriented to them (245D.09 subd. 4a — the statute is explicit).
+ * Overdue compliance items do not block scheduling; they come back as a warning, because the
+ * training can be caught up before the shift and refusing to book it only pushed the work into
+ * someone's spreadsheet.
+ */
+async function checkEligibility(staffId: string, personId: string): Promise<{ problem?: string; warning?: string }> {
   const s = await getStaff(staffId);
-  if (!s || !s.active) return "That staff member is inactive.";
+  if (!s || !s.active) return { problem: "That staff member is inactive." };
   const a = (await listAssignmentsForStaff(staffId)).find((x) => x.assignment.active && x.person.id === personId);
-  if (!a) return "That caregiver is not assigned to this client.";
-  if (!a.assignment.orientedOn) return "That caregiver has not been oriented to this client (245D.09, subd. 4a).";
+  if (!a) return { problem: "That caregiver is not assigned to this client." };
+  if (!a.assignment.orientedOn) return { problem: "That caregiver has not been oriented to this client (245D.09, subd. 4a)." };
   const creds = (await listAllCredentials()).get(staffId) ?? [];
-  if (complianceSummary(evaluateCompliance(s.hireDate, creds)).overdue > 0) return "That caregiver has overdue compliance items.";
-  return null;
+  const overdue = complianceSummary(evaluateCompliance(s.hireDate, creds)).overdue;
+  return overdue > 0 ? { warning: `${s.firstName} ${s.lastName} has ${overdue} overdue compliance item${overdue === 1 ? "" : "s"} — see Compliance before the first shift.` } : {};
 }
 
 export async function createShifts(_prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -32,8 +38,8 @@ export async function createShifts(_prev: ActionState, fd: FormData): Promise<Ac
   const d = parsed.data;
   const agreement = await getAgreement(d.serviceAgreementId);
   if (!agreement || agreement.personId !== d.personId || agreement.status !== "active") return { errors: { serviceAgreementId: "Choose an active agreement for this client" } };
-  const problem = await checkEligibility(d.staffId, d.personId);
-  if (problem) return { errors: { staffId: problem } };
+  const eligibility = await checkEligibility(d.staffId, d.personId);
+  if (eligibility.problem) return { errors: { staffId: eligibility.problem } };
   const db = await getDb();
   // The chosen weekdays, or just the weekday of the start date when none are ticked.
   const first = new Date(d.date + "T12:00:00Z");
@@ -64,7 +70,8 @@ export async function createShifts(_prev: ActionState, fd: FormData): Promise<Ac
   });
   revalidatePath("/scheduling");
   revalidatePath("/");
-  return created.length ? { message: `${created.length} shift${created.length === 1 ? "" : "s"} scheduled.` } : { message: "No shifts created. The caregiver already has a shift at that time or the agreement has ended." };
+  if (!created.length) return { message: "No shifts created. The caregiver already has a shift at that time or the agreement has ended." };
+  return { ok: true, message: `${created.length} event${created.length === 1 ? "" : "s"} scheduled.${eligibility.warning ? ` ${eligibility.warning}` : ""}` };
 }
 
 export async function cancelShift(id: string, scope: "one" | "series"): Promise<ActionState> {
