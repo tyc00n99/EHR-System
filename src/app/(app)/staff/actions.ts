@@ -109,7 +109,7 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
   revalidatePath(`/staff/${staffId}`);
   revalidatePath("/staff");
   revalidatePath("/me");
-  return {};
+  return { ok: true };
 }
 
 export async function deleteCredential(id: string, staffId: string): Promise<void> {

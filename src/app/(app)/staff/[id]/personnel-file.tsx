@@ -123,7 +123,7 @@ function Detail({ staffId, item }: { staffId: string; item: PersonnelItem }) {
           <dt className="text-muted-foreground">Documents</dt>
           <dd className="m-0">
             {latest.documents.length === 0 ? (
-              <AttachForm staffId={staffId} credentialId={latest.id} />
+              <AttachForm staffId={staffId} credentialId={latest.id} compact={item.status === "ok" || item.status === "due_soon"} />
             ) : (
               <div className="flex flex-wrap gap-2">
                 {latest.documents.map((d) => (
@@ -170,7 +170,7 @@ function RecordForm({ staffId, item, onDone }: { staffId: string; item: Personne
   const [state, action, pending] = useActionState(addCredential.bind(null, staffId), {});
   const e = state.errors ?? {};
   useEffect(() => {
-    if (state.ok) { toast.success("Recorded, with its document."); onDone(); }
+    if (state.ok) { toast.success("Recorded."); onDone(); }
     else if (state.message) toast.error(state.message);
   }, [state, onDone]);
   const dated = item.renews === "expiry";
@@ -266,7 +266,7 @@ function AttachForm({ staffId, credentialId, compact }: { staffId: string; crede
   return (
     <form action={action} className={cx("flex items-center gap-2", !compact && "rounded-lg border border-danger/40 bg-danger-soft/40 p-2")}>
       <input name="file" type="file" required accept=".pdf,image/*,.doc,.docx" aria-label="Attach a document" className={cx(fileField, "h-9 max-w-[320px]")} />
-      <button disabled={pending} className="h-9 shrink-0 rounded-lg border border-line bg-card px-3 text-[14px] font-medium text-text-strong hover:bg-hover disabled:opacity-60">{pending ? "Attaching…" : compact ? "Add another" : "Attach"}</button>
+      <button disabled={pending} className="h-9 shrink-0 rounded-lg border border-line bg-card px-3 text-[14px] font-medium text-text-strong hover:bg-hover disabled:opacity-60">{pending ? "Attaching…" : "Attach"}</button>
       {state.errors?.file && <span className="text-[13px] text-danger">{state.errors.file}</span>}
     </form>
   );
