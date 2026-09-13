@@ -582,3 +582,14 @@ export async function listStaffDocuments(staffId: string) {
   const db = await getDb();
   return db.select().from(schema.staffDocuments).where(eq(schema.staffDocuments.staffId, staffId)).orderBy(desc(schema.staffDocuments.createdAt));
 }
+
+export async function listStaffAvailability(staffId: string) {
+  const db = await getDb();
+  return db.select().from(schema.staffAvailability).where(eq(schema.staffAvailability.staffId, staffId)).orderBy(schema.staffAvailability.weekday);
+}
+
+/** Every caregiver's week in one read, for the schedule's Team view. */
+export async function listAllStaffAvailability() {
+  const db = await getDb();
+  return db.select().from(schema.staffAvailability).orderBy(schema.staffAvailability.weekday);
+}

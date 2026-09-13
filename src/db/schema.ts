@@ -816,6 +816,30 @@ export const clientLocations = pgTable(
  * than one. The date range and time zone describe the whole schedule and are written identically
  * on every row, because the editor always saves the set together.
  */
+/**
+ * When a caregiver can work. Same shape as client availability, kept as its own table because the
+ * two are edited from different records and the schedule reads them for different rows.
+ */
+export const staffAvailability = pgTable(
+  "staff_availability",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    staffId: uuid("staff_id").notNull().references(() => staff.id, { onDelete: "cascade" }),
+    /** 0 = Sunday, matching Date.getDay() and the shift weekday picker. */
+    weekday: integer("weekday").notNull(),
+    /** 24h "HH:MM". */
+    startTime: text("start_time").notNull(),
+    endTime: text("end_time").notNull(),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+    timeZone: text("time_zone").notNull().default("America/Chicago"),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [index("staff_availability_staff_idx").on(t.staffId)],
+);
+export type StaffAvailability = typeof staffAvailability.$inferSelect;
+
 export const clientAvailability = pgTable(
   "client_availability",
   {

@@ -1,5 +1,5 @@
 import { listAllAvailability } from "@/db/profile-queries";
-import { getOrganization, listAgreementsWithUsage, listPeople, listShifts, listStaff, getShift } from "@/db/queries";
+import { getOrganization, listAgreementsWithUsage, listAllStaffAvailability, listPeople, listShifts, listStaff, getShift } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { fmtDayTime, fromLocalInput } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
@@ -41,12 +41,13 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   const to = view === "daily" ? date : view === "weekly" ? addDays(from, 6) : addDays(addDays(from, 32).slice(0, 8) + "01", -1);
   const step = view === "daily" ? 1 : view === "weekly" ? 7 : 30;
 
-  const [rows, people, staffRows, agreements, availability, org, openShift] = await Promise.all([
+  const [rows, people, staffRows, agreements, availability, staffAvail, org, openShift] = await Promise.all([
     listShifts(fromLocalInput(`${from}T00:00`), fromLocalInput(`${addDays(to, 1)}T00:00`), user.role === "dsp" ? { staffId: user.staffId ?? undefined } : {}),
     listPeople(),
     listStaff(true),
     listAgreementsWithUsage(),
     listAllAvailability(),
+    listAllStaffAvailability(),
     getOrganization(),
     one("shift") ? getShift(one("shift")) : null,
   ]);
@@ -82,8 +83,13 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     if (!covered.has(a.personId)) covered.set(a.personId, new Set());
     covered.get(a.personId)!.add(a.weekday);
   }
-  const offDays = (personId: string) => {
-    const set = covered.get(personId);
+  for (const a of staffAvail) {
+    if (!covered.has(a.staffId)) covered.set(a.staffId, new Set());
+    covered.get(a.staffId)!.add(a.weekday);
+  }
+  // Keyed by person or staff id: both sides of the visit keep a week, and the grid asks by row.
+  const offDays = (rowId: string) => {
+    const set = covered.get(rowId);
     if (!set) return [];
     return days.filter((d) => !set.has(dayOfWeek(d.date))).map((d) => d.date);
   };
@@ -92,7 +98,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   const gridRows: GridRow[] = mode === "team"
     ? staffRows
         .filter((s) => matches(`${s.firstName} ${s.lastName}`))
-        .map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, meta: s.title ?? undefined, href: `/staff/${s.id}` }))
+        .map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, meta: s.title ?? undefined, href: `/staff/${s.id}`, unavailable: offDays(s.id) }))
     : people
         .filter((p) => p.status !== "discharged")
         .filter((p) => matches(`${p.firstName} ${p.lastName}`))

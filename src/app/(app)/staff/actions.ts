@@ -8,7 +8,7 @@ import { audited } from "@/db/audited";
 import { requireUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { decryptField, encryptField, formatSsn } from "@/lib/crypto";
-import { credentialSchema, fieldErrors, formToObject, loginSchema, staffSchema, type ActionState } from "@/lib/validation";
+import { availabilityScheduleSchema, credentialSchema, fieldErrors, formToObject, loginSchema, staffSchema, type ActionState } from "@/lib/validation";
 import { categoryForCredential } from "@/lib/staff-documents";
 import { storeStaffFile } from "./document-actions";
 
@@ -159,4 +159,29 @@ export async function revealSsn(staffId: string): Promise<{ ssn?: string; messag
   if (!row) return { message: "Staff member not found." };
   await audited(db, { userId: user.id }).event("reveal", staffId, "staff", { field: "ssn" });
   return { ssn: formatSsn(decryptField(row.ssnEncrypted)) };
+}
+
+/**
+ * Replaces a caregiver's whole week in one audited pass, exactly as the client version does — a
+ * partial write would leave the schedule describing a week nobody chose.
+ */
+export async function saveStaffAvailability(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const staffId = String(fd.get("staffId") ?? "");
+  if (!staffId) return { error: "That form is missing which team member it belongs to." };
+  let payload: unknown;
+  try { payload = JSON.parse(String(fd.get("schedule") ?? "{}")); } catch { return { error: "The schedule could not be read. Reload and try again." }; }
+  const parsed = availabilityScheduleSchema.safeParse(payload);
+  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  const { startDate, endDate, timeZone, windows } = parsed.data;
+  const db = await getDb();
+  const w = audited(db, { userId: user.id });
+  const existing = await db.select({ id: schema.staffAvailability.id }).from(schema.staffAvailability).where(eq(schema.staffAvailability.staffId, staffId));
+  for (const row of existing) await w.delete(schema.staffAvailability, row.id);
+  for (const win of windows) {
+    await w.insert(schema.staffAvailability, { staffId, weekday: win.weekday, startTime: win.startTime, endTime: win.endTime, startDate, endDate: endDate ?? null, timeZone });
+  }
+  revalidatePath(`/staff/${staffId}`);
+  revalidatePath("/scheduling");
+  return { ok: true, message: windows.length ? "Availability saved." : "Availability cleared." };
 }

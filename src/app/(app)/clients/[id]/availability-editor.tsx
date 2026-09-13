@@ -30,7 +30,11 @@ const ZONE_LABEL = "Central Time — Minnesota";
 
 const DEFAULT_WINDOW: Window = { start: "09:00", end: "17:00" };
 
-export function AvailabilityEditor({ personId, initial, onDone }: { personId: string; initial: Schedule; onDone: () => void }) {
+/**
+ * Edits one person's week. Built for clients; staff use the same editor with their own save action
+ * and `field="staffId"`, because the week looks identical whichever side of the visit you are on.
+ */
+export function AvailabilityEditor({ personId, initial, onDone, save = saveAvailability, field = "personId" }: { personId: string; initial: Schedule; onDone: () => void; save?: (p: ActionState, fd: FormData) => Promise<ActionState>; field?: "personId" | "staffId" }) {
   const [startDate, setStartDate] = useState(initial.startDate);
   const [endDate, setEndDate] = useState(initial.endDate);
   const timeZone = ZONE;
@@ -38,7 +42,7 @@ export function AvailabilityEditor({ personId, initial, onDone }: { personId: st
   const [copyFrom, setCopyFrom] = useState<number | null>(null);
 
   const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => {
-    const r = await saveAvailability(p, fd);
+    const r = await save(p, fd);
     if (r.ok) { toast.success(r.message ?? "Saved."); onDone(); }
     else if (r.error) toast.error(r.error);
     else if (r.errors) toast.error(Object.values(r.errors)[0] ?? "Check the highlighted fields.");
@@ -67,7 +71,7 @@ export function AvailabilityEditor({ personId, initial, onDone }: { personId: st
             </button>
           </div>
 
-          <input type="hidden" name="personId" value={personId} />
+          <input type="hidden" name={field} value={personId} />
           <input type="hidden" name="schedule" value={schedule} />
 
           <div className="px-6 py-5">

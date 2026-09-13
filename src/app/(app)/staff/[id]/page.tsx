@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
-import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listStaffDocuments, listVisits } from "@/db/queries";
+import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listStaffAvailability, listStaffDocuments, listVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
@@ -11,6 +11,9 @@ import { AssignmentPanel, DeleteDocument, DocumentForm, LoginPanel } from "./pan
 import { PersonnelFile } from "./personnel-file";
 import { NoteRows } from "./note-rows";
 import { NoteFilters } from "./note-filters";
+import { StaffAvailabilityButton } from "./availability-panel";
+import { AvailabilityCards } from "@/components/availability-cards";
+import { isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { buildPersonnelFile } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
@@ -34,6 +37,13 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const noteClients = [...new Map(allVisits.map((r) => [r.visit.personId, `${r.personFirst} ${r.personLast}`])).entries()].map(([pid, name]) => ({ id: pid, name })).sort((a, b) => a.name.localeCompare(b.name));
   const noteCodes = [...new Set(allVisits.map((r) => r.visit.serviceCode))].sort().map((c) => ({ code: c, label: labelForCode(c, []) }));
   const personnel = buildPersonnelFile(s.hireDate, credentials, documents);
+  const availability = await listStaffAvailability(id);
+  const schedule = {
+    startDate: availability[0]?.startDate ?? isoDay(0),
+    endDate: availability[0]?.endDate ?? "",
+    timeZone: availability[0]?.timeZone ?? "America/Chicago",
+    days: [0, 1, 2, 3, 4, 5, 6].map((d) => availability.filter((a) => a.weekday === d).map((a) => ({ start: a.startTime, end: a.endTime }))),
+  };
   const categoryLabel = (v: string) => STAFF_DOCUMENT_CATEGORIES.find((c) => c.value === v)?.label ?? v;
   const fmtSize = (n: number) => (n >= 1024 * 1024 ? `${(n / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
   const items = evaluateCompliance(s.hireDate, credentials);
@@ -76,6 +86,11 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
             ]} />
           </Card>
           <div className="space-y-4">
+            <Card title="Availability" description="When this caregiver can be scheduled" actions={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />} padded>
+              {availability.length > 0
+                ? <AvailabilityCards rows={availability} />
+                : <p className="text-[14px] text-muted-foreground">No availability recorded. Scheduling has no idea when this person is free.</p>}
+            </Card>
             <Card title="Compliance at a glance" actions={<Link href={`/staff/${id}?tab=compliance`} className="text-[13px] font-medium text-primary hover:underline">Details</Link>}>
               <ul className="grid gap-px sm:grid-cols-2">{items.map((i) => <li key={i.type} className="flex items-center justify-between gap-3 px-5 py-2.5"><span className="truncate text-[13px]">{i.label}</span><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge></li>)}</ul>
             </Card>
