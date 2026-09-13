@@ -267,7 +267,7 @@ export function RecordHeader({ avatar, title, subtitle, chips, actions, crumbs }
       <div className="flex flex-wrap items-center gap-4 pb-4">
         {avatar}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-[24px] leading-8">{title}</h1>{chips}</div>
+          <div className="flex flex-wrap items-center gap-2"><h1 className="truncate leading-8">{title}</h1>{chips}</div>
           {subtitle && <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">{subtitle}</div>}
         </div>
         {actions && <div className="flex shrink-0 gap-2">{actions}</div>}

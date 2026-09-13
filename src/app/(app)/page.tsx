@@ -192,7 +192,7 @@ async function OfficeHome({ user }: { user: { staffId: string | null; staffName:
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">Your workspace</p>
-          <h1 className="text-[28px] leading-9">{first ? `Today, ${first}` : "Today at your agency"}</h1>
+          <h1 className="leading-9">{first ? `Today, ${first}` : "Today at your agency"}</h1>
           <p className="mt-1 text-[13px] text-muted-foreground">{today()} · Pay period {period.label}</p>
         </div>
         <div className="flex gap-2">

@@ -12,7 +12,7 @@ export default async function ClientsPage() {
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-      <p className="text-[28px] font-medium tracking-tight text-primary">Welcome, {firstName}</p>
+      <p className="text-[32px] font-bold tracking-tight text-primary">Welcome, {firstName}</p>
     </div>
   );
 }
