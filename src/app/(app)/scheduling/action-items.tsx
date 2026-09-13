@@ -8,7 +8,8 @@ import { cx } from "@/components/kit";
 /**
  * The reference puts a standing "Action Items" column beside the schedule: four fixed categories
  * that are always present, each saying plainly that it is empty rather than disappearing. Collapsed,
- * it becomes a 56px strip of the same four icons, so the categories never leave the screen.
+ * it becomes an 80px strip of the same four icons — the width of the nav rail beside it — so the
+ * categories never leave the screen.
  */
 
 export interface ActionItem {
@@ -38,21 +39,21 @@ export function ActionItems({ label, groups }: { label: string; groups: ActionGr
 
   if (!open) {
     return (
-      <aside className="flex w-14 shrink-0 flex-col items-center gap-5 border-r border-line py-3.5">
+      <aside className="flex w-20 shrink-0 flex-col items-center gap-6 border-r border-line py-3.5">
         <button
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Show action items"
           className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"
         >
-          <Icon.chevronRight size={16} />
+          <Icon.chevronRight size={18} />
         </button>
         {groups.map((g) => {
           const t = TONE[g.key];
           const I = Icon[t.icon];
           return (
             <span key={g.key} title={`${g.label}${g.items.length ? ` · ${g.items.length}` : ""}`} className={cx("relative", t.color)}>
-              <I size={17} />
+              <I size={20} />
               {g.items.length > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">
                   {g.items.length}

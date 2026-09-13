@@ -35,13 +35,13 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
         orgName={orgName}
         footer={<>
           {!loginRequired() && (
-            <span title="This link opens without a password, so anyone who has it can read every record. Set REQUIRE_LOGIN=1 to turn the login back on." className="flex size-9 items-center justify-center rounded-md text-warn" aria-label="No password set on this deployment">
-              <span className="flex size-2 rounded-full bg-warn" />
+            <span title="This link opens without a password, so anyone who has it can read every record. Set REQUIRE_LOGIN=1 to turn the login back on." className="flex size-12 items-center justify-center rounded-lg text-warn" aria-label="No password set on this deployment">
+              <span className="flex size-2.5 rounded-full bg-warn" />
             </span>
           )}
           {gear.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong" />}><Settings className="size-[18px]" /></DropdownMenuTrigger>
+              <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" className="flex size-12 items-center justify-center rounded-lg text-muted-foreground hover:bg-hover hover:text-text-strong" />}><Settings className="size-[22px]" /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="right" className="w-60">
                 {gear.map((g, i) => (
                   <DropdownMenuGroup key={g.label}>
@@ -57,8 +57,8 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
             </DropdownMenu>
           )}
           <DropdownMenu>
-            <DropdownMenuTrigger render={<button aria-label="Account and appearance" className="flex size-9 items-center justify-center rounded-md hover:bg-hover" />}>
-              <Avatar name={user.staffName ?? user.email} size={26} />
+            <DropdownMenuTrigger render={<button aria-label="Account and appearance" className="flex size-12 items-center justify-center rounded-lg hover:bg-hover" />}>
+              <Avatar name={user.staffName ?? user.email} size={32} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="right" className="w-60">
               <DropdownMenuGroup><DropdownMenuLabel><div className="truncate text-[13px] font-medium text-text-strong">{user.staffName ?? user.email}</div><div className="truncate text-[13px] font-normal text-muted-foreground">{user.email} · {ROLE_LABEL[user.role]}</div></DropdownMenuLabel></DropdownMenuGroup>

@@ -10,7 +10,8 @@ import { primaryNav, type NavCounts, type Role } from "@/lib/nav";
 /**
  * The destination rail: icons only, down the left, the way Passage Health does it.
  *
- * It reads the same `primaryNav()` the phone's tab bar reads, so a role can never be offered a
+ * 80px wide with 22px icons, measured off the reference (79px rail, 22px glyphs, a 48px
+ * active pill). It reads the same `primaryNav()` the phone's tab bar reads, so a role can never be offered a
  * destination in one place and denied it in another. Labels live in the tooltip and the accessible
  * name rather than on screen, which is what buys back the width.
  */
@@ -20,8 +21,8 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
     href === "/" ? pathname === "/" : [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
 
   return (
-    <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-14 shrink-0 flex-col items-center gap-1 border-r border-line bg-sidebar py-2.5 md:flex">
-      <Link href="/" title={orgName} className="mb-1.5 flex size-8 items-center justify-center rounded-md bg-primary text-[13px] font-medium text-primary-foreground">
+    <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-sidebar py-3 md:flex">
+      <Link href="/" title={orgName} className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-[16px] font-semibold text-primary-foreground">
         D
       </Link>
       {primaryNav(role).map((d) => {
@@ -35,13 +36,13 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
             aria-label={d.label}
             aria-current={active ? "page" : undefined}
             className={cx(
-              "group relative flex size-9 items-center justify-center rounded-md transition-colors",
+              "group relative flex size-12 items-center justify-center rounded-lg transition-colors",
               active ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text-strong",
             )}
           >
-            <Ic size={18} />
+            <Ic size={22} />
             {badge > 0 && (
-              <span className="absolute right-1 top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-medium leading-none text-white">
+              <span className="absolute right-1.5 top-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-medium leading-none text-white">
                 {badge > 99 ? "99+" : badge}
               </span>
             )}
@@ -58,7 +59,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
           </Link>
         );
       })}
-      {footer && <div className="mt-auto flex flex-col items-center gap-1 border-t border-line pt-2">{footer}</div>}
+      {footer && <div className="mt-auto flex w-full flex-col items-center gap-1.5 border-t border-line pt-2.5">{footer}</div>}
     </nav>
   );
 }
