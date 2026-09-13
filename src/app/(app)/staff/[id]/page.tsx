@@ -10,6 +10,8 @@ import { GENDERS } from "@/lib/validation";
 import { AssignmentPanel, DeleteDocument, DocumentForm, LoginPanel } from "./panels";
 import { PersonnelFile } from "./personnel-file";
 import { NoteRows } from "./note-rows";
+import { NoteFilters } from "./note-filters";
+import { labelForCode } from "@/lib/hcpcs";
 import { buildPersonnelFile } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
@@ -22,9 +24,15 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const { id } = await params;
   const sp = await searchParams;
   const tab = typeof sp.tab === "string" ? sp.tab : "overview";
+  const clientFilter = typeof sp.client === "string" ? sp.client : "";
+  const codeFilter = typeof sp.code === "string" ? sp.code : "";
   const s = await getStaff(id);
   if (!s) notFound();
-  const [login, assignments, credentials, visits, people, documents] = await Promise.all([getUserForStaff(id), listAssignmentsForStaff(id), listCredentials(id), listVisits({ staffId: id, limit: 25 }), listPeople(), listStaffDocuments(id)]);
+  const [login, assignments, credentials, visits, people, documents] = await Promise.all([getUserForStaff(id), listAssignmentsForStaff(id), listCredentials(id), listVisits({ staffId: id, limit: 25, personId: clientFilter || undefined, serviceCode: codeFilter || undefined }), listPeople(), listStaffDocuments(id)]);
+  // The filter options come from everything this person has ever written, not from the filtered page.
+  const allVisits = tab === "visits" ? await listVisits({ staffId: id, limit: 1000 }) : [];
+  const noteClients = [...new Map(allVisits.map((r) => [r.visit.personId, `${r.personFirst} ${r.personLast}`])).entries()].map(([pid, name]) => ({ id: pid, name })).sort((a, b) => a.name.localeCompare(b.name));
+  const noteCodes = [...new Set(allVisits.map((r) => r.visit.serviceCode))].sort().map((c) => ({ code: c, label: labelForCode(c, []) }));
   const personnel = buildPersonnelFile(s.hireDate, credentials, documents);
   const categoryLabel = (v: string) => STAFF_DOCUMENT_CATEGORIES.find((c) => c.value === v)?.label ?? v;
   const fmtSize = (n: number) => (n >= 1024 * 1024 ? `${(n / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
@@ -97,8 +105,8 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "visits" && (
-        <Card title="Recent notes" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">All notes</Link>}>
-          {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (
+        <Card title="Recent notes" actions={<div className="flex items-center gap-3"><NoteFilters staffId={id} client={clientFilter} code={codeFilter} clients={noteClients} codes={noteCodes} /><Link href={`/visits?staff=${id}`} className="text-[13px] font-medium text-primary hover:underline">All notes</Link></div>}>
+          {visits.length === 0 ? <Empty icon="clock" title={clientFilter || codeFilter ? "No notes match those filters" : "No notes yet"} /> : (
             <Table><Thead><Th>Clock in</Th><Th>Client</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead><NoteRows staffId={id} rows={visits.map(({ visit: v, personFirst, personLast }) => ({ id: v.id, when: fmtDateTime(v.clockInAt), client: `${personFirst} ${personLast}`, personId: v.personId, code: v.serviceCode, units: v.units, status: v.status, unsigned: v.status === "completed" && !v.clientSignedAt }))} /></Table>
           )}
         </Card>

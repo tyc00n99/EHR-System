@@ -178,6 +178,7 @@ export async function staffPeriodTotals(staffId: string, from: Date, to: Date) {
 }
 
 export interface VisitFilter {
+  serviceCode?: string;
   personId?: string;
   staffId?: string;
   from?: Date;
@@ -190,6 +191,7 @@ export async function listVisits(f: VisitFilter = {}) {
   const where = [
     f.personId ? eq(visits.personId, f.personId) : undefined,
     f.staffId ? eq(visits.staffId, f.staffId) : undefined,
+    f.serviceCode ? eq(visits.serviceCode, f.serviceCode) : undefined,
     f.from ? gte(visits.clockInAt, f.from) : undefined,
     f.to ? lte(visits.clockInAt, f.to) : undefined,
   ].filter(Boolean);
