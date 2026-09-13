@@ -71,6 +71,16 @@ export const shiftStatus = pgEnum("shift_status", ["scheduled", "in_progress", "
 export const medAdminStatus = pgEnum("med_admin_status", ["given", "refused", "held", "missed"]);
 
 export const credentialType = pgEnum("credential_type", [
+  // The personnel-record items a 245D licensor checks (245D.095 subd. 3), one type each, so every
+  // item on that list is a dated row with a document behind it. Date of hire lives on the staff row.
+  "application",
+  "duties_acknowledgment",
+  "position_requirements",
+  "qualifications",
+  "evaluation",
+  "background_study_results",
+  "first_supervised_contact",
+  "first_unsupervised_contact",
   "background_study",
   "orientation",
   "maltreatment_reporting",
@@ -551,6 +561,8 @@ export const staffCredentials = pgTable(
     completedOn: date("completed_on").notNull(),
     expiresOn: date("expires_on"),
     hours: numeric("hours", { precision: 5, scale: 1 }),
+    /** The trainer or instructor. A training record without one does not satisfy the licensor. */
+    instructor: text("instructor"),
     note: text("note"),
     ...timestamps,
   },

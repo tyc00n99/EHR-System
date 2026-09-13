@@ -5,10 +5,18 @@
 import type { CredentialType, StaffCredential } from "@/db/schema";
 
 export const CREDENTIAL_TYPES: { type: CredentialType; label: string; cite: string; renews: "never" | "annual" | "expiry" }[] = [
-  { type: "background_study", label: "DHS background study", cite: "245C.03; 245D.09, subd. 6", renews: "never" },
+  { type: "application", label: "Completed application", cite: "245D.095, subd. 3", renews: "never" },
+  { type: "duties_acknowledgment", label: "Job duties acknowledgment", cite: "245D.095, subd. 3", renews: "never" },
+  { type: "position_requirements", label: "Meets position requirements", cite: "245D.095, subd. 3", renews: "never" },
+  { type: "qualifications", label: "Staff qualifications", cite: "245D.09, subd. 3", renews: "never" },
+  { type: "background_study", label: "Background study submitted", cite: "245C.03; 245D.09, subd. 6", renews: "never" },
+  { type: "background_study_results", label: "Background study results received from DHS", cite: "245C", renews: "never" },
   { type: "orientation", label: "Orientation to program requirements", cite: "245D.09, subd. 4", renews: "never" },
   { type: "maltreatment_reporting", label: "Maltreatment reporting training", cite: "245D.09, subd. 4(5); 245A.65, subd. 3", renews: "annual" },
   { type: "annual_training", label: "Annual training", cite: "245D.09, subd. 5", renews: "annual" },
+  { type: "evaluation", label: "Performance evaluation", cite: "245D.09, subd. 3 to 5", renews: "annual" },
+  { type: "first_supervised_contact", label: "First supervised direct contact", cite: "245D.095, subd. 3", renews: "never" },
+  { type: "first_unsupervised_contact", label: "First unsupervised direct contact", cite: "245D.095, subd. 3", renews: "never" },
   { type: "first_aid", label: "First aid certification", cite: "245D.09, subd. 5", renews: "expiry" },
   { type: "cpr", label: "CPR certification", cite: "License holder policy", renews: "expiry" },
   { type: "drivers_license", label: "Driver's license", cite: "License holder policy", renews: "expiry" },

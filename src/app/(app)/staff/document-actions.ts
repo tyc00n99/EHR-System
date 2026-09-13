@@ -79,3 +79,18 @@ export async function deleteStaffDocument(id: string, staffId: string): Promise<
   await deleteFile(doc.filePath);
   revalidatePath(`/staff/${staffId}`);
 }
+
+/** Files a document against a credential that was recorded before documents were required. */
+export async function attachToCredential(staffId: string, credentialId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const file = fd.get("file");
+  if (!(file instanceof File) || file.size === 0) return { errors: { file: "Choose a file" } };
+  const db = await getDb();
+  const [cred] = await db.select().from(schema.staffCredentials).where(eq(schema.staffCredentials.id, credentialId)).limit(1);
+  if (!cred || cred.staffId !== staffId) return { message: "That credential is not on this record." };
+  const { categoryForCredential } = await import("@/lib/staff-documents");
+  const stored = await storeStaffFile(user.id, staffId, file, { category: categoryForCredential(cred.type), title: cred.title, credentialId });
+  if (stored.error) return { errors: { file: stored.error } };
+  revalidatePath(`/staff/${staffId}`);
+  return { ok: true, message: "Document attached." };
+}

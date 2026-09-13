@@ -248,7 +248,7 @@ export const DEFAULT_TASKS = [
   { code: "household", label: "Household tasks" },
 ] as const;
 
-export const CREDENTIAL_TYPE_VALUES = ["background_study", "orientation", "maltreatment_reporting", "annual_training", "first_aid", "cpr", "drivers_license", "auto_insurance", "other"] as const;
+export const CREDENTIAL_TYPE_VALUES = ["application", "duties_acknowledgment", "position_requirements", "qualifications", "background_study", "background_study_results", "orientation", "maltreatment_reporting", "annual_training", "evaluation", "first_supervised_contact", "first_unsupervised_contact", "first_aid", "cpr", "drivers_license", "auto_insurance", "other"] as const;
 
 export const credentialSchema = z
   .object({
@@ -258,9 +258,12 @@ export const credentialSchema = z
     completedOn: isoDate,
     expiresOn: isoDate.optional(),
     hours: z.coerce.number().min(0).max(999).optional(),
+    instructor: z.string().max(120).optional(),
     note: z.string().max(1000).optional(),
   })
-  .refine((c) => !c.expiresOn || c.expiresOn >= c.completedOn, { message: "Expiry must be after completion", path: ["expiresOn"] });
+  .refine((c) => !c.expiresOn || c.expiresOn >= c.completedOn, { message: "Expiry must be after completion", path: ["expiresOn"] })
+  // Staff training records must name the trainer or instructor (245D.095 subd. 3).
+  .refine((c) => !["orientation", "maltreatment_reporting", "annual_training"].includes(c.type) || Boolean(c.instructor?.trim()), { message: "Name the trainer or instructor", path: ["instructor"] });
 
 export const loginSchema = z.object({
   staffId: z.uuid(),

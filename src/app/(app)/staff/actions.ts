@@ -88,6 +88,9 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
   // file does not leave a credential behind with nothing to back it.
   const file = fd.get("file");
   const attached = file instanceof File && file.size > 0 ? file : null;
+  // Every personnel-file item except the date of hire has to be backed by a document, so a row
+  // cannot be written without one. The licensor reads the paper, not the row.
+  if (!attached) return { errors: { file: "Attach the document that shows this" } };
   const db = await getDb();
   const { hours, ...rest } = parsed.data;
   const row = await audited(db, { userId: user.id }).insert(schema.staffCredentials, { ...rest, hours: hours != null ? hours.toFixed(1) : null });

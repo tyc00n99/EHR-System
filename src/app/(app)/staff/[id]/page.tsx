@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
 import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listStaffDocuments, listVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
-import { CREDENTIAL_TYPES, complianceSummary, credentialLabel, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
+import { complianceSummary, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
 import { GENDERS } from "@/lib/validation";
-import { AssignmentPanel, CredentialForm, DeleteCredential, DeleteDocument, DocumentForm, LoginPanel } from "./panels";
+import { AssignmentPanel, DeleteDocument, DocumentForm, LoginPanel } from "./panels";
+import { PersonnelFile } from "./personnel-file";
+import { buildPersonnelFile } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
 
@@ -22,7 +24,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const s = await getStaff(id);
   if (!s) notFound();
   const [login, assignments, credentials, visits, people, documents] = await Promise.all([getUserForStaff(id), listAssignmentsForStaff(id), listCredentials(id), listVisits({ staffId: id, limit: 25 }), listPeople(), listStaffDocuments(id)]);
-  const fileFor = (credentialId: string) => documents.find((d) => d.credentialId === credentialId);
+  const personnel = buildPersonnelFile(s.hireDate, credentials, documents);
   const categoryLabel = (v: string) => STAFF_DOCUMENT_CATEGORIES.find((c) => c.value === v)?.label ?? v;
   const fmtSize = (n: number) => (n >= 1024 * 1024 ? `${(n / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
   const items = evaluateCompliance(s.hireDate, credentials);
@@ -77,18 +79,10 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
 
       {tab === "compliance" && (
         <div className="space-y-4">
-          <Card title="Requirements" description="What 245D.09 and chapter 245C require before and during direct support work">
-            <ul className="divide-y divide-line-soft">{items.map((i) => <li key={i.type} className="flex items-start gap-3 px-5 py-3"><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge><div className="min-w-0 flex-1"><div className="font-medium text-text-strong">{i.label} {i.cite && <span className="text-[13px] font-normal text-muted-foreground">{i.cite}</span>}</div><div className="text-[13px] text-muted-foreground">{i.detail}</div></div>{i.due && <span className={`shrink-0 text-[13px] tabular-nums ${i.status === "overdue" ? "text-danger" : "text-muted-foreground"}`}>{fmtDate(i.due)}</span>}</li>)}</ul>
-          </Card>
-          <Card title="Training and credentials" description="Add each certificate, clearance, or training as it is completed">
-            {credentials.length === 0 ? <Empty icon="doc" title="Nothing recorded yet" /> : (
-              <Table><Thead><Th>Item</Th><Th>Completed</Th><Th>Expires</Th><Th align="right">Hours</Th><Th>File</Th><Th>Note</Th><Th /></Thead><tbody>{credentials.map((c) => { const f = fileFor(c.id); return <Tr key={c.id}><Td strong>{c.title}<div className="text-[13px] font-normal text-muted-foreground">{credentialLabel(c.type)}</div></Td><Td className="text-muted-foreground">{fmtDate(c.completedOn)}</Td><Td className="text-muted-foreground">{c.expiresOn ? fmtDate(c.expiresOn) : "—"}</Td><Td align="right">{c.hours ?? ""}</Td><Td>{f ? <a href={`/staff/${id}/documents/${f.id}`} target="_blank" rel="noopener" className="text-[13px] font-medium text-primary hover:underline">View</a> : <span className="text-[13px] text-hint">—</span>}</Td><Td wrap className="text-[13px] text-muted-foreground">{c.note}</Td><Td align="right"><DeleteCredential id={c.id} staffId={id} /></Td></Tr>; })}</tbody></Table>
-            )}
-            <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">Record a credential</div><CredentialForm staffId={id} types={CREDENTIAL_TYPES.map((t) => ({ type: t.type, label: t.label }))} /></div>
-          </Card>
-          <Card title="Documents" description="The personnel file: background study, certificates, employment and tax forms, policy acknowledgments">
-            {documents.length === 0 ? <Empty icon="doc" title="No documents filed yet" /> : (
-              <Table><Thead><Th>Document</Th><Th>Category</Th><Th>Filed</Th><Th align="right">Size</Th><Th /></Thead><tbody>{documents.map((d) => <Tr key={d.id}><Td strong><a href={`/staff/${id}/documents/${d.id}`} target="_blank" rel="noopener" className="hover:underline">{d.title}</a><div className="text-[13px] font-normal text-muted-foreground">{d.fileName}{d.note ? ` · ${d.note}` : ""}</div></Td><Td className="text-muted-foreground">{categoryLabel(d.category)}</Td><Td className="text-muted-foreground">{fmtDate(d.createdAt.toISOString().slice(0, 10))}</Td><Td align="right" className="ident text-muted-foreground">{fmtSize(d.sizeBytes)}</Td><Td align="right"><DeleteDocument id={d.id} staffId={id} /></Td></Tr>)}</tbody></Table>
+          <PersonnelFile staffId={id} items={personnel} documents={documents.map((d) => ({ id: d.id, title: d.title, fileName: d.fileName, credentialId: d.credentialId, createdAt: d.createdAt.toISOString().slice(0, 10) }))} />
+          <Card title="Documents" description="The rest of the personnel file: employment and tax forms, policy acknowledgments, anything not tied to one item above">
+            {documents.filter((d) => !d.credentialId).length === 0 ? <Empty icon="doc" title="No other documents filed" /> : (
+              <Table><Thead><Th>Document</Th><Th>Category</Th><Th>Filed</Th><Th align="right">Size</Th><Th /></Thead><tbody>{documents.filter((d) => !d.credentialId).map((d) => <Tr key={d.id}><Td strong><a href={`/staff/${id}/documents/${d.id}`} target="_blank" rel="noopener" className="hover:underline">{d.title}</a><div className="text-[13px] font-normal text-muted-foreground">{d.fileName}{d.note ? ` · ${d.note}` : ""}</div></Td><Td className="text-muted-foreground">{categoryLabel(d.category)}</Td><Td className="text-muted-foreground">{fmtDate(d.createdAt.toISOString().slice(0, 10))}</Td><Td align="right" className="ident text-muted-foreground">{fmtSize(d.sizeBytes)}</Td><Td align="right"><DeleteDocument id={d.id} staffId={id} /></Td></Tr>)}</tbody></Table>
             )}
             <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">File a document</div><DocumentForm staffId={id} categories={[...STAFF_DOCUMENT_CATEGORIES]} /></div>
           </Card>
