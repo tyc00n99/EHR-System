@@ -53,6 +53,7 @@ export function primaryNav(role: Role): Destination[] {
     { href: "/staff", label: "Team", icon: "team" },
     { href: "/scheduling", label: "Schedule", icon: "calendar" },
     { href: "/visits", label: "Notes", icon: "visits", also: ["/notes", "/clock"] },
+    { href: "/evv", label: "EVV", icon: "shield" },
     ...(role === "admin" ? [{ href: "/billing", label: "Billing", icon: "money" as IconName }] : []),
     { href: "/attention", label: "Review", icon: "bell", badge: "review" as const },
   ];
@@ -115,6 +116,17 @@ export function sectionRow(pathname: string, role: Role, c: NavCounts): SectionE
       { href: "/attention?kind=manual", label: "Manual EVV", count: c.manual || undefined, match: param("kind", "manual") },
       { href: "/attention?kind=missed_shift", label: "Missed shifts", count: c.missed || undefined, match: param("kind", "missed_shift") },
       { href: "/attention?kind=compliance", label: "Credentials", count: c.compliance || undefined, match: param("kind", "compliance") },
+    ];
+  }
+
+  if (pathname === "/evv") {
+    return [
+      { href: "/evv", label: "Review queue", match: (_p, p) => !p.get("tab") || p.get("tab") === "queue" },
+      { href: "/evv?tab=compliance", label: "Compliance", match: param("tab", "compliance") },
+      ...(role === "admin" ? [
+        { href: "/evv?tab=settings", label: "Settings", match: param("tab", "settings") },
+        { href: "/evv?tab=integration", label: "Integration", match: param("tab", "integration") },
+      ] : []),
     ];
   }
 

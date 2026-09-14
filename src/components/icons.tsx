@@ -46,6 +46,7 @@ export const Icon = {
   check: (p: P) => <I {...p}><path d="M5 12l4 4 10-10" /></I>,
   edit: (p: P) => <I {...p}><path d="M4 20h4l10-10-4-4L4 16z" /><path d="M12 8l4 4" /></I>,
   inbox: (p: P) => <I {...p}><path d="M4 4h16v16H4z" /><path d="M4 14h5l1.5 2h3L15 14h5" /></I>,
+  shield: (p: P) => <I {...p}><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z" /><path d="M9 12.5l2 2 4-4.5" /></I>,
   bell: (p: P) => <I {...p}><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" /><path d="M10 20a2 2 0 0 0 4 0" /></I>,
   chart: (p: P) => <I {...p}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></I>,
   money: (p: P) => <I {...p}><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M7 12h.01M17 12h.01" /></I>,

@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { getDb } from "@/db";
+import { defaultOrganizationId, makeCtx } from "@/evv/context";
+import { COMPLIANCE, reasonLabel } from "@/evv/labels";
+import { listVisitsForStaff } from "@/evv/review";
 import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Notice, StatTile } from "@/components/kit";
-import { getOpenVisitForStaff, getStaff, listAssignmentsForStaff, listCredentials, listShifts, listVisits, staffPeriodTotals } from "@/db/queries";
+import { getOpenVisitForStaff, getStaff, listAssignmentsForStaff, listCredentials, listPeople, listShifts, listVisits, staffPeriodTotals } from "@/db/queries";
 import { labelForCode } from "@/lib/hcpcs";
 import { requireUser } from "@/lib/auth";
 import { evaluateCompliance } from "@/lib/credentials";
-import { fmtDateTime, fullName } from "@/lib/format";
+import { fmtDate, fmtDateTime, fullName } from "@/lib/format";
 import { currentPayPeriod } from "@/lib/pay-period";
 import { VisitSheet } from "./visits/record/visit-sheet";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
@@ -21,6 +25,31 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
 }
 
 /* ---------- caregiver home ---------- */
+
+async function EvvMine({ staffId }: { staffId: string }) {
+  const db = await getDb();
+  const ctx = makeCtx(db, await defaultOrganizationId(db), null);
+  const rows = await listVisitsForStaff(ctx, staffId, 6);
+  if (!rows.length) return null;
+  const people = await listPeople();
+  const name = (id: string) => { const p = people.find((x) => x.id === id); return p ? fullName(p) : "Client"; };
+  return (
+    <Card title="Visit verification" description="How your recent visits stand for EVV. Clock in and out with location on, at the person's home or with Community chosen, and they stay compliant." className="mb-6">
+      <ul className="divide-y divide-line-soft">
+        {rows.map((v) => { const c = COMPLIANCE[v.complianceStatus]; const reasons = v.complianceReasons.filter((r) => r !== "EVV_NOT_REQUIRED"); return (
+          <li key={v.id} className="px-4 py-2.5">
+            <Link href={v.visitId ? `/visits/${v.visitId}` : "/visits"} className="flex flex-wrap items-center gap-x-3 gap-y-1 hover:underline">
+              <span className="w-24 shrink-0 text-[13px] tabular-nums text-muted-foreground">{v.serviceDate ? fmtDate(v.serviceDate) : "—"}</span>
+              <span className="min-w-0 flex-1 font-medium text-text-strong">{name(v.personId)}</span>
+              <Badge tone={c.tone}>{v.evvRequired ? c.label : "Not required"}</Badge>
+            </Link>
+            {reasons.length > 0 && <div className="mt-0.5 text-[13px] text-muted-foreground">{reasons.slice(0, 2).map(reasonLabel).join(" · ")}</div>}
+          </li>
+        ); })}
+      </ul>
+    </Card>
+  );
+}
 
 async function CaregiverHome({ staffId, name }: { staffId: string; name: string | null }) {
   const period = currentPayPeriod();
@@ -100,6 +129,8 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
           <div className="text-[13px] text-muted-foreground">{attention.map((i) => i.label).join(" · ")}</div>
         </Notice>
       )}
+
+      <EvvMine staffId={staffId} />
 
       <Card title="My recent notes" actions={<Link href="/visits" className="text-[13px] font-medium text-primary hover:underline">This pay period</Link>}>
         {visits.length === 0 ? <Empty icon="clock" title="No notes yet" /> : (

@@ -129,3 +129,13 @@ export async function visitDetail(ctx: EvvCtx, visitId: string) {
     counts: { openExceptions: exceptions.filter((e) => e.status === "open").length, versions: versions.length, events: events.length },
   };
 }
+
+/** A caregiver's own recent EVV visits, newest first. */
+export async function listVisitsForStaff(ctx: EvvCtx, staffId: string, limit = 8) {
+  return ctx.db.select().from(schema.evvVisits).where(and(eq(schema.evvVisits.organizationId, ctx.orgId), eq(schema.evvVisits.staffId, staffId))).orderBy(desc(schema.evvVisits.createdAt)).limit(limit);
+}
+
+/** The most recent submissions across the tenant, for the integration screen. */
+export async function recentSubmissions(ctx: EvvCtx, limit = 20) {
+  return ctx.db.select().from(schema.evvSubmissions).where(eq(schema.evvSubmissions.organizationId, ctx.orgId)).orderBy(desc(schema.evvSubmissions.updatedAt)).limit(limit);
+}

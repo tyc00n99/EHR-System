@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Notice, PageHeader, PageIcon, Properties } from "@/components/kit";
+import { EvvCard } from "./evv-card";
 import { Icon } from "@/components/icons";
 import { getVisit } from "@/db/queries";
 import { can, requireUser } from "@/lib/auth";
@@ -54,6 +55,7 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
       <div className="mb-4 overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]"><VisitRecord id={v.id} /></div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <EvvCard visitId={v.id} office={user.role !== "dsp"} />
         <Card title="Aggregator record" description="Exactly what the EVV aggregator and the 837P claim line receive" padded>
           <Properties items={[
             { icon: "hash", label: "Provider tax ID", value: <span className="tabular-nums">{v.providerTaxId}</span> },

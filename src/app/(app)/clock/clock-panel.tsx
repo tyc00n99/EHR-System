@@ -51,6 +51,32 @@ function useGpsSubmit(dispatch: (fd: FormData) => void) {
   return { onSubmit, locating, gpsError };
 }
 
+/**
+ * Lets the caregiver see, before pressing the button, whether the phone can place them: the EVV
+ * geofence needs a fix, and a fix vaguer than a couple of hundred metres is flagged. One tap,
+ * no tracking — the position is read once and discarded.
+ */
+function LocationReadiness() {
+  const [state, setState] = useState<{ kind: "idle" } | { kind: "checking" } | { kind: "ok"; accuracy: number | null } | { kind: "error"; message: string }>({ kind: "idle" });
+  const check = async () => {
+    setState({ kind: "checking" });
+    try { const fix = await getPosition(); setState({ kind: "ok", accuracy: fix.accuracy ?? null }); }
+    catch (err) { setState({ kind: "error", message: err instanceof Error ? err.message : "Location failed." }); }
+  };
+  const good = state.kind === "ok" && (state.accuracy == null || state.accuracy <= 200);
+  return (
+    <div className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-[13px] ${state.kind === "ok" ? (good ? "border-ok/30 bg-ok-soft text-ok" : "border-warn/30 bg-warn-soft text-warn") : state.kind === "error" ? "border-danger/30 bg-danger-soft text-danger" : "border-line bg-sidebar text-muted-foreground"}`}>
+      <span className="min-w-0 flex-1">
+        {state.kind === "idle" && "Location is recorded for EVV. Check it before you clock in."}
+        {state.kind === "checking" && "Checking your location…"}
+        {state.kind === "ok" && (good ? `Location ready${state.accuracy != null ? ` · accurate to about ${Math.round(state.accuracy)} m` : ""}` : `Location found but only accurate to about ${Math.round(state.accuracy ?? 0)} m — step outside or wait a moment, then check again`)}
+        {state.kind === "error" && state.message}
+      </span>
+      <button type="button" onClick={check} disabled={state.kind === "checking"} className="shrink-0 font-medium underline disabled:opacity-60">{state.kind === "idle" ? "Check location" : "Check again"}</button>
+    </div>
+  );
+}
+
 function ClientSignature({ error, reasonError }: { error?: string; reasonError?: string }) {
   const [unable, setUnable] = useState(false);
   return (
@@ -109,11 +135,12 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
           {options.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
         </Select>
       </Field>
-      <Field label="Where" error={e.placeOfService}>
+      <Field label="Where" error={e.placeOfService} hint="Pick the person's home only when you are there. Anywhere else is a community visit — EVV compares your location against their home address.">
         <Select name="placeOfService" defaultValue="12" className="h-11 text-base">
           {places.map((p) => <option key={p.code} value={p.code}>{p.label}</option>)}
         </Select>
       </Field>
+      <LocationReadiness />
       <fieldset>
         <legend className="mb-1 block text-[13px] font-medium text-muted-foreground">Planned tasks</legend>
         <div className="divide-y divide-line-soft rounded-md border border-line">
@@ -167,6 +194,7 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
         <Textarea name="shiftNote" required className="min-h-36 text-base" />
       </Field>
       <ClientSignature error={e.clientCode} reasonError={e.unableReason} />
+      <LocationReadiness />
       <Button type="submit" className="h-12 w-full text-base" disabled={pending || locating}>
         {locating ? "Getting your location…" : pending ? "Clocking out…" : "Clock out"}
       </Button>
