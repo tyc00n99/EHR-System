@@ -8,8 +8,10 @@ import { cx } from "@/components/kit";
  */
 
 /** Six hues, assigned per service code so the same service reads the same colour everywhere. */
-// No blues: the user asked for none anywhere. Violet, purple, amber, pink, green, rust.
-const TRACK_COLORS = ["#6d4fc2", "#9333ea", "#b45309", "#be185d", "#15803d", "#c2410c"];
+// Service hues carry meaning per code, so they must not look like the interface: no blue (the
+// user asked for none) and no purple (the accent and its lavender tint are purple now). Green,
+// amber, pink, rust, brown, olive.
+const TRACK_COLORS = ["#15803d", "#b45309", "#be185d", "#c2410c", "#854d0e", "#4d7c0f"];
 
 export function serviceColor(code: string): string {
   let n = 0;
