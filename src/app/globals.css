@@ -147,14 +147,14 @@
   --nav-text: #475569;
   --nav-text-strong: #0f172a;
   --nav-hover: rgba(15, 23, 42, 0.04);
-  --nav-active: #dce7f5;
+  --nav-active: #f1ecfa;
   --nav-active-text: #173e6d;
   --nav-group: #94a3b8;
   --nav-badge: #dc2626;
-  --nav-cta: #dce7f5;
-  --nav-cta-border: #a9c3e2;
-  --nav-cta: #dce7f5;
-  --nav-cta-border: #a9c3e2;
+  --nav-cta: #f1ecfa;
+  --nav-cta-border: #d6c8f0;
+  --nav-cta: #f1ecfa;
+  --nav-cta-border: #d6c8f0;
 
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.06);
@@ -177,7 +177,7 @@
   --primary: #0098c0;
   --primary-foreground: #ffffff;
   --primary-hover: #0081a5;
-  --primary-soft: #dff3fa;
+  --primary-soft: #f1ecfa;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
   --muted: var(--gray-200);
@@ -516,14 +516,14 @@ kbd { font-family: var(--font-mono); }
   --banner-line: #e2e8f0;
   --nav: #f8fafb;
   --nav-group: #607381;
-  --nav-active: #dce7f5;
-  --nav-cta: #dce7f5;
-  --nav-cta-border: #b9cee8;
+  --nav-active: #f1ecfa;
+  --nav-cta: #f1ecfa;
+  --nav-cta-border: #d6c8f0;
   --text-muted: #526575;
   --text-hint: #697d8d;
   --primary: #0098c0;
   --primary-hover: #0081a5;
-  --primary-soft: #dff3fa;
+  --primary-soft: #f1ecfa;
   --blue-500: #0098c0;
   --ring: #0098c0;
   --radius: 0.75rem;
