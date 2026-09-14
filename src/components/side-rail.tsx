@@ -32,11 +32,11 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
 
   return (
     <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-sidebar py-3 md:flex">
-      <Link href="/" title={orgName} aria-label="EVVora home" className="mb-2 flex size-10 items-center justify-center overflow-hidden rounded-lg border border-line-soft">
-        {/* The app icon itself (public/evvora-icon-1024.png, served at 192), so the tile matches the
-            favicon and the home-screen icon rather than being a third mark. */}
+      <Link href="/" title={orgName} aria-label="EVVora home" className="mb-2 flex size-16 items-center justify-center overflow-hidden rounded-xl border border-line-soft">
+        {/* The app icon, cropped to the mark (public/evvora-tile.png) so the E+VV fills the tile
+            instead of sitting in the icon's own padding, and drawn at 64px on the 80px rail. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
-        <img src="/icon-192.png" alt="" width={40} height={40} className="size-full object-cover" />
+        <img src="/evvora-tile.png" alt="" width={64} height={64} className="size-full object-cover" />
       </Link>
       {primaryNav(role).map((d) => {
         const Ic = Icon[d.icon];
