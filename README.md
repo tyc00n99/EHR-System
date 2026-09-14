@@ -1,4 +1,4 @@
-# 245D EHR
+# EVVora
 
 Electronic health record for Minnesota 245D-licensed providers of home and community-based services.
 

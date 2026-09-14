@@ -22,9 +22,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
 
   return (
     <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-sidebar py-3 md:flex">
-      <Link href="/" title={orgName} className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-[16px] font-semibold text-primary-foreground">
-        D
-      </Link>
+      <Link href="/" title={orgName} className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-[16px] font-semibold text-primary-foreground">E</Link>
       {primaryNav(role).map((d) => {
         const Ic = Icon[d.icon];
         const active = isActive(d.href, d.also);

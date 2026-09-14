@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Sonder Homecare",
-    short_name: "Sonder Homecare",
+    name: "EVVora",
+    short_name: "EVVora",
     description: "Clock in and out, record tasks and write the note.",
     start_url: "/clock",
     display: "standalone",
