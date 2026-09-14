@@ -254,14 +254,12 @@ async function main() {
     locationSource: "gps" as const, locationType: v.community ? ("community" as const) : ("home" as const), verificationMethod: v.manual ? ("manual" as const) : ("mobile" as const),
     offline: v.offline, deviceId: "sam-phone", metadata: { channel: "seed" }, manualReason: v.manual ? "Phone died at the door; times confirmed with Jordan's mother" : undefined,
   });
-  let k = 0;
   for (const v of seeded) {
     const receiveIn = v.offline ? new Date(v.start.getTime() + 3 * 3_600_000) : new Date(v.start.getTime() + 20_000);
     const receiveOut = v.offline ? new Date(v.end.getTime() + 2 * 3_600_000) : new Date(v.end.getTime() + 15_000);
     await createVisit(makeCtx(db, org.id, v.manual ? adminUser.id : samUser.id, () => v.start), { id: v.id, personId: jordan.id, staffId: sam.id, serviceAgreementId: v.sa.id, visitId: v.id, manualEntry: v.manual });
     await clockIn(makeCtx(db, org.id, samUser.id, () => receiveIn), v.id, ev(v.id, "clock_in", v.start, v), v.manual ? { ...actor, userId: adminUser.id, role: "admin" } : actor);
     await clockOut(makeCtx(db, org.id, samUser.id, () => receiveOut), v.id, ev(v.id, "clock_out", v.end, v), v.manual ? { ...actor, userId: adminUser.id, role: "admin" } : actor);
-    k++;
   }
   // The aggregator (mock) accepts everything except one visit, which it rejects for review; the
   // most recent two stay queued so the integration screen shows work in flight.
