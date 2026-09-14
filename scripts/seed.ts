@@ -2,7 +2,8 @@
  * Seeds sample data into the configured database (local PGlite, or DATABASE_URL). Run with `npm run db:seed`.
  *
  * Deliberately small: one organisation, one admin login (Mustafa Ali) and one caregiver (Sam
- * Nguyen), and one client (Jordan Abelard) whose record is complete in every section — contacts,
+ * Nguyen, days; Amara Okafor, overnights), and one client (Harold Lindqvist, early-onset Alzheimer's)
+ * whose record is complete in every section — contacts,
  * funding, locations with a geocoded home, availability, diagnoses, agreements, goals, medications,
  * documents, a signing code, six weeks of notes — plus the EVV records those notes produce, built
  * through the real EVV services so the queue, the compliance report and the integration screen all
@@ -41,8 +42,8 @@ import { activitiesFor, skillsFor } from "../src/lib/templates";
 const { organizations, staff, users, people, sites, programs, serviceAgreements, assignments, staffCredentials, staffDocuments, staffAvailability, visits, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations, clientContacts, clientFundingSources, clientLocations, clientAvailability, clientDiagnoses, clientDocuments } = schema;
 
 const PASSWORD = process.env.SEED_ADMIN_PASSWORD?.trim() || "changeme-245d";
-const HOME = { lat: 44.9778, lng: -93.265 }; // Jordan's home, downtown Minneapolis
-const JORDAN_CODE = "482113";
+const HOME = { lat: 44.9778, lng: -93.265 }; // Harold's home, north Minneapolis (sample coordinates)
+const CLIENT_CODE = "482113";
 
 /** A tiny valid PDF so every filed document opens. */
 const samplePdf = (title: string) => new TextEncoder().encode(`%PDF-1.1\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>endobj\n4 0 obj<</Length ${title.length + 50}>>stream\nBT /F1 16 Tf 72 720 Td (${title.replace(/[()\\]/g, "")} - sample) Tj ET\nendstream\nendobj\n5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n`);
@@ -74,7 +75,7 @@ async function main() {
     await w.update(schema.evvProviderProfiles, profile.id, { medicaidProviderId: org.umpi, legalName: "Sonder Homecare LLC" });
   }
 
-  /* ---------- staff: the admin login and one caregiver ---------- */
+  /* ---------- staff: the admin login, one daytime caregiver, one overnight caregiver ---------- */
   const ssn = (digits: string) => ({ ssnEncrypted: encryptField(digits), ssnLast4: digits.slice(-4) });
   const [keptAdminUser] = reuse ? await db.select().from(users).where(eq(users.email, "admin@example.com")) : [];
   const [keptAdmin] = keptAdminUser?.staffId ? await db.select().from(staff).where(eq(staff.id, keptAdminUser.staffId)) : [];
@@ -88,11 +89,19 @@ async function main() {
     address1: "2600 Nicollet Ave", address2: "Apt 3", city: "Minneapolis", zip: "55408", umpi: "A100000003", hireDate: "2025-06-10", title: "Direct support professional",
     email: "dsp@example.com", phone: "612-555-0103",
   });
+  // Overnight staff: night supervision cannot be worked by the same person who does the days.
+  const amara = await w.insert(staff, {
+    firstName: "Amara", lastName: "Okafor", dob: "1994-11-30", gender: "female", ...ssn("456789012"), payRate: "21.00",
+    address1: "77 Snelling Ave N", city: "St. Paul", zip: "55104", umpi: "A100000004", hireDate: "2025-09-01", title: "Direct support professional, overnight",
+    email: "night@example.com", phone: "651-555-0104",
+  });
   const hash = await hashPassword(PASSWORD);
   const adminUser = keptAdminUser ?? (await w.insert(users, { email: "admin@example.com", passwordHash: hash, role: "admin", staffId: admin.id }));
   const samUser = await w.insert(users, { email: "dsp@example.com", passwordHash: hash, role: "dsp", staffId: sam.id });
+  const amaraUser = await w.insert(users, { email: "night@example.com", passwordHash: hash, role: "dsp", staffId: amara.id });
   for (const d of [1, 2, 3, 4, 5]) await w.insert(staffAvailability, { staffId: sam.id, weekday: d, startTime: "08:00", endTime: "17:00", startDate: "2026-01-01" });
   await w.insert(staffAvailability, { staffId: sam.id, weekday: 6, startTime: "09:00", endTime: "15:00", startDate: "2026-01-01" });
+  for (const d of [0, 1, 2, 3, 4, 5, 6]) await w.insert(staffAvailability, { staffId: amara.id, weekday: d, startTime: "21:00", endTime: "23:59", startDate: "2026-01-01", notes: "Overnights; available until 7:00 the next morning" });
 
   /* ---------- personnel files: the licensor's thirteen items, each with its document ---------- */
   type CredType = (typeof staffCredentials.$inferInsert)["type"];
@@ -103,20 +112,20 @@ async function main() {
     { type: "qualifications", title: "Staff qualifications documentation", category: "employment_form", monthsAfterHire: 0 },
     { type: "orientation", title: "245D orientation to program requirements", category: "orientation", monthsAfterHire: 0, instructor: "Mustafa Ali", hours: "8.0" },
     { type: "maltreatment_reporting", title: "Vulnerable Adults Act and maltreatment reporting", category: "training_certificate", monthsAfterHire: 0, instructor: "Mustafa Ali", hours: "1.5", renewMonths: 12 },
-    { type: "annual_training", title: "Person-centered practices and positive supports", category: "training_certificate", monthsAfterHire: 4, instructor: "North Star Training Cooperative", hours: "12.0", renewMonths: 12 },
+    { type: "annual_training", title: "Dementia care, person-centered practices and positive supports", category: "training_certificate", monthsAfterHire: 4, instructor: "North Star Training Cooperative", hours: "12.0", renewMonths: 12 },
     { type: "evaluation", title: "Performance evaluation", category: "evaluation", monthsAfterHire: 12, renewMonths: 12 },
     { type: "background_study", title: "DHS NETStudy 2.0 submission", category: "background_study", monthsAfterHire: -1 },
     { type: "background_study_results", title: "DHS background study determination: cleared", category: "background_study", monthsAfterHire: 0 },
-    { type: "first_supervised_contact", title: "First supervised direct contact", category: "orientation", monthsAfterHire: 0, note: "Jordan Abelard · supervised by Mustafa Ali" },
-    { type: "first_unsupervised_contact", title: "First unsupervised direct contact", category: "orientation", monthsAfterHire: 1, note: "Jordan Abelard" },
+    { type: "first_supervised_contact", title: "First supervised direct contact", category: "orientation", monthsAfterHire: 0, note: "Harold Lindqvist · supervised by Mustafa Ali" },
+    { type: "first_unsupervised_contact", title: "First unsupervised direct contact", category: "orientation", monthsAfterHire: 1, note: "Harold Lindqvist" },
     { type: "drivers_license", title: "MN Class D driver's licence", category: "license", monthsAfterHire: -12, expiresYears: 4 },
   ];
   const addMonths = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
   const personnelFile = async (row: typeof sam, uploadedBy: string) => {
-    // Recurring items are dated within the last year so they read as current, not overdue.
     for (const it of ITEMS) {
       let completedOn = addMonths(row.hireDate, it.monthsAfterHire);
       if (it.renewMonths) { while (addMonths(completedOn, it.renewMonths) < today) completedOn = addMonths(completedOn, it.renewMonths); }
+      if (completedOn > today) completedOn = today;
       const cred = await w.insert(staffCredentials, { staffId: row.id, type: it.type, title: it.title, completedOn, expiresOn: it.expiresYears ? addMonths(completedOn, it.expiresYears * 12) : null, hours: it.hours ?? null, instructor: it.instructor ?? null, renewMonths: it.renewMonths ?? null, note: it.note ?? null });
       const path = `staff/${row.id}/${cred.id}.pdf`;
       const bytes = samplePdf(`${it.title} - ${row.firstName} ${row.lastName}`);
@@ -125,104 +134,152 @@ async function main() {
     }
   };
   await personnelFile(sam, adminUser.id);
+  await personnelFile(amara, adminUser.id);
   await personnelFile(admin, adminUser.id);
 
   /* ---------- sites and programs ---------- */
   await w.insert(sites, { name: "Main office", type: "office", address1: "100 Main St", city: "Minneapolis", zip: "55401" });
   const home = await w.insert(sites, { name: "In-home services", type: "in_home", licenseNumber: "1234567" });
-  const ihsTraining = await w.insert(programs, { siteId: home.id, serviceTypeId: "ihs-with-training", name: "IHS with training" });
+  const ihs = await w.insert(programs, { siteId: home.id, serviceTypeId: "ihs-without-training", name: "IHS without training" });
+  const night = await w.insert(programs, { siteId: home.id, serviceTypeId: "night-supervision", name: "Night supervision" });
+  const homemaker = await w.insert(programs, { siteId: home.id, serviceTypeId: "homemaker", name: "Homemaker with personal care" });
   const respite = await w.insert(programs, { siteId: home.id, serviceTypeId: "respite-in-home", name: "In-home respite" });
 
-  /* ---------- the client: complete in every section ---------- */
-  const jordan = await w.insert(people, {
-    firstName: "Jordan", lastName: "Abelard", preferredName: "Jo", dob: "1998-04-12", sexAtBirth: "male", pmi: "12345678",
+  /* ---------- the client: early-onset Alzheimer's, complete in every section ---------- */
+  const harold = await w.insert(people, {
+    firstName: "Harold", lastName: "Lindqvist", preferredName: "Hal", dob: "1963-02-08", sexAtBirth: "male", pmi: "12345678",
     waiverProgram: "CADI", county: "Hennepin", status: "active", serviceStartDate: "2026-07-01", medicationSupport: true,
     caseManagerName: "Dana Whitfield", caseManagerPhone: "612-555-0142", caseManagerEmail: "dwhitfield@hennepin.example",
-    guardianName: "Renee Abelard", guardianRelationship: "Mother", guardianPhone: "612-555-0177", guardianEmail: "renee.abelard@example.com",
-    emergencyContactName: "Marcus Abelard", emergencyContactRelationship: "Father", emergencyContactPhone: "612-555-0163", emergencyContactEmail: "marcus.abelard@example.com",
+    guardianName: "Ingrid Lindqvist", guardianRelationship: "Spouse · health care agent and POA", guardianPhone: "612-555-0177", guardianEmail: "ingrid.lindqvist@example.com",
+    emergencyContactName: "Ingrid Lindqvist", emergencyContactRelationship: "Spouse", emergencyContactPhone: "612-555-0177", emergencyContactEmail: "ingrid.lindqvist@example.com",
     consultProviderName: "North Star Consultation Services", consultContactName: "Priya Raman", consultPhone: "651-555-0133", consultEmail: "praman@northstar.example",
-    address1: "1420 Girard Ave N", address2: "Unit 2", city: "Minneapolis", state: "MN", zip: "55411", phone: "612-555-0150", email: "jordan.abelard@example.com",
+    address1: "1420 Girard Ave N", city: "Minneapolis", state: "MN", zip: "55411", phone: "612-555-0150", email: "ingrid.lindqvist@example.com",
     smsConsent: true, smsConsentAt: new Date("2026-07-01T15:00:00Z"),
-    signatureCodeHash: await hashPassword(JORDAN_CODE), signatureCodeEncrypted: encryptField(JORDAN_CODE), signatureCodeSetAt: new Date(),
+    signatureCodeHash: await hashPassword(CLIENT_CODE), signatureCodeEncrypted: encryptField(CLIENT_CODE), signatureCodeSetAt: new Date(),
+    activityLibrary: [
+      "Sorted and set up the weekly pill organizer with {name}, checking each dose against the MAR",
+      "Cued {name} through the morning routine with the picture schedule: toileting, wash, dress, breakfast",
+      "Walked the block with {name} after lunch; practiced the route home with landmarks",
+      "Folded laundry together; {name} matched socks and named colours",
+      "Looked through the family photo album and talked about the lake cabin",
+      "Prepared lunch with {name} choosing between two options shown on plates",
+      "Checked the door alarm and the stove knob covers before leaving",
+      "Redirected {name} during a sundowning episode with music from the 1970s and a warm drink",
+      "Reoriented {name} to the day and the calendar on the whiteboard",
+      "Assisted {name} with a shower using the step-by-step cue cards",
+    ],
   });
-  await w.insert(clientContacts, { personId: jordan.id, name: "Renee Abelard", relationship: "Mother · legal guardian", phone: "(612) 555-0177", email: "renee.abelard@example.com", isPrimary: true, isLegalRepresentative: true });
-  await w.insert(clientContacts, { personId: jordan.id, name: "Marcus Abelard", relationship: "Father", phone: "(612) 555-0163", email: "marcus.abelard@example.com", isPrimary: false, isLegalRepresentative: false, notes: "Call first in an emergency; works nights" });
-  await w.insert(clientFundingSources, { personId: jordan.id, payer: "Minnesota Health Care Programs (MA)", waiver: "CADI", memberId: "12345678", priority: "primary", startDate: "2026-07-01", notes: "Waiver renewal due June 2027" });
-  await w.insert(clientLocations, { personId: jordan.id, type: "home", posCode: "12", label: "Home", address1: "1420 Girard Ave N", address2: "Unit 2", city: "Minneapolis", state: "MN", zip: "55411", isDefault: true, lat: HOME.lat, lng: HOME.lng, ivrPhone: "612-555-0150" });
-  await w.insert(clientLocations, { personId: jordan.id, type: "community", posCode: "99", label: "Webber Park Library", address1: "4440 Humboldt Ave N", city: "Minneapolis", state: "MN", zip: "55412", isDefault: false, lat: 45.0357, lng: -93.298 });
-  for (const d of [1, 2, 3, 4, 5]) await w.insert(clientAvailability, { personId: jordan.id, weekday: d, startTime: "09:00", endTime: "14:00", startDate: "2026-07-01", notes: "Day programme after 2:30pm" });
-  await w.insert(clientAvailability, { personId: jordan.id, weekday: 6, startTime: "10:00", endTime: "15:00", startDate: "2026-07-01" });
-  await w.insert(clientDiagnoses, { personId: jordan.id, icdCode: "F84.0", description: "Autism spectrum disorder", diagnosedOn: "2012-03-14", isPrimary: true });
-  await w.insert(clientDiagnoses, { personId: jordan.id, icdCode: "F41.1", description: "Generalised anxiety disorder", diagnosedOn: "2019-11-02", isPrimary: false });
+  await w.insert(clientContacts, { personId: harold.id, name: "Ingrid Lindqvist", relationship: "Spouse · health care agent and POA", phone: "(612) 555-0177", email: "ingrid.lindqvist@example.com", isPrimary: true, isLegalRepresentative: true, notes: "Manages the pharmacy refills; call her about any refused dose" });
+  await w.insert(clientContacts, { personId: harold.id, name: "Erik Lindqvist", relationship: "Son", phone: "(612) 555-0163", email: "erik.lindqvist@example.com", isPrimary: false, isLegalRepresentative: false, notes: "Lives ten minutes away; covers Sunday nights" });
+  await w.insert(clientFundingSources, { personId: harold.id, payer: "Minnesota Health Care Programs (MA)", waiver: "CADI", memberId: "12345678", priority: "primary", startDate: "2026-07-01", notes: "Waiver renewal due June 2027; 24-hour emergency assistance under review" });
+  await w.insert(clientLocations, { personId: harold.id, type: "home", posCode: "12", label: "Home", address1: "1420 Girard Ave N", city: "Minneapolis", state: "MN", zip: "55411", isDefault: true, lat: HOME.lat, lng: HOME.lng, ivrPhone: "612-555-0150" });
+  await w.insert(clientLocations, { personId: harold.id, type: "day_program", posCode: "99", label: "Lyngblomsten adult day program", address1: "1415 Almond Ave", city: "St. Paul", state: "MN", zip: "55108", isDefault: false, lat: 44.9724, lng: -93.1594 });
+  for (const d of [1, 2, 3, 4, 5]) await w.insert(clientAvailability, { personId: harold.id, weekday: d, startTime: "08:00", endTime: "13:00", startDate: "2026-07-01", notes: "Adult day program Tue and Thu afternoons" });
+  for (const d of [0, 1, 2, 3, 4, 5, 6]) await w.insert(clientAvailability, { personId: harold.id, weekday: d, startTime: "21:30", endTime: "23:59", startDate: "2026-07-01", notes: "Overnight supervision through 6:00" });
+  await w.insert(clientAvailability, { personId: harold.id, weekday: 6, startTime: "10:00", endTime: "15:00", startDate: "2026-07-01" });
+  await w.insert(clientDiagnoses, { personId: harold.id, icdCode: "G30.0", description: "Alzheimer's disease with early onset", diagnosedOn: "2024-09-18", isPrimary: true });
+  await w.insert(clientDiagnoses, { personId: harold.id, icdCode: "F02.81", description: "Dementia in Alzheimer's disease with behavioral disturbance (wandering, sundowning)", diagnosedOn: "2025-11-04", isPrimary: false });
+  await w.insert(clientDiagnoses, { personId: harold.id, icdCode: "I10", description: "Essential hypertension", diagnosedOn: "2019-03-02", isPrimary: false });
+  await w.insert(clientDiagnoses, { personId: harold.id, icdCode: "E11.9", description: "Type 2 diabetes mellitus without complications", diagnosedOn: "2020-06-15", isPrimary: false });
 
-  const saIhs = await w.insert(serviceAgreements, { personId: jordan.id, programId: ihsTraining.id, agreementNumber: "SA-2026-00101", serviceCode: "H2014", modifiers: ["UC", "U3"], authorizedUnits: 1040, unitRate: "6.85", unitMinutes: 15, startDate: "2026-07-01", endDate: "2027-06-30", authorizingCounty: "Hennepin" });
-  const saRespite = await w.insert(serviceAgreements, { personId: jordan.id, programId: respite.id, agreementNumber: "SA-2026-00102", serviceCode: "S5150", modifiers: [], authorizedUnits: 320, unitRate: "5.10", unitMinutes: 15, startDate: "2026-07-01", endDate: "2027-06-30", authorizingCounty: "Hennepin" });
-  await w.insert(assignments, { staffId: sam.id, personId: jordan.id, orientedOn: "2026-07-01" });
-  await w.insert(assignments, { staffId: admin.id, personId: jordan.id, orientedOn: "2026-07-01" });
+  const sa = (programId: string, agreementNumber: string, serviceCode: string, modifiers: string[], authorizedUnits: number, unitRate: string) =>
+    w.insert(serviceAgreements, { personId: harold.id, programId, agreementNumber, serviceCode, modifiers, authorizedUnits, unitRate, unitMinutes: 15, startDate: "2026-07-01", endDate: "2027-06-30", authorizingCounty: "Hennepin" });
+  const saIhs = await sa(ihs.id, "SA-2026-00101", "S5135", ["UC"], 4200, "5.95");          // IHS without training, weekday mornings
+  const saNight = await sa(night.id, "SA-2026-00102", "S5135", ["UA"], 12000, "2.10");       // night supervision, six nights a week
+  const saHomemaker = await sa(homemaker.id, "SA-2026-00103", "S5130", ["TG"], 700, "4.95"); // homemaker with personal care, Tue/Thu
+  const saRespite = await sa(respite.id, "SA-2026-00104", "S5150", [], 900, "5.10");         // in-home respite, Saturdays
+  await w.insert(assignments, { staffId: sam.id, personId: harold.id, orientedOn: "2026-07-01" });
+  await w.insert(assignments, { staffId: amara.id, personId: harold.id, orientedOn: "2026-09-02" });
+  await w.insert(assignments, { staffId: admin.id, personId: harold.id, orientedOn: "2026-07-01" });
 
   for (const [category, title, effectiveOn, text] of [
-    ["support_plan", "CSSP 2026–2027", "2026-07-01", "Coordinated services and support plan for Jordan Abelard. Goals: community participation, meal planning, employment exploration. CADI waiver. Case manager Dana Whitfield."],
-    ["iapp", "IAPP signed 7/1/26", "2026-07-01", "Individual abuse prevention plan. Vulnerabilities: anxiety in crowds, difficulty asking for help. Supports: visual schedule, staff nearby in community settings."],
-    ["treatment_goals", "Support plan goals, Q3 2026", "2026-07-01", "Goal 1: join one community activity a week. Goal 2: plan and cook two meals a week with fading support."],
+    ["support_plan", "CSSP 2026–2027", "2026-07-01", "Coordinated services and support plan for Harold Lindqvist. Early-onset Alzheimer's disease. Services: IHS without training, night supervision, homemaker with personal care, in-home respite. Goals: medication taken as prescribed, morning routine with cueing, safe nights, meals and hydration, home kept safe, staying engaged. Case manager Dana Whitfield."],
+    ["iapp", "IAPP signed 7/1/26", "2026-07-01", "Individual abuse prevention plan. Vulnerabilities: memory loss, wandering after dark, may refuse or double-take medications, cannot manage money or the stove safely. Supports: door alarm, stove knob covers, locked medication box with staff-managed MAR, staff present overnight."],
+    ["treatment_goals", "Support plan goals, Q3 2026", "2026-07-01", "Medication management, personal care with cueing, night safety, nutrition and hydration, homemaking, engagement and orientation, spouse respite."],
+    ["other", "Medication administration plan", "2026-07-01", "Donepezil 10 mg at bedtime; memantine 10 mg twice daily; metformin 500 mg with breakfast and dinner; lisinopril 10 mg each morning. Staff administer from the locked box and record every dose, refusal and hold. Hold metformin and call Ingrid if Harold has not eaten. Call the prescriber for two refusals of donepezil in a row."],
   ] as const) {
-    const path = `clients/${jordan.id}/${category}.pdf`;
+    const path = `clients/${harold.id}/${category}.pdf`;
     const bytes = samplePdf(title);
     await putFile(path, bytes, "application/pdf");
-    await w.insert(clientDocuments, { personId: jordan.id, category, title, fileName: `${category}.pdf`, filePath: path, mimeType: "application/pdf", sizeBytes: bytes.byteLength, effectiveOn, uploadedBy: adminUser.id, extractedText: text, extractedAt: new Date(), extractionSummary: title, extractionModel: "seed" });
+    await w.insert(clientDocuments, { personId: harold.id, category, title, fileName: `${category}.pdf`, filePath: path, mimeType: "application/pdf", sizeBytes: bytes.byteLength, effectiveOn, uploadedBy: adminUser.id, extractedText: text, extractedAt: new Date(), extractionSummary: title, extractionModel: "seed" });
   }
 
-  /* ---------- goals ---------- */
-  const mkGoal = async (title: string, description: string, category: string, prompts: string[]) => {
-    const g = await w.insert(goals, { personId: jordan.id, title, description, category, status: "active", startDate: "2026-07-01", createdBy: adminUser.id });
-    const qs: { id: string }[] = [];
-    for (const [i, prompt] of prompts.entries()) qs.push(await w.insert(goalQuestions, { goalId: g.id, prompt, sortOrder: i }));
+  /* ---------- goals: one per support area, each with yes/no prompts staff answer on every note ---------- */
+  const mkGoal = async (title: string, description: string, category: string, prompts: string[], targetDate: string | null = null) => {
+    const g = await w.insert(goals, { personId: harold.id, title, description, category, status: "active", startDate: "2026-07-01", targetDate, createdBy: adminUser.id });
+    const qs: { id: string; prompt: string; area: string }[] = [];
+    for (const [i, prompt] of prompts.entries()) qs.push({ id: (await w.insert(goalQuestions, { goalId: g.id, prompt, sortOrder: i })).id, prompt, area: category });
     return qs;
   };
   const questions = [
-    ...(await mkGoal("Join one community activity a week", "Jordan chooses and attends a community activity, with staff nearby and prompting only when asked.", "social", ["Did Jordan participate in a community outing?", "Did Jordan start a conversation with a peer or staff member today?"])),
-    ...(await mkGoal("Cook two meals a week", "Jordan plans and cooks with staff support, working toward doing it alone.", "daily_living", ["Did Jordan help plan or cook a meal today?"])),
+    ...(await mkGoal("Take every medication as prescribed", "Harold takes donepezil, memantine, metformin and lisinopril from the locked box at the scheduled times, with staff administering and recording each dose. Fewer than two refused doses a week by December.", "health", ["Did Harold take every scheduled dose during this visit?", "Was any dose refused, missed or held? (No means every dose went as planned)", "Did staff check the pill organizer against the MAR?"], "2026-12-31")),
+    ...(await mkGoal("Complete the morning routine with cueing", "Harold completes toileting, washing, dressing and breakfast following the picture schedule with verbal cues, working toward needing fewer physical prompts.", "daily_living", ["Did Harold complete the morning routine with verbal cues only?", "Did Harold need hands-on help with any step?"])),
+    ...(await mkGoal("Stay safe through the night", "Harold sleeps through the night or, when he gets up, is redirected back to bed without leaving the house. No unaccompanied exits.", "safety", ["Did Harold stay inside the house all night?", "Did Harold get up more than twice?", "Was the door alarm armed and the stove secured at the start of the shift?"])),
+    ...(await mkGoal("Eat three meals and drink enough water", "Harold eats breakfast, lunch and dinner and drinks at least six glasses of water, with staff offering choices between two options.", "nutrition", ["Did Harold eat a full meal during this visit?", "Did Harold drink at least two glasses of water?"])),
+    ...(await mkGoal("Keep the home safe and clean", "Kitchen, bathroom and bedroom kept clean; expired food and hazards removed; medications and cleaning products locked away.", "homemaking", ["Was the kitchen cleaned and hazards removed?", "Were medications and cleaning products locked away at the end of the visit?"])),
+    ...(await mkGoal("Stay oriented and engaged", "Harold takes part in a familiar activity each visit (music, photo album, a walk) and is reoriented to the day and place using the whiteboard.", "social", ["Did Harold take part in a familiar activity?", "Was Harold reoriented to the day and place?", "Was there a sundowning or agitation episode?"])),
+    ...(await mkGoal("Give Ingrid a break every week", "Saturday respite so Harold's wife has four hours away from caregiving each week.", "family", ["Was Ingrid able to leave the house during respite?"])),
   ];
 
-  /* ---------- notes: six weeks of H2014 weekdays and S5150 Saturdays ---------- */
+  /* ---------- notes: six weeks of IHS mornings, six nights a week, homemaker Tue/Thu, respite Saturdays ---------- */
   const NOTES = {
     ihs: [
-      "Jordan planned breakfast, wrote the grocery list, and paid at the register with staff nearby. Practiced counting change; needed one prompt. Walked to the library and checked out two books. Mood bright, no concerns.",
-      "Worked on the laundry sequence from the support plan: sorted, loaded, and started the machine with verbal prompts only. Reviewed the bus schedule for Thursday's outing. Jordan asked to call a friend and did so independently.",
-      "Community outing to Cub Foods. Jordan compared prices on two items and chose the cheaper one without prompting. Cooked pasta for lunch with staff supervising the stove. Reviewed tomorrow's plan on the whiteboard.",
-      "Quiet morning. Jordan was tired and needed extra time to start; staff used the visual schedule and Jordan completed all three tasks. Practiced texting the case manager to confirm an appointment. No incidents.",
-      "Webber Park Library programme. Jordan checked in at the desk alone, joined the group for forty minutes, and asked the librarian a question about the schedule. Walked back; discussed what went well.",
+      "Morning routine with the picture schedule. Harold needed verbal cues for each step and hands-on help with shaving. Breakfast eaten fully. Morning meds: lisinopril and memantine taken; metformin taken after breakfast. Checked the pill organizer against the MAR — Ingrid had refilled Thursday's box twice, corrected it with her.",
+      "Harold was anxious on arrival and asked for his mother three times. Reoriented with the whiteboard and the family photo album; settled by 9:40. Refused memantine at first, accepted it twenty minutes later with juice. Short walk around the block; Harold named the neighbour's dog. Lunch prepared together, ate about two-thirds.",
+      "Good morning. Harold completed washing and dressing with cues only, no hands-on help. All morning medications taken on the first offer. Sorted the weekly pill organizer with Harold watching and naming the days. Practiced the route to the mailbox and back. Reminded Ingrid the donepezil refill is due Monday.",
+      "Harold had been up at 3am (per overnight note) and was tired. Slower routine, needed help with buttons. Took lisinopril and memantine; metformin held because Harold ate only two bites of breakfast — called Ingrid per the medication plan, she agreed. Offered a second breakfast at 11:00 and he ate half a sandwich; metformin given then and recorded.",
+      "Found two loose metformin tablets in Harold's shirt pocket from yesterday's dinner dose. Recorded as missed, told Ingrid, and moved the evening dose to the locked box with overnight staff administering. Morning routine completed with cues. Music from the 1970s during lunch prep; Harold sang along and was calm.",
+    ],
+    night: [
+      "Arrived 10:00pm. Door alarm armed, stove knobs covered, medication box locked. Bedtime donepezil and memantine given at 10:15 and swallowed with water. Harold up once at 1:40am looking for the bathroom; guided there and back to bed. Slept until 5:50. No attempt to leave the house.",
+      "Harold refused donepezil at bedtime, saying he had already taken it. Checked the MAR (he had not), waited fifteen minutes, offered again with a cup of tea; taken at 10:35. Up at 12:30 and again at 3:15, second time dressed and heading for the front door; door alarm sounded, redirected with music and a warm drink, back to bed by 3:45.",
+      "Quiet night. Bedtime medications taken on the first offer. Harold slept 10:40pm to 5:30am without getting up. Ingrid slept in the guest room and reported she got her first full night in a week.",
+      "Sundowning on arrival: Harold agitated, pacing, insisting he had to get to work. Sat with him on the porch for twenty minutes, then the photo album. Bedtime meds given at 11:05 after he settled. Up three times; guided back each time. Reported the pattern to Sam for the morning handoff.",
+      "Harold had a mild hypoglycaemia symptom at 2am (sweaty, confused beyond baseline). Gave juice per the diabetes plan, rechecked at 2:30 and he was back to baseline. Recorded and texted Ingrid in the morning. Otherwise slept.",
+    ],
+    homemaker: [
+      "Homemaker with personal care. Shower with the step-by-step cue cards; Harold managed washing with cues, staff helped with hair. Cleaned the bathroom and kitchen, discarded expired yoghurt and a mouldy loaf, ran and folded laundry. Locked the cleaning products and medication box before leaving.",
+      "Bathing completed; Harold resisted stepping into the tub until the water was warmer, then fine. Changed bed linens, vacuumed, wiped the fridge shelves. Found lisinopril tablets in the kitchen drawer — moved them to the locked box and noted it for Ingrid and the MAR.",
+      "Personal care and homemaking. Nail care and shave, then meal prep: portioned five lunches into labelled containers with a picture of the contents on each. Kitchen cleaned. Checked the smoke detector; battery replaced.",
     ],
     respite: [
-      "Respite at home while parents were out. Board game, snack, and a walk to the park. Jordan chose the evening film and made popcorn. Calm evening; parents returned at 2:00 and staff gave a handoff.",
-      "Saturday respite. Practiced the bus route to the library and back. Lunch at home, then a quiet afternoon with music. No concerns.",
+      "Saturday respite so Ingrid could go to her sister's. Harold and staff walked to the park, looked at the photo album, and made grilled cheese for lunch. Noon meds (memantine) taken. One episode of asking for Ingrid, reassured with the note she left on the whiteboard. Ingrid back at 2:00.",
+      "Respite while Ingrid was at church and lunch with friends. Music and a puzzle. Harold napped for an hour. Lunch eaten fully; drank three glasses of water. Calm handoff.",
     ],
   };
-  const dspUserId = samUser.id;
-  const seeded: { id: string; start: Date; end: Date; n: number; manual: boolean; community: boolean; offline: boolean; unsigned: boolean; sa: typeof saIhs }[] = [];
+  type Sa = typeof saIhs;
+  const seeded: { id: string; start: Date; end: Date; n: number; manual: boolean; community: boolean; offline: boolean; sa: Sa; staffRow: typeof sam; userId: string }[] = [];
   let n = 0;
-  const seedVisit = async (sa: typeof saIhs, start: Date, minutes: number, note: string, flags: { manual?: boolean; community?: boolean; offline?: boolean; unsigned?: boolean } = {}) => {
+  const seedVisit = async (sa: Sa, staffRow: typeof sam, userId: string, serviceTypeId: string, start: Date, minutes: number, note: string, flags: { manual?: boolean; offline?: boolean; unsigned?: boolean } = {}) => {
     const end = new Date(start.getTime() + minutes * 60000);
     const units = Math.floor(minutes / 15) + (minutes % 15 >= 8 ? 1 : 0);
-    const pool = skillsFor(sa.serviceCode === "H2014" ? "ihs-with-training" : "respite-in-home");
-    const at = flags.community ? { lat: 45.0357, lng: -93.298 } : HOME;
+    const pool = skillsFor(serviceTypeId);
     const jitter = () => (Math.random() - 0.5) * 0.0006; // ± ~30 m
-    const activities = activitiesFor("Jordan", null);
+    const activities = activitiesFor("Harold", harold.activityLibrary);
+    const isNight = sa.id === saNight.id;
     const inserted = await w.insert(visits, {
-      personId: jordan.id, staffId: sam.id, serviceAgreementId: sa.id, programId: sa.programId,
-      providerTaxId: org.taxId, pmi: jordan.pmi, serviceCode: sa.serviceCode, modifiers: sa.modifiers, renderingIdType: "umpi", renderingId: sam.umpi!,
-      placeOfService: flags.community ? "99" : "12", units, clockInAt: start, clockOutAt: end,
-      clockInLat: at.lat + jitter(), clockInLng: at.lng + jitter(), clockInAccuracyM: 9, clockOutLat: at.lat + jitter(), clockOutLng: at.lng + jitter(), clockOutAccuracyM: 12,
-      manualEntry: Boolean(flags.manual), manualEntryReason: flags.manual ? "Phone died at the door; times confirmed with Jordan's mother" : null,
-      tasks: [{ code: "adl", label: "Personal care / ADLs", completed: true }, { code: "skills", label: "Skill building per support plan", completed: true }],
-      shiftNote: note, interactionLevel: (["low", "medium", "high"] as const)[n % 3],
+      personId: harold.id, staffId: staffRow.id, serviceAgreementId: sa.id, programId: sa.programId,
+      providerTaxId: org.taxId, pmi: harold.pmi, serviceCode: sa.serviceCode, modifiers: sa.modifiers, renderingIdType: "umpi", renderingId: staffRow.umpi!,
+      placeOfService: "12", units, clockInAt: start, clockOutAt: end,
+      clockInLat: HOME.lat + jitter(), clockInLng: HOME.lng + jitter(), clockInAccuracyM: 9, clockOutLat: HOME.lat + jitter(), clockOutLng: HOME.lng + jitter(), clockOutAccuracyM: 12,
+      manualEntry: Boolean(flags.manual), manualEntryReason: flags.manual ? "Phone died at the door; times confirmed with Ingrid" : null,
+      tasks: isNight ? [{ code: "safety", label: "Door alarm and stove secured", completed: true }, { code: "meds", label: "Bedtime medications", completed: true }] : [{ code: "adl", label: "Personal care / ADLs", completed: true }, { code: "meds", label: "Medication administration", completed: true }],
+      shiftNote: note, interactionLevel: (["medium", "high", "high"] as const)[n % 3],
       skills: pool.length ? [pool[n % pool.length], pool[(n + 2) % pool.length]].filter((v, i, a) => a.indexOf(v) === i) : [],
-      activities: [activities[n % activities.length], activities[(n * 7 + 3) % activities.length]].filter((x, i, a) => a.indexOf(x) === i),
-      clientSignedAt: flags.unsigned ? null : new Date(end.getTime() + 60000), clientUnsignedReason: flags.unsigned ? "Asleep at end of shift" : null,
-      staffSignedAt: new Date(end.getTime() + 120000), noteSavedAt: new Date(end.getTime() + 120000), noteSavedBy: flags.manual ? adminUser.id : dspUserId, noteSavedLat: at.lat, noteSavedLng: at.lng,
-      approvedAt: new Date(end.getTime() + 120000), status: "completed", createdBy: flags.manual ? adminUser.id : dspUserId, updatedBy: flags.manual ? adminUser.id : dspUserId,
+      activities: isNight ? [activities[6], activities[n % 2 === 0 ? 7 : 8]] : [activities[n % 6], activities[(n * 7 + 3) % activities.length]].filter((x, i, a) => a.indexOf(x) === i),
+      clientSignedAt: flags.unsigned || isNight ? null : new Date(end.getTime() + 60000), clientUnsignedReason: isNight ? "Asleep at end of shift; Ingrid signs the weekly summary" : flags.unsigned ? "Unable to sign today; spouse notified" : null,
+      staffSignedAt: new Date(end.getTime() + 120000), noteSavedAt: new Date(end.getTime() + 120000), noteSavedBy: flags.manual ? adminUser.id : userId, noteSavedLat: HOME.lat, noteSavedLng: HOME.lng,
+      approvedAt: new Date(end.getTime() + 120000), status: "completed", createdBy: flags.manual ? adminUser.id : userId, updatedBy: flags.manual ? adminUser.id : userId,
     });
-    seeded.push({ id: inserted.id, start, end, n, manual: Boolean(flags.manual), community: Boolean(flags.community), offline: Boolean(flags.offline), unsigned: Boolean(flags.unsigned), sa });
-    for (const [i, q] of questions.entries()) await w.insert(goalResponses, { visitId: inserted.id, questionId: q.id, response: (n + i) % 5 === 0 ? "no" : (n + i) % 11 === 0 ? "na" : "yes" });
+    seeded.push({ id: inserted.id, start, end, n, manual: Boolean(flags.manual), community: false, offline: Boolean(flags.offline), sa, staffRow, userId });
+    // Goal responses: each goal is answered on the visits where it applies, with medication misses showing up.
+    for (const [i, q] of questions.entries()) {
+      const applies = q.area === "safety" ? isNight : q.area === "homemaking" ? sa.id === saHomemaker.id || sa.id === saIhs.id : q.area === "family" ? sa.id === saRespite.id : !isNight || q.area === "health";
+      if (!applies) continue;
+      const bad = (n + i) % 6 === 0;
+      const negativeIsGood = /refused|hands-on|more than twice|sundowning/i.test(q.prompt);
+      await w.insert(goalResponses, { visitId: inserted.id, questionId: q.id, response: (n + i) % 13 === 0 ? "na" : negativeIsGood ? (bad ? "yes" : "no") : (bad ? "no" : "yes") });
+    }
     n++;
   };
   const firstDay = days(today, -42);
@@ -230,20 +287,28 @@ async function main() {
     const day = days(firstDay, d);
     if (day >= today) break;
     const dow = new Date(day + "T12:00:00Z").getUTCDay();
-    if (dow >= 1 && dow <= 5) await seedVisit(saIhs, chicago(day, 9), 180 + (n % 3) * 15, NOTES.ihs[n % NOTES.ihs.length], { community: n % 5 === 4, manual: n % 13 === 7, offline: n % 9 === 5, unsigned: n % 17 === 11 });
-    if (dow === 6) await seedVisit(saRespite, chicago(day, 10), 240, NOTES.respite[n % NOTES.respite.length]);
+    if (dow >= 1 && dow <= 5) await seedVisit(saIhs, sam, samUser.id, "ihs-without-training", chicago(day, 8), 240 + (n % 3) * 15, NOTES.ihs[n % NOTES.ihs.length], { manual: n % 13 === 7, offline: n % 9 === 5, unsigned: n % 17 === 11 });
+    if (dow === 2 || dow === 4) await seedVisit(saHomemaker, sam, samUser.id, "homemaker", chicago(day, 13.5), 90, NOTES.homemaker[n % NOTES.homemaker.length]);
+    if (dow === 6) await seedVisit(saRespite, sam, samUser.id, "respite-in-home", chicago(day, 10), 240, NOTES.respite[n % NOTES.respite.length]);
+    if (dow !== 0 && day >= "2026-09-02") await seedVisit(saNight, amara, amaraUser.id, "night-supervision", chicago(day, 22), 480, NOTES.night[n % NOTES.night.length], { offline: n % 11 === 4 });
   }
 
-  /* ---------- medications (245D.05) with a MAR ---------- */
-  const omeprazole = await w.insert(medications, { personId: jordan.id, name: "Omeprazole", dose: "20 mg", route: "oral", frequency: "Every morning", times: ["09:15"], instructions: "30 minutes before breakfast.", prescriber: "Dr. Okonkwo", startDate: "2026-07-01" });
-  const sertraline = await w.insert(medications, { personId: jordan.id, name: "Sertraline", dose: "50 mg", route: "oral", frequency: "Once daily", times: ["09:15"], instructions: "Hold and call the prescriber if Jordan reports dizziness.", prescriber: "Dr. Okonkwo", startDate: "2026-07-01" });
+  /* ---------- medications (245D.05) with a MAR that shows the management problem ---------- */
+  const med = (name: string, dose: string, frequency: string, times: string[], instructions: string) => w.insert(medications, { personId: harold.id, name, dose, route: "oral", frequency, times, instructions, prescriber: "Dr. Okonkwo, Hennepin Healthcare Memory Clinic", startDate: "2026-07-01" });
+  const donepezil = await med("Donepezil", "10 mg", "Once daily at bedtime", ["22:15"], "Give from the locked box; watch him swallow. Two refusals in a row: call the prescriber.");
+  const memantine = await med("Memantine", "10 mg", "Twice daily", ["08:30", "22:15"], "May take with food. Do not double up after a missed dose.");
+  const metformin = await med("Metformin", "500 mg", "Twice daily with meals", ["08:30", "18:00"], "Hold and call Ingrid if Harold has not eaten. Watch for sweating and confusion beyond baseline.");
+  const lisinopril = await med("Lisinopril", "10 mg", "Every morning", ["08:30"], "Check he has not already taken one from an old bottle; report any loose tablets found.");
+  const scheduleFor = (m: typeof donepezil) => m.times.map((t) => ({ t, who: Number(t.slice(0, 2)) >= 20 ? amara : sam, by: Number(t.slice(0, 2)) >= 20 ? amaraUser.id : samUser.id }));
   for (let i = 30; i >= 1; i--) {
     const date = days(today, -i);
-    const dow = new Date(date + "T12:00:00Z").getUTCDay();
-    if (dow === 0) continue;
-    for (const [k, med] of [omeprazole, sertraline].entries()) {
-      const status = (i * 7 + k) % 17 === 0 ? "refused" : (i * 7 + k) % 23 === 0 ? "missed" : "given";
-      await w.insert(medicationAdministrations, { medicationId: med.id, personId: jordan.id, scheduledDate: date, scheduledTime: "09:15", status, givenAt: status === "given" ? chicago(date, 9.25) : null, recordedBy: dspUserId, staffId: sam.id, note: status === "refused" ? "Refused, offered again 20 min later" : null });
+    for (const [k, m] of [donepezil, memantine, metformin, lisinopril].entries()) {
+      for (const { t, who, by } of scheduleFor(m)) {
+        const x = i * 11 + k * 3 + Number(t.slice(0, 2));
+        const status = x % 9 === 0 ? "refused" : x % 14 === 0 ? "missed" : x % 19 === 0 ? "held" : "given";
+        const note = status === "refused" ? (m.id === donepezil.id ? "Said he had already taken it; offered again after 15 min, still refused" : "Refused, accepted 20 min later — recorded as refused per plan") : status === "missed" ? "Tablets found in shirt pocket the next morning" : status === "held" ? "Held: had not eaten; Ingrid called" : null;
+        await w.insert(medicationAdministrations, { medicationId: m.id, personId: harold.id, scheduledDate: date, scheduledTime: t, status, givenAt: status === "given" ? chicago(date, Number(t.slice(0, 2)) + Number(t.slice(3)) / 60) : null, recordedBy: by, staffId: who.id, note });
+      }
     }
   }
 
@@ -251,40 +316,41 @@ async function main() {
   for (let d = -7; d < 14; d++) {
     const date = days(today, d);
     const dow = new Date(date + "T12:00:00Z").getUTCDay();
-    if (dow === 0) continue;
     const past = date < today;
-    if (dow <= 5) await w.insert(shifts, { personId: jordan.id, staffId: sam.id, serviceAgreementId: saIhs.id, startAt: chicago(date, 9), endAt: chicago(date, 12), status: past ? "completed" : "scheduled", createdBy: adminUser.id });
-    else await w.insert(shifts, { personId: jordan.id, staffId: sam.id, serviceAgreementId: saRespite.id, startAt: chicago(date, 10), endAt: chicago(date, 14), status: past ? "completed" : "scheduled", createdBy: adminUser.id });
+    const status = past ? "completed" : "scheduled";
+    if (dow >= 1 && dow <= 5) await w.insert(shifts, { personId: harold.id, staffId: sam.id, serviceAgreementId: saIhs.id, startAt: chicago(date, 8), endAt: chicago(date, 12), status, createdBy: adminUser.id });
+    if (dow === 2 || dow === 4) await w.insert(shifts, { personId: harold.id, staffId: sam.id, serviceAgreementId: saHomemaker.id, startAt: chicago(date, 13.5), endAt: chicago(date, 15), status, createdBy: adminUser.id });
+    if (dow === 6) await w.insert(shifts, { personId: harold.id, staffId: sam.id, serviceAgreementId: saRespite.id, startAt: chicago(date, 10), endAt: chicago(date, 14), status, createdBy: adminUser.id });
+    if (dow !== 0) await w.insert(shifts, { personId: harold.id, staffId: amara.id, serviceAgreementId: saNight.id, startAt: chicago(date, 22), endAt: new Date(chicago(date, 22).getTime() + 8 * 3_600_000), status, createdBy: adminUser.id });
   }
 
   /* ---------- EVV: the same notes, through the real services ---------- */
-  const actor = { userId: samUser.id, staffId: sam.id, role: "dsp" as const };
   const ev = (visitId: string, kind: "clock_in" | "clock_out", at: Date, v: (typeof seeded)[number]) => ({
     eventId: derivedEventId(visitId, kind), idempotencyKey: `web:${visitId}:${kind}`, deviceCapturedAt: at.toISOString(), deviceUtcOffsetMinutes: utcOffsetMinutes(at),
-    latitude: (v.community ? 45.0357 : HOME.lat) + (Math.random() - 0.5) * 0.0006, longitude: (v.community ? -93.298 : HOME.lng) + (Math.random() - 0.5) * 0.0006, accuracyMeters: kind === "clock_in" ? 9 : 12,
-    locationSource: "gps" as const, locationType: v.community ? ("community" as const) : ("home" as const), verificationMethod: v.manual ? ("manual" as const) : ("mobile" as const),
-    offline: v.offline, deviceId: "sam-phone", metadata: { channel: "seed" }, manualReason: v.manual ? "Phone died at the door; times confirmed with Jordan's mother" : undefined,
+    latitude: HOME.lat + (Math.random() - 0.5) * 0.0006, longitude: HOME.lng + (Math.random() - 0.5) * 0.0006, accuracyMeters: kind === "clock_in" ? 9 : 12,
+    locationSource: "gps" as const, locationType: "home" as const, verificationMethod: v.manual ? ("manual" as const) : ("mobile" as const),
+    offline: v.offline, deviceId: `${v.staffRow.firstName.toLowerCase()}-phone`, metadata: { channel: "seed" }, manualReason: v.manual ? "Phone died at the door; times confirmed with Ingrid" : undefined,
   });
   for (const v of seeded) {
+    const actor = { userId: v.userId, staffId: v.staffRow.id, role: "dsp" as const };
     const receiveIn = v.offline ? new Date(v.start.getTime() + 3 * 3_600_000) : new Date(v.start.getTime() + 20_000);
     const receiveOut = v.offline ? new Date(v.end.getTime() + 2 * 3_600_000) : new Date(v.end.getTime() + 15_000);
-    await createVisit(makeCtx(db, org.id, v.manual ? adminUser.id : samUser.id, () => v.start), { id: v.id, personId: jordan.id, staffId: sam.id, serviceAgreementId: v.sa.id, visitId: v.id, manualEntry: v.manual });
-    await clockIn(makeCtx(db, org.id, samUser.id, () => receiveIn), v.id, ev(v.id, "clock_in", v.start, v), v.manual ? { ...actor, userId: adminUser.id, role: "admin" } : actor);
-    await clockOut(makeCtx(db, org.id, samUser.id, () => receiveOut), v.id, ev(v.id, "clock_out", v.end, v), v.manual ? { ...actor, userId: adminUser.id, role: "admin" } : actor);
+    await createVisit(makeCtx(db, org.id, v.manual ? adminUser.id : v.userId, () => v.start), { id: v.id, personId: harold.id, staffId: v.staffRow.id, serviceAgreementId: v.sa.id, visitId: v.id, manualEntry: v.manual });
+    await clockIn(makeCtx(db, org.id, v.userId, () => receiveIn), v.id, ev(v.id, "clock_in", v.start, v), v.manual ? { ...actor, userId: adminUser.id, role: "admin" } : actor);
+    await clockOut(makeCtx(db, org.id, v.userId, () => receiveOut), v.id, ev(v.id, "clock_out", v.end, v), v.manual ? { ...actor, userId: adminUser.id, role: "admin" } : actor);
   }
   // The aggregator (mock) accepts everything except one visit, which it rejects for review; the
-  // most recent two stay queued so the integration screen shows work in flight.
+  // most recent few stay queued so the integration screen shows work in flight.
   const rejectId = seeded[Math.floor(seeded.length / 2)]?.id;
   const mock = new MockAggregatorAdapter((payload) => (payload.visitId === rejectId ? outcomes.validation("V210", "Service authorization not found for member") : outcomes.accept()));
-  const cutoff = seeded.at(-3)?.end ?? new Date();
+  const cutoff = seeded.at(-4)?.end ?? new Date();
   await processQueue(makeCtx(db, org.id, null, () => cutoff), mock, 500);
-  // One correction, so the history and resubmission chain have an example.
-  const fix = seeded.find((v) => !v.manual && !v.offline && v.id !== rejectId && v.end < cutoff);
-  if (fix) await correctVisit(makeCtx(db, org.id, adminUser.id, () => new Date(fix.end.getTime() + 86_400_000)), fix.id, { reasonCode: "FORGOT_CLOCK_OUT", explanation: "Sam forgot to clock out; the end time was confirmed with Jordan's mother by phone the next morning.", changes: { clockOutAt: new Date(fix.end.getTime() + 20 * 60000).toISOString() } });
+  const fix = seeded.find((v) => !v.manual && !v.offline && v.id !== rejectId && v.end < cutoff && v.sa.id === saIhs.id);
+  if (fix) await correctVisit(makeCtx(db, org.id, adminUser.id, () => new Date(fix.end.getTime() + 86_400_000)), fix.id, { reasonCode: "FORGOT_CLOCK_OUT", explanation: "Sam forgot to clock out; the end time was confirmed with Ingrid by phone the next morning.", changes: { clockOutAt: new Date(fix.end.getTime() + 20 * 60000).toISOString() } });
 
-  console.log(`Seeded "${org.name}": 2 staff (1 admin login, 1 caregiver login) with complete personnel files, 1 client complete in every section, ${seeded.length} notes over six weeks, ${seeded.length} EVV visits (mock aggregator: accepted, one rejected, one corrected), 2 medications with a 30-day MAR, and three weeks of shifts.`);
-  console.log(keptAdminUser ? `Kept the existing admin@example.com login and organisation. dsp@example.com password: ${PASSWORD}` : `Log in with admin@example.com or dsp@example.com. Password: ${PASSWORD === "changeme-245d" ? PASSWORD : "(from SEED_ADMIN_PASSWORD)"}`);
-  console.log(`Jordan Abelard's signing code: ${JORDAN_CODE}`);
+  console.log(`Seeded "${org.name}": 3 staff (admin, daytime caregiver, overnight caregiver) with complete personnel files, 1 client (Harold Lindqvist, early-onset Alzheimer's) complete in every section with 7 goals, ${seeded.length} notes over six weeks, ${seeded.length} EVV visits (mock aggregator: accepted, one rejected, one corrected), 4 medications with a 30-day MAR, and three weeks of shifts.`);
+  console.log(keptAdminUser ? `Kept the existing admin@example.com login and organisation. dsp@example.com / night@example.com password: ${PASSWORD}` : `Log in with admin@example.com, dsp@example.com or night@example.com. Password: ${PASSWORD === "changeme-245d" ? PASSWORD : "(from SEED_ADMIN_PASSWORD)"}`);
+  console.log(`Harold Lindqvist's signing code: ${CLIENT_CODE}`);
 }
 
 main().then(() => process.exit(0)).catch((e) => { console.error(e); process.exit(1); });
