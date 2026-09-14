@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, gte, inArray, isNotNull, isNull, lte, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, sql, sum } from "drizzle-orm";
 import { getDb, schema } from "./index";
 
 const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
@@ -592,4 +592,33 @@ export async function listStaffAvailability(staffId: string) {
 export async function listAllStaffAvailability() {
   const db = await getDb();
   return db.select().from(schema.staffAvailability).orderBy(schema.staffAvailability.weekday);
+}
+
+/**
+ * Full-text-ish search over the documents' text layers (and titles), both sides of the visit.
+ * ILIKE over a capped column is enough at an agency's scale; a snippet around the first hit is
+ * cut here so the results page can show why a file matched.
+ */
+export async function searchDocumentText(q: string, limit = 20) {
+  const db = await getDb();
+  const needle = `%${q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+  const [client, staffDocs] = await Promise.all([
+    db.select({ id: clientDocuments.id, title: clientDocuments.title, fileName: clientDocuments.fileName, text: clientDocuments.extractedText, summary: clientDocuments.extractionSummary, ownerId: clientDocuments.personId, first: people.firstName, last: people.lastName })
+      .from(clientDocuments).innerJoin(people, eq(clientDocuments.personId, people.id))
+      .where(or(ilike(clientDocuments.extractedText, needle), ilike(clientDocuments.title, needle))).orderBy(desc(clientDocuments.createdAt)).limit(limit),
+    db.select({ id: schema.staffDocuments.id, title: schema.staffDocuments.title, fileName: schema.staffDocuments.fileName, text: schema.staffDocuments.extractedText, summary: schema.staffDocuments.extractionSummary, ownerId: schema.staffDocuments.staffId, first: staff.firstName, last: staff.lastName })
+      .from(schema.staffDocuments).innerJoin(staff, eq(schema.staffDocuments.staffId, staff.id))
+      .where(or(ilike(schema.staffDocuments.extractedText, needle), ilike(schema.staffDocuments.title, needle))).orderBy(desc(schema.staffDocuments.createdAt)).limit(limit),
+  ]);
+  const snippet = (text: string | null) => {
+    if (!text) return null;
+    const i = text.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return null;
+    const from = Math.max(0, i - 60), to = Math.min(text.length, i + q.length + 90);
+    return `${from > 0 ? "…" : ""}${text.slice(from, to).replace(/\s+/g, " ")}${to < text.length ? "…" : ""}`;
+  };
+  return [
+    ...client.map((d) => ({ kind: "client" as const, id: d.id, title: d.title, fileName: d.fileName, summary: d.summary, snippet: snippet(d.text), ownerId: d.ownerId, owner: `${d.first} ${d.last}`, href: `/clients/${d.ownerId}?tab=files` })),
+    ...staffDocs.map((d) => ({ kind: "staff" as const, id: d.id, title: d.title, fileName: d.fileName, summary: d.summary, snippet: snippet(d.text), ownerId: d.ownerId, owner: `${d.first} ${d.last}`, href: `/staff/${d.ownerId}?tab=compliance` })),
+  ];
 }

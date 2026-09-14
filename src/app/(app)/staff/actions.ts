@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { decryptField, encryptField, formatSsn } from "@/lib/crypto";
 import { availabilityScheduleSchema, credentialSchema, fieldErrors, formToObject, loginSchema, staffSchema, type ActionState } from "@/lib/validation";
+import { textLayerFrom } from "@/lib/document-text";
 import { categoryForCredential } from "@/lib/staff-documents";
 import { storeStaffFile } from "./document-actions";
 
@@ -98,8 +99,11 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
   const { hours, ...rest } = parsed.data;
   const row = await audited(db, { userId: user.id }).insert(schema.staffCredentials, { ...rest, hours: hours != null ? hours.toFixed(1) : null });
   if (attached) {
+    // The form may have read the file already (the fields were filled from it); reuse that text
+    // rather than reading the same page twice.
+    const read = textLayerFrom(String(fd.get("extractedText") ?? ""), String(fd.get("extractionSummary") ?? ""));
     const stored = await storeStaffFile(user.id, staffId, attached, {
-      category: categoryForCredential(rest.type), title: rest.title, credentialId: row.id,
+      category: categoryForCredential(rest.type), title: rest.title, credentialId: row.id, read,
     });
     if (stored.error) {
       await audited(db, { userId: user.id }).delete(schema.staffCredentials, row.id);

@@ -490,6 +490,12 @@ export const clientDocuments = pgTable(
     sizeBytes: integer("size_bytes").notNull(),
     effectiveOn: date("effective_on"),
     note: text("note"),
+    /** The document's text, read by the model at upload so the file can be searched. Null until read. */
+    extractedText: text("extracted_text"),
+    extractedAt: timestamp("extracted_at", { withTimezone: true }),
+    /** One line saying what the model took the document to be, shown beside the file. */
+    extractionSummary: text("extraction_summary"),
+    extractionModel: text("extraction_model"),
     uploadedBy: uuid("uploaded_by")
       .notNull()
       .references(() => users.id),
@@ -540,6 +546,12 @@ export const staffDocuments = pgTable(
     /** The credential this file is evidence for, when it is. Cleared, not cascaded, if that row goes. */
     credentialId: uuid("credential_id").references((): AnyPgColumn => staffCredentials.id, { onDelete: "set null" }),
     note: text("note"),
+    /** The document's text, read by the model at upload so the file can be searched. Null until read. */
+    extractedText: text("extracted_text"),
+    extractedAt: timestamp("extracted_at", { withTimezone: true }),
+    /** One line saying what the model took the document to be, shown beside the file. */
+    extractionSummary: text("extraction_summary"),
+    extractionModel: text("extraction_model"),
     uploadedBy: uuid("uploaded_by")
       .notNull()
       .references(() => users.id),

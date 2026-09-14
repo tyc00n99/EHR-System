@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { requireUser } from "@/lib/auth";
+import { indexStoredDocument, textLayerFor } from "@/lib/document-text";
 import { deleteFile, putFile } from "@/lib/storage";
 import { clientDocumentSchema, fieldErrors, formToObject, type ActionState } from "@/lib/validation";
 
@@ -32,8 +33,11 @@ export async function uploadClientDocument(personId: string, _prev: ActionState,
   const rel = `clients/${personId}/${randomUUID()}${ext}`;
   await putFile(rel, new Uint8Array(await file.arrayBuffer()), file.type || "application/pdf");
 
+  // The searchable text, read once at upload. A failed read leaves the file as it is.
+  const layer = await textLayerFor(file);
   const db = await getDb();
   await audited(db, { userId: user.id }).insert(schema.clientDocuments, {
+    ...(layer ?? {}),
     personId,
     ...parsed.data,
     fileName: file.name,
@@ -54,4 +58,12 @@ export async function deleteClientDocument(id: string, personId: string): Promis
   await audited(db, { userId: user.id }).delete(schema.clientDocuments, id);
   await deleteFile(doc.filePath);
   revalidatePath(`/clients/${personId}`);
+}
+
+/** Reads a document filed before reading existed, so it becomes searchable. */
+export async function indexClientDocument(id: string, personId: string): Promise<{ ok?: true; error?: string }> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const r = await indexStoredDocument("client", id, user.id);
+  if (r.ok) revalidatePath(`/clients/${personId}`);
+  return r;
 }

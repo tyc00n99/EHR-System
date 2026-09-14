@@ -1,13 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
+import { credentialLabel } from "@/lib/credentials";
 import { fmtDate } from "@/lib/format";
 import type { PersonnelItem, PersonnelStatus } from "@/lib/personnel-file";
 import { addCredential, deleteCredential } from "../actions";
-import { attachToCredential } from "../document-actions";
+import { attachToCredential, readCredentialFile } from "../document-actions";
 
 /**
  * The personnel file as two panes: the licensor's list down the left, ticked as it is satisfied,
@@ -35,7 +36,7 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
   return <div className="mb-1.5 text-[14.5px] text-text-strong">{children}{required && <span className="text-danger"> *</span>}</div>;
 }
 
-export function PersonnelFile({ staffId, items }: { staffId: string; items: PersonnelItem[]; documents: { id: string; title: string; fileName: string; credentialId: string | null; createdAt: string }[] }) {
+export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId: string; items: PersonnelItem[]; aiReady: boolean; staffName: string; documents: { id: string; title: string; fileName: string; credentialId: string | null; createdAt: string }[] }) {
   const [key, setKey] = useState(items.find((i) => i.status !== "ok")?.key ?? items[0].key);
   const current = items.find((i) => i.key === key) ?? items[0];
   const groups = useMemo(() => {
@@ -84,13 +85,13 @@ export function PersonnelFile({ staffId, items }: { staffId: string; items: Pers
           ))}
         </nav>
 
-        <Detail key={current.key} staffId={staffId} item={current} />
+        <Detail key={current.key} staffId={staffId} item={current} aiReady={aiReady} staffName={staffName} />
       </div>
     </div>
   );
 }
 
-function Detail({ staffId, item }: { staffId: string; item: PersonnelItem }) {
+function Detail({ staffId, item, aiReady, staffName }: { staffId: string; item: PersonnelItem; aiReady: boolean; staffName: string }) {
   const t = TONE[item.status];
   const [recording, setRecording] = useState(false);
   const latest = item.records[0];
@@ -143,7 +144,7 @@ function Detail({ staffId, item }: { staffId: string; item: PersonnelItem }) {
         {!item.type && (<><dt className="text-muted-foreground">Source</dt><dd className="m-0 text-text">The staff record. Change it under Edit.</dd></>)}
       </dl>
 
-      {recording && item.type && <RecordForm staffId={staffId} item={item} onDone={() => setRecording(false)} />}
+      {recording && item.type && <RecordForm staffId={staffId} item={item} aiReady={aiReady} staffName={staffName} onDone={() => setRecording(false)} />}
 
       {item.records.length > 1 && (
         <div className="mt-7">
@@ -166,8 +167,17 @@ function Detail({ staffId, item }: { staffId: string; item: PersonnelItem }) {
   );
 }
 
-function RecordForm({ staffId, item, onDone }: { staffId: string; item: PersonnelItem; onDone: () => void }) {
+/** A small mark beside a field the document filled in, so the reviewer knows which values to check. */
+function FromDoc({ on }: { on: boolean }) {
+  return on ? <span className="ml-1.5 rounded bg-primary-soft px-1.5 py-px text-[13px] font-medium text-primary">from document</span> : null;
+}
+
+function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: string; item: PersonnelItem; aiReady: boolean; staffName: string; onDone: () => void }) {
   const [state, action, pending] = useActionState(addCredential.bind(null, staffId), {});
+  // Reading the document is its own action: choosing a file sends it to the reader, and the
+  // fields below fill in from what it returns. The file is uploaded again with the form; the text
+  // read here rides along in hidden inputs so the page is read once.
+  const [rs, runRead, reading] = useActionState(readCredentialFile.bind(null, staffId, item.type ?? ""), {});
   const e = state.errors ?? {};
   useEffect(() => {
     if (state.ok) { toast.success("Recorded."); onDone(); }
@@ -177,37 +187,74 @@ function RecordForm({ staffId, item, onDone }: { staffId: string; item: Personne
   const sourceOk = item.type === "position_requirements";
   const dateLabel = item.type === "background_study" ? "Date submitted" : item.type === "background_study_results" ? "Date results received from DHS" : item.type?.startsWith("first_") ? "Date of first contact" : "Date completed";
 
+  const r = rs.read;
+  const noteFromDoc = r ? [
+    r.backgroundResult && item.type === "background_study_results" ? `DHS determination: ${r.backgroundResult.replace("_", " ")}` : null,
+    r.issuer, r.certificateNumber ? `Cert. ${r.certificateNumber}` : null,
+  ].filter(Boolean).join(" · ") : "";
+  const has = (v: unknown) => v != null && v !== "";
+
   return (
     <form action={action} className="mt-6 rounded-xl border border-primary bg-primary-soft/30 p-5">
       <input type="hidden" name="type" value={item.type ?? ""} />
+      <input type="hidden" name="extractedText" value={r?.text ?? ""} />
+      <input type="hidden" name="extractionSummary" value={r?.summary ?? ""} />
       <div className="mb-4 text-[15px] font-semibold text-text-strong">Record — {item.label}</div>
-      <div className="grid gap-4 md:grid-cols-2">
+
+      <div className="mb-4">
+        <Label required={!sourceOk}>Document</Label>
+        <input
+          name="file" type="file" required={!sourceOk} accept=".pdf,image/*,.doc,.docx" className={fileField}
+          onChange={(ev) => { const f = ev.currentTarget.files?.[0]; if (f && aiReady) { const fd = new FormData(); fd.append("file", f); startTransition(() => runRead(fd)); } }}
+        />
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          {sourceOk ? "Optional here: attach the diploma, licence or resume if there is one, or describe the source below." : "The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper."}
+          {aiReady ? " Choose it first and the fields fill in from the page." : ""}
+        </p>
+        {e.file && <p className="mt-1 text-[13px] text-danger">{e.file}</p>}
+        {reading && <p className="mt-2 flex items-center gap-2 text-[13.5px] text-primary"><span className="inline-block size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" /> Reading {rs.fileName ?? "the document"}…</p>}
+        {!reading && rs.readId && (
+          <div className={cx("mt-2 rounded-lg px-3 py-2.5 text-[13.5px]", r ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>
+            {r ? (
+              <>
+                <div className="font-medium">Read {rs.fileName}. Check the fields before saving.</div>
+                {r.summary && <div className="mt-0.5">{r.summary}</div>}
+                {rs.nameOk === false && <div className="mt-1 font-medium text-danger">The name on the document ({r.personName}) is not {staffName}. Make sure this is the right file and the right person.</div>}
+                {rs.looksLike && <div className="mt-1 font-medium text-danger">This looks like “{credentialLabel(rs.looksLike as never)}” rather than “{item.label}”.</div>}
+                {r.notes && <div className="mt-1">Reviewer note: {r.notes}</div>}
+              </>
+            ) : <div>{rs.message}</div>}
+          </div>
+        )}
+      </div>
+
+      <div key={rs.readId ?? 0} className="grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          <Label required>Title</Label>
-          <input name="title" required defaultValue={item.label} className={field} />
+          <Label required>Title<FromDoc on={has(r?.title)} /></Label>
+          <input name="title" required defaultValue={r?.title ?? item.label} className={field} />
           {e.title && <p className="mt-1 text-[13px] text-danger">{e.title}</p>}
         </div>
         <div>
-          <Label required>{dateLabel}</Label>
-          <input name="completedOn" type="date" required className={field} />
+          <Label required>{dateLabel}<FromDoc on={has(r?.completedOn)} /></Label>
+          <input name="completedOn" type="date" required defaultValue={r?.completedOn ?? ""} className={field} />
           {e.completedOn && <p className="mt-1 text-[13px] text-danger">{e.completedOn}</p>}
         </div>
         {dated && (
           <div>
-            <Label>Expires on</Label>
-            <input name="expiresOn" type="date" className={field} />
+            <Label>Expires on<FromDoc on={has(r?.expiresOn)} /></Label>
+            <input name="expiresOn" type="date" defaultValue={r?.expiresOn ?? ""} className={field} />
             {e.expiresOn && <p className="mt-1 text-[13px] text-danger">{e.expiresOn}</p>}
           </div>
         )}
         {item.needsInstructor && (<>
           <div>
-            <Label required>Trainer or instructor</Label>
-            <input name="instructor" required placeholder="Who delivered it" className={field} />
+            <Label required>Trainer or instructor<FromDoc on={has(r?.instructor)} /></Label>
+            <input name="instructor" required placeholder="Who delivered it" defaultValue={r?.instructor ?? ""} className={field} />
             {e.instructor && <p className="mt-1 text-[13px] text-danger">{e.instructor}</p>}
           </div>
           <div>
-            <Label>Hours</Label>
-            <input name="hours" type="number" step="0.5" min={0} className={field} />
+            <Label>Hours<FromDoc on={has(r?.hours)} /></Label>
+            <input name="hours" type="number" step="0.5" min={0} defaultValue={r?.hours ?? ""} className={field} />
             {e.hours && <p className="mt-1 text-[13px] text-danger">{e.hours}</p>}
           </div>
         </>)}
@@ -227,30 +274,22 @@ function RecordForm({ staffId, item, onDone }: { staffId: string; item: Personne
             <p className="mt-1 text-[13px] text-muted-foreground">Sets when the next one is due.</p>
           </div>
         )}
-        <div className="md:col-span-2">
-          <Label required={!sourceOk}>Document</Label>
-          <input name="file" type="file" required={!sourceOk} accept=".pdf,image/*,.doc,.docx" className={fileField} />
-          <p className="mt-1 text-[13px] text-muted-foreground">
-            {sourceOk ? "Optional here: attach the diploma, licence or resume if there is one, or describe the source below." : "The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper."}
-          </p>
-          {e.file && <p className="mt-1 text-[13px] text-danger">{e.file}</p>}
-        </div>
         {sourceOk && (
           <div className="md:col-span-2">
-            <Label required>Source</Label>
-            <input name="note" placeholder="How they meet the requirements — e.g. HS diploma on file; 2 years' experience per the application" className={field} />
+            <Label required>Source<FromDoc on={has(noteFromDoc)} /></Label>
+            <input name="note" defaultValue={noteFromDoc} placeholder="How they meet the requirements — e.g. HS diploma on file; 2 years' experience per the application" className={field} />
             {e.note && <p className="mt-1 text-[13px] text-danger">{e.note}</p>}
           </div>
         )}
         {!sourceOk && !item.type?.startsWith("first_") && (
           <div className="md:col-span-2">
-            <Label>Note</Label>
-            <input name="note" placeholder="Provider, certificate number, or what was covered" className={field} />
+            <Label>Note<FromDoc on={has(noteFromDoc)} /></Label>
+            <input name="note" defaultValue={noteFromDoc} placeholder="Provider, certificate number, or what was covered" className={field} />
           </div>
         )}
       </div>
       <div className="mt-4 flex items-center gap-2">
-        <button disabled={pending} className="h-10 rounded-lg bg-primary px-4 text-[14.5px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">{pending ? "Saving…" : "Save"}</button>
+        <button disabled={pending || reading} className="h-10 rounded-lg bg-primary px-4 text-[14.5px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-60">{pending ? "Saving…" : "Save"}</button>
         <button type="button" onClick={onDone} className="h-10 px-3 text-[14.5px] text-muted-foreground hover:text-text-strong">Cancel</button>
       </div>
     </form>

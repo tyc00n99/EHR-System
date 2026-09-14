@@ -8,6 +8,7 @@ import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { getPerson, getOrganization } from "@/db/queries";
 import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAgreement } from "@/lib/ai/extract-agreement";
+import { readIntakeDocument, readable, type IntakeRead } from "@/lib/ai/read-document";
 import { requireUser } from "@/lib/auth";
 import { issueClientCode } from "@/lib/client-code";
 import { decryptField } from "@/lib/crypto";
@@ -178,4 +179,27 @@ export async function updateAgreement(agreementId: string, personId: string, _pr
   await audited(db, { userId: user.id }).update(schema.serviceAgreements, agreementId, { ...rest, unitRate: unitRate.toFixed(2), status: status as "active" | "exhausted" | "expired" | "cancelled" });
   revalidatePath(`/clients/${personId}`);
   redirect(`/clients/${personId}?tab=authorizations`);
+}
+
+export interface IntakeReadState { read?: IntakeRead; fileName?: string; message?: string; readId?: number }
+
+/**
+ * Reads a referral packet, CSSP or prior record before a client exists, so the new-client form
+ * fills in from it. Nothing is stored: the person reviews the draft and saves, and the packet is
+ * filed under Documents once the record exists.
+ */
+export async function readIntakeFile(_prev: IntakeReadState, fd: FormData): Promise<IntakeReadState> {
+  await requireUser(["admin", "supervisor"]);
+  const readId = Date.now();
+  if (!aiConfigured()) return { readId, message: "Document reading is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying. You can still type the client in by hand." };
+  const file = fd.get("file");
+  if (!(file instanceof File) || file.size === 0) return { readId, message: "Choose a file first." };
+  if (file.size > 25 * 1024 * 1024) return { readId, message: "Files must be under 25 MB" };
+  if (!readable(file.type, file.name)) return { readId, message: "Use a PDF or a photo. Word documents and HEIC images cannot be read." };
+  try {
+    const read = await readIntakeDocument(new Uint8Array(await file.arrayBuffer()), file.type || "application/pdf", file.name);
+    return { readId, read, fileName: file.name };
+  } catch (e) {
+    return { readId, fileName: file.name, message: explainAiError(e) };
+  }
 }

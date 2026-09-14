@@ -33,6 +33,8 @@ import { AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DeleteDocument, DocumentUpload } from "./documents";
+import { DocumentTextChip } from "@/components/document-text-chip";
+import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { VisitSheet } from "../../visits/record/visit-sheet";
 
 const SEX: Record<string, string> = { female: "Female", male: "Male", nonbinary: "Non-binary", other: "Other", undisclosed: "Undisclosed" };
@@ -61,6 +63,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const person = await getPerson(id);
   if (!person || !(await canViewPerson(user, id))) notFound();
   const manage = can(user, "manage_people");
+  const aiReady = aiConfigured();
   const current = currentPayPeriod();
   const oldest = payPeriodByIndex(current.index - (periodsToShow - 1));
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : new Date().toISOString().slice(0, 7);
@@ -278,7 +281,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             DOCUMENT_CATEGORIES.map(([cat, label]) => { const docs = documents.filter((d) => d.doc.category === cat); if (!docs.length) return null; return (
               <div key={cat} className="border-b border-line-soft last:border-b-0">
                 <div className="bg-sidebar px-5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-gray-500">{label}</div>
-                <ul className="divide-y divide-line-soft">{docs.map(({ doc, uploaderEmail }) => <li key={doc.id} className="flex flex-wrap items-center gap-3 px-5 py-3"><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-3 hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-panel text-gray-600"><Icon.doc size={18} /></span><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{doc.title}</span><span className="block truncate text-[13px] text-muted-foreground">{doc.effectiveOn ? `Effective ${fmtDate(doc.effectiveOn)} · ` : ""}{doc.fileName} · {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB{manage ? ` · ${uploaderEmail}` : ""}</span>{doc.note && <span className="mt-0.5 block text-[13px] text-text">{doc.note}</span>}</span></a><PreviewButton href={`/clients/${id}/documents/${doc.id}`} title={doc.title} mime={doc.mimeType} /><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center rounded-full bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-primary-soft/70">Open</a>{manage && <DeleteDocument id={doc.id} personId={id} />}</li>)}</ul>
+                <ul className="divide-y divide-line-soft">{docs.map(({ doc, uploaderEmail }) => <li key={doc.id} className="flex flex-wrap items-center gap-3 px-5 py-3"><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-3 hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-panel text-gray-600"><Icon.doc size={18} /></span><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{doc.title}</span><span className="block truncate text-[13px] text-muted-foreground">{doc.effectiveOn ? `Effective ${fmtDate(doc.effectiveOn)} · ` : ""}{doc.fileName} · {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB{manage ? ` · ${uploaderEmail}` : ""}</span>{doc.note && <span className="mt-0.5 block text-[13px] text-text">{doc.note}</span>}</span></a><PreviewButton href={`/clients/${id}/documents/${doc.id}`} title={doc.title} mime={doc.mimeType} /><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center rounded-full bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-primary-soft/70">Open</a>{manage && <DocumentTextChip kind="client" id={doc.id} ownerId={id} hasText={Boolean(doc.extractedText)} summary={doc.extractionSummary} aiReady={aiReady} />}{manage && <DeleteDocument id={doc.id} personId={id} />}</li>)}</ul>
               </div>
             ); })
           )}

@@ -7,6 +7,7 @@ import { complianceSummary, evaluateCompliance, type ComplianceStatus } from "@/
 import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
 import { GENDERS } from "@/lib/validation";
 import { DeleteDocument, DocumentForm, LoginPanel } from "./panels";
+import { DocumentTextChip } from "@/components/document-text-chip";
 import { PersonnelFile } from "./personnel-file";
 import { NoteRows } from "./note-rows";
 import { NoteFilters } from "./note-filters";
@@ -15,6 +16,7 @@ import { ManageAssignments } from "./manage-assignments";
 import { AvailabilityCards } from "@/components/availability-cards";
 import { isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
+import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { buildPersonnelFile } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
@@ -104,10 +106,10 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
 
       {tab === "compliance" && (
         <div className="space-y-4">
-          <PersonnelFile staffId={id} items={personnel} documents={documents.map((d) => ({ id: d.id, title: d.title, fileName: d.fileName, credentialId: d.credentialId, createdAt: d.createdAt.toISOString().slice(0, 10) }))} />
+          <PersonnelFile staffId={id} items={personnel} aiReady={aiConfigured()} staffName={`${s.firstName} ${s.lastName}`} documents={documents.map((d) => ({ id: d.id, title: d.title, fileName: d.fileName, credentialId: d.credentialId, createdAt: d.createdAt.toISOString().slice(0, 10) }))} />
           <Card title="Documents" description="The rest of the personnel file: employment and tax forms, policy acknowledgments, anything not tied to one item above">
             {documents.filter((d) => !d.credentialId).length === 0 ? <Empty icon="doc" title="No other documents filed" /> : (
-              <Table><Thead><Th>Document</Th><Th>Category</Th><Th>Filed</Th><Th align="right">Size</Th><Th /></Thead><tbody>{documents.filter((d) => !d.credentialId).map((d) => <Tr key={d.id}><Td strong><a href={`/staff/${id}/documents/${d.id}`} target="_blank" rel="noopener" className="hover:underline">{d.title}</a><div className="text-[13px] font-normal text-muted-foreground">{d.fileName}{d.note ? ` · ${d.note}` : ""}</div></Td><Td className="text-muted-foreground">{categoryLabel(d.category)}</Td><Td className="text-muted-foreground">{fmtDate(d.createdAt.toISOString().slice(0, 10))}</Td><Td align="right" className="ident text-muted-foreground">{fmtSize(d.sizeBytes)}</Td><Td align="right"><DeleteDocument id={d.id} staffId={id} /></Td></Tr>)}</tbody></Table>
+              <Table><Thead><Th>Document</Th><Th>Category</Th><Th>Filed</Th><Th align="right">Size</Th><Th /></Thead><tbody>{documents.filter((d) => !d.credentialId).map((d) => <Tr key={d.id}><Td strong><a href={`/staff/${id}/documents/${d.id}`} target="_blank" rel="noopener" className="hover:underline">{d.title}</a><div className="text-[13px] font-normal text-muted-foreground">{d.fileName}{d.note ? ` · ${d.note}` : ""}</div></Td><Td className="text-muted-foreground">{categoryLabel(d.category)}</Td><Td className="text-muted-foreground">{fmtDate(d.createdAt.toISOString().slice(0, 10))}</Td><Td align="right" className="ident text-muted-foreground">{fmtSize(d.sizeBytes)}</Td><Td align="right"><span className="inline-flex items-center gap-2"><DocumentTextChip kind="staff" id={d.id} ownerId={id} hasText={Boolean(d.extractedText)} summary={d.extractionSummary} aiReady={aiConfigured()} /><DeleteDocument id={d.id} staffId={id} /></span></Td></Tr>)}</tbody></Table>
             )}
             <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">File a document</div><DocumentForm staffId={id} categories={[...STAFF_DOCUMENT_CATEGORIES]} /></div>
           </Card>
