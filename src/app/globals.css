@@ -20,12 +20,12 @@
   --gray-800: #2a2726;
   --gray-900: #1b1818;
 
-  --blue-100: #eef0f7;
-  --blue-200: #e1e5f1;
-  --blue-300: #aeb8da;
-  --blue-500: #5656b9;
-  --blue-600: #0b2672;
-  --blue-700: #08205e;
+  --blue-100: #f6f2fc;
+  --blue-200: #e9e1f7;
+  --blue-300: #c9b8ea;
+  --blue-500: #6d4fc2;
+  --blue-600: #5b3fae;
+  --blue-700: #4a3390;
 
   --text: #1b1818;
   --text-strong: #1b1818;
@@ -76,9 +76,9 @@
   --card-foreground: var(--text);
   --popover: #ffffff;
   --popover-foreground: var(--text);
-  --primary: #0b2672;
+  --primary: #6d4fc2;
   --primary-foreground: #ffffff;
-  --primary-hover: #08205e;
+  --primary-hover: #5b3fae;
   --primary-soft: #e1e5f1;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
@@ -89,8 +89,8 @@
   --destructive: var(--danger);
   --border: var(--gray-300);
   --input: var(--gray-300);
-  --ring: #5656b9;
-  --chart-1: #0b2672;
+  --ring: #6d4fc2;
+  --chart-1: #6d4fc2;
   --chart-2: #da8a14;
   --chart-3: #5656b9;
   --chart-4: #1f6b4a;
@@ -118,12 +118,12 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
-  --blue-100: #f4f7fc;
-  --blue-200: #dce7f5;
-  --blue-300: #a9c3e2;
-  --blue-500: #0098c0;
-  --blue-600: #1d4e89;
-  --blue-700: #173e6d;
+  --blue-100: #f6f2fc;
+  --blue-200: #e9e1f7;
+  --blue-300: #c9b8ea;
+  --blue-500: #6d4fc2;
+  --blue-600: #5b3fae;
+  --blue-700: #4a3390;
 
   --text: #0f172a;
   --text-strong: #0b1220;
@@ -174,9 +174,9 @@
   --card-foreground: var(--text);
   --popover: #ffffff;
   --popover-foreground: var(--text);
-  --primary: #0098c0;
+  --primary: #6d4fc2;
   --primary-foreground: #ffffff;
-  --primary-hover: #0081a5;
+  --primary-hover: #5b3fae;
   --primary-soft: #f1ecfa;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
@@ -187,8 +187,8 @@
   --destructive: var(--danger);
   --border: var(--gray-300);
   --input: var(--gray-300);
-  --ring: #0098c0;
-  --chart-1: #1d4e89;
+  --ring: #6d4fc2;
+  --chart-1: #6d4fc2;
   --chart-2: #f59e0b;
   --chart-3: #6366f1;
   --chart-4: #0ea5e9;
@@ -229,7 +229,7 @@
   --blue-500: #6366f1;
   --blue-600: #4f46e5;
   --blue-700: #4338ca;
-  --chart-1: #4f46e5;
+  --chart-1: #6d4fc2;
   --chart-2: #f97316;
 }
 
@@ -273,7 +273,7 @@
   --blue-500: #3f8a63;
   --blue-600: #2f6f4e;
   --blue-700: #245a3f;
-  --chart-1: #2f6f4e;
+  --chart-1: #6d4fc2;
   --chart-2: #c2410c;
   --ok: #2f6f4e;
   --ok-soft: #dcefe3;
@@ -521,11 +521,11 @@ kbd { font-family: var(--font-mono); }
   --nav-cta-border: #d6c8f0;
   --text-muted: #526575;
   --text-hint: #697d8d;
-  --primary: #0098c0;
-  --primary-hover: #0081a5;
+  --primary: #6d4fc2;
+  --primary-hover: #5b3fae;
   --primary-soft: #f1ecfa;
-  --blue-500: #0098c0;
-  --ring: #0098c0;
+  --blue-500: #6d4fc2;
+  --ring: #6d4fc2;
   --radius: 0.75rem;
 }
 /* This later block wins over the one above it, so the heading weight has to be set twice. */

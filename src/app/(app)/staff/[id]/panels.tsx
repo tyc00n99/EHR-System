@@ -52,7 +52,7 @@ export function AssignmentPanel({ staffId, assignments, candidates }: { staffId:
                 <div className="text-[13px] text-muted-foreground">{a.orientedOn ? `Oriented to this person ${a.orientedOn}` : "Not yet oriented to this person's plan and needs"}</div>
               </div>
               {a.orientedOn ? <Badge tone="ok">oriented</Badge> : (
-                <button disabled={pending} onClick={() => start(() => markOriented(a.id, staffId))} className="inline-flex h-7 items-center rounded-md bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-blue-300/40 disabled:opacity-50">Mark oriented today</button>
+                <button disabled={pending} onClick={() => start(() => markOriented(a.id, staffId))} className="inline-flex h-7 items-center rounded-md bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-primary-soft/70 disabled:opacity-50">Mark oriented today</button>
               )}
               <button disabled={pending} onClick={() => { if (confirm(`End ${a.name}'s assignment?`)) start(() => endAssignment(a.id, staffId)); }} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">End</button>
             </li>

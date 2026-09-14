@@ -10,7 +10,7 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 
 const btn = {
   primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
-  secondary: "bg-primary-soft text-primary hover:bg-blue-300/40",
+  secondary: "bg-primary-soft text-primary hover:bg-primary-soft/70",
   ghost: "text-text hover:bg-hover",
   outline: "border border-line bg-page text-text hover:bg-hover",
   danger: "bg-danger-soft text-danger hover:bg-danger/15",
@@ -40,7 +40,7 @@ export function Field({ label, error, hint, children, className }: { label: stri
   );
 }
 
-const control = "h-9 w-full rounded-lg border border-line bg-page px-3 text-text placeholder:text-hint transition-colors hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300/50 disabled:bg-panel";
+const control = "h-9 w-full rounded-lg border border-line bg-page px-3 text-text placeholder:text-hint transition-colors hover:border-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft disabled:bg-panel";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cx(control, className)} {...props} />;
@@ -295,7 +295,7 @@ export function Toolbar({ action, q, placeholder, chips, count, children, hidden
       <form action={action} className="relative">
         {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
         <Icon.search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input name="q" defaultValue={q} placeholder={placeholder} className="h-8 w-64 rounded-md border border-line bg-page pl-8 pr-2.5 text-[13px] placeholder:text-hint focus:border-blue-500 focus:outline-none" />
+        <input name="q" defaultValue={q} placeholder={placeholder} className="h-8 w-64 rounded-md border border-line bg-page pl-8 pr-2.5 text-[13px] placeholder:text-hint focus:border-primary focus:outline-none" />
       </form>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">

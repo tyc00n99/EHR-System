@@ -45,7 +45,7 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
       </header>
 
       {open ? (
-        <Link href="/clock" className="mb-6 block rounded-lg border border-blue-300 bg-blue-100 px-4 py-4 hover:bg-blue-200/60">
+        <Link href="/clock" className="mb-6 block rounded-lg border border-primary/30 bg-primary-soft px-4 py-4 hover:bg-primary-soft/70">
           <div className="text-[13px] font-medium text-primary">Visit in progress</div>
           <div className="mt-0.5 text-[17px] font-semibold text-text-strong">{fullName(open.person)}</div>
           <div className="text-[13px] text-muted-foreground">Since {fmtDateTime(open.visit.clockInAt)} · tap to clock out</div>
@@ -63,7 +63,7 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-[13px] font-semibold text-gray-100">{a.person.firstName[0]}{a.person.lastName[0]}</span>
                     <span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{fullName(a.person)}</span><span className="block truncate text-[13px] text-muted-foreground">{a.assignment.orientedOn ? `${a.person.waiverProgram} · ${a.person.city ?? a.person.county} · plans and files` : "Orientation pending"}</span></span>
                   </Link>
-                  <Link href="/clock" aria-label={`Clock in with ${fullName(a.person)}`} className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary hover:bg-blue-300/40"><Icon.clock size={18} /></Link>
+                  <Link href="/clock" aria-label={`Clock in with ${fullName(a.person)}`} className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-soft text-primary hover:bg-primary-soft/70"><Icon.clock size={18} /></Link>
                 </div>
               ))}
             </div>

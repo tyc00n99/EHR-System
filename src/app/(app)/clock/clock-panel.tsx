@@ -59,7 +59,7 @@ function ClientSignature({ error, reasonError }: { error?: string; reasonError?:
       <p className="mt-0.5 text-[13px] text-muted-foreground">Read the note to the person, then hand them the phone to enter their signing code.</p>
       {!unable && (
         <Field label="Client signing code" error={error} className="mt-3">
-          <input name="clientCode" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" className="h-14 w-full rounded-md border border-line bg-page text-center text-[28px] font-bold tracking-[0.35em] tabular-nums focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300/50" />
+          <input name="clientCode" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" className="h-14 w-full rounded-md border border-line bg-page text-center text-[28px] font-bold tracking-[0.35em] tabular-nums focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft" />
         </Field>
       )}
       <label className="mt-3 flex items-center gap-3 text-[13px]">
@@ -146,7 +146,7 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <input type="hidden" name="visitId" value={open.id} />
-      <div className="rounded-lg border border-blue-300 bg-blue-100 px-4 py-3.5">
+      <div className="rounded-lg border border-primary/30 bg-primary-soft px-4 py-3.5">
         <p className="text-[13px] font-medium text-primary">Visit in progress</p>
         <h2 className="mt-0.5">{open.personName}</h2>
         <p className="mt-1 text-[13px] text-muted-foreground">{open.serviceCode} · since {since}</p>
