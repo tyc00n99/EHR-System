@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
-import { BannerFact, ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
+import { ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
 import { ClientPhoto } from "./client-photo";
 import { ProfileHistory } from "./profile-history";
@@ -24,7 +24,7 @@ import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { deadlinesFromServiceStart } from "@/lib/compliance";
-import { fmtDate, fmtDateNum, fmtDateTime, fmtDayTime, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
+import { fmtDate, fmtDateNum, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { getServiceType } from "@/lib/services";
@@ -38,7 +38,6 @@ import { VisitSheet } from "../../visits/record/visit-sheet";
 const SEX: Record<string, string> = { female: "Female", male: "Male", nonbinary: "Non-binary", other: "Other", undisclosed: "Undisclosed" };
 
 const statusTone = { active: "ok", intake: "accent", discharged: "neutral" } as const;
-const visitTone = (s: string) => (s === "completed" ? "ok" : s === "void" ? "neutral" : "accent") as "ok" | "neutral" | "accent";
 
 function daysAgo(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
 
@@ -121,7 +120,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   // Everything the Profile tab is a checklist of, built once so the tab badge and the section list
   // agree about what is still missing.
   const posLabel: Record<string, string> = { home: "Home", community: "Community", day_program: "Day program", residential: "Residential site", school: "School", telehealth: "Telehealth", other: "Other" };
-  const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const hhmm = (t: string) => { const [h, m] = t.split(":").map(Number); const ap = h >= 12 ? "PM" : "AM"; return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${ap}`; };
   const profileSections: Section[] = [
     { key: "contacts", label: "Emergency contacts", count: profile.contacts.length, done: profile.contacts.length > 0, editable: "contacts", addLabel: "Add contact" },
@@ -233,16 +231,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                   </div>
                   <div className="ml-[18px]"><UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
                 </Link>
-              ))}
-            </ChartSection>
-            <ChartSection label="Recent notes" action={<Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">All {noteCount} →</Link>}>
-              {visits.length === 0 ? <p className="text-[13px] text-muted-foreground">No notes in the periods shown. <Link href={`/clients/${id}?tab=notes`} className="text-primary hover:underline">Look further back</Link>.</p> : visits.slice(0, 8).map(({ visit: v, staffFirst, staffLast }) => (
-                <ChartLine key={v.id}>
-                  <ServiceDot code={v.serviceCode} />
-                  <Link href={`/clients/${id}?note=${v.id}`} scroll={false} className="ident w-[92px] shrink-0 whitespace-nowrap text-muted-foreground hover:underline">{fmtDayTime(v.clockInAt)}</Link>
-                  <span className="min-w-0 flex-1 truncate">{staffFirst} {staffLast} <span className="text-muted-foreground">· <span className="ident">{v.units}</span> units</span></span>
-                  {v.status === "completed" && !v.clientSignedAt ? <Badge tone="danger">unsigned</Badge> : v.status !== "completed" ? <Badge tone={visitTone(v.status)}>{v.status.replace("_", " ")}</Badge> : v.manualEntry ? <Badge tone="warn">manual</Badge> : <Icon.check size={13} className="text-ok" aria-label="signed" />}
-                </ChartLine>
               ))}
             </ChartSection>
           </ChartCol>
