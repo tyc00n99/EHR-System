@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 58 210 234" role="img" aria-label="EVVora">
+  <!-- The rounded E from the EVVORA wordmark, on its own for small tiles. Fill comes from CSS. -->
+  <path fill="currentColor" d="M88 70H228V116H112V145H214V189H112V234H228V280H88C58 280 42 263 42 234V116C42 87 58 70 88 70Z"/>
+</svg>

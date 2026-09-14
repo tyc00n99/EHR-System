@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 360" role="img" aria-labelledby="title desc">
+  <title id="title">EVVORA logo — option 2</title>
+  <desc id="desc">Near-black EVVORA wordmark with an integrated lavender EVV verification stroke and lavender A crossbar.</desc>
+
+  <!-- Brand colors: near-black #17131D, lavender #9B7CF6 -->
+  <g fill="#17131D">
+    <!-- Rounded E -->
+    <path d="M88 70H228V116H112V145H214V189H112V234H228V280H88C58 280 42 263 42 234V116C42 87 58 70 88 70Z"/>
+
+    <!-- Connected EVV rhythm -->
+    <path d="M220 70H278L346 219L414 70H470L538 219L606 70H664L570 269C564 282 553 290 539 290C526 290 515 282 509 269L442 125L375 269C369 282 358 290 345 290C331 290 320 282 314 269L220 70Z"/>
+
+    <!-- O -->
+    <path fill-rule="evenodd" d="M772 64C705 64 658 111 658 175C658 239 705 286 772 286C839 286 886 239 886 175C886 111 839 64 772 64ZM772 112C809 112 834 138 834 175C834 212 809 238 772 238C735 238 710 212 710 175C710 138 735 112 772 112Z"/>
+
+    <!-- R -->
+    <path fill-rule="evenodd" d="M910 70H1000C1064 70 1097 99 1097 149C1097 183 1080 208 1048 220L1092 280H1028L988 227H963V280H910V70ZM963 114V184H997C1028 184 1044 172 1044 149C1044 126 1028 114 997 114H963Z"/>
+
+    <!-- A -->
+    <path fill-rule="evenodd" d="M1206 70H1248L1335 280H1276L1259 235H1193L1176 280H1117L1206 70ZM1226 130L1208 191H1244L1226 130Z"/>
+  </g>
+
+  <!-- Integrated EVV verification stroke; deliberately stops before O -->
+  <path d="M92 256C270 268 486 276 635 226" fill="none" stroke="#9B7CF6" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Lavender crossbar detail inside A -->
+  <path d="M1199 199H1253L1263 221H1191L1199 199Z" fill="#9B7CF6"/>
+</svg>

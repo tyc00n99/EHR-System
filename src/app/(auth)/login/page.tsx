@@ -11,9 +11,9 @@ export default async function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-sidebar px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">E</span>
-          <span className="text-lg font-semibold tracking-tight text-text-strong">EVVora</span>
+        <div className="mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+          <img src="/evvora-wordmark.svg" alt="EVVora" width={190} height={50} className="h-[50px] w-auto" />
         </div>
         <div className="rounded-xl border border-line bg-card p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <h2>Log in</h2>
