@@ -69,7 +69,7 @@
   --radius-btn: 9999px;
   --banner: #ffffff;
   --banner-line: #e2e8f0;
-  --font-display: var(--font-serif);
+  --font-display: var(--font-sans);
   --background: #ffffff;
   --foreground: var(--text);
   --card: #ffffff;
@@ -336,8 +336,8 @@
   --color-danger-soft: var(--danger-soft);
 
   --font-sans: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-serif: var(--font-fraunces), "Fraunces", Georgia, serif;
-  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  --font-serif: var(--font-sans);
+  --font-mono: var(--font-sans);
 
   --radius-app: var(--radius);
   --radius-btn: var(--radius-btn);
@@ -439,9 +439,9 @@ h2 { font-size: 21px; line-height: 28px; letter-spacing: -0.01em; }
 h3 { color: var(--text-strong); font-size: 17px; line-height: 24px; font-weight: 600; }
 
 /* Data reads in mono, the Hubble way: numbers, codes, times. */
-.tabular-nums { font-family: var(--font-mono); letter-spacing: 0; }
-.figure { font-family: var(--font-display); font-weight: 500; font-variation-settings: "SOFT" 30; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-kbd { font-family: var(--font-mono); }
+.tabular-nums { font-family: var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.figure { font-family: var(--font-sans); font-weight: 500; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+kbd { font-family: var(--font-sans); }
 
 /* Notion-style selection and quiet scrollbars */
 * { scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent; }
@@ -532,7 +532,7 @@ kbd { font-family: var(--font-mono); }
 h1, h2 { font-weight: 700; }
 .figure { font-family: var(--font-sans); font-weight: 500; letter-spacing: -0.01em; }
 /* Identifiers keep the monospace: a PMI, a service code and a unit count should look like data. */
-.tabular-nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.tabular-nums { font-family: var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
@@ -542,4 +542,4 @@ h1, h2 { font-weight: 700; }
 .font-bold, strong, b { font-weight: 700; }
 
 /* Identifiers: PMI numbers, HCPCS codes, dates in tables, unit counts, money. */
-.ident { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.ident { font-family: var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: 0; }
