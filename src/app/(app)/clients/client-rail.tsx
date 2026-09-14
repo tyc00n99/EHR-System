@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
+import { useModulePanel } from "@/components/module-panel";
 
 export interface RailPerson { id: string; name: string; pmi: string; status: "active" | "intake" | "discharged"; flagged: boolean; photo: string | null }
 
@@ -19,6 +20,7 @@ export interface RailPerson { id: string; name: string; pmi: string; status: "ac
  */
 export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; label: string; canAdd: boolean }) {
   const pathname = usePathname();
+  const panel = useModulePanel();
   const [q, setQ] = useState("");
   // The status filters used to sit in a row above the page. They belong with the list they filter.
   const [filtering, setFiltering] = useState(false);
@@ -35,15 +37,19 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
   }, [people, q, status]);
   const countOf = (s: RailPerson["status"]) => people.filter((p) => p.status === s).length;
 
-  // A record is open: it gets the full width.
-  if (openId) return null;
+  // A record is open: it gets the full width — until the rail asks for the list, which then
+  // slides in over the record (the reference's behaviour) and closes as soon as a row is picked.
+  const over = Boolean(openId) && panel.open === "clients";
+  if (openId && !over) return null;
+  const close = () => panel.setOpen(null);
 
   return (
-    <aside aria-label={label} className="hidden w-[248px] shrink-0 border-r border-line bg-sidebar md:block">
+    <aside aria-label={label} className={cx("hidden w-[248px] shrink-0 border-r border-line bg-sidebar md:block", over && "absolute inset-y-0 left-0 z-30 shadow-[8px_0_24px_rgba(0,0,0,0.08)]")}>
       <div className="flex h-full flex-col">
         <div className="flex h-11 shrink-0 items-center gap-2 px-3">
           <Icon.clients size={15} className="shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-strong">{label}</span>
+          {over && <button type="button" onClick={close} aria-label="Close" className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={16} className="rotate-45" /></button>}
         </div>
 
         <div className="mx-3 mb-2 flex shrink-0 items-center gap-1.5">
@@ -95,6 +101,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 key={p.id}
                 href={`/clients/${p.id}`}
                 aria-current={on ? "page" : undefined}
+                onClick={close}
                 className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2.5 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
               >
                 <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-panel text-[13px] font-semibold text-text-strong">
@@ -117,6 +124,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
           <div className="shrink-0 border-t border-line p-2.5">
             <Link
               href="/clients/new"
+              onClick={close}
               className="flex h-9 items-center justify-center gap-1.5 rounded-md bg-primary text-[13px] font-medium text-primary-foreground hover:bg-primary-hover"
             >
               <Icon.plus size={15} /> Add client

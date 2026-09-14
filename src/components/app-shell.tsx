@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { MobileNav } from "@/components/mobile-nav";
 import { SectionNav } from "@/components/top-nav";
 import { SideRail } from "@/components/side-rail";
+import { ModulePanelProvider } from "@/components/module-panel";
 import { Avatar } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { NotePreview } from "@/components/note-preview";
@@ -26,6 +27,7 @@ const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" 
 export function AppShell({ user, orgName, counts, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
   const gear = gearGroups(user.role);
   return (
+    <ModulePanelProvider>
     <div className="flex h-screen overflow-hidden bg-page-bg">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 
@@ -88,5 +90,6 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
       <Suspense fallback={null}><NotePreview /></Suspense>
       <Toaster position="bottom-right" richColors closeButton />
     </div>
+    </ModulePanelProvider>
   );
 }

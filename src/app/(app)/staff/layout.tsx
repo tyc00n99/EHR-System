@@ -19,7 +19,7 @@ export default async function StaffLayout({ children }: { children: ReactNode })
     overdue: complianceSummary(evaluateCompliance(s.hireDate, creds.get(s.id) ?? [])).overdue,
   }));
   return (
-    <div className="-mx-4 -my-5 flex min-h-0 flex-1 md:-mx-8 md:-my-6">
+    <div className="relative -mx-4 -my-5 flex min-h-0 flex-1 md:-mx-8 md:-my-6">
       <TeamRail members={members} canAdd={user.role === "admin"} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-5 md:px-8 md:py-6">{children}</div>
     </div>

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { primaryNav, type NavCounts, type Role } from "@/lib/nav";
+import { useModulePanel } from "@/components/module-panel";
 
 /**
  * The destination rail: icons only, down the left, the way Passage Health does it.
@@ -17,6 +18,15 @@ import { primaryNav, type NavCounts, type Role } from "@/lib/nav";
  */
 export function SideRail({ role, counts, orgName, footer }: { role: Role; counts: NavCounts; orgName: string; footer?: ReactNode }) {
   const pathname = usePathname();
+  const panel = useModulePanel();
+  // A record of this module is open: its icon should reveal the list over the record, not leave it.
+  const panelFor = (href: string): "clients" | "team" | null => {
+    const m = pathname.match(/^\/(clients|staff)\/([^/]+)/);
+    if (!m || m[2] === "new") return null;
+    if (href === "/clients" && m[1] === "clients") return "clients";
+    if (href === "/staff" && m[1] === "staff") return "team";
+    return null;
+  };
   const isActive = (href: string, also?: string[]) =>
     href === "/" ? pathname === "/" : [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
 
@@ -32,17 +42,12 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
         const Ic = Icon[d.icon];
         const active = isActive(d.href, d.also);
         const badge = d.badge ? counts[d.badge] : 0;
-        return (
-          <Link
-            key={d.href}
-            href={d.href}
-            aria-label={d.label}
-            aria-current={active ? "page" : undefined}
-            className={cx(
+        const overlay = panelFor(d.href);
+        const itemClass = cx(
               "group relative flex size-12 items-center justify-center rounded-lg transition-colors",
               active ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text-strong",
-            )}
-          >
+            );
+        const inner = (<>
             <Ic size={22} />
             {badge > 0 && (
               <span className="absolute right-1.5 top-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-medium leading-none text-white">
@@ -59,6 +64,14 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
                 {d.label}
               </span>
             )}
+        </>);
+        return overlay ? (
+          <button key={d.href} type="button" onClick={() => panel.setOpen(panel.open === overlay ? null : overlay)} aria-label={d.label} aria-expanded={panel.open === overlay} className={itemClass}>
+            {inner}
+          </button>
+        ) : (
+          <Link key={d.href} href={d.href} aria-label={d.label} aria-current={active ? "page" : undefined} className={itemClass}>
+            {inner}
           </Link>
         );
       })}
