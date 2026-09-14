@@ -9,6 +9,11 @@
  * have something honest to show. Sample data only. No real client information belongs in this file.
  *
  * The admin password is `changeme-245d` unless SEED_ADMIN_PASSWORD is set.
+ *
+ * SEED_REUSE=1 seeds into a database that already holds an organisation, the admin login and the
+ * EVV configuration (after a targeted wipe of everything else): the organisation row, the EVV
+ * provider profile/identifiers/policy/rules and the admin@example.com user and staff rows are kept
+ * and everything else is created around them.
  */
 import { existsSync, readFileSync } from "node:fs";
 if (existsSync(".env.local")) {
@@ -48,37 +53,43 @@ const todayIso = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chi
 
 async function main() {
   const db = await getDb();
-  const existing = await db.select().from(organizations).limit(1);
-  if (existing.length) { console.log("Database already seeded. Run `npm run db:reset` to start over."); return; }
+  const reuse = process.env.SEED_REUSE === "1";
+  const [existingOrg] = await db.select().from(organizations).limit(1);
+  if (existingOrg && !reuse) { console.log("Database already seeded. Run `npm run db:reset` to start over, or SEED_REUSE=1 after a targeted wipe."); return; }
+  if (reuse && (await db.select().from(people).limit(1)).length) { console.log("SEED_REUSE=1 needs an empty client table. Wipe first."); process.exit(1); }
   const w = audited(db, { userId: null });
   const today = todayIso();
 
   /* ---------- organisation ---------- */
-  const org = await w.insert(organizations, {
+  const org = existingOrg ?? (await w.insert(organizations, {
     name: "Sonder Homecare",
     taxId: "41-0000000",         // sample EIN — replace with the real one in Settings
     umpi: "A100000000",          // sample UMPI — replace with the MHCP-enrolled identifier
     licenseNumber: "1234567",
     address1: "100 Main St", city: "Minneapolis", zip: "55401", phone: "612-555-0100",
-  });
+  }));
   await ensureEvvDefaults(db, org.id);
-  const [profile] = await db.select().from(schema.evvProviderProfiles).where(eq(schema.evvProviderProfiles.organizationId, org.id));
-  await w.update(schema.evvProviderProfiles, profile.id, { medicaidProviderId: "A100000000", legalName: "Sonder Homecare LLC" });
+  if (!existingOrg) {
+    const [profile] = await db.select().from(schema.evvProviderProfiles).where(eq(schema.evvProviderProfiles.organizationId, org.id));
+    await w.update(schema.evvProviderProfiles, profile.id, { medicaidProviderId: org.umpi, legalName: "Sonder Homecare LLC" });
+  }
 
   /* ---------- staff: the admin login and one caregiver ---------- */
   const ssn = (digits: string) => ({ ssnEncrypted: encryptField(digits), ssnLast4: digits.slice(-4) });
-  const admin = await w.insert(staff, {
+  const [keptAdminUser] = reuse ? await db.select().from(users).where(eq(users.email, "admin@example.com")) : [];
+  const [keptAdmin] = keptAdminUser?.staffId ? await db.select().from(staff).where(eq(staff.id, keptAdminUser.staffId)) : [];
+  const admin = keptAdmin ?? (await w.insert(staff, {
     firstName: "Mustafa", lastName: "Ali", dob: "1988-05-14", gender: "male", ...ssn("123456789"), payRate: "38.00",
     address1: "100 Main St", city: "Minneapolis", zip: "55401", umpi: "A100000001", hireDate: "2024-01-15", title: "Program director",
     email: "admin@example.com", phone: "612-555-0101",
-  });
+  }));
   const sam = await w.insert(staff, {
     firstName: "Sam", lastName: "Nguyen", dob: "1999-03-22", gender: "nonbinary", ...ssn("345678901"), payRate: "19.75",
     address1: "2600 Nicollet Ave", address2: "Apt 3", city: "Minneapolis", zip: "55408", umpi: "A100000003", hireDate: "2025-06-10", title: "Direct support professional",
     email: "dsp@example.com", phone: "612-555-0103",
   });
   const hash = await hashPassword(PASSWORD);
-  const adminUser = await w.insert(users, { email: "admin@example.com", passwordHash: hash, role: "admin", staffId: admin.id });
+  const adminUser = keptAdminUser ?? (await w.insert(users, { email: "admin@example.com", passwordHash: hash, role: "admin", staffId: admin.id }));
   const samUser = await w.insert(users, { email: "dsp@example.com", passwordHash: hash, role: "dsp", staffId: sam.id });
   for (const d of [1, 2, 3, 4, 5]) await w.insert(staffAvailability, { staffId: sam.id, weekday: d, startTime: "08:00", endTime: "17:00", startDate: "2026-01-01" });
   await w.insert(staffAvailability, { staffId: sam.id, weekday: 6, startTime: "09:00", endTime: "15:00", startDate: "2026-01-01" });
@@ -272,7 +283,7 @@ async function main() {
   if (fix) await correctVisit(makeCtx(db, org.id, adminUser.id, () => new Date(fix.end.getTime() + 86_400_000)), fix.id, { reasonCode: "FORGOT_CLOCK_OUT", explanation: "Sam forgot to clock out; the end time was confirmed with Jordan's mother by phone the next morning.", changes: { clockOutAt: new Date(fix.end.getTime() + 20 * 60000).toISOString() } });
 
   console.log(`Seeded "${org.name}": 2 staff (1 admin login, 1 caregiver login) with complete personnel files, 1 client complete in every section, ${seeded.length} notes over six weeks, ${seeded.length} EVV visits (mock aggregator: accepted, one rejected, one corrected), 2 medications with a 30-day MAR, and three weeks of shifts.`);
-  console.log(`Log in with admin@example.com or dsp@example.com. Password: ${PASSWORD === "changeme-245d" ? PASSWORD : "(from SEED_ADMIN_PASSWORD)"}`);
+  console.log(keptAdminUser ? `Kept the existing admin@example.com login and organisation. dsp@example.com password: ${PASSWORD}` : `Log in with admin@example.com or dsp@example.com. Password: ${PASSWORD === "changeme-245d" ? PASSWORD : "(from SEED_ADMIN_PASSWORD)"}`);
   console.log(`Jordan Abelard's signing code: ${JORDAN_CODE}`);
 }
 
