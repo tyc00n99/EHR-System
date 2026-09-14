@@ -16,6 +16,7 @@ import { audited } from "../src/db/audited";
 import { hashPassword } from "../src/lib/password";
 import { SERVICE_CODES } from "../src/lib/hcpcs";
 import { activitiesFor, skillsFor } from "../src/lib/templates";
+import { ensureEvvDefaults } from "../src/evv/context";
 
 const { organizations, staff, users, people, sites, programs, serviceAgreements, assignments, staffCredentials, visits, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
 
@@ -41,6 +42,7 @@ async function main() {
     zip: "55401",
     phone: "612-555-0100",
   });
+  await ensureEvvDefaults(db, org.id);
 
   const ssn = (digits: string) => ({ ssnEncrypted: encryptField(digits), ssnLast4: digits.slice(-4) });
   const admin = await w.insert(staff, {

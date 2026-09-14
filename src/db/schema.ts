@@ -4,6 +4,7 @@
  */
 import { sql } from "drizzle-orm";
 import {
+  bigserial,
   boolean,
   check,
   customType,
@@ -818,6 +819,13 @@ export const clientLocations = pgTable(
     /** CMS place of service, e.g. 12 for the person's home. */
     posCode: text("pos_code").notNull().default("12"),
     isDefault: boolean("is_default").notNull().default(false),
+    /** Geocoded point for the EVV geofence comparison. Null until someone sets it. */
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    /** Safe at Home / protected address: EVV records the visit without comparing coordinates. */
+    protectedAddress: boolean("protected_address").notNull().default(false),
+    /** Registered telephone line for IVR clock-ins from this location. */
+    ivrPhone: text("ivr_phone"),
     ...timestamps,
   },
   (t) => [index("client_locations_person_idx").on(t.personId)],
@@ -919,3 +927,520 @@ export type ClientAvailability = typeof clientAvailability.$inferSelect;
 export type ClientDiagnosis = typeof clientDiagnoses.$inferSelect;
 export type LocationType = (typeof locationType.enumValues)[number];
 export type FundingPriority = (typeof fundingPriority.enumValues)[number];
+
+// =====================================================================================
+// Electronic Visit Verification (EVV) — canonical domain, isolated from the aggregator.
+//
+// Every table here carries `organization_id`: the host app is one organisation per database
+// today, but the EVV domain is tenant-scoped on its own so a shared database later needs no
+// restructuring and every query can be proven isolated. Nothing here uses HHAeXchange field
+// names; the Minnesota adapter translates. The `visits` table (the 245D note) stays the source
+// of truth for documentation; an EVV visit links to it and never replaces it.
+// =====================================================================================
+
+export const evvVisitStatus = pgEnum("evv_visit_status", ["planned", "in_progress", "awaiting_clock_in", "completed", "voided"]);
+export const evvComplianceStatus = pgEnum("evv_compliance_status", ["COMPLIANT", "NONCOMPLIANT", "INCOMPLETE", "EXEMPT_LIVE_IN", "PENDING_REVIEW"]);
+export const evvBillingReadiness = pgEnum("evv_billing_readiness", ["not_ready", "ready", "ready_with_warnings", "hold"]);
+export const evvVerificationMethod = pgEnum("evv_verification_method", ["mobile", "ivr", "fob", "live_in", "manual", "imported", "other"]);
+export const evvLocationType = pgEnum("evv_location_type", ["home", "community", "alternate", "protected"]);
+export const evvLocationState = pgEnum("evv_location_state", ["captured", "inside_geofence", "outside_geofence", "community", "unavailable", "permission_denied", "accuracy_insufficient", "protected_address", "registered_location", "not_applicable"]);
+export const evvEventType = pgEnum("evv_event_type", ["clock_in", "clock_out", "correction", "submission", "acknowledgment", "void", "review"]);
+export const evvExceptionStatus = pgEnum("evv_exception_status", ["open", "acknowledged", "resolved", "waived"]);
+export const evvSubmissionStatus = pgEnum("evv_submission_status", ["queued", "transmitting", "submitted", "accepted", "accepted_with_warning", "rejected", "retry_scheduled", "correction_required", "resubmitted", "permanently_failed", "blocked"]);
+export const evvRejectionCategory = pgEnum("evv_rejection_category", ["transient", "authentication", "validation", "duplicate", "not_found", "configuration", "unknown"]);
+export const evvUnitType = pgEnum("evv_unit_type", ["fifteen_minute", "hourly", "daily", "per_visit"]);
+
+/** Per-tenant provider enrollment data the aggregator and DHS evaluate compliance against. */
+export const evvProviderProfiles = pgTable(
+  "evv_provider_profiles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    legalName: text("legal_name").notNull(),
+    federalTaxId: text("federal_tax_id").notNull(),
+    /** Minnesota Medicaid (MHCP) provider ID. */
+    medicaidProviderId: text("medicaid_provider_id"),
+    /** Identifier HHAeXchange assigns the provider once enrolled. Null until onboarding completes. */
+    hhaxProviderId: text("hhax_provider_id"),
+    /** "third_party" (EVVora submits to the aggregator) or "hhax_direct" (provider uses HHAX's own tools). */
+    evvSystem: text("evv_system").notNull().default("third_party"),
+    /** Production submission is enabled only when this is true AND the environment is configured. */
+    productionEnabled: boolean("production_enabled").notNull().default(false),
+    timeZone: text("time_zone").notNull().default("America/Chicago"),
+    state: text("state").notNull().default("MN"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("evv_provider_profiles_org_idx").on(t.organizationId)],
+);
+export type EvvProviderProfile = typeof evvProviderProfiles.$inferSelect;
+
+/** Every NPI / UMPI the tax ID is associated with. DHS evaluates compliance across all of them. */
+export const evvProviderIdentifiers = pgTable(
+  "evv_provider_identifiers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    type: staffIdType("type").notNull(),
+    value: text("value").notNull(),
+    label: text("label"),
+    effectiveFrom: date("effective_from"),
+    effectiveTo: date("effective_to"),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("evv_provider_identifiers_unique").on(t.organizationId, t.type, t.value), index("evv_provider_identifiers_org_idx").on(t.organizationId)],
+);
+export type EvvProviderIdentifier = typeof evvProviderIdentifiers.$inferSelect;
+
+/** Payers and MCOs the provider bills; the aggregator wants the payer on every visit. */
+export const evvPayers = pgTable(
+  "evv_payers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    /** "medicaid_ffs" | "mco" | "other" */
+    kind: text("kind").notNull().default("medicaid_ffs"),
+    /** The payer's identifier at the aggregator, once known. */
+    externalPayerId: text("external_payer_id"),
+    isDefault: boolean("is_default").notNull().default(false),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("evv_payers_org_idx").on(t.organizationId)],
+);
+export type EvvPayer = typeof evvPayers.$inferSelect;
+
+/**
+ * State policy knobs. One row per (organisation, state). Nothing about compliance tolerance is
+ * hardcoded: geofence distance, what "real time" means, the monthly deadline, and plausibility
+ * bounds are all here so a DHS bulletin changes a row, not a release.
+ */
+export const evvPolicies = pgTable(
+  "evv_policies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    state: text("state").notNull().default("MN"),
+    geofenceMeters: integer("geofence_meters").notNull().default(500),
+    /** GPS accuracy above this (metres) is treated as insufficient to place the caregiver. */
+    maxAccuracyMeters: integer("max_accuracy_meters").notNull().default(200),
+    /** Device time vs. server receipt beyond this many minutes is "not verified in real time". */
+    realTimeToleranceMinutes: integer("real_time_tolerance_minutes").notNull().default(60),
+    /** Device timestamps this far in the future relative to the server are implausible. */
+    maxFutureSkewMinutes: integer("max_future_skew_minutes").notNull().default(10),
+    /** Visits longer than this are implausible and go to review. */
+    maxVisitMinutes: integer("max_visit_minutes").notNull().default(24 * 60),
+    minVisitMinutes: integer("min_visit_minutes").notNull().default(1),
+    /** Day of the month by which the previous month's visits and corrections must be submitted. */
+    submissionDeadlineDay: integer("submission_deadline_day").notNull().default(14),
+    /** How many days before the deadline the queue starts flagging visits. */
+    deadlineWarningDays: integer("deadline_warning_days").notNull().default(5),
+    /** Allow a live-in caregiver's daily entry to be captured outside real time. */
+    liveInNonRealTimeAllowed: boolean("live_in_non_real_time_allowed").notNull().default(true),
+    /** Hold billing (rather than warn) on noncompliant visits. */
+    billingHoldOnNoncompliant: boolean("billing_hold_on_noncompliant").notNull().default(false),
+    /** Retry schedule for aggregator submissions. */
+    maxSubmissionAttempts: integer("max_submission_attempts").notNull().default(8),
+    retryBaseSeconds: integer("retry_base_seconds").notNull().default(60),
+    retryMaxSeconds: integer("retry_max_seconds").notNull().default(6 * 3600),
+    /** Acknowledgments older than this without a result are "stuck". */
+    ackTimeoutHours: integer("ack_timeout_hours").notNull().default(48),
+    sourceUrl: text("source_url"),
+    sourceNote: text("source_note"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("evv_policies_org_state_idx").on(t.organizationId, t.state)],
+);
+export type EvvPolicy = typeof evvPolicies.$inferSelect;
+
+/**
+ * Which service code + modifier combinations require EVV. Versioned: a change inserts a new row
+ * with `supersedes_id` pointing at the old one rather than editing history.
+ */
+export const evvServiceRules = pgTable(
+  "evv_service_rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    state: text("state").notNull().default("MN"),
+    /** Null = applies to every payer in the state. */
+    payerId: uuid("payer_id").references(() => evvPayers.id, { onDelete: "set null" }),
+    serviceCode: text("service_code").notNull(),
+    /** Every modifier here must be present on the visit for the rule to match. */
+    requiredModifiers: text("required_modifiers").array().notNull().default(sql`'{}'::text[]`),
+    /** Any modifier here present on the visit means the rule does not match. */
+    excludedModifiers: text("excluded_modifiers").array().notNull().default(sql`'{}'::text[]`),
+    /** Whether "any modifiers" match (true) or the visit must carry exactly the required set (false). */
+    allowAdditionalModifiers: boolean("allow_additional_modifiers").notNull().default(true),
+    label: text("label").notNull(),
+    requiresEvv: boolean("requires_evv").notNull().default(true),
+    unitType: evvUnitType("unit_type").notNull().default("fifteen_minute"),
+    sharedCare: boolean("shared_care").notNull().default(false),
+    effectiveFrom: date("effective_from").notNull(),
+    effectiveTo: date("effective_to"),
+    active: boolean("active").notNull().default(true),
+    version: integer("version").notNull().default(1),
+    supersedesId: uuid("supersedes_id").references((): AnyPgColumn => evvServiceRules.id),
+    sourceUrl: text("source_url"),
+    sourceLabel: text("source_label"),
+    sourceEffectiveDate: date("source_effective_date"),
+    createdBy: uuid("created_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("evv_service_rules_org_code_idx").on(t.organizationId, t.serviceCode), index("evv_service_rules_active_idx").on(t.organizationId, t.active)],
+);
+export type EvvServiceRule = typeof evvServiceRules.$inferSelect;
+
+/** A properly documented live-in caregiver relationship. Effective-dated; only this makes a visit EXEMPT_LIVE_IN. */
+export const evvLiveInRelationships = pgTable(
+  "evv_live_in_relationships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    personId: uuid("person_id").notNull().references(() => people.id),
+    staffId: uuid("staff_id").notNull().references(() => staff.id),
+    effectiveFrom: date("effective_from").notNull(),
+    effectiveTo: date("effective_to"),
+    /** Where the documentation lives (a staff document id, or a description). Required. */
+    documentationRef: text("documentation_ref").notNull(),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    note: text("note"),
+    active: boolean("active").notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [index("evv_live_in_org_person_staff_idx").on(t.organizationId, t.personId, t.staffId), check("evv_live_in_date_order", sql`${t.effectiveTo} is null or ${t.effectiveTo} >= ${t.effectiveFrom}`)],
+);
+export type EvvLiveInRelationship = typeof evvLiveInRelationships.$inferSelect;
+
+/** One shared-care service occurrence: one caregiver, several clients, explicit unit allocation. */
+export const evvSharedCareGroups = pgTable(
+  "evv_shared_care_groups",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    staffId: uuid("staff_id").notNull().references(() => staff.id),
+    /** "equal" | "manual" — how units were split across the clients. */
+    allocationMethod: text("allocation_method").notNull().default("equal"),
+    note: text("note"),
+    createdBy: uuid("created_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("evv_shared_care_org_idx").on(t.organizationId)],
+);
+
+/**
+ * The canonical EVV visit: the current projection of a visit's state. Every change to it is
+ * also written as a row in evv_visit_versions, and the events that caused it live in
+ * evv_events — this row is never the only record of what happened.
+ */
+export const evvVisits = pgTable(
+  "evv_visits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(1),
+
+    // Provider identifiers, snapshotted so a later profile edit does not rewrite history.
+    providerMedicaidId: text("provider_medicaid_id"),
+    providerTaxId: text("provider_tax_id").notNull(),
+    billingIdType: staffIdType("billing_id_type"),
+    billingId: text("billing_id"),
+
+    personId: uuid("person_id").notNull().references(() => people.id),
+    memberId: text("member_id").notNull(),
+    staffId: uuid("staff_id").notNull().references(() => staff.id),
+    serviceAgreementId: uuid("service_agreement_id").references(() => serviceAgreements.id),
+    shiftId: uuid("shift_id").references(() => shifts.id),
+    /** The 245D note this visit documents, when one exists. Its signature state is not EVV state. */
+    visitId: uuid("visit_id").references(() => visits.id),
+    sharedCareGroupId: uuid("shared_care_group_id").references(() => evvSharedCareGroups.id),
+    /** Units allotted to this client when part of a shared-care group. Null = not shared. */
+    sharedCareUnitsAllocated: integer("shared_care_units_allocated"),
+
+    serviceCode: text("service_code").notNull(),
+    modifiers: text("modifiers").array().notNull().default(sql`'{}'::text[]`),
+    payerId: uuid("payer_id").references(() => evvPayers.id),
+    /** Which rule decided EVV is required (null when no rule matched → not required). */
+    serviceRuleId: uuid("service_rule_id").references(() => evvServiceRules.id),
+    evvRequired: boolean("evv_required").notNull().default(true),
+
+    scheduledStartAt: timestamp("scheduled_start_at", { withTimezone: true }),
+    scheduledEndAt: timestamp("scheduled_end_at", { withTimezone: true }),
+    clockInAt: timestamp("clock_in_at", { withTimezone: true }),
+    clockOutAt: timestamp("clock_out_at", { withTimezone: true }),
+    clockInEventId: uuid("clock_in_event_id"),
+    clockOutEventId: uuid("clock_out_event_id"),
+    /** Minnesota date of service (the clock-in's local date), YYYY-MM-DD. */
+    serviceDate: date("service_date"),
+    timeZone: text("time_zone").notNull().default("America/Chicago"),
+    durationMinutes: integer("duration_minutes"),
+    units: integer("units"),
+    unitType: evvUnitType("unit_type"),
+
+    locationType: evvLocationType("location_type"),
+    verificationMethod: evvVerificationMethod("verification_method"),
+    liveIn: boolean("live_in").notNull().default(false),
+    liveInRelationshipId: uuid("live_in_relationship_id").references(() => evvLiveInRelationships.id),
+    sharedCare: boolean("shared_care").notNull().default(false),
+    manualEntry: boolean("manual_entry").notNull().default(false),
+    corrected: boolean("corrected").notNull().default(false),
+    /** Set when the row was created by the backfill from historical `visits`; never treated as verified. */
+    imported: boolean("imported").notNull().default(false),
+
+    status: evvVisitStatus("status").notNull().default("planned"),
+    complianceStatus: evvComplianceStatus("compliance_status").notNull().default("INCOMPLETE"),
+    complianceReasons: text("compliance_reasons").array().notNull().default(sql`'{}'::text[]`),
+    complianceEvaluatedAt: timestamp("compliance_evaluated_at", { withTimezone: true }),
+    billingReadiness: evvBillingReadiness("billing_readiness").notNull().default("not_ready"),
+    billingReasons: text("billing_reasons").array().notNull().default(sql`'{}'::text[]`),
+    /** Rolled up from the latest submission so the queue can filter without a join. */
+    submissionStatus: evvSubmissionStatus("submission_status"),
+    externalReferenceId: text("external_reference_id"),
+    /** Whether the aggregator still needs to hear about the latest version. */
+    resubmissionRequired: boolean("resubmission_required").notNull().default(false),
+
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    voidedBy: uuid("voided_by").references(() => users.id),
+    voidReason: text("void_reason"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+
+    createdBy: uuid("created_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [
+    index("evv_visits_org_idx").on(t.organizationId),
+    index("evv_visits_org_service_date_idx").on(t.organizationId, t.serviceDate),
+    index("evv_visits_org_staff_idx").on(t.organizationId, t.staffId),
+    index("evv_visits_org_person_idx").on(t.organizationId, t.personId),
+    index("evv_visits_org_compliance_idx").on(t.organizationId, t.complianceStatus),
+    index("evv_visits_org_submission_idx").on(t.organizationId, t.submissionStatus),
+    index("evv_visits_external_ref_idx").on(t.organizationId, t.externalReferenceId),
+    index("evv_visits_visit_idx").on(t.visitId),
+    index("evv_visits_status_idx").on(t.organizationId, t.status),
+    check("evv_visits_clock_order", sql`${t.clockOutAt} is null or ${t.clockInAt} is null or ${t.clockOutAt} >= ${t.clockInAt}`),
+    check("evv_visits_void_reason", sql`${t.status} <> 'voided' or ${t.voidReason} is not null`),
+  ],
+);
+export type EvvVisit = typeof evvVisits.$inferSelect;
+
+/** Immutable snapshot of an EVV visit at each version. Insert-only. */
+export const evvVisitVersions = pgTable(
+  "evv_visit_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").notNull().references(() => evvVisits.id),
+    version: integer("version").notNull(),
+    /** The full visit row at this version, minus nothing: it is the record. */
+    snapshot: jsonb("snapshot").notNull(),
+    /** What produced this version: "clock_in" | "clock_out" | "correction" | "void" | "reconcile" | "import" | "evaluate". */
+    cause: text("cause").notNull(),
+    causedByEventId: uuid("caused_by_event_id"),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("evv_visit_versions_unique").on(t.evvVisitId, t.version), index("evv_visit_versions_org_idx").on(t.organizationId)],
+);
+
+/**
+ * Immutable EVV events: what a device or a person asserted, when. Insert-only; never updated,
+ * never deleted. Coordinates are encrypted at rest (`location_encrypted`); the derived
+ * classification next to them is what the compliance engine reads.
+ */
+export const evvEvents = pgTable(
+  "evv_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").notNull().references(() => evvVisits.id),
+    /** Client-generated UUID for the event; the unit of idempotency across offline syncs. */
+    eventId: uuid("event_id").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    type: evvEventType("type").notNull(),
+    /** What the device's clock said when the caregiver pressed the button. Never overwritten. */
+    deviceCapturedAt: timestamp("device_captured_at", { withTimezone: true }),
+    /** The device's UTC offset at capture, in minutes (Central Daylight = -300). */
+    deviceUtcOffsetMinutes: integer("device_utc_offset_minutes"),
+    /** When the server received it. Differs from device time whenever the event was offline. */
+    serverReceivedAt: timestamp("server_received_at", { withTimezone: true }).notNull().defaultNow(),
+    /** The moment the event is taken to have happened, in UTC (device time unless implausible). */
+    effectiveAt: timestamp("effective_at", { withTimezone: true }),
+    /** AES-256-GCM of {lat,lng,accuracy}. Null when no fix was captured. */
+    locationEncrypted: text("location_encrypted"),
+    accuracyMeters: doublePrecision("accuracy_meters"),
+    /** "gps" | "network" | "ivr" | "fob" | "manual" | "none" */
+    locationSource: text("location_source"),
+    locationType: evvLocationType("location_type"),
+    locationState: evvLocationState("location_state").notNull().default("not_applicable"),
+    distanceFromHomeMeters: doublePrecision("distance_from_home_meters"),
+    /** Registered IVR line or FOB identifier, when those methods are used. */
+    registeredLocationRef: text("registered_location_ref"),
+    verificationMethod: evvVerificationMethod("verification_method").notNull(),
+    deviceId: text("device_id"),
+    offline: boolean("offline").notNull().default(false),
+    /** True when the event reached the server later than the policy's real-time tolerance. */
+    delayed: boolean("delayed").notNull().default(false),
+    actorUserId: uuid("actor_user_id").references(() => users.id),
+    actorStaffId: uuid("actor_staff_id").references(() => staff.id),
+    /** Non-PHI metadata the client sent (app version, OS, connectivity). Never coordinates. */
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    /** SHA-256 over the immutable fields, so tampering with a stored row is detectable. */
+    integrityHash: text("integrity_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("evv_events_org_event_idx").on(t.organizationId, t.eventId),
+    uniqueIndex("evv_events_org_idem_idx").on(t.organizationId, t.idempotencyKey),
+    index("evv_events_visit_idx").on(t.evvVisitId),
+    index("evv_events_org_staff_idx").on(t.organizationId, t.actorStaffId),
+  ],
+);
+export type EvvEvent = typeof evvEvents.$inferSelect;
+
+/** A correction to an EVV visit: original and corrected values kept side by side, forever. */
+export const evvCorrections = pgTable(
+  "evv_corrections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").notNull().references(() => evvVisits.id),
+    priorVersion: integer("prior_version").notNull(),
+    resultingVersion: integer("resulting_version").notNull(),
+    /** { field: { from, to } } for every changed field. */
+    changes: jsonb("changes").$type<Record<string, { from: unknown; to: unknown }>>().notNull(),
+    reasonCode: text("reason_code").notNull(),
+    explanation: text("explanation").notNull(),
+    correctedBy: uuid("corrected_by").notNull().references(() => users.id),
+    correctedAt: timestamp("corrected_at", { withTimezone: true }).notNull().defaultNow(),
+    makesNoncompliant: boolean("makes_noncompliant").notNull().default(true),
+    resubmissionRequired: boolean("resubmission_required").notNull().default(true),
+    eventId: uuid("event_id"),
+  },
+  (t) => [index("evv_corrections_visit_idx").on(t.evvVisitId), index("evv_corrections_org_idx").on(t.organizationId)],
+);
+export type EvvCorrection = typeof evvCorrections.$inferSelect;
+
+/** Something a person needs to look at. Opened by the engine, closed by a reviewer, never deleted. */
+export const evvExceptions = pgTable(
+  "evv_exceptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").notNull().references(() => evvVisits.id),
+    /** A reason code from the compliance engine or the ingestion service. */
+    type: text("type").notNull(),
+    /** "info" | "warning" | "error" */
+    severity: text("severity").notNull().default("warning"),
+    detail: text("detail"),
+    status: evvExceptionStatus("status").notNull().default("open"),
+    assignedTo: uuid("assigned_to").references(() => users.id),
+    resolvedBy: uuid("resolved_by").references(() => users.id),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolutionNote: text("resolution_note"),
+    ...timestamps,
+  },
+  (t) => [index("evv_exceptions_org_status_idx").on(t.organizationId, t.status), index("evv_exceptions_visit_idx").on(t.evvVisitId), index("evv_exceptions_assigned_idx").on(t.assignedTo)],
+);
+export type EvvException = typeof evvExceptions.$inferSelect;
+
+/** Internal reviewer comments on a visit. */
+export const evvVisitComments = pgTable(
+  "evv_visit_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").notNull().references(() => evvVisits.id),
+    authorUserId: uuid("author_user_id").notNull().references(() => users.id),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("evv_visit_comments_visit_idx").on(t.evvVisitId)],
+);
+
+/** One submission of one visit version to one aggregator. Resubmissions chain through `resubmission_of`. */
+export const evvSubmissions = pgTable(
+  "evv_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").notNull().references(() => evvVisits.id),
+    /** "hhax_mn" today; the adapter key. */
+    aggregator: text("aggregator").notNull(),
+    /** "mock" | "sandbox" | "production" */
+    environment: text("environment").notNull(),
+    visitVersion: integer("visit_version").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    status: evvSubmissionStatus("status").notNull().default("queued"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    requestedAt: timestamp("requested_at", { withTimezone: true }).notNull().defaultNow(),
+    acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+    lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+    externalReferenceId: text("external_reference_id"),
+    transportResult: text("transport_result"),
+    rejectionCategory: evvRejectionCategory("rejection_category"),
+    vendorRejectionCode: text("vendor_rejection_code"),
+    rejectionMessage: text("rejection_message"),
+    /** Warnings the aggregator returned with an acceptance. */
+    warnings: jsonb("warnings").$type<string[]>(),
+    resubmissionOf: uuid("resubmission_of").references((): AnyPgColumn => evvSubmissions.id),
+    /** "create" | "update" | "void" */
+    operation: text("operation").notNull().default("create"),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("evv_submissions_idem_idx").on(t.organizationId, t.idempotencyKey),
+    index("evv_submissions_visit_idx").on(t.evvVisitId),
+    index("evv_submissions_org_status_idx").on(t.organizationId, t.status),
+    index("evv_submissions_due_idx").on(t.status, t.nextAttemptAt),
+    index("evv_submissions_external_idx").on(t.organizationId, t.externalReferenceId),
+  ],
+);
+export type EvvSubmission = typeof evvSubmissions.$inferSelect;
+
+/** Every attempt at delivery, whether or not it got through. Insert-only, no PHI. */
+export const evvSubmissionAttempts = pgTable(
+  "evv_submission_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    submissionId: uuid("submission_id").notNull().references(() => evvSubmissions.id),
+    attempt: integer("attempt").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    outcome: text("outcome").notNull(),
+    transportResult: text("transport_result"),
+    rejectionCategory: evvRejectionCategory("rejection_category"),
+    vendorCode: text("vendor_code"),
+    message: text("message"),
+    /** SHA-256 of the outbound payload, so an attempt can be tied to bytes without storing PHI. */
+    payloadHash: text("payload_hash"),
+  },
+  (t) => [index("evv_submission_attempts_submission_idx").on(t.submissionId)],
+);
+
+/**
+ * Append-only EVV audit trail, hash-chained per visit: each row's hash covers the previous row's
+ * hash, so a deleted or edited row breaks the chain. Details never carry coordinates or names.
+ */
+export const evvAuditEvents = pgTable(
+  "evv_audit_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    evvVisitId: uuid("evv_visit_id").references(() => evvVisits.id),
+    action: text("action").notNull(),
+    actorUserId: uuid("actor_user_id").references(() => users.id),
+    details: jsonb("details").$type<Record<string, unknown>>(),
+    previousHash: text("previous_hash"),
+    hash: text("hash").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    /** Insertion order, so the chain is unambiguous even when two rows share a timestamp. */
+    seq: bigserial("seq", { mode: "number" }).notNull(),
+  },
+  (t) => [index("evv_audit_events_visit_idx").on(t.evvVisitId, t.seq), index("evv_audit_events_org_idx").on(t.organizationId, t.at)],
+);
+export type EvvAuditEvent = typeof evvAuditEvents.$inferSelect;

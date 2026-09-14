@@ -9,6 +9,7 @@ import { findShiftForClockIn, getAgreement, getOrganization, getPerson, getStaff
 import { requireUser, type CurrentUser } from "@/lib/auth";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { computeUnits } from "@/lib/units";
+import { mirrorClockIn, mirrorClockOut, mirrorEdit, mirrorManualVisit, mirrorVoid } from "@/evv/bridge";
 import { verifyPassword } from "@/lib/password";
 import {
   DEFAULT_TASKS,
@@ -80,7 +81,7 @@ export async function clockIn(_prev: ActionState, fd: FormData): Promise<ActionS
     if (person.status !== "active") return { message: "This client is not active." };
     if (!withinSpan(agreement, today())) return { message: "Today is outside the service agreement dates." };
     const shift = await findShiftForClockIn(user.staffId, d.personId, new Date());
-    await audited(db, { userId: user.id }).insert(visits, {
+    const row = await audited(db, { userId: user.id }).insert(visits, {
       shiftId: shift?.id ?? null,
       personId: d.personId,
       staffId: user.staffId,
@@ -99,6 +100,7 @@ export async function clockIn(_prev: ActionState, fd: FormData): Promise<ActionS
       updatedBy: user.id,
     });
     if (shift) await audited(db, { userId: user.id }).update(schema.shifts, shift.id, { status: "in_progress" });
+    await mirrorClockIn(row, user);
   } catch (e) {
     return { message: e instanceof Error ? e.message : "Could not clock in." };
   }
@@ -130,7 +132,7 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
   }
   const clockOutAt = new Date();
   const units = computeUnits(v.clockInAt, clockOutAt, agreement?.unitMinutes ?? 15);
-  await audited(db, { userId: user.id }).update(visits, v.id, {
+  const closed = await audited(db, { userId: user.id }).update(visits, v.id, {
     clockOutAt,
     clientSignedAt,
     clientUnsignedReason,
@@ -144,6 +146,7 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
     updatedBy: user.id,
   });
   if (v.shiftId) await audited(db, { userId: user.id }).update(schema.shifts, v.shiftId, { status: "completed" });
+  await mirrorClockOut(closed, user);
   revalidatePath("/clock");
   revalidatePath("/");
   revalidatePath("/visits");
@@ -187,6 +190,7 @@ export async function createManualVisit(_prev: ActionState, fd: FormData): Promi
       updatedBy: user.id,
     });
     id = row.id;
+    await mirrorManualVisit(row, user);
   } catch (e) {
     return { message: e instanceof Error ? e.message : "Could not save the visit." };
   }
@@ -238,6 +242,7 @@ export async function editVisit(_prev: ActionState, fd: FormData): Promise<Actio
     status: "completed",
     manualEntryReason: v.manualEntryReason ?? d.reason,
   });
+  await mirrorEdit(v.id, user, d.reason, changes);
   revalidatePath(`/visits/${v.id}`);
   revalidatePath("/visits");
   redirect(`/visits/${v.id}`);
@@ -251,6 +256,7 @@ export async function voidVisit(visitId: string, reason: string): Promise<Action
   if (!v) return { message: "Note not found." };
   if (v.status === "void") return { message: "Already void." };
   await recordEdit(user, v.id, reason, { status: { from: v.status, to: "void" } }, { status: "void", manualEntryReason: v.manualEntryReason ?? reason });
+  await mirrorVoid(v.id, user, reason);
   revalidatePath(`/visits/${v.id}`);
   revalidatePath("/visits");
   return {};

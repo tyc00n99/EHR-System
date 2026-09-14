@@ -13,7 +13,9 @@
     "db:reset": "tsx scripts/reset.ts && tsx scripts/migrate.ts && tsx scripts/seed.ts",
     "db:codes": "tsx scripts/backfill-codes.ts",
     "db:org": "tsx scripts/rename-org.ts",
-    "db:staff-name": "tsx scripts/rename-staff.ts"
+    "db:staff-name": "tsx scripts/rename-staff.ts",
+    "test": "node --import tsx --test \"src/evv/__tests__/*.test.ts\"",
+    "evv:backfill": "tsx scripts/evv-backfill.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.123.0",

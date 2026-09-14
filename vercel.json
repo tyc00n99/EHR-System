@@ -1,5 +1,7 @@
 {
   "crons": [
-    { "path": "/api/cron/rotate-client-codes", "schedule": "0 14 * * 1" }
+    { "path": "/api/cron/rotate-client-codes", "schedule": "0 14 * * 1" },
+    { "path": "/api/cron/evv-submit", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/evv-reconcile", "schedule": "0 */6 * * *" }
   ]
 }
