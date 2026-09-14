@@ -22,9 +22,11 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
 
   return (
     <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-sidebar py-3 md:flex">
-      <Link href="/" title={orgName} aria-label="EVVora home" className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        {/* The rounded E from the EVVORA wordmark (public/evvora-wordmark.svg). */}
-        <svg viewBox="30 58 210 234" aria-hidden className="h-[22px] w-auto"><path fill="currentColor" d="M88 70H228V116H112V145H214V189H112V234H228V280H88C58 280 42 263 42 234V116C42 87 58 70 88 70Z" /></svg>
+      <Link href="/" title={orgName} aria-label="EVVora home" className="mb-2 flex size-10 items-center justify-center overflow-hidden rounded-lg border border-line-soft">
+        {/* The app icon itself (public/evvora-icon-1024.png, served at 192), so the tile matches the
+            favicon and the home-screen icon rather than being a third mark. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
+        <img src="/icon-192.png" alt="" width={40} height={40} className="size-full object-cover" />
       </Link>
       {primaryNav(role).map((d) => {
         const Ic = Icon[d.icon];
