@@ -4,8 +4,8 @@ import type { IconName } from "@/components/icons";
  * The whole navigation, in one place, so the top bar, the section row, the gear menu and the
  * phone's tab bar can never disagree about what a role is allowed to open.
  *
- * Shape decided September 2026: a caregiver gets four destinations, a supervisor six, an admin
- * seven (Team joined the rail on Sept 13, mirroring the reference's Team module). Everything an office user opens a few times a month lives behind the gear instead of
+ * Shape decided September 2026: a caregiver gets four destinations, a supervisor five, an admin
+ * six (Team joined the rail on Sept 13; Today left it the same day — the logo is the way home). Everything an office user opens a few times a month lives behind the gear instead of
  * competing with Clients for the same glance.
  */
 
@@ -46,8 +46,9 @@ export function primaryNav(role: Role): Destination[] {
       { href: "/visits", label: "My notes", icon: "visits", also: ["/notes"] },
     ];
   }
+  // No Today entry for office roles: the home screen is a greeting, and the logo tile already
+  // links there. Caregivers keep theirs — their home is the clock-in screen, not a greeting.
   return [
-    { href: "/", label: "Today", icon: "home" },
     { href: "/clients", label: "Clients", icon: "clients", also: ["/agreements"] },
     { href: "/staff", label: "Team", icon: "team" },
     { href: "/scheduling", label: "Schedule", icon: "calendar" },
