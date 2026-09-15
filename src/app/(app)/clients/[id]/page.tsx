@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
-import { ChartAlert, ChartCol, ChartFacts, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
+import { ChartAlert, ChartCol, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
 import { ClientPhoto } from "./client-photo";
 import { ProfileHistory } from "./profile-history";
@@ -23,7 +23,6 @@ import { MedicationSupportToggle } from "./med-toggle";
 import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
-import { deadlinesFromServiceStart } from "@/lib/compliance";
 import { fmtDate, fmtDateNum, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
@@ -94,9 +93,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
   const shiftMonth = (d: number) => { const x = new Date(Date.UTC(my, mm - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
-  const tracks = agreements.map((a) => (a.serviceTypeId ? getServiceType(a.serviceTypeId).planningTrack : null)).filter(Boolean);
-  const track = tracks.includes("245D.071") ? "245D.071" : tracks.length ? "245D.07" : null;
-  const deadlines = person.serviceStartDate && track ? deadlinesFromServiceStart(track, new Date(person.serviceStartDate + "T12:00:00")) : [];
   const address = [person.address1, person.address2, person.city && `${person.city}, ${person.state} ${person.zip ?? ""}`.trim()].filter(Boolean).join(", ");
   const active = agreements.filter((a) => a.agreement.status === "active");
   const unitsLeft = active.reduce((n, a) => n + (a.agreement.authorizedUnits - a.unitsUsed), 0);
@@ -175,81 +171,60 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
 
       {tab === "overview" && (
-        <ChartGrid>
-          <ChartCol>
-            <ChartSection label="Demographics" action={<Link href={`/clients/${id}?tab=profile`} className="text-primary hover:underline">Profile →</Link>}>
-              <ChartFacts items={[
-                { label: "Address", value: address || null },
-                { label: "Phone", value: person.phone ? <a href={`tel:${person.phone}`} className="ident text-primary hover:underline">{person.phone}</a> : <Link href={`/clients/${id}/edit`} className="text-hint hover:underline">Add a number</Link> },
-                { label: "Email", value: person.email ? <a href={`mailto:${person.email}`} className="text-primary hover:underline">{person.email}</a> : null },
-                { label: "Case mgr", value: person.caseManagerName },
-                { label: "Emergency", value: profile.contacts[0] ? <>{profile.contacts[0].name}{profile.contacts[0].phone && <div className="ident text-muted-foreground">{profile.contacts[0].phone}</div>}</> : <Link href={`/clients/${id}?tab=profile`} className="text-hint hover:underline">None on file</Link> },
-              ]} />
-            </ChartSection>
-            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="text-primary hover:underline">All →</Link>}>
-              {activeTeam.length === 0 ? <p className="text-[13px] text-muted-foreground">No caregivers assigned yet.</p> : activeTeam.slice(0, 4).map((t) => (
-                <ChartLine key={t.assignment.id}>
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
-                  <span className="min-w-0 flex-1 truncate">{t.staff.firstName} {t.staff.lastName}</span>
-                  <Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge>
-                </ChartLine>
-              ))}
-            </ChartSection>
-            <ChartSection label={track ? `Planning · ${track}` : "Planning"} action={<Rule name="planning" />}>
-              {deadlines.length === 0 ? <p className="text-[13px] text-muted-foreground">{person.serviceStartDate ? "Add an agreement with a service type to compute deadlines." : "Set a service start date to compute deadlines."}</p> : (
-                <>
-                  {deadlines.map((d) => { const overdue = d.due < new Date(); return (
-                    <ChartLine key={d.id} className="items-start">
-                      <span className="min-w-0 flex-1 leading-snug" title={d.cite}>{d.label}</span>
-                      <span className={cx("ident shrink-0", overdue ? "text-danger" : "text-muted-foreground")}>{fmtDateNum(d.due.toISOString())}</span>
-                    </ChartLine>
-                  ); })}
-                  <p className="mt-2 text-[13px] text-hint">Calculated dates. Verify completion in Plans &amp; files.</p>
-                </>
-              )}
-            </ChartSection>
-            {manage && (
-              <ChartSection label="Signing code" action={<Rule name="code" />}>
-                <ClientCodePanel personId={id} manage={manage} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} rotatesOn={person.signatureCodeSetAt ? fmtDate(new Date(person.signatureCodeSetAt.getTime() + CODE_ROTATION_DAYS * 86_400_000)) : null} sentAt={person.signatureCodeSentAt ? fmtDate(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
-              </ChartSection>
-            )}
-            {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
-          </ChartCol>
-
+        <ChartGrid columns="two">
           <ChartCol>
             <ChartSection label={`Authorizations · ${active.length} active`} action={<Link href={`/clients/${id}?tab=authorizations`} className="text-primary hover:underline">Manage →</Link>}>
               {active.length === 0 ? (
                 <Empty icon="doc" title="No active authorization" action={manage && <LinkButton href={`/clients/${id}/agreements/new`} variant="primary">Add an agreement</LinkButton>}>Notes cannot be recorded until one exists.</Empty>
               ) : active.map(({ agreement: a, unitsUsed }) => (
-                <Link key={a.id} href={`/clients/${id}/agreements/${a.id}`} className="block border-b border-line-soft py-2 last:border-0 hover:bg-hover">
+                <Link key={a.id} href={`/clients/${id}/agreements/${a.id}`} className="block border-b border-line-soft py-2.5 last:border-0 hover:bg-hover">
                   <div className="flex items-baseline gap-2.5">
                     <ServiceDot code={a.serviceCode} className="translate-y-[-1px]" />
-                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
-                    <span className="ident text-[13px] text-muted-foreground">{fmtMoney(a.unitRate)}/u</span>
+                    <span className="min-w-0 flex-1 truncate font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
+                    <span className="ident text-[13px]">{fmtMoney(a.unitRate)}/u</span>
                   </div>
-                  <div className="ml-[18px] mt-0.5 text-[13px] text-muted-foreground">
+                  <div className="ml-[18px] mt-0.5 text-[13px]">
                     <span className="ident">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
-                    {" · "}<span className="ident text-text-strong">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
+                    {" · "}<span className="ident font-medium text-text-strong">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
                     {" · through "}<span className="ident">{fmtDateNum(a.endDate)}</span>
                   </div>
                   <div className="ml-[18px]"><UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
                 </Link>
               ))}
             </ChartSection>
+            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="text-primary hover:underline">All →</Link>}>
+              {activeTeam.length === 0 ? <p className="text-[13px]">No caregivers assigned yet.</p> : (
+                <div className="grid gap-x-8 sm:grid-cols-2">
+                  {activeTeam.slice(0, 6).map((t) => (
+                    <ChartLine key={t.assignment.id}>
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
+                      <Link href={`/staff/${t.staff.id}`} className="min-w-0 flex-1 truncate hover:underline">{t.staff.firstName} {t.staff.lastName}</Link>
+                      <Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge>
+                    </ChartLine>
+                  ))}
+                </div>
+              )}
+            </ChartSection>
           </ChartCol>
 
           <ChartCol>
+            {manage && (
+              <ChartSection label="Signing code" action={<Rule name="code" />}>
+                <ClientCodePanel personId={id} manage={manage} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} rotatesOn={person.signatureCodeSetAt ? fmtDate(new Date(person.signatureCodeSetAt.getTime() + CODE_ROTATION_DAYS * 86_400_000)) : null} sentAt={person.signatureCodeSentAt ? fmtDate(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
+              </ChartSection>
+            )}
+            <ChartSection label="This pay period">
+              <ChartLine><span className="flex-1">Units</span><span className="ident font-medium text-text-strong">{periodUnits}</span></ChartLine>
+              <ChartLine><span className="flex-1">Hours</span><span className="ident font-medium text-text-strong">{periodHours}</span></ChartLine>
+              <ChartLine><span className="flex-1">Notes</span><span className="ident font-medium text-text-strong">{periodVisits.length}</span></ChartLine>
+              <ChartLine><span className="flex-1">Units left</span><span className="ident font-medium text-text-strong">{unitsLeft.toLocaleString()}</span></ChartLine>
+            </ChartSection>
             <ChartSection label={alerts.length ? `Needs attention · ${alerts.length}` : "Needs attention"}>
               {alerts.length === 0 ? (
-                <p className="text-[13px] text-muted-foreground">Nothing outstanding. Notes are signed, the authorizations have room, and the team is oriented.</p>
+                <p className="text-[13px]">Nothing outstanding. Notes are signed, the authorizations have room, and the team is oriented.</p>
               ) : alerts.map((a, i) => <ChartAlert key={i} tone={a.tone} action={a.href && <Link href={a.href} className="font-medium underline underline-offset-2">{a.cta}</Link>}>{a.body}</ChartAlert>)}
             </ChartSection>
-            <ChartSection label="This pay period">
-              <ChartLine><span className="flex-1 text-muted-foreground">Units</span><span className="ident font-medium text-text-strong">{periodUnits}</span></ChartLine>
-              <ChartLine><span className="flex-1 text-muted-foreground">Hours</span><span className="ident font-medium text-text-strong">{periodHours}</span></ChartLine>
-              <ChartLine><span className="flex-1 text-muted-foreground">Notes</span><span className="ident font-medium text-text-strong">{periodVisits.length}</span></ChartLine>
-              <ChartLine><span className="flex-1 text-muted-foreground">Units left</span><span className="ident font-medium text-text-strong">{unitsLeft.toLocaleString()}</span></ChartLine>
-            </ChartSection>
+            {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
           </ChartCol>
         </ChartGrid>
       )}

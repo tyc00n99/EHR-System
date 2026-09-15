@@ -46,8 +46,8 @@ export function BannerFact({ label, children }: { label?: string; children: Reac
   return <span>{label && <span className="text-muted-foreground">{label} </span>}<span className="text-text-strong">{children}</span></span>;
 }
 
-export function ChartGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-0 border-t border-line lg:grid-cols-[248px_minmax(0,1fr)_268px]">{children}</div>;
+export function ChartGrid({ children, columns = "three" }: { children: ReactNode; columns?: "three" | "two" }) {
+  return <div className={cx("grid gap-0 border-t border-line", columns === "two" ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-[248px_minmax(0,1fr)_268px]")}>{children}</div>;
 }
 
 export function ChartCol({ children, className }: { children: ReactNode; className?: string }) {
