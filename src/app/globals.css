@@ -543,3 +543,16 @@ h1, h2 { font-weight: 700; }
 
 /* Identifiers: PMI numbers, HCPCS codes, dates in tables, unit counts, money. */
 .ident { font-family: var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+
+/* ---- One ink (Sept 15, 2026, user's request: no gray text anywhere) ----
+   Secondary text used a muted gray for hierarchy; the user wants every word in the same black.
+   The tokens collapse here rather than in 450 class names, so the hierarchy can come back by
+   deleting this block. Placeholders stay gray: an empty field must not look filled. Unlayered so
+   it beats Tailwind's layered utilities. */
+:root, :root[data-theme="tide"], :root[data-theme="slate"], :root[data-theme="hubble"] {
+  --text-muted: var(--text);
+  --text-hint: var(--text);
+  --muted-foreground: var(--text);
+}
+.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-hint, .text-muted, .text-muted-foreground { color: var(--text); }
+input::placeholder, textarea::placeholder { color: #94a3b8; opacity: 1; }
