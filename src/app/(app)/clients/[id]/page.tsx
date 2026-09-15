@@ -14,9 +14,9 @@ import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { getOrganization } from "@/db/queries";
-import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
+import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits, listVisitStaffForPerson } from "@/db/queries";
 import { LifePlan } from "./life-plan";
-import { NotesTab, type NoteRow } from "./notes-tab";
+import { NotesTab, type NoteFilters, type NoteRow } from "./notes-tab";
 import { StatusControl } from "./status-control";
 import { MedicationSupportToggle } from "./med-toggle";
 import { fromLocalInput } from "@/lib/format";
@@ -69,7 +69,13 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const noteCode = typeof sp.code === "string" ? sp.code : "";
   const noteFrom = typeof sp.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.from) ? sp.from : "";
   const noteTo = typeof sp.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.to) ? sp.to : "";
-  const noteRows = tab === "notes" ? await listVisits({ personId: id, from: noteFrom ? fromLocalInput(`${noteFrom}T00:00`) : daysAgo(90), to: noteTo ? new Date(fromLocalInput(`${noteTo}T00:00`).getTime() + 86_399_000) : undefined, limit: 2000 }) : [];
+  const noteStaff = typeof sp.staff === "string" && /^[0-9a-f-]{36}$/.test(sp.staff) ? sp.staff : "";
+  const noteSigned: NoteFilters["signed"] = sp.signed === "unsigned" ? "unsigned" : "";
+  const noteSort: NoteFilters["sort"] = sp.sort === "oldest" ? "oldest" : "newest";
+  const NOTE_LIMIT = 2000;
+  // Service and staff go to the query so the filter runs over the whole range, not the loaded page.
+  const noteRows = tab === "notes" ? await listVisits({ personId: id, serviceCode: noteCode || undefined, staffId: noteStaff || undefined, from: noteFrom ? fromLocalInput(`${noteFrom}T00:00`) : daysAgo(90), to: noteTo ? new Date(fromLocalInput(`${noteTo}T00:00`).getTime() + 86_399_000) : undefined, limit: NOTE_LIMIT }) : [];
+  const noteStaffOptions = tab === "notes" ? await listVisitStaffForPerson(id) : [];
   const noteResponses = tab === "notes" && noteRows.length ? await goalCountsForVisits(noteRows.map((r) => r.visit.id)) : new Map<string, { yes: number; no: number }>();
   const [agreements, visits, documents, team, goals, meds, admins] = await Promise.all([
     listAgreementsForPerson(id),
@@ -155,16 +161,12 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         name={fullName(person)}
         avatar={<ClientPhoto personId={id} name={fullName(person)} initials={`${person.firstName[0]}${person.lastName[0]}`} src={photoSrc} manage={manage} size={36} />}
         facts={<>
+          <span>PMI <span className="ident text-text-strong">{person.pmi}</span></span>
           {/* The reference prints this date in the sans face, not the mono one identifiers use. */}
           {person.serviceStartDate && <span>Client since {fmtDate(person.serviceStartDate)}</span>}
         </>}
         chips={<>
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
-          {/* The reference shows a sequential "ID: 1" here; ours is the PMI, which is the number
-              anyone dealing with this person actually quotes. */}
-          <span className="inline-flex h-[26px] items-center rounded-full border border-line px-2.5 text-[13.5px] text-muted-foreground">
-            PMI <span className="ident ml-1 text-text-strong">{person.pmi}</span>
-          </span>
           {person.status === "active" && !person.signatureCodeHash && <Badge tone="danger">no signing code</Badge>}
         </>}
         actions={<span className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-line bg-card px-2.5 text-[13.5px] text-muted-foreground"><Icon.building size={14} />{org.name}</span>}
@@ -254,9 +256,12 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         <NotesTab
           personId={id}
           base={`/clients/${id}`}
-          filters={{ code: noteCode, from: noteFrom, to: noteTo }}
+          filters={{ code: noteCode, from: noteFrom, to: noteTo, staff: noteStaff, signed: noteSigned, sort: noteSort }}
+          staffOptions={noteStaffOptions.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))}
+          totalNotes={noteCount}
+          capped={noteRows.length >= NOTE_LIMIT}
           codes={Array.from(new Map(agreements.map((a) => [a.agreement.serviceCode, { code: a.agreement.serviceCode, label: labelForCode(a.agreement.serviceCode, a.agreement.modifiers) }])).values())}
-          rows={noteRows.filter((r) => !noteCode || r.visit.serviceCode === noteCode).map(({ visit: v, staffFirst, staffLast, editCount }): NoteRow => ({ returned: Boolean(v.returnedAt), id: v.id, clockInAt: v.clockInAt, clockOutAt: v.clockOutAt, serviceCode: v.serviceCode, modifiers: v.modifiers, units: v.units, status: v.status, note: v.shiftNote, interaction: v.interactionLevel, skills: v.skills, staff: `${staffFirst} ${staffLast}`, staffSigned: Boolean(v.staffSignedAt), clientSigned: Boolean(v.clientSignedAt), approved: Boolean(v.approvedAt), manual: v.manualEntry, edits: editCount, goalYes: noteResponses.get(v.id)?.yes ?? 0, goalNo: noteResponses.get(v.id)?.no ?? 0 }))}
+          rows={noteRows.filter((r) => noteSigned !== "unsigned" || (r.visit.status === "completed" && !r.visit.clientSignedAt)).map(({ visit: v, staffFirst, staffLast, editCount }): NoteRow => ({ returned: Boolean(v.returnedAt), id: v.id, clockInAt: v.clockInAt, clockOutAt: v.clockOutAt, serviceCode: v.serviceCode, modifiers: v.modifiers, units: v.units, status: v.status, note: v.shiftNote, interaction: v.interactionLevel, skills: v.skills, activities: v.activities, staff: `${staffFirst} ${staffLast}`, staffSigned: Boolean(v.staffSignedAt), clientSigned: Boolean(v.clientSignedAt), approved: Boolean(v.approvedAt), manual: v.manualEntry, edits: editCount, goalYes: noteResponses.get(v.id)?.yes ?? 0, goalNo: noteResponses.get(v.id)?.no ?? 0 }))}
         />
       )}
 

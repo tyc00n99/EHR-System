@@ -13,7 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const sp = new URL(req.url).searchParams;
   const visitId = sp.get("visit");
   const from = sp.get("from"), to = sp.get("to");
-  const { buffer, notes } = await buildNotesPdf(person, { code: sp.get("code"), visitId, from, to });
+  const { buffer, notes } = await buildNotesPdf(person, { code: sp.get("code"), visitId, from, to, staffId: /^[0-9a-f-]{36}$/.test(sp.get("staff") ?? "") ? sp.get("staff") : null });
   const stamp = visitId && notes[0] ? `-${chicagoDate(notes[0].clockInAt)}` : `${from ? `-${from}` : ""}${to ? `-${to}` : ""}`;
   return new Response(new Uint8Array(buffer), {
     headers: {

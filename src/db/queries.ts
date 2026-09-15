@@ -625,3 +625,14 @@ export async function searchDocumentText(q: string, limit = 20) {
     ...staffDocs.map((d) => ({ kind: "staff" as const, id: d.id, title: d.title, fileName: d.fileName, summary: d.summary, snippet: snippet(d.text), ownerId: d.ownerId, owner: `${d.first} ${d.last}`, href: `/staff/${d.ownerId}?tab=compliance` })),
   ];
 }
+
+/** Everyone who has ever recorded a visit with this person, for the Sessions staff filter. Former caregivers stay listed so their notes remain findable. */
+export async function listVisitStaffForPerson(personId: string) {
+  const db = await getDb();
+  return db
+    .selectDistinct({ id: staff.id, firstName: staff.firstName, lastName: staff.lastName })
+    .from(visits)
+    .innerJoin(staff, eq(visits.staffId, staff.id))
+    .where(eq(visits.personId, personId))
+    .orderBy(staff.lastName, staff.firstName);
+}

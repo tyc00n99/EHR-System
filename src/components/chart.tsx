@@ -31,9 +31,10 @@ export function PatientBanner({ name, avatar, facts, chips, actions }: { name: s
           organisation pushed hard right. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {avatar}
-        <div className="text-[19px] font-bold leading-tight tracking-[-0.01em] text-text-strong">{name}</div>
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[14.5px] text-muted-foreground">{facts}</div>
+        <div className="text-[20px] font-bold leading-tight tracking-[-0.01em] text-text-strong">{name}</div>
         {chips && <div className="flex flex-wrap items-center gap-2">{chips}</div>}
+        {/* The identifiers are the quiet half: smaller, muted, and behind a hairline so the name and status read first. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-muted-foreground sm:border-l sm:border-line sm:pl-4">{facts}</div>
         {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
       </div>
     </div>

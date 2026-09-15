@@ -8,12 +8,12 @@ import type { TimesheetGroup } from "./timesheet-pdf";
 
 const chicagoDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 
-export interface NotesPdfFilter { code?: string | null; visitId?: string | null; from?: string | null; to?: string | null }
+export interface NotesPdfFilter { code?: string | null; visitId?: string | null; from?: string | null; to?: string | null; staffId?: string | null }
 
 /** Renders the notes document for one person. Shared by the client export and the single-note preview. */
 export async function buildNotesPdf(person: Person, filter: NotesPdfFilter) {
-  const { code = "", visitId = null, from = null, to = null } = filter;
-  const rows = (await listVisits({ personId: person.id, from: from ? fromLocalInput(`${from}T00:00`) : undefined, to: to ? new Date(fromLocalInput(`${to}T00:00`).getTime() + 86_399_000) : undefined, limit: 2000 }))
+  const { code = "", visitId = null, from = null, to = null, staffId = null } = filter;
+  const rows = (await listVisits({ personId: person.id, staffId: staffId || undefined, from: from ? fromLocalInput(`${from}T00:00`) : undefined, to: to ? new Date(fromLocalInput(`${to}T00:00`).getTime() + 86_399_000) : undefined, limit: 2000 }))
     .filter((r) => (visitId ? r.visit.id === visitId : r.visit.status === "completed" && (!code || r.visit.serviceCode === code)));
   const [org, detail] = await Promise.all([
     getOrganization(),
