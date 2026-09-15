@@ -31,11 +31,11 @@ export function DocumentsTab({ personId, items, others, summary, manage, aiReady
 
   const FileRow = ({ d, primary }: { d: ClientDocument; primary?: boolean }) => (
     <div className={cx("flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]", !primary && "pl-5")}>
-      <a href={`/clients/${personId}/documents/${d.id}`} target="_blank" rel="noreferrer" className={cx("min-w-0 hover:underline", primary ? "font-medium text-text-strong" : "")}>{d.title}</a>
+      <PreviewButton variant="icon" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
+      <span className={cx("min-w-0", primary ? "font-medium text-text-strong" : "")}>{d.title}</span>
       <span>{d.effectiveOn ? `effective ${fmtDate(d.effectiveOn)}` : `uploaded ${fmtDate(d.createdAt)}`}</span>
       {d.note && <span>· {d.note}</span>}
       <span className="ml-auto flex items-center gap-2">
-        <PreviewButton href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
         {manage && <DocumentTextChip kind="client" id={d.id} ownerId={personId} hasText={Boolean(d.extractedText)} summary={d.extractionSummary} aiReady={aiReady} />}
         {manage && <DeleteDocument id={d.id} personId={personId} />}
       </span>
