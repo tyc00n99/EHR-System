@@ -16,7 +16,6 @@ export function categoryLabel(value: string): string {
   return known ? known[1] : value.replace(/[_-]+/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
-const ICON: Record<string, string> = { social: "👥", daily_living: "🏠", health: "💚", community: "🚌", employment: "💼", communication: "💬", other: "⭐" };
 
 function Bar({ label, n, total, tone }: { label: string; n: number; total: number; tone: "ok" | "danger" }) {
   const pct = total ? Math.round((n / total) * 100) : 0;
@@ -38,7 +37,6 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
         return (
           <section key={g.id} className={cx("rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]", g.status !== "active" && "opacity-70")}>
             <div className="flex items-start gap-3 border-b border-line-soft px-5 py-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-panel text-lg">{ICON[g.category] ?? "⭐"}</span>
               <div className="min-w-0 flex-1"><h3 className="text-[16px] font-semibold text-text-strong">{g.title}</h3><span className="text-[13px] text-muted-foreground">{categoryLabel(g.category)}</span>{g.description && <p className="mt-0.5 text-[13px] text-muted-foreground">{g.description}</p>}{g.targetDate && <p className="mt-0.5 text-[13px] text-muted-foreground">Target {g.targetDate}</p>}</div>
               <Badge tone={g.status === "active" ? "ok" : g.status === "met" ? "accent" : "neutral"}>{g.status}</Badge>
               {manage && (
