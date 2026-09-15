@@ -260,7 +260,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       )}
 
       {tab === "files" && (
-        <DocumentsTab personId={id} items={checklist} others={documents.map((d) => d.doc).filter((d) => !REQUIRED_CATEGORIES.has(d.category))} summary={checklistSummary(checklist)} manage={manage} aiReady={aiReady} uploaders={Object.fromEntries(documents.map((d) => [d.doc.uploadedBy, d.uploaderEmail]))} />
+        <DocumentsTab personId={id} items={checklist} others={documents.map((d) => d.doc).filter((d) => !REQUIRED_CATEGORIES.has(d.category))} summary={checklistSummary(checklist)} manage={manage} aiReady={aiReady} />
       )}
 
 

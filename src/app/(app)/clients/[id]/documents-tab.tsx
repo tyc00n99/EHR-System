@@ -17,15 +17,14 @@ const TONE: Record<ChecklistItem["status"], { dot: string; badge: "ok" | "warn" 
   overdue: { dot: "bg-danger", badge: "danger", label: "Renewal overdue" },
   missing: { dot: "bg-warn", badge: "warn", label: "Missing" },
 };
-const KB = (n: number) => `${Math.max(1, Math.round(n / 1024))} KB`;
 
 /**
  * The client's documents as a checklist first — what a 245D record must hold, ticked or flagged —
  * then everything else. Uploading is a drawer-less inline form that opens on demand, preset to
  * the item you clicked Add on.
  */
-export function DocumentsTab({ personId, items, others, summary, manage, aiReady, uploaders }: {
-  personId: string; items: ChecklistItem[]; others: ClientDocument[]; summary: { onFile: number; total: number; overdue: number; missing: number }; manage: boolean; aiReady: boolean; uploaders: Record<string, string>;
+export function DocumentsTab({ personId, items, others, summary, manage, aiReady }: {
+  personId: string; items: ChecklistItem[]; others: ClientDocument[]; summary: { onFile: number; total: number; overdue: number; missing: number }; manage: boolean; aiReady: boolean;
 }) {
   const [upload, setUpload] = useState<DocumentCategory | null>(null);
   const open = (c: DocumentCategory) => setUpload((v) => (v === c ? null : c));
@@ -33,7 +32,7 @@ export function DocumentsTab({ personId, items, others, summary, manage, aiReady
   const FileRow = ({ d, primary }: { d: ClientDocument; primary?: boolean }) => (
     <div className={cx("flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]", !primary && "pl-5")}>
       <a href={`/clients/${personId}/documents/${d.id}`} target="_blank" rel="noreferrer" className={cx("min-w-0 hover:underline", primary ? "font-medium text-text-strong" : "")}>{d.title}</a>
-      <span>{d.effectiveOn ? `effective ${fmtDate(d.effectiveOn)}` : `uploaded ${fmtDate(d.createdAt)}`} · {d.fileName} · {KB(d.sizeBytes)}{uploaders[d.uploadedBy] ? ` · ${uploaders[d.uploadedBy]}` : ""}</span>
+      <span>{d.effectiveOn ? `effective ${fmtDate(d.effectiveOn)}` : `uploaded ${fmtDate(d.createdAt)}`}</span>
       {d.note && <span>· {d.note}</span>}
       <span className="ml-auto flex items-center gap-2">
         <PreviewButton href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
