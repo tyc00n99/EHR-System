@@ -134,9 +134,7 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
           <div className="text-[13px] uppercase tracking-[0.08em]">Outcome</div>
           <div className="mt-0.5 text-[15px] font-medium text-text-strong">{g.outcome ?? "No outcome written yet."}</div>
           {g.description && <p className="mt-1.5 text-[13.5px]">{g.description}</p>}
-          <p className="mt-2 text-[13px]">
-            {latest ? `Last review ${fmtDate(latest.reviewedAt)} by ${latest.by}: ${latest.note}` : live.length ? `Not reviewed yet. ${answered} notes have answered its questions ${rangeLabel}.` : "Not reviewed yet. This goal has no per-note questions; it is judged at review."}
-          </p>
+          {!latest && <p className="mt-2 text-[13px]">{live.length ? `Not reviewed yet. ${answered} notes have answered its questions ${rangeLabel}.` : "Not reviewed yet. This goal has no per-note questions; it is judged at review."}</p>}
         </div>
       )}
 
