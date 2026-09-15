@@ -1,10 +1,10 @@
 "use client";
 
+import { CircleHelp } from "lucide-react";
 import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
 import { fmtDate, fmtDateTime } from "@/lib/format";
-import { GOAL_CATEGORIES } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
 import { addGoalQuestion, addGoalReview, createGoal, reinstateGoalQuestion, retireGoalQuestion, setGoalStatus, updateGoal } from "../goal-actions";
 
@@ -12,12 +12,6 @@ export interface GoalView {
   id: string; title: string; outcome: string | null; description: string | null; category: string; status: "active" | "met" | "discontinued"; startDate: string | null; targetDate: string | null;
   questions: { id: string; prompt: string; active: boolean; yes: number; no: number; na: number }[];
   reviews: { id: string; assessment: string; note: string; reviewedAt: Date; by: string }[];
-}
-
-/** Turns a stored category into something readable, including ones people add themselves. */
-export function categoryLabel(value: string): string {
-  const known = GOAL_CATEGORIES.find(([v]) => v === value);
-  return known ? known[1] : value.replace(/[_-]+/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
 const ASSESSMENT: Record<string, { label: string; dot: string; tone: "ok" | "warn" | "accent" | "danger" | "neutral" }> = {
@@ -50,7 +44,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
   const back = () => setSelected(null);
 
   if (selected === "new" && manage) {
-    return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><NewGoal personId={personId} extraCategories={[...new Set(goals.map((g) => g.category))].filter((c) => !GOAL_CATEGORIES.some(([v]) => v === c))} onDone={back} /></div>;
+    return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><NewGoal personId={personId} onDone={back} /></div>;
   }
   if (current) {
     return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><GoalDetail key={current.id} personId={personId} g={current} manage={manage} rangeLabel={rangeLabel} /></div>;
@@ -75,15 +69,14 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
         <section key={grp.label} className="mb-4 overflow-hidden rounded-xl border border-line bg-card">
           <div className="border-b border-line px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.11em]">{grp.label} · {grp.items.length}</div>
           <ul className="divide-y divide-line-soft">
-            {grp.items.map((g) => { const st = standing(g); const latest = g.reviews[0]; return (
+            {grp.items.map((g, i) => { const st = standing(g); const latest = g.reviews[0]; return (
               <li key={g.id}>
                 <button type="button" onClick={() => setSelected(g.id)} className={cx("flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-hover", g.status !== "active" && "opacity-70")}>
-                  <span className={cx("mt-[7px] size-2 shrink-0 rounded-full", st.dot)} />
+                  <span className="w-6 shrink-0 text-right text-[13.5px] tabular-nums">{i + 1}.</span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
                     {g.outcome && <span className="mt-0.5 block text-[13.5px] leading-snug">{g.outcome}</span>}
                     <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
-                      <span>{categoryLabel(g.category)}</span>
                       <span>{g.questions.filter((q) => q.active).length ? `${g.questions.filter((q) => q.active).length} question${g.questions.filter((q) => q.active).length === 1 ? "" : "s"} on every note` : "Judged at review"}</span>
                       {latest && <span>Reviewed {fmtDate(latest.reviewedAt)}</span>}
                       {g.targetDate && <span>Target {fmtDate(g.targetDate)}</span>}
@@ -122,7 +115,7 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
       <div className="flex flex-wrap items-start gap-2">
         <div className="min-w-0 flex-1">
           <h2 className="max-w-3xl text-[21px] leading-tight">{g.title}</h2>
-          <div className="mt-1 text-[13px]">{categoryLabel(g.category)}{g.targetDate ? ` · target ${fmtDate(g.targetDate)}` : ""}{g.startDate ? ` · since ${fmtDate(g.startDate)}` : ""}</div>
+          {(g.targetDate || g.startDate) && <div className="mt-1 text-[13px]">{[g.targetDate && `Target ${fmtDate(g.targetDate)}`, g.startDate && `Since ${fmtDate(g.startDate)}`].filter(Boolean).join(" · ")}</div>}
         </div>
         <Badge tone={st.tone}>{st.label}</Badge>
         {manage && (<>
@@ -169,12 +162,17 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
 
       {retired.length > 0 && (
         <section className="mt-5">
-          <div className="mb-1 text-[13px] font-medium uppercase tracking-[0.11em]">Retired questions · {retired.length}</div>
-          <p className="mb-1 text-[13px]">No longer asked on new notes. Past answers are kept, and a question can be reinstated.</p>
+          <div className="mb-1 flex items-center gap-1.5 text-[13px] font-medium uppercase tracking-[0.11em]">
+            Retired questions · {retired.length}
+            <span className="group relative inline-flex">
+              <button type="button" aria-label="About retired questions" className="flex size-5 items-center justify-center rounded-full hover:bg-hover"><CircleHelp size={14} /></button>
+              <span role="tooltip" className="pointer-events-none absolute left-6 top-1/2 z-20 hidden w-72 -translate-y-1/2 rounded-md bg-gray-800 px-2.5 py-1.5 text-[13px] font-normal normal-case tracking-normal text-gray-100 shadow-lg group-hover:block group-focus-within:block">No longer asked on new notes. Past answers are kept, and a question can be reinstated.</span>
+            </span>
+          </div>
           <ul className="divide-y divide-line-soft">
             {retired.map((q) => { const total = q.yes + q.no; return (
-              <li key={q.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[14px] opacity-70">
-                <span className="min-w-0 flex-1 line-through decoration-line">{q.prompt}</span>
+              <li key={q.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[14px]">
+                <span className="min-w-0 flex-1 text-text-strong line-through decoration-danger decoration-1">{q.prompt}</span>
                 <span className="text-[13px] tabular-nums">{total ? `${q.yes} yes · ${q.no} no` : "no answers yet"}{q.na ? ` · ${q.na} n/a` : ""}</span>
                 {manage && g.status === "active" && <button type="button" disabled={pending} onClick={() => start(async () => { await reinstateGoalQuestion(q.id, personId); toast.success("Question reinstated"); })} className="text-[13px] font-medium text-primary hover:underline">Reinstate</button>}
               </li>
@@ -225,8 +223,7 @@ function EditGoal({ personId, g, onDone }: { personId: string; g: GoalView; onDo
     <form action={action} className="mt-4 rounded-lg border border-primary bg-primary-soft/30 p-4">
       <FormError message={state.errors ? state.message : undefined} />
       <div className="grid gap-3 sm:grid-cols-6">
-        <Field label="Goal" error={e.title} className="sm:col-span-4"><Input name="title" defaultValue={g.title} required /></Field>
-        <Field label="Category" error={e.category} className="sm:col-span-2"><Input name="category" defaultValue={g.category} required maxLength={40} /></Field>
+        <Field label="Goal" error={e.title} className="sm:col-span-6"><Input name="title" defaultValue={g.title} required /></Field>
         <Field label="Outcome" error={e.outcome} hint="One measurable line from the support plan" className="sm:col-span-6"><Input name="outcome" defaultValue={g.outcome ?? ""} placeholder="Fewer than two refused doses a week" /></Field>
         <Field label="What this looks like for the person" error={e.description} className="sm:col-span-6"><Textarea name="description" defaultValue={g.description ?? ""} className="min-h-14" /></Field>
         <Field label="Start" error={e.startDate} className="sm:col-span-3"><Input name="startDate" type="date" defaultValue={g.startDate ?? ""} /></Field>
@@ -237,8 +234,7 @@ function EditGoal({ personId, g, onDone }: { personId: string; g: GoalView; onDo
   );
 }
 
-function NewGoal({ personId, extraCategories, onDone }: { personId: string; extraCategories: string[]; onDone: () => void }) {
-  const [adding, setAdding] = useState(false);
+function NewGoal({ personId, onDone }: { personId: string; onDone: () => void }) {
   const [state, submit, pending] = useActionState(createGoal.bind(null, personId), {});
   useToast(state, onDone);
   const [questions, setQuestions] = useState<string[]>([]);
@@ -249,17 +245,7 @@ function NewGoal({ personId, extraCategories, onDone }: { personId: string; extr
       <p className="mt-1 text-[13.5px]">From the support plan. Write the outcome as the plan states it; add per-note questions only where caregivers should answer them on every note.</p>
       <FormError message={state.errors ? state.message : undefined} />
       <div className="mt-4 grid gap-3 md:grid-cols-6">
-        <Field label="Goal" error={e.title} className="md:col-span-4"><Input name="title" placeholder="Take every medication as prescribed" required /></Field>
-        <Field label="Category" error={e.category} className="md:col-span-2" hint={adding ? "Name it the way your team says it." : undefined}>
-          {adding ? (
-            <div className="flex gap-1.5"><Input name="category" autoFocus required maxLength={40} placeholder="New category" /><Button type="button" variant="outline" className="h-9 shrink-0" onClick={() => setAdding(false)}>Back</Button></div>
-          ) : (
-            <Select name="category" defaultValue="health" onChange={(ev) => { if (ev.target.value === "__new") setAdding(true); }}>
-              {[...GOAL_CATEGORIES.map(([v, l]) => [v, l] as [string, string]), ...extraCategories.map((c) => [c, categoryLabel(c)] as [string, string])].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              <option value="__new">Add a category…</option>
-            </Select>
-          )}
-        </Field>
+        <Field label="Goal" error={e.title} className="md:col-span-6"><Input name="title" placeholder="Take every medication as prescribed" required /></Field>
         <Field label="Outcome" error={e.outcome} hint="One measurable line" className="md:col-span-6"><Input name="outcome" placeholder="Fewer than two refused doses a week by December" /></Field>
         <Field label="What this looks like for the person" error={e.description} className="md:col-span-6"><Textarea name="description" className="min-h-14" placeholder="Staff administer from the locked box and record every dose." /></Field>
         <Field label="Start" error={e.startDate} className="md:col-span-3"><Input name="startDate" type="date" /></Field>
