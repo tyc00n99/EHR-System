@@ -56,7 +56,7 @@ export function DocumentsTab({ personId, items, others, archived, summary, manag
 
       <section className="mb-5 overflow-hidden rounded-xl border border-line bg-card">
         <div className="grid grid-cols-[minmax(0,1fr)_170px_140px_112px] items-center gap-4 border-b border-line px-5 py-3 text-[13px] font-medium uppercase tracking-[0.11em]">
-          <span>Required for a 245D record</span><span>Renew by</span><span /><span />
+          <span>Document</span><span>Renew by</span><span /><span />
         </div>
         <ul className="divide-y divide-line-soft">
           {items.map((it) => { const missing = it.status === "missing"; return (
