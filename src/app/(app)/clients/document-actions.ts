@@ -67,3 +67,13 @@ export async function indexClientDocument(id: string, personId: string): Promise
   if (r.ok) revalidatePath(`/clients/${personId}`);
   return r;
 }
+
+/** Archives (or restores) a document. The file stays on the record; only the lists change. */
+export async function setClientDocumentArchived(id: string, personId: string, archived: boolean): Promise<void> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  const [doc] = await db.select({ id: schema.clientDocuments.id, personId: schema.clientDocuments.personId }).from(schema.clientDocuments).where(eq(schema.clientDocuments.id, id)).limit(1);
+  if (!doc || doc.personId !== personId) return;
+  await audited(db, { userId: user.id }).update(schema.clientDocuments, id, archived ? { archivedAt: new Date(), archivedBy: user.id } : { archivedAt: null, archivedBy: null });
+  revalidatePath(`/clients/${personId}`);
+}

@@ -81,7 +81,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     listMedications(id),
     listMedAdmins(id, `${month}-01`, monthEnd),
   ]);
-  const checklist = buildDocumentChecklist(documents.map((d) => d.doc));
+  const liveDocuments = documents.map((d) => d.doc).filter((d) => !d.archivedAt);
+  const checklist = buildDocumentChecklist(liveDocuments);
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
   const org = await getOrganization();
@@ -137,7 +138,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     { key: "overview", label: "Overview" },
     { key: "lifeplan", label: "Programming", count: goals.filter((g) => g.goal.status === "active").length },
     { key: "notes", label: "Sessions", count: noteCount },
-    { key: "files", label: "Documents", count: documents.length },
+    { key: "files", label: "Documents", count: liveDocuments.length },
     { key: "medical", label: "Medication", count: person.medicationSupport ? meds.filter((m) => m.active).length || undefined : undefined },
     { key: "profile", label: "Profile", count: profileOutstanding || undefined },
   ];
@@ -260,7 +261,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       )}
 
       {tab === "files" && (
-        <DocumentsTab personId={id} items={checklist} others={documents.map((d) => d.doc).filter((d) => !REQUIRED_CATEGORIES.has(d.category))} summary={checklistSummary(checklist)} manage={manage} aiReady={aiReady} />
+        <DocumentsTab personId={id} items={checklist} others={liveDocuments.filter((d) => !REQUIRED_CATEGORIES.has(d.category))} archived={documents.map((d) => d.doc).filter((d) => Boolean(d.archivedAt))} summary={checklistSummary(checklist)} manage={manage} aiReady={aiReady} />
       )}
 
 

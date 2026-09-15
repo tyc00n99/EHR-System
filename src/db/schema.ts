@@ -494,6 +494,9 @@ export const clientDocuments = pgTable(
     sizeBytes: integer("size_bytes").notNull(),
     effectiveOn: date("effective_on"),
     note: text("note"),
+    /** Archived files leave the checklist and the list but stay on the record and can be restored. */
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    archivedBy: uuid("archived_by").references(() => users.id),
     /** The document's text, read by the model at upload so the file can be searched. Null until read. */
     extractedText: text("extracted_text"),
     extractedAt: timestamp("extracted_at", { withTimezone: true }),
