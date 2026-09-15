@@ -182,14 +182,13 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                   <div className="flex items-baseline gap-2.5">
                     <ServiceDot code={a.serviceCode} className="translate-y-[-1px]" />
                     <span className="min-w-0 flex-1 truncate font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
-                    <span className="ident text-[13px]">{fmtMoney(a.unitRate)}/u</span>
                   </div>
                   <div className="ml-[18px] mt-0.5 text-[13px]">
                     <span className="ident">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
                     {" · "}<span className="ident font-medium text-text-strong">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
                     {" · through "}<span className="ident">{fmtDateNum(a.endDate)}</span>
                   </div>
-                  <div className="ml-[18px]"><UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
+                  <div className="ml-[18px] max-w-[240px]"><UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
                 </Link>
               ))}
             </ChartSection>
