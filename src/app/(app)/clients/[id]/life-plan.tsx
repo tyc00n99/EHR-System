@@ -40,13 +40,22 @@ function useToast(state: ActionState, onOk?: () => void) {
 }
 
 /**
- * Support plan goals as a list and a detail pane. The outcome leads; questions are optional —
- * a goal may be measured only by the supervisor's review — and the review history is the record
- * a licensor asks for. Same two-pane shape as the Profile tab.
+ * Support plan goals: a full-width list, and a full-width detail when one is opened — not a side
+ * pane. The outcome leads; questions are optional (a goal may be measured only by the
+ * supervisor's review); the review history is the record a licensor asks for.
  */
 export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: string; goals: GoalView[]; manage: boolean; rangeLabel: string }) {
-  const [selected, setSelected] = useState<string | "new" | null>(goals.find((g) => g.status === "active")?.id ?? goals[0]?.id ?? (manage ? "new" : null));
+  const [selected, setSelected] = useState<string | "new" | null>(null);
   const current = goals.find((g) => g.id === selected) ?? null;
+  const back = () => setSelected(null);
+
+  if (selected === "new" && manage) {
+    return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><NewGoal personId={personId} extraCategories={[...new Set(goals.map((g) => g.category))].filter((c) => !GOAL_CATEGORIES.some(([v]) => v === c))} onDone={back} /></div>;
+  }
+  if (current) {
+    return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><GoalDetail key={current.id} personId={personId} g={current} manage={manage} rangeLabel={rangeLabel} /></div>;
+  }
+
   const groups: { label: string; items: GoalView[] }[] = [
     { label: "Active", items: goals.filter((g) => g.status === "active") },
     { label: "Met", items: goals.filter((g) => g.status === "met") },
@@ -54,28 +63,41 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
   ].filter((x) => x.items.length);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line">
-      <div className="grid lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="border-b border-line bg-sidebar lg:border-b-0 lg:border-r">
-          {goals.length === 0 && <p className="px-4 py-6 text-[13px]">No goals yet.</p>}
-          {groups.map((grp) => (
-            <div key={grp.label}>
-              <div className="px-4 pt-4 pb-1 text-[13px] font-medium uppercase tracking-[0.11em]">{grp.label} · {grp.items.length}</div>
-              {grp.items.map((g) => { const st = standing(g); return (
-                <button key={g.id} type="button" onClick={() => setSelected(g.id)} aria-current={selected === g.id ? "true" : undefined} className={cx("flex w-full items-start gap-2.5 px-4 py-2.5 text-left text-[14px] transition-colors", selected === g.id ? "bg-primary-soft text-primary" : "hover:bg-hover", g.status !== "active" && "opacity-70")}>
-                  <span className={cx("mt-[7px] size-2 shrink-0 rounded-full", st.dot)} /><span className="min-w-0 leading-snug">{g.title}</span>
+    <div>
+      {manage && <div className="mb-3 flex justify-end"><Button variant="outline" className="h-9" onClick={() => setSelected("new")}>+ New goal</Button></div>}
+      {goals.length === 0 && <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-[13px]">{manage ? "No goals yet. Add the outcomes from the support plan." : "A supervisor adds goals from the support plan."}</div>}
+      {groups.map((grp) => (
+        <section key={grp.label} className="mb-4 overflow-hidden rounded-xl border border-line bg-card">
+          <div className="border-b border-line px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.11em]">{grp.label} · {grp.items.length}</div>
+          <ul className="divide-y divide-line-soft">
+            {grp.items.map((g) => { const st = standing(g); const latest = g.reviews[0]; return (
+              <li key={g.id}>
+                <button type="button" onClick={() => setSelected(g.id)} className={cx("flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-hover", g.status !== "active" && "opacity-70")}>
+                  <span className={cx("mt-[7px] size-2 shrink-0 rounded-full", st.dot)} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
+                    {g.outcome && <span className="mt-0.5 block text-[13.5px] leading-snug">{g.outcome}</span>}
+                    <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
+                      <span>{categoryLabel(g.category)}</span>
+                      <span>{g.questions.length ? `${g.questions.length} question${g.questions.length === 1 ? "" : "s"} on every note` : "Judged at review"}</span>
+                      {latest && <span>Reviewed {fmtDate(latest.reviewedAt)}</span>}
+                      {g.targetDate && <span>Target {fmtDate(g.targetDate)}</span>}
+                    </span>
+                  </span>
+                  <Badge tone={st.tone}>{st.label}</Badge>
+                  <span className="mt-0.5 text-[13px]">›</span>
                 </button>
-              ); })}
-            </div>
-          ))}
-          {manage && <div className="p-3"><Button variant={selected === "new" ? "primary" : "outline"} className="h-9 w-full" onClick={() => setSelected("new")}>+ New goal</Button></div>}
-        </aside>
-        <div className="min-w-0 p-5 lg:p-6">
-          {selected === "new" && manage ? <NewGoal personId={personId} extraCategories={[...new Set(goals.map((g) => g.category))].filter((c) => !GOAL_CATEGORIES.some(([v]) => v === c))} onDone={() => setSelected(goals[0]?.id ?? null)} /> : current ? <GoalDetail key={current.id} personId={personId} g={current} manage={manage} rangeLabel={rangeLabel} /> : <p className="text-[13px]">{manage ? "Add the goals from the support plan." : "A supervisor adds goals from the support plan."}</p>}
-        </div>
-      </div>
+              </li>
+            ); })}
+          </ul>
+        </section>
+      ))}
     </div>
   );
+}
+
+function BackLink({ onClick }: { onClick: () => void }) {
+  return <button type="button" onClick={onClick} className="mb-4 text-[13px] font-medium text-primary hover:underline">← All goals</button>;
 }
 
 function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: GoalView; manage: boolean; rangeLabel: string }) {
@@ -91,7 +113,7 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
     <div>
       <div className="flex flex-wrap items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-[19px] leading-tight">{g.title}</h2>
+          <h2 className="max-w-3xl text-[21px] leading-tight">{g.title}</h2>
           <div className="mt-1 text-[13px]">{categoryLabel(g.category)}{g.targetDate ? ` · target ${fmtDate(g.targetDate)}` : ""}{g.startDate ? ` · since ${fmtDate(g.startDate)}` : ""}</div>
         </div>
         <Badge tone={st.tone}>{st.label}</Badge>
