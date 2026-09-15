@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { primaryNav, type NavCounts, type Role } from "@/lib/nav";
@@ -19,6 +20,12 @@ import { useModulePanel } from "@/components/module-panel";
 export function SideRail({ role, counts, orgName, footer }: { role: Role; counts: NavCounts; orgName: string; footer?: ReactNode }) {
   const pathname = usePathname();
   const panel = useModulePanel();
+  // The hovered tile's label. Rendered through a portal at the top of the document with fixed
+  // coordinates: Safari clipped a tooltip that merely overflowed the rail, and the module panel
+  // beside the rail painted over what was left of it.
+  const [tip, setTip] = useState<{ label: string; x: number; y: number } | null>(null);
+  const showTip = (label: string) => (e: MouseEvent<HTMLElement>) => { const r = e.currentTarget.getBoundingClientRect(); setTip({ label, x: r.right + 8, y: r.top + r.height / 2 }); };
+  const hideTip = () => setTip(null);
   // A record of this module is open: its icon should reveal the list over the record, not leave it.
   const panelFor = (href: string): "clients" | "team" | null => {
     const m = pathname.match(/^\/(clients|staff)\/([^/]+)/);
@@ -31,7 +38,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
     href === "/" ? pathname === "/" : [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
 
   return (
-    <nav aria-label="Main" className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-sidebar py-3 md:flex">
+    <nav aria-label="Main" className="relative z-40 hidden h-screen w-20 shrink-0 flex-col items-center gap-1.5 border-r border-line bg-sidebar py-3 md:flex">
       <Link href="/" title={orgName} aria-label="EVVora home" className="mb-2 flex size-16 items-center justify-center overflow-hidden rounded-xl border border-line-soft">
         {/* The app icon, cropped to the mark (public/evvora-tile.png) so the E+VV fills the tile
             instead of sitting in the icon's own padding, and drawn at 64px on the 80px rail. */}
@@ -54,28 +61,24 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
                 {badge > 99 ? "99+" : badge}
               </span>
             )}
-            {/* The label lives here rather than in `title`: the native tooltip takes a second to
-                appear and cannot be styled, which makes an icon-only rail feel unlabelled. */}
-            {!active && (
-              <span
-                role="tooltip"
-                className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-[13px] font-medium text-gray-100 shadow-lg group-hover:block"
-              >
-                {d.label}
-              </span>
-            )}
         </>);
         return overlay ? (
-          <button key={d.href} type="button" onClick={() => panel.setOpen(panel.open === overlay ? null : overlay)} aria-label={d.label} aria-expanded={panel.open === overlay} className={itemClass}>
+          <button key={d.href} type="button" onClick={() => panel.setOpen(panel.open === overlay ? null : overlay)} onMouseEnter={active ? undefined : showTip(d.label)} onMouseLeave={hideTip} aria-label={d.label} aria-expanded={panel.open === overlay} className={itemClass}>
             {inner}
           </button>
         ) : (
-          <Link key={d.href} href={d.href} aria-label={d.label} aria-current={active ? "page" : undefined} className={itemClass}>
+          <Link key={d.href} href={d.href} onMouseEnter={active ? undefined : showTip(d.label)} onMouseLeave={hideTip} aria-label={d.label} aria-current={active ? "page" : undefined} className={itemClass}>
             {inner}
           </Link>
         );
       })}
       {footer && <div className="mt-auto flex w-full flex-col items-center gap-1.5 border-t border-line pt-2.5">{footer}</div>}
+      {/* The label lives here rather than in `title`: the native tooltip takes a second to appear and
+          cannot be styled, which makes an icon-only rail feel unlabelled. */}
+      {tip && createPortal(
+        <span role="tooltip" style={{ left: tip.x, top: tip.y }} className="pointer-events-none fixed z-[60] -translate-y-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-[13px] font-medium text-gray-100 shadow-lg">{tip.label}</span>,
+        document.body,
+      )}
     </nav>
   );
 }
