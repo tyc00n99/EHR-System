@@ -68,7 +68,6 @@ export function DocumentsTab({ personId, items, others, summary, manage, aiReady
                 <span className={cx("mt-[7px] size-2 shrink-0 rounded-full", t.dot)} />
                 <div className="min-w-0 flex-1">
                   <div className="text-[15px] font-medium text-text-strong">{it.label}</div>
-                  <div className="text-[13px]">{it.detail} <span className="opacity-60">· {it.cite}</span></div>
                 </div>
                 <span className="text-[13px]">{it.renewBy ? `${it.status === "overdue" ? "Was due" : "Renew by"} ${fmtDate(it.renewBy)}` : it.cadenceLabel}</span>
                 <Badge tone={t.badge}>{t.label}</Badge>
