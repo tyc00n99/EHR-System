@@ -56,8 +56,13 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
     return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><GoalDetail key={current.id} personId={personId} g={current} manage={manage} rangeLabel={rangeLabel} /></div>;
   }
 
+  // Active goals in the order a supervisor reads them: needs attention, then never reviewed, then
+  // on track — and within each, the one reviewed longest ago first.
+  const rank = (g: GoalView) => { const a = g.reviews[0]?.assessment; return a === "needs_attention" || a === "not_met" ? 0 : !a ? 1 : 2; };
+  const lastReview = (g: GoalView) => g.reviews[0]?.reviewedAt.getTime() ?? 0;
+  const active = goals.filter((g) => g.status === "active").sort((a, b) => rank(a) - rank(b) || lastReview(a) - lastReview(b) || a.title.localeCompare(b.title));
   const groups: { label: string; items: GoalView[] }[] = [
-    { label: "Active", items: goals.filter((g) => g.status === "active") },
+    { label: "Active", items: active },
     { label: "Met", items: goals.filter((g) => g.status === "met") },
     { label: "Discontinued", items: goals.filter((g) => g.status === "discontinued") },
   ].filter((x) => x.items.length);
