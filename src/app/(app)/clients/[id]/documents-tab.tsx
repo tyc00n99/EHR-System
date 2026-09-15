@@ -30,7 +30,7 @@ export function DocumentsTab({ personId, items, others, summary, manage, aiReady
   const open = (c: DocumentCategory) => setUpload((v) => (v === c ? null : c));
 
   const FileRow = ({ d, primary }: { d: ClientDocument; primary?: boolean }) => (
-    <div className={cx("flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]", !primary && "pl-5")}>
+    <div className={cx("flex min-h-9 flex-wrap items-center gap-x-4 gap-y-1 text-[13.5px]", !primary && "pl-6")}>
       <PreviewButton variant="icon" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
       <span className={cx("min-w-0", primary ? "font-medium text-text-strong" : "")}>{d.title}</span>
       <span>{d.effectiveOn ? `effective ${fmtDate(d.effectiveOn)}` : `uploaded ${fmtDate(d.createdAt)}`}</span>
@@ -58,33 +58,32 @@ export function DocumentsTab({ personId, items, others, summary, manage, aiReady
         </div>
       )}
 
-      <section className="mb-4 overflow-hidden rounded-xl border border-line bg-card">
-        <div className="border-b border-line px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.11em]">Required for a 245D record</div>
+      <section className="mb-5 overflow-hidden rounded-xl border border-line bg-card">
+        <div className="grid grid-cols-[minmax(0,1fr)_170px_140px_112px] items-center gap-4 border-b border-line px-5 py-3 text-[13px] font-medium uppercase tracking-[0.11em]">
+          <span>Required for a 245D record</span><span>Renew by</span><span>Status</span><span />
+        </div>
         <ul className="divide-y divide-line-soft">
           {items.map((it) => { const t = TONE[it.status]; return (
-            <li key={it.category} className="px-4 py-3">
-              <div className="flex flex-wrap items-start gap-3">
-                <span className={cx("mt-[7px] size-2 shrink-0 rounded-full", t.dot)} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15px] font-medium text-text-strong">{it.label}</div>
-                </div>
-                <span className="text-[13px]">{it.renewBy ? `${it.status === "overdue" ? "Was due" : "Renew by"} ${fmtDate(it.renewBy)}` : it.cadenceLabel}</span>
-                <Badge tone={t.badge}>{t.label}</Badge>
-                {manage && <Button variant="outline" className="h-7 px-2 text-[13px]" onClick={() => open(it.category)}>{it.latest ? "Add new" : "Add"}</Button>}
+            <li key={it.category} className="px-5 py-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_170px_140px_112px] items-center gap-4">
+                <div className="flex min-w-0 items-center gap-3"><span className={cx("size-2.5 shrink-0 rounded-full", t.dot)} /><span className="text-[15px] font-medium text-text-strong">{it.label}</span></div>
+                <span className="text-[13.5px]">{it.renewBy ? fmtDate(it.renewBy) : it.cadenceLabel}</span>
+                <span><Badge tone={t.badge}>{t.label}</Badge></span>
+                <span className="text-right">{manage && <Button variant="outline" className="h-8 w-full text-[13px]" onClick={() => open(it.category)}>{it.latest ? "Add new" : "Add"}</Button>}</span>
               </div>
-              {it.documents.length > 0 && <div className="mt-2 space-y-1 pl-5">{it.documents.map((d, i) => <FileRow key={d.id} d={d} primary={i === 0} />)}</div>}
+              {it.documents.length > 0 && <div className="mt-3 space-y-2 pl-[22px]">{it.documents.map((d, i) => <FileRow key={d.id} d={d} primary={i === 0} />)}</div>}
             </li>
           ); })}
         </ul>
       </section>
 
       <section className="overflow-hidden rounded-xl border border-line bg-card">
-        <div className="border-b border-line px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.11em]">Other files · {others.length}</div>
-        {others.length === 0 ? <p className="px-4 py-4 text-[13px]">Medical orders, correspondence, photos of paperwork — anything staff should read before a shift.</p> : (
+        <div className="border-b border-line px-5 py-3 text-[13px] font-medium uppercase tracking-[0.11em]">Other files · {others.length}</div>
+        {others.length === 0 ? <p className="px-5 py-5 text-[13px]">Medical orders, correspondence, photos of paperwork — anything staff should read before a shift.</p> : (
           <ul className="divide-y divide-line-soft">
             {others.map((d) => (
-              <li key={d.id} className="px-4 py-2.5">
-                <div className="mb-0.5 text-[13px] uppercase tracking-[0.06em] opacity-60">{DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category}</div>
+              <li key={d.id} className="px-5 py-4">
+                <div className="mb-2 text-[13px] uppercase tracking-[0.06em] opacity-60">{DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category}</div>
                 <FileRow d={d} primary />
               </li>
             ))}
