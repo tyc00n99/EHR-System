@@ -45,7 +45,7 @@ export const auditAction = pgEnum("audit_action", ["insert", "update", "delete",
 
 export const gender = pgEnum("gender", ["female", "male", "nonbinary", "other", "undisclosed"]);
 
-export const documentCategory = pgEnum("document_category", ["support_plan", "iapp", "treatment_goals", "other"]);
+export const documentCategory = pgEnum("document_category", ["support_plan", "iapp", "treatment_goals", "rights", "release", "medical", "other"]);
 export const staffDocumentCategory = pgEnum("staff_document_category", [
   "background_study",        // consent form, NETStudy clearance letter
   "training_certificate",    // certificates, training acknowledgments, the annual training record

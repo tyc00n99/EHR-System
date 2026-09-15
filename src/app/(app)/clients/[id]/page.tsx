@@ -17,21 +17,19 @@ import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { NotesTab, type NoteRow } from "./notes-tab";
-import { PreviewButton } from "./doc-preview";
 import { StatusControl } from "./status-control";
 import { MedicationSupportToggle } from "./med-toggle";
 import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
+import { buildDocumentChecklist, checklistSummary, REQUIRED_CATEGORIES } from "@/lib/client-documents";
 import { fmtDate, fmtDateNum, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
-import { DOCUMENT_CATEGORIES } from "@/lib/validation";
 import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
-import { DeleteDocument, DocumentUpload } from "./documents";
-import { DocumentTextChip } from "@/components/document-text-chip";
+import { DocumentsTab } from "./documents-tab";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { VisitSheet } from "../../visits/record/visit-sheet";
 
@@ -83,6 +81,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     listMedications(id),
     listMedAdmins(id, `${month}-01`, monthEnd),
   ]);
+  const checklist = buildDocumentChecklist(documents.map((d) => d.doc));
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
   const org = await getOrganization();
@@ -261,17 +260,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       )}
 
       {tab === "files" && (
-        <Card title="Plans and files" description="Support plan, IAPP, treatment goals, and anything else staff should read before a shift">
-          {documents.length === 0 ? <p className="px-5 py-6 text-center text-[13px] text-muted-foreground">No files yet. {manage ? "Upload the support plan, the IAPP, and treatment goals below." : "Your supervisor has not uploaded plans for this person yet."}</p> : (
-            DOCUMENT_CATEGORIES.map(([cat, label]) => { const docs = documents.filter((d) => d.doc.category === cat); if (!docs.length) return null; return (
-              <div key={cat} className="border-b border-line-soft last:border-b-0">
-                <div className="bg-sidebar px-5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-gray-500">{label}</div>
-                <ul className="divide-y divide-line-soft">{docs.map(({ doc, uploaderEmail }) => <li key={doc.id} className="flex flex-wrap items-center gap-3 px-5 py-3"><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="flex min-w-0 flex-1 items-center gap-3 hover:underline"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-panel text-gray-600"><Icon.doc size={18} /></span><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{doc.title}</span><span className="block truncate text-[13px] text-muted-foreground">{doc.effectiveOn ? `Effective ${fmtDate(doc.effectiveOn)} · ` : ""}{doc.fileName} · {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB{manage ? ` · ${uploaderEmail}` : ""}</span>{doc.note && <span className="mt-0.5 block text-[13px] text-text">{doc.note}</span>}</span></a><PreviewButton href={`/clients/${id}/documents/${doc.id}`} title={doc.title} mime={doc.mimeType} /><a href={`/clients/${id}/documents/${doc.id}`} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center rounded-full bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-primary-soft/70">Open</a>{manage && <DocumentTextChip kind="client" id={doc.id} ownerId={id} hasText={Boolean(doc.extractedText)} summary={doc.extractionSummary} aiReady={aiReady} />}{manage && <DeleteDocument id={doc.id} personId={id} />}</li>)}</ul>
-              </div>
-            ); })
-          )}
-          {manage && <div className="border-t border-line-soft bg-sidebar px-5 py-4"><div className="mb-3 text-[13px] font-medium text-text-strong">Upload a plan or file</div><DocumentUpload personId={id} /></div>}
-        </Card>
+        <DocumentsTab personId={id} items={checklist} others={documents.map((d) => d.doc).filter((d) => !REQUIRED_CATEGORIES.has(d.category))} summary={checklistSummary(checklist)} manage={manage} aiReady={aiReady} uploaders={Object.fromEntries(documents.map((d) => [d.doc.uploadedBy, d.uploaderEmail]))} />
       )}
 
 

@@ -47,7 +47,7 @@ export async function uploadClientDocument(personId: string, _prev: ActionState,
     uploadedBy: user.id,
   });
   revalidatePath(`/clients/${personId}`);
-  return {};
+  return { ok: true };
 }
 
 export async function deleteClientDocument(id: string, personId: string): Promise<void> {

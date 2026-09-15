@@ -123,12 +123,15 @@ export const staffSchema = z
 export const DOCUMENT_CATEGORIES = [
   ["support_plan", "Support plan (CSSP / support plan addendum)"],
   ["iapp", "Individual abuse prevention plan (IAPP)"],
-  ["treatment_goals", "Treatment goals and outcomes"],
+  ["treatment_goals", "Support plan goals and outcomes"],
+  ["rights", "Service recipient rights notice"],
+  ["release", "Release of information / consent"],
+  ["medical", "Medical (orders, medication plan, physician notes)"],
   ["other", "Other file"],
 ] as const;
 
 export const clientDocumentSchema = z.object({
-  category: z.enum(["support_plan", "iapp", "treatment_goals", "other"]),
+  category: z.enum(["support_plan", "iapp", "treatment_goals", "rights", "release", "medical", "other"]),
   title: z.string().min(1, "Required").max(200),
   effectiveOn: isoDate.optional(),
   note: z.string().max(1000).optional(),
