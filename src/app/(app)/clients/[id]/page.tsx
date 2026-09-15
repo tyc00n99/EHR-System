@@ -26,7 +26,6 @@ import { can, requireUser } from "@/lib/auth";
 import { fmtDate, fmtDateNum, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
-import { getServiceType } from "@/lib/services";
 import { DOCUMENT_CATEGORIES } from "@/lib/validation";
 import { AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
