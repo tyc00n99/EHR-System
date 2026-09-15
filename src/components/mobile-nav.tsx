@@ -29,7 +29,7 @@ export function MobileNav({ role, review }: { role: Role; review: number }) {
         const Ic = Icon[d.icon];
         const on = active(d.href);
         return (
-          <Link key={d.href} href={d.href} aria-current={on ? "page" : undefined} className={cx("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[13px] font-medium", on ? "bg-primary-soft text-primary" : "text-muted-foreground")}>
+          <Link key={d.href} href={d.href} aria-current={on ? "page" : undefined} className={cx("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[13px] font-medium", on ? "bg-tab-hover text-primary after:absolute after:inset-x-5 after:bottom-1 after:h-[3px] after:rounded-full after:bg-primary" : "text-muted-foreground")}>
             <Ic size={20} />
             {d.label}
             {d.badge === "review" && review > 0 && <span className="absolute right-[22%] top-2 inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-danger px-1 text-[13px] text-white">{review}</span>}

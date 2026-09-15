@@ -41,6 +41,7 @@
   --line: #d6d1c7;
   --line-soft: #e8e4dc;
   --hover: rgba(27, 24, 24, 0.04);
+  --tab-hover: #ebe8e1;
   --active: rgba(27, 24, 24, 0.07);
 
   --nav: #f8f7f3;
@@ -139,6 +140,7 @@
   --line: #e2e8f0;
   --line-soft: #eef2f6;
   --hover: rgba(15, 23, 42, 0.04);
+  --tab-hover: #f4f2ed;
   --active: rgba(15, 23, 42, 0.07);
 
   /* frame */
@@ -207,6 +209,7 @@
   --gray-100: #f8fafc; --gray-200: #f1f5f9; --gray-300: #e2e8f0; --gray-400: #94a3b8; --gray-500: #64748b; --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
   --text: #0f172a; --text-strong: #0b1220; --text-muted: #64748b; --text-hint: #94a3b8;
   --sidebar: #f8fafc; --panel: #f1f5f9; --line: #e2e8f0; --line-soft: #eef2f6; --border: #e2e8f0; --input: #e2e8f0;
+  --tab-hover: #f3f1ec;
   --radius: 0.5rem;
   --page-bg: #f5f6f8;
   --nav: #111827;
@@ -251,6 +254,7 @@
   --page-bg: #f6f4ef;
   --sidebar: #faf9f6;
   --panel: #f3f1ec;
+  --tab-hover: #ece9e1;
   --line: #e4e0d8;
   --line-soft: #ece9e2;
   --nav: #1f2a24;
@@ -306,6 +310,7 @@
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
   --color-hover: var(--hover);
+  --color-tab-hover: var(--tab-hover);
   --color-active: var(--active);
 
   --color-nav: var(--nav);
@@ -335,7 +340,7 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: var(--font-figtree), "Figtree", system-ui, sans-serif;
   --font-serif: var(--font-sans);
   --font-mono: var(--font-sans);
 
@@ -537,7 +542,7 @@ h1, h2 { font-weight: 700; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
-/* Plus Jakarta Sans ships 400/500/600/700, so semibold is a real cut and nothing needs clamping. */
+/* Figtree is a variable font (300–900), so every weight is a real cut and nothing needs clamping. */
 .font-semibold, th { font-weight: 600; }
 .font-bold, strong, b { font-weight: 700; }
 

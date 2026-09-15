@@ -101,7 +101,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
                 aria-current={on ? "true" : undefined}
                 className={cx(
                   "flex w-full items-center gap-2.5 border-b border-line-soft px-4 py-4 text-left text-[15px] transition-colors",
-                  on ? "rounded-r-md bg-primary-soft font-medium text-primary shadow-[inset_4px_0_0_var(--primary)]" : "text-text hover:bg-hover",
+                  on ? "bg-tab-hover font-medium text-primary shadow-[inset_3px_0_0_var(--primary)]" : "text-text hover:bg-tab-hover",
                 )}
               >
                 <span className="min-w-0 flex-1 truncate">{s.label}</span>

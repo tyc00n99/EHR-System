@@ -45,7 +45,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
         const overlay = panelFor(d.href);
         const itemClass = cx(
               "group relative flex size-12 items-center justify-center rounded-lg transition-colors",
-              active ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text-strong",
+              active ? "bg-tab-hover text-primary after:absolute after:inset-x-3 after:bottom-1.5 after:h-[3px] after:rounded-full after:bg-primary" : "text-muted-foreground hover:bg-tab-hover hover:text-text-strong",
             );
         const inner = (<>
             <Ic size={22} />

@@ -72,7 +72,7 @@ export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId:
                     type="button"
                     onClick={() => setKey(it.key)}
                     aria-current={on ? "true" : undefined}
-                    className={cx("flex w-full items-center gap-2.5 border-b border-line px-4 py-3 text-left text-[15px] transition-colors", on ? "bg-primary-soft font-semibold text-primary shadow-[inset_4px_0_0_var(--primary)]" : "text-text-strong hover:bg-hover")}
+                    className={cx("flex w-full items-center gap-2.5 border-b border-line px-4 py-3 text-left text-[15px] transition-colors", on ? "bg-tab-hover font-semibold text-primary shadow-[inset_3px_0_0_var(--primary)]" : "text-text-strong hover:bg-tab-hover")}
                   >
                     <span className={cx("flex size-[22px] shrink-0 items-center justify-center rounded-full text-[12px] font-bold", t.ring)}>{t.mark}</span>
                     <span className="min-w-0 flex-1 truncate">{it.label}</span>

@@ -102,7 +102,7 @@ export function ClientRail({ people, label, canAdd }: { people: RailPerson[]; la
                 href={`/clients/${p.id}`}
                 aria-current={on ? "page" : undefined}
                 onClick={close}
-                className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2.5 transition-colors", on ? "bg-card shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-hover")}
+                className={cx("flex items-center gap-2.5 border-b border-line-soft px-3 py-2.5 transition-colors", on ? "bg-tab-hover shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-tab-hover")}
               >
                 <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-panel text-[13px] font-semibold text-text-strong">
                   {p.photo

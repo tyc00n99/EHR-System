@@ -278,10 +278,10 @@ export function RecordHeader({ avatar, title, subtitle, chips, actions, crumbs }
 
 export function Tabs({ tabs, current, base }: { tabs: { key: string; label: string; count?: number }[]; current: string; base: string }) {
   return (
-    <div className="-mx-4 mb-5 flex shrink-0 items-center gap-1.5 overflow-x-auto bg-page px-4 py-2 md:-mx-8 md:px-8">
+    <div className="-mx-4 mb-5 flex shrink-0 items-center gap-1 overflow-x-auto border-b border-line-soft bg-page px-4 pt-1 md:-mx-8 md:px-8">
       {tabs.map((t) => (
-        <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-3.5 text-[17.5px] font-medium transition-colors", current === t.key ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-hover hover:text-text")}>
-          {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[13px] leading-[18px]", current === t.key ? "bg-primary-soft text-primary" : "bg-panel text-muted-foreground")}>{t.count}</span>}
+        <Link key={t.key} aria-current={current === t.key ? "page" : undefined} href={t.key === tabs[0].key ? base : `${base}?tab=${t.key}`} className={cx("relative flex h-10 shrink-0 items-center gap-1.5 rounded-t-md px-3.5 text-[17.5px] font-medium transition-colors after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary after:transition-opacity hover:bg-tab-hover", current === t.key ? "text-text-strong after:opacity-100" : "text-muted-foreground after:opacity-0 hover:text-text-strong")}>
+          {t.label}{t.count != null && <span className={cx("rounded-full px-1.5 text-[13px] leading-[18px]", current === t.key ? "bg-panel text-text-strong" : "bg-panel text-muted-foreground")}>{t.count}</span>}
         </Link>
       ))}
     </div>

@@ -4,13 +4,10 @@ import "./globals.css";
 import { DEFAULT_THEME, THEME_BOOT } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
-// Plus Jakarta Sans, identified from the reference recording. Four real weights, so headings can
-// use 600 instead of leaning on size alone the way Montserrat's two cuts forced.
-const jakarta = localFont({ variable: "--font-jakarta", src: [
-  { path: "../fonts/PlusJakartaSans-400.woff2", weight: "400", style: "normal" },
-  { path: "../fonts/PlusJakartaSans-500.woff2", weight: "500", style: "normal" },
-  { path: "../fonts/PlusJakartaSans-600.woff2", weight: "600", style: "normal" },
-  { path: "../fonts/PlusJakartaSans-700.woff2", weight: "700", style: "normal" },
+// Figtree, the open-licence stand-in for Centra No2 (the face Gusto runs in its product; a
+// commercial font, so we ship the closest OFL match). One variable file covers every weight.
+const figtree = localFont({ variable: "--font-figtree", src: [
+  { path: "../fonts/Figtree-variable.woff2", weight: "300 900", style: "normal" },
 ] });
 // Identifiers — PMI, HCPCS codes, dates, unit counts — are data, and data reads better in a
 // monospace beside Montserrat. 400 and 500 only, matching the sans.
@@ -31,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", jakarta.variable)}>
+    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", figtree.variable)}>
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         {children}

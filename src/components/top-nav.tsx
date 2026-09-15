@@ -24,7 +24,7 @@ export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
             aria-current={active ? "page" : undefined}
             className={cx(
               "flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[13.5px] transition-colors",
-              active ? "bg-primary-soft font-medium text-primary" : "text-muted-foreground hover:bg-hover hover:text-text-strong",
+              active ? "bg-tab-hover font-medium text-text-strong shadow-[inset_0_-3px_0_var(--primary)]" : "text-muted-foreground hover:bg-tab-hover hover:text-text-strong",
             )}
           >
             <Ic size={15} />
@@ -49,7 +49,7 @@ export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) 
   const entries = sectionRow(pathname, role, counts);
   if (!entries) return null;
   return (
-    <nav aria-label="Section" className="z-10 flex h-10 items-center gap-5 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
+    <nav aria-label="Section" className="z-10 flex h-10 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
       {entries.map((e) => {
         const active = e.match ? e.match(pathname, params) : pathname === e.href;
         return (
@@ -58,8 +58,8 @@ export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) 
             href={e.href}
             aria-current={active ? "page" : undefined}
             className={cx(
-              "flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-[13px] transition-colors",
-              active ? "border-primary font-medium text-primary" : "border-transparent text-muted-foreground hover:text-text-strong",
+              "relative flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-md px-2 text-[13px] transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary after:transition-opacity hover:bg-tab-hover",
+              active ? "font-medium text-text-strong after:opacity-100" : "text-muted-foreground after:opacity-0 hover:text-text-strong",
             )}
           >
             {e.label}
