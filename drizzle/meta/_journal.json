@@ -169,6 +169,13 @@
       "when": 1789449210729,
       "tag": "0023_agreement_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789450786462,
+      "tag": "0024_goal_outcome_reviews",
+      "breakpoints": true
     }
   ]
 }

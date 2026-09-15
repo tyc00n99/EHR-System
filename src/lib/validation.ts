@@ -296,9 +296,17 @@ export const goalSchema = z.object({
   title: z.string().min(1, "Required").max(200),
   description: z.string().max(1000).optional(),
   category: z.string().min(1).max(40).default("other"),
+  outcome: z.string().max(300).optional(),
   startDate: isoDate.optional(),
   targetDate: isoDate.optional(),
-  questions: z.array(z.string().min(3).max(300)).min(1, "Add at least one yes/no question").max(8),
+  /** Optional: a goal can be judged at review alone, with no per-note questions. */
+  questions: z.array(z.string().min(3).max(300)).max(8).default([]),
+});
+
+export const GOAL_ASSESSMENTS = ["on_track", "needs_attention", "met", "not_met"] as const;
+export const goalReviewSchema = z.object({
+  assessment: z.enum(GOAL_ASSESSMENTS),
+  note: z.string().min(3, "Say where the goal stands").max(2000),
 });
 
 export const shiftSchema = z

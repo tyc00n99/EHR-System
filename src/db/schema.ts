@@ -601,6 +601,8 @@ export const goals = pgTable(
     description: text("description"),
     /** Short category used for the icon: social, daily_living, health, community, employment, communication, other. */
     category: text("category").notNull().default("other"),
+    /** The measurable outcome the support plan names, in one line: "Fewer than two refused doses a week". */
+    outcome: text("outcome"),
     status: goalStatus("status").notNull().default("active"),
     startDate: date("start_date"),
     targetDate: date("target_date"),
@@ -641,6 +643,25 @@ export const goalResponses = pgTable(
   },
   (t) => [uniqueIndex("goal_responses_visit_question_idx").on(t.visitId, t.questionId), index("goal_responses_question_idx").on(t.questionId)],
 );
+
+/**
+ * A supervisor's periodic judgement of a goal. Goals without yes/no questions are measured only
+ * this way; goals with questions get both. Insert-only: the history is the point.
+ */
+export const goalReviews = pgTable(
+  "goal_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    goalId: uuid("goal_id").notNull().references(() => goals.id, { onDelete: "cascade" }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }).notNull().defaultNow(),
+    /** on_track | needs_attention | met | not_met */
+    assessment: text("assessment").notNull(),
+    note: text("note").notNull(),
+  },
+  (t) => [index("goal_reviews_goal_idx").on(t.goalId, t.reviewedAt)],
+);
+export type GoalReview = typeof goalReviews.$inferSelect;
 
 // ---------- scheduling ----------
 

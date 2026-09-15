@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { requireUser } from "@/lib/auth";
-import { fieldErrors, formToObject, goalSchema, medicationSchema, type ActionState } from "@/lib/validation";
+import { fieldErrors, formToObject, goalReviewSchema, goalSchema, medicationSchema, type ActionState } from "@/lib/validation";
 
 export async function createGoal(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
@@ -20,6 +20,36 @@ export async function createGoal(personId: string, _prev: ActionState, fd: FormD
   });
   revalidatePath(`/clients/${personId}`);
   return { message: "Goal added." };
+}
+
+/** Edits the goal's wording: title, outcome, description, category, target. Questions are managed separately. */
+export async function updateGoal(goalId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const parsed = goalSchema.omit({ questions: true }).safeParse(formToObject(fd));
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
+  const db = await getDb();
+  const [g] = await db.select({ id: schema.goals.id, personId: schema.goals.personId }).from(schema.goals).where(eq(schema.goals.id, goalId)).limit(1);
+  if (!g || g.personId !== personId) return { message: "Goal not found." };
+  await audited(db, { userId: user.id }).update(schema.goals, goalId, { ...parsed.data, outcome: parsed.data.outcome ?? null, description: parsed.data.description ?? null, startDate: parsed.data.startDate ?? null, targetDate: parsed.data.targetDate ?? null });
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true, message: "Goal updated." };
+}
+
+/** Records a review: where the goal stands, in the supervisor's words. Met and not-met also move the status. */
+export async function addGoalReview(goalId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const parsed = goalReviewSchema.safeParse(formToObject(fd));
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
+  const db = await getDb();
+  const [g] = await db.select({ id: schema.goals.id, personId: schema.goals.personId }).from(schema.goals).where(eq(schema.goals.id, goalId)).limit(1);
+  if (!g || g.personId !== personId) return { message: "Goal not found." };
+  await db.transaction(async (tx) => {
+    const w = audited(tx, { userId: user.id });
+    await w.insert(schema.goalReviews, { goalId, reviewedBy: user.id, assessment: parsed.data.assessment, note: parsed.data.note.trim() });
+    if (parsed.data.assessment === "met") await w.update(schema.goals, goalId, { status: "met" });
+  });
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true, message: "Review recorded." };
 }
 
 export async function setGoalStatus(goalId: string, personId: string, status: "active" | "met" | "discontinued"): Promise<void> {

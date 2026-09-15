@@ -204,22 +204,39 @@ async function main() {
     await w.insert(clientDocuments, { personId: harold.id, category, title, fileName: `${category}.pdf`, filePath: path, mimeType: "application/pdf", sizeBytes: bytes.byteLength, effectiveOn, uploadedBy: adminUser.id, extractedText: text, extractedAt: new Date(), extractionSummary: title, extractionModel: "seed" });
   }
 
-  /* ---------- goals: one per support area, each with yes/no prompts staff answer on every note ---------- */
-  const mkGoal = async (title: string, description: string, category: string, prompts: string[], targetDate: string | null = null) => {
-    const g = await w.insert(goals, { personId: harold.id, title, description, category, status: "active", startDate: "2026-07-01", targetDate, createdBy: adminUser.id });
+  /* ---------- goals: one per support area. Some carry yes/no questions staff answer on every note; ---------- */
+  /* ---------- others are outcome-only and are judged at the supervisor's review.                  ---------- */
+  const { goalReviews } = schema;
+  const mkGoal = async (title: string, outcome: string, description: string, category: string, prompts: string[], targetDate: string | null = null) => {
+    const g = await w.insert(goals, { personId: harold.id, title, outcome, description, category, status: "active", startDate: "2026-07-01", targetDate, createdBy: adminUser.id });
     const qs: { id: string; prompt: string; area: string }[] = [];
     for (const [i, prompt] of prompts.entries()) qs.push({ id: (await w.insert(goalQuestions, { goalId: g.id, prompt, sortOrder: i })).id, prompt, area: category });
-    return qs;
+    return { id: g.id, qs };
   };
-  const questions = [
-    ...(await mkGoal("Take every medication as prescribed", "Harold takes donepezil, memantine, metformin and lisinopril from the locked box at the scheduled times, with staff administering and recording each dose. Fewer than two refused doses a week by December.", "health", ["Did Harold take every scheduled dose during this visit?", "Was any dose refused, missed or held? (No means every dose went as planned)", "Did staff check the pill organizer against the MAR?"], "2026-12-31")),
-    ...(await mkGoal("Complete the morning routine with cueing", "Harold completes toileting, washing, dressing and breakfast following the picture schedule with verbal cues, working toward needing fewer physical prompts.", "daily_living", ["Did Harold complete the morning routine with verbal cues only?", "Did Harold need hands-on help with any step?"])),
-    ...(await mkGoal("Stay safe through the night", "Harold sleeps through the night or, when he gets up, is redirected back to bed without leaving the house. No unaccompanied exits.", "safety", ["Did Harold stay inside the house all night?", "Did Harold get up more than twice?", "Was the door alarm armed and the stove secured at the start of the shift?"])),
-    ...(await mkGoal("Eat three meals and drink enough water", "Harold eats breakfast, lunch and dinner and drinks at least six glasses of water, with staff offering choices between two options.", "nutrition", ["Did Harold eat a full meal during this visit?", "Did Harold drink at least two glasses of water?"])),
-    ...(await mkGoal("Keep the home safe and clean", "Kitchen, bathroom and bedroom kept clean; expired food and hazards removed; medications and cleaning products locked away.", "homemaking", ["Was the kitchen cleaned and hazards removed?", "Were medications and cleaning products locked away at the end of the visit?"])),
-    ...(await mkGoal("Stay oriented and engaged", "Harold takes part in a familiar activity each visit (music, photo album, a walk) and is reoriented to the day and place using the whiteboard.", "social", ["Did Harold take part in a familiar activity?", "Was Harold reoriented to the day and place?", "Was there a sundowning or agitation episode?"])),
-    ...(await mkGoal("Give Ingrid a break every week", "Saturday respite so Harold's wife has four hours away from caregiving each week.", "family", ["Was Ingrid able to leave the house during respite?"])),
-  ];
+  const review = (goalId: string, daysAgo: number, assessment: "on_track" | "needs_attention" | "met" | "not_met", note: string) =>
+    w.insert(goalReviews, { goalId, reviewedBy: adminUser.id, reviewedAt: chicago(days(today, -daysAgo), 16), assessment, note });
+
+  const gMeds = await mkGoal("Take every medication as prescribed", "Fewer than two refused doses a week, every week, by December", "Harold takes donepezil, memantine, metformin and lisinopril from the locked box at the scheduled times, with staff administering and recording each dose.", "health", ["Did Harold take every scheduled dose during this visit?", "Was any dose refused, missed or held? (No means every dose went as planned)", "Did staff check the pill organizer against the MAR?"], "2026-12-31");
+  await review(gMeds.id, 35, "on_track", "Locked box and staff-administered MAR are working; one refusal in the past two weeks.");
+  await review(gMeds.id, 7, "needs_attention", "Refusals are concentrated at bedtime — four of the last six were donepezil. Asked the memory clinic whether donepezil can move to the morning.");
+  const gRoutine = await mkGoal("Complete the morning routine with cueing", "Morning routine finished with verbal cues only, no hands-on help, five days a week", "Toileting, washing, dressing and breakfast following the picture schedule, working toward needing fewer physical prompts.", "daily_living", ["Did Harold complete the morning routine with verbal cues only?", "Did Harold need hands-on help with any step?"]);
+  await review(gRoutine.id, 21, "on_track", "Hands-on help now mostly limited to shaving and buttons. Keep the picture schedule where it is.");
+  const gNight = await mkGoal("Stay safe through the night", "No unaccompanied exits; back in bed within fifteen minutes of getting up", "Harold sleeps through the night or, when he gets up, is redirected back to bed without leaving the house.", "safety", ["Did Harold stay inside the house all night?", "Did Harold get up more than twice?", "Was the door alarm armed and the stove secured at the start of the shift?"]);
+  await review(gNight.id, 7, "on_track", "Two door-alarm events since overnight staff started, both redirected within minutes. No exits.");
+  const gMeals = await mkGoal("Eat three meals and drink enough water", "Three meals and at least six glasses of water a day", "Staff offer choices between two options shown on plates; hydration prompted every hour.", "nutrition", ["Did Harold eat a full meal during this visit?", "Did Harold drink at least two glasses of water?"]);
+  const gHome = await mkGoal("Keep the home safe and clean", "Kitchen, bathroom and bedroom clean; hazards, expired food and loose medications removed on every homemaker visit", "Cleaning products and medications locked away at the end of each visit.", "homemaking", ["Was the kitchen cleaned and hazards removed?", "Were medications and cleaning products locked away at the end of the visit?"]);
+  await review(gHome.id, 14, "on_track", "Loose lisinopril tablets found in a kitchen drawer on Sep 1 and moved to the locked box; nothing since.");
+  const gEngaged = await mkGoal("Stay oriented and engaged", "A familiar activity on every visit, and reorientation to the day and place with the whiteboard", "Music, the photo album or a walk; the whiteboard calendar is updated each morning.", "social", ["Did Harold take part in a familiar activity?", "Was Harold reoriented to the day and place?", "Was there a sundowning or agitation episode?"]);
+  // Outcome-only goals: no questions on the notes; the supervisor judges them at review.
+  const gRespite = await mkGoal("Give Ingrid a break every week", "Ingrid has four hours away from caregiving every Saturday", "Saturday in-home respite so Harold's wife can leave the house; judged from the respite notes at each review.", "family", []);
+  await review(gRespite.id, 28, "on_track", "Respite delivered four of four Saturdays; Ingrid used two of them to see her sister.");
+  await review(gRespite.id, 3, "on_track", "Five of the last six Saturdays. The missed one was Harold's clinic appointment, rescheduled to the Sunday.");
+  const gSundown = await mkGoal("Reduce sundowning episodes", "Fewer than two agitation episodes a week by the end of November", "Evening routine starts at 6:30 with lights up, music from the 1970s and a warm drink; agitation is logged in the evening and overnight notes.", "behavioral", [], "2026-11-30");
+  await review(gSundown.id, 20, "needs_attention", "Nine episodes in the last four weeks, most between 5 and 7pm. Starting the evening routine earlier and closing the blinds before dusk.");
+  await review(gSundown.id, 4, "needs_attention", "Down to five episodes in the last two weeks since the earlier routine. Continue and review in two weeks.");
+  const gMailbox = await mkGoal("Walk to the mailbox and back on his own", "Harold walks to the mailbox and returns without prompting, three times a week", "Practiced daily with staff a step behind, then from the porch, then from the window.", "community", []);
+  await review(gMailbox.id, 26, "met", "Three unprompted trips this week and last. Moving to maintenance — staff watch from the window.");
+  const questions = [gMeds, gRoutine, gNight, gMeals, gHome, gEngaged].flatMap((g) => g.qs);
 
   /* ---------- notes: six weeks of IHS mornings, six nights a week, homemaker Tue/Thu, respite Saturdays ---------- */
   const NOTES = {
@@ -348,7 +365,7 @@ async function main() {
   const fix = seeded.find((v) => !v.manual && !v.offline && v.id !== rejectId && v.end < cutoff && v.sa.id === saIhs.id);
   if (fix) await correctVisit(makeCtx(db, org.id, adminUser.id, () => new Date(fix.end.getTime() + 86_400_000)), fix.id, { reasonCode: "FORGOT_CLOCK_OUT", explanation: "Sam forgot to clock out; the end time was confirmed with Ingrid by phone the next morning.", changes: { clockOutAt: new Date(fix.end.getTime() + 20 * 60000).toISOString() } });
 
-  console.log(`Seeded "${org.name}": 3 staff (admin, daytime caregiver, overnight caregiver) with complete personnel files, 1 client (Harold Lindqvist, early-onset Alzheimer's) complete in every section with 7 goals, ${seeded.length} notes over six weeks, ${seeded.length} EVV visits (mock aggregator: accepted, one rejected, one corrected), 4 medications with a 30-day MAR, and three weeks of shifts.`);
+  console.log(`Seeded "${org.name}": 3 staff (admin, daytime caregiver, overnight caregiver) with complete personnel files, 1 client (Harold Lindqvist, early-onset Alzheimer's) complete in every section with 9 goals (3 outcome-only, 11 reviews), ${seeded.length} notes over six weeks, ${seeded.length} EVV visits (mock aggregator: accepted, one rejected, one corrected), 4 medications with a 30-day MAR, and three weeks of shifts.`);
   console.log(keptAdminUser ? `Kept the existing admin@example.com login and organisation. dsp@example.com / night@example.com password: ${PASSWORD}` : `Log in with admin@example.com, dsp@example.com or night@example.com. Password: ${PASSWORD === "changeme-245d" ? PASSWORD : "(from SEED_ADMIN_PASSWORD)"}`);
   console.log(`Harold Lindqvist's signing code: ${CLIENT_CODE}`);
 }
