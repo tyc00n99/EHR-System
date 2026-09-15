@@ -121,7 +121,7 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
         const first = g.items[0].clockInAt;
         return (
           <section key={g.key} aria-labelledby={`day-${g.key}`} className="grid gap-3 md:grid-cols-[140px_minmax(0,1fr)] md:gap-0">
-            <div className="md:pr-4 md:pt-2">
+            <div className="md:sticky md:top-0 md:self-start md:bg-page md:pb-3 md:pr-4 md:pt-2">
               <h3 id={`day-${g.key}`} className="text-[22px] font-semibold leading-tight tracking-[-0.01em] text-text-strong">{monthDay.format(first)}</h3>
               <div className="text-[14px]">{weekday.format(first)}, {year.format(first)}</div>
               <div className="mt-0.5 text-[13px] tabular-nums text-muted-foreground">{g.items.length} {g.items.length === 1 ? "session" : "sessions"} · {num(g.units)} units</div>
