@@ -213,8 +213,11 @@ async function main() {
     for (const [i, prompt] of prompts.entries()) qs.push({ id: (await w.insert(goalQuestions, { goalId: g.id, prompt, sortOrder: i })).id, prompt, area: category });
     return { id: g.id, qs };
   };
-  const review = (goalId: string, daysAgo: number, assessment: "on_track" | "needs_attention" | "met" | "not_met", note: string) =>
-    w.insert(goalReviews, { goalId, reviewedBy: adminUser.id, reviewedAt: chicago(days(today, -daysAgo), 16), assessment, note });
+  // A "met" review closes the goal, exactly as the app's addGoalReview does.
+  const review = async (goalId: string, daysAgo: number, assessment: "on_track" | "needs_attention" | "met" | "not_met", note: string) => {
+    await w.insert(goalReviews, { goalId, reviewedBy: adminUser.id, reviewedAt: chicago(days(today, -daysAgo), 16), assessment, note });
+    if (assessment === "met") await w.update(goals, goalId, { status: "met" });
+  };
 
   const gMeds = await mkGoal("Take every medication as prescribed", "Fewer than two refused doses a week, every week, by December", "Harold takes donepezil, memantine, metformin and lisinopril from the locked box at the scheduled times, with staff administering and recording each dose.", "health", ["Did Harold take every scheduled dose during this visit?", "Was any dose refused, missed or held? (No means every dose went as planned)", "Did staff check the pill organizer against the MAR?"], "2026-12-31");
   await review(gMeds.id, 35, "on_track", "Locked box and staff-administered MAR are working; one refusal in the past two weeks.");

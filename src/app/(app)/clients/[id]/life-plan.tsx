@@ -98,9 +98,9 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
         {manage && (<>
           <Button variant="outline" className="h-8" onClick={() => { setEditing((v) => !v); setReviewing(false); }}>{editing ? "Close" : "Edit"}</Button>
           {g.status === "active" && <Button variant="outline" className="h-8" onClick={() => { setReviewing((v) => !v); setEditing(false); }}>{reviewing ? "Close" : "Review"}</Button>}
-          <Select value={g.status} onChange={(e) => start(async () => { await setGoalStatus(g.id, personId, e.target.value as GoalView["status"]); toast.success("Status updated"); })} disabled={pending} className="h-8 w-auto text-[13px]">
+          <div className="w-36"><Select value={g.status} onChange={(e) => start(async () => { await setGoalStatus(g.id, personId, e.target.value as GoalView["status"]); toast.success("Status updated"); })} disabled={pending} className="h-8 text-[13px]">
             <option value="active">Active</option><option value="met">Met</option><option value="discontinued">Discontinued</option>
-          </Select>
+          </Select></div>
         </>)}
       </div>
 
