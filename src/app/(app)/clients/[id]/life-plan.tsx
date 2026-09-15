@@ -1,16 +1,16 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import { GOAL_CATEGORIES } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
-import { addGoalQuestion, addGoalReview, createGoal, retireGoalQuestion, setGoalStatus, updateGoal } from "../goal-actions";
+import { addGoalQuestion, addGoalReview, createGoal, reinstateGoalQuestion, retireGoalQuestion, setGoalStatus, updateGoal } from "../goal-actions";
 
 export interface GoalView {
   id: string; title: string; outcome: string | null; description: string | null; category: string; status: "active" | "met" | "discontinued"; startDate: string | null; targetDate: string | null;
-  questions: { id: string; prompt: string; yes: number; no: number; na: number }[];
+  questions: { id: string; prompt: string; active: boolean; yes: number; no: number; na: number }[];
   reviews: { id: string; assessment: string; note: string; reviewedAt: Date; by: string }[];
 }
 
@@ -44,7 +44,7 @@ function useToast(state: ActionState, onOk?: () => void) {
  * pane. The outcome leads; questions are optional (a goal may be measured only by the
  * supervisor's review); the review history is the record a licensor asks for.
  */
-export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: string; goals: GoalView[]; manage: boolean; rangeLabel: string }) {
+export function LifePlan({ personId, goals, manage, rangeLabel, library }: { personId: string; goals: GoalView[]; manage: boolean; rangeLabel: string; library?: ReactNode }) {
   const [selected, setSelected] = useState<string | "new" | null>(null);
   const current = goals.find((g) => g.id === selected) ?? null;
   const back = () => setSelected(null);
@@ -79,7 +79,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
                     {g.outcome && <span className="mt-0.5 block text-[13.5px] leading-snug">{g.outcome}</span>}
                     <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
                       <span>{categoryLabel(g.category)}</span>
-                      <span>{g.questions.length ? `${g.questions.length} question${g.questions.length === 1 ? "" : "s"} on every note` : "Judged at review"}</span>
+                      <span>{g.questions.filter((q) => q.active).length ? `${g.questions.filter((q) => q.active).length} question${g.questions.filter((q) => q.active).length === 1 ? "" : "s"} on every note` : "Judged at review"}</span>
                       {latest && <span>Reviewed {fmtDate(latest.reviewedAt)}</span>}
                       {g.targetDate && <span>Target {fmtDate(g.targetDate)}</span>}
                     </span>
@@ -92,6 +92,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel }: { personId: st
           </ul>
         </section>
       ))}
+      {library}
     </div>
   );
 }
@@ -107,7 +108,9 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
   const [newQ, setNewQ] = useState("");
   const st = standing(g);
   const latest = g.reviews[0];
-  const answered = g.questions.reduce((n, q) => Math.max(n, q.yes + q.no + q.na), 0);
+  const live = g.questions.filter((q) => q.active);
+  const retired = g.questions.filter((q) => !q.active);
+  const answered = live.reduce((n, q) => Math.max(n, q.yes + q.no + q.na), 0);
 
   return (
     <div>
@@ -132,19 +135,19 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
           <div className="mt-0.5 text-[15px] font-medium text-text-strong">{g.outcome ?? "No outcome written yet."}</div>
           {g.description && <p className="mt-1.5 text-[13.5px]">{g.description}</p>}
           <p className="mt-2 text-[13px]">
-            {latest ? `Last review ${fmtDate(latest.reviewedAt)} by ${latest.by}: ${latest.note}` : g.questions.length ? `Not reviewed yet. ${answered} notes have answered its questions ${rangeLabel}.` : "Not reviewed yet. This goal has no per-note questions; it is judged at review."}
+            {latest ? `Last review ${fmtDate(latest.reviewedAt)} by ${latest.by}: ${latest.note}` : live.length ? `Not reviewed yet. ${answered} notes have answered its questions ${rangeLabel}.` : "Not reviewed yet. This goal has no per-note questions; it is judged at review."}
           </p>
         </div>
       )}
 
       {reviewing && manage && <ReviewForm personId={personId} goalId={g.id} onDone={() => setReviewing(false)} />}
 
-      {(g.questions.length > 0 || (manage && g.status === "active")) && (
+      {(live.length > 0 || (manage && g.status === "active")) && (
         <section className="mt-5">
-          <div className="mb-1 flex items-center justify-between"><div className="text-[13px] font-medium uppercase tracking-[0.11em]">Questions on every note{g.questions.length ? ` · ${rangeLabel}` : ""}</div></div>
-          {g.questions.length === 0 && <p className="text-[13px]">None. Add one only if caregivers should answer it on every note; otherwise the goal is judged at review.</p>}
+          <div className="mb-1 flex items-center justify-between"><div className="text-[13px] font-medium uppercase tracking-[0.11em]">Questions on every note{live.length ? ` · ${rangeLabel}` : ""}</div></div>
+          {live.length === 0 && <p className="text-[13px]">None. Add one only if caregivers should answer it on every note; otherwise the goal is judged at review.</p>}
           <ul className="divide-y divide-line-soft">
-            {g.questions.map((q) => { const total = q.yes + q.no; const pct = total ? Math.round((q.yes / total) * 100) : null; return (
+            {live.map((q) => { const total = q.yes + q.no; const pct = total ? Math.round((q.yes / total) * 100) : null; return (
               <li key={q.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[14px]">
                 <span className="min-w-0 flex-1">{q.prompt}</span>
                 <span className="flex items-center gap-2 text-[13px]"><span className="relative inline-block h-1 w-14 overflow-hidden rounded bg-panel"><span className="absolute inset-y-0 left-0 rounded bg-text-strong" style={{ width: `${pct ?? 0}%` }} /></span><span className="w-9 text-right tabular-nums">{pct == null ? "—" : `${pct}%`}</span><span className="w-16 tabular-nums">{q.yes} / {total}</span><span className="w-10 tabular-nums">{q.na ? `${q.na} n/a` : ""}</span></span>
@@ -158,6 +161,22 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
               <Button variant="outline" className="h-8" disabled={pending || !newQ.trim()} onClick={() => start(async () => { const r = await addGoalQuestion(g.id, personId, newQ); if (r.message) toast.error(r.message); else { toast.success("Question added"); setNewQ(""); } })}>Add</Button>
             </div>
           )}
+        </section>
+      )}
+
+      {retired.length > 0 && (
+        <section className="mt-5">
+          <div className="mb-1 text-[13px] font-medium uppercase tracking-[0.11em]">Retired questions · {retired.length}</div>
+          <p className="mb-1 text-[13px]">No longer asked on new notes. Past answers are kept, and a question can be reinstated.</p>
+          <ul className="divide-y divide-line-soft">
+            {retired.map((q) => { const total = q.yes + q.no; return (
+              <li key={q.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[14px] opacity-70">
+                <span className="min-w-0 flex-1 line-through decoration-line">{q.prompt}</span>
+                <span className="text-[13px] tabular-nums">{total ? `${q.yes} yes · ${q.no} no` : "no answers yet"}{q.na ? ` · ${q.na} n/a` : ""}</span>
+                {manage && g.status === "active" && <button type="button" disabled={pending} onClick={() => start(async () => { await reinstateGoalQuestion(q.id, personId); toast.success("Question reinstated"); })} className="text-[13px] font-medium text-primary hover:underline">Reinstate</button>}
+              </li>
+            ); })}
+          </ul>
         </section>
       )}
 

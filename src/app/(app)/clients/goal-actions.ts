@@ -69,10 +69,18 @@ export async function addGoalQuestion(goalId: string, personId: string, prompt: 
   return {};
 }
 
+/** Retiring hides a question from new notes. Its past responses stay, and it can be reinstated. */
 export async function retireGoalQuestion(questionId: string, personId: string): Promise<void> {
   const user = await requireUser(["admin", "supervisor"]);
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.goalQuestions, questionId, { active: false });
+  revalidatePath(`/clients/${personId}`);
+}
+
+export async function reinstateGoalQuestion(questionId: string, personId: string): Promise<void> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  await audited(db, { userId: user.id }).update(schema.goalQuestions, questionId, { active: true });
   revalidatePath(`/clients/${personId}`);
 }
 

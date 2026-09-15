@@ -419,7 +419,7 @@ export async function listGoalsWithStats(personId: string, from: Date, to: Date)
   const db = await getDb();
   const gs = await db.select().from(goals).where(eq(goals.personId, personId)).orderBy(desc(goals.status), goals.createdAt);
   if (gs.length === 0) return [];
-  const qs = await db.select().from(goalQuestions).where(and(sql`${goalQuestions.goalId} in ${gs.map((g) => g.id)}`, eq(goalQuestions.active, true))).orderBy(goalQuestions.sortOrder);
+  const qs = await db.select().from(goalQuestions).where(sql`${goalQuestions.goalId} in ${gs.map((g) => g.id)}`).orderBy(goalQuestions.sortOrder);
   const reviews = await db.select({ review: schema.goalReviews, email: users.email, first: staff.firstName, last: staff.lastName }).from(schema.goalReviews).leftJoin(users, eq(schema.goalReviews.reviewedBy, users.id)).leftJoin(staff, eq(users.staffId, staff.id)).where(sql`${schema.goalReviews.goalId} in ${gs.map((g) => g.id)}`).orderBy(desc(schema.goalReviews.reviewedAt));
   const rs = qs.length
     ? await db
