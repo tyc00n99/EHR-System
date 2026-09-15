@@ -92,7 +92,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
           </ul>
         </section>
       ))}
-      {library}
+      {library && <div className="mt-2">{library}</div>}
     </div>
   );
 }
