@@ -27,7 +27,7 @@ import { fmtDate, fmtDateNum, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, iso
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { DOCUMENT_CATEGORIES } from "@/lib/validation";
-import { AgreementStatusButton } from "./agreement-status";
+import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DeleteDocument, DocumentUpload } from "./documents";
@@ -93,7 +93,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
   const shiftMonth = (d: number) => { const x = new Date(Date.UTC(my, mm - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
   const address = [person.address1, person.address2, person.city && `${person.city}, ${person.state} ${person.zip ?? ""}`.trim()].filter(Boolean).join(", ");
-  const active = agreements.filter((a) => a.agreement.status === "active");
+  const liveAgreements = agreements.filter((a) => !a.agreement.archivedAt);
+  const archived = agreements.filter((a) => a.agreement.archivedAt);
+  const active = liveAgreements.filter((a) => a.agreement.status === "active");
   const unitsLeft = active.reduce((n, a) => n + (a.agreement.authorizedUnits - a.unitsUsed), 0);
   const periodVisits = visits.filter(({ visit: v }) => v.clockInAt >= current.start && v.status === "completed");
   const unsigned = visits.filter(({ visit: v }) => v.status === "completed" && !v.clientSignedAt && !v.clientUnsignedReason).length;
@@ -229,14 +231,24 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       )}
 
       {tab === "authorizations" && (
-        <Card title="Service agreements" description="Every authorization on file. Click one to view or edit units, dates, and rate." actions={manage && <LinkButton href={`/clients/${id}/agreements/new`} variant="primary">New agreement</LinkButton>}>
-          {agreements.length === 0 ? <Empty icon="doc" title="No service agreements yet" /> : (
-            <Table>
-              <Thead><Th>Agreement</Th><Th>Service</Th><Th>Units</Th><Th align="right">Rate</Th><Th>Dates</Th><Th>County</Th><Th>Status</Th><Th /></Thead>
-              <tbody>{agreements.map(({ agreement: a, unitsUsed }) => <Tr key={a.id} muted={a.status !== "active"}><Td strong><Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{a.agreementNumber}</Link>{a.documentPath && <a href={`/agreements/${a.id}/document`} target="_blank" rel="noreferrer" className="ml-2 text-[13px] font-normal text-muted-foreground hover:underline">PDF</a>}</Td><Td>{labelForCode(a.serviceCode, a.modifiers)}<div className="text-[13px] text-muted-foreground tabular-nums">{a.serviceCode} {a.modifiers.join(" ")}</div></Td><Td><span className="flex items-center gap-2"><Ring used={unitsUsed} total={a.authorizedUnits} size={26} /><span className="tabular-nums">{unitsUsed.toLocaleString()} / {a.authorizedUnits.toLocaleString()}</span></span></Td><Td align="right">{fmtMoney(a.unitRate)}</Td><Td className="text-muted-foreground">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</Td><Td>{a.authorizingCounty}</Td><Td><Badge tone={a.status === "active" ? "ok" : a.status === "cancelled" ? "danger" : "neutral"}>{a.status}</Badge></Td><Td align="right"><span className="flex justify-end gap-3">{manage && <Link href={`/clients/${id}/agreements/${a.id}`} className="text-[13px] font-medium text-primary hover:underline">Edit</Link>}{manage && <AgreementStatusButton id={a.id} personId={id} status={a.status} />}</span></Td></Tr>)}</tbody>
-            </Table>
+        <>
+          <Card title="Service agreements" description="Current authorizations. Click one to view or edit units, dates, and rate; archive the ones from earlier years once they are closed." actions={manage && <LinkButton href={`/clients/${id}/agreements/new`} variant="primary">New agreement</LinkButton>}>
+            {liveAgreements.length === 0 ? <Empty icon="doc" title={archived.length ? "Every agreement is archived" : "No service agreements yet"} /> : (
+              <Table>
+                <Thead><Th>Agreement</Th><Th>Service</Th><Th>Units</Th><Th align="right">Rate</Th><Th>Dates</Th><Th>County</Th><Th>Status</Th><Th /></Thead>
+                <tbody>{liveAgreements.map(({ agreement: a, unitsUsed }) => <Tr key={a.id} muted={a.status !== "active"}><Td strong><Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{a.agreementNumber}</Link>{a.documentPath && <a href={`/agreements/${a.id}/document`} target="_blank" rel="noreferrer" className="ml-2 text-[13px] font-normal text-muted-foreground hover:underline">PDF</a>}</Td><Td>{labelForCode(a.serviceCode, a.modifiers)}<div className="text-[13px] text-muted-foreground tabular-nums">{a.serviceCode} {a.modifiers.join(" ")}</div></Td><Td><span className="flex items-center gap-2"><Ring used={unitsUsed} total={a.authorizedUnits} size={26} /><span className="tabular-nums">{unitsUsed.toLocaleString()} / {a.authorizedUnits.toLocaleString()}</span></span></Td><Td align="right">{fmtMoney(a.unitRate)}</Td><Td className="text-muted-foreground">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</Td><Td>{a.authorizingCounty}</Td><Td><Badge tone={a.status === "active" ? "ok" : a.status === "cancelled" ? "danger" : "neutral"}>{a.status}</Badge></Td><Td align="right"><span className="flex justify-end gap-3">{manage && <Link href={`/clients/${id}/agreements/${a.id}`} className="text-[13px] font-medium text-primary hover:underline">Edit</Link>}{manage && <AgreementStatusButton id={a.id} personId={id} status={a.status} />}{manage && a.status !== "active" && <AgreementArchiveButton id={a.id} personId={id} archived={false} />}</span></Td></Tr>)}</tbody>
+              </Table>
+            )}
+          </Card>
+          {archived.length > 0 && (
+            <Card title={`Archived · ${archived.length}`} description="Closed agreements kept for the record. They stay on the notes they were billed against and can be restored." className="mt-4">
+              <Table>
+                <Thead><Th>Agreement</Th><Th>Service</Th><Th>Units</Th><Th align="right">Rate</Th><Th>Dates</Th><Th>County</Th><Th>Status</Th><Th /></Thead>
+                <tbody>{archived.map(({ agreement: a, unitsUsed }) => <Tr key={a.id} muted={a.status !== "active"}><Td strong><Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{a.agreementNumber}</Link>{a.documentPath && <a href={`/agreements/${a.id}/document`} target="_blank" rel="noreferrer" className="ml-2 text-[13px] font-normal text-muted-foreground hover:underline">PDF</a>}</Td><Td>{labelForCode(a.serviceCode, a.modifiers)}<div className="text-[13px] text-muted-foreground tabular-nums">{a.serviceCode} {a.modifiers.join(" ")}</div></Td><Td><span className="flex items-center gap-2"><Ring used={unitsUsed} total={a.authorizedUnits} size={26} /><span className="tabular-nums">{unitsUsed.toLocaleString()} / {a.authorizedUnits.toLocaleString()}</span></span></Td><Td align="right">{fmtMoney(a.unitRate)}</Td><Td className="text-muted-foreground">{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</Td><Td>{a.authorizingCounty}</Td><Td><Badge tone={a.status === "active" ? "ok" : a.status === "cancelled" ? "danger" : "neutral"}>{a.status}</Badge></Td><Td align="right"><span className="flex justify-end gap-3">{manage && <AgreementArchiveButton id={a.id} personId={id} archived />}</span></Td></Tr>)}</tbody>
+              </Table>
+            </Card>
           )}
-        </Card>
+        </>
       )}
 
       {tab === "notes" && (

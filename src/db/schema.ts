@@ -337,6 +337,9 @@ export const serviceAgreements = pgTable(
     /** Uploaded service agreement PDF, relative to the uploads directory. */
     documentPath: text("document_path"),
     documentName: text("document_name"),
+    /** Archived agreements are kept, and listed apart, so an old year's paperwork stops crowding the current one. */
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    archivedBy: uuid("archived_by").references(() => users.id),
     ...timestamps,
   },
   (t) => [

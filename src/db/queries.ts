@@ -385,6 +385,7 @@ export async function listAgreementsWithUsage() {
     .from(serviceAgreements)
     .innerJoin(people, eq(serviceAgreements.personId, people.id))
     .leftJoin(used, eq(used.agreementId, serviceAgreements.id))
+    .where(isNull(serviceAgreements.archivedAt))
     .orderBy(serviceAgreements.endDate);
 }
 

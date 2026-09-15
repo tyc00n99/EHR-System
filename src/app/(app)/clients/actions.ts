@@ -102,6 +102,19 @@ export async function setAgreementStatus(id: string, personId: string, status: "
   revalidatePath(`/clients/${personId}`);
 }
 
+/** Archives (or restores) an agreement. Only non-active ones can be archived; the row and its visits stay. */
+export async function setAgreementArchived(id: string, personId: string, archived: boolean): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const db = await getDb();
+  const [a] = await db.select().from(schema.serviceAgreements).where(eq(schema.serviceAgreements.id, id)).limit(1);
+  if (!a || a.personId !== personId) return { message: "Agreement not found." };
+  if (archived && a.status === "active") return { message: "Cancel or expire the agreement before archiving it." };
+  await audited(db, { userId: user.id }).update(schema.serviceAgreements, id, archived ? { archivedAt: new Date(), archivedBy: user.id } : { archivedAt: null, archivedBy: null });
+  revalidatePath(`/clients/${personId}`);
+  revalidatePath("/agreements");
+  return { ok: true };
+}
+
 export interface ExtractState extends ActionState {
   extracted?: ExtractedAgreement;
   documentPath?: string;
