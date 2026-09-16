@@ -30,7 +30,7 @@ export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { 
     { accessorKey: "client", header: "Client", meta: { filter: true }, cell: ({ row }) => <Link href={`/clients/${row.original.personId}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{row.original.client}</Link> },
     { accessorKey: "staff", header: "Caregiver", meta: { filter: true } },
     { accessorKey: "service", header: "Service", meta: { filter: true }, cell: ({ getValue }) => <span className="ident">{String(getValue())}</span> },
-    { accessorKey: "units", header: "Units", meta: { align: "right" } },
+    { accessorKey: "units", header: "Units", enableSorting: false, meta: { align: "right" } },
     { id: "status", accessorFn: standingOf, header: "Status", meta: { filter: true }, cell: ({ row }) => {
       const r = row.original; const st = standingOf(r);
       return (

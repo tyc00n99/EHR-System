@@ -103,17 +103,17 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
           {searchPlaceholder && (
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
-              <Input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder={searchPlaceholder} className="h-8 w-64 bg-page pl-8 text-[13px]" />
+              <Input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder={searchPlaceholder} className="h-8 w-64 bg-page pl-8 text-[14px]" />
             </div>
           )}
           {chips}
-          <span className="text-[13px] text-muted-foreground">{total === data.length ? `${total} row${total === 1 ? "" : "s"}` : `${total} of ${data.length}`}</span>
-          {activeFilters > 0 && <button type="button" onClick={() => table.resetColumnFilters()} className="text-[13px] font-medium text-primary hover:underline">Clear {activeFilters === 1 ? "filter" : `${activeFilters} filters`}</button>}
+          <span className="text-[14px] text-muted-foreground">{total === data.length ? `${total} row${total === 1 ? "" : "s"}` : `${total} of ${data.length}`}</span>
+          {activeFilters > 0 && <button type="button" onClick={() => table.resetColumnFilters()} className="text-[14px] font-medium text-primary hover:underline">Clear {activeFilters === 1 ? "filter" : `${activeFilters} filters`}</button>}
         </>)}
         <div className="ml-auto flex items-center gap-2">
           {actions}
           <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1.5 text-[13px]" />}>
+            <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1.5 text-[14px]" />}>
               <Columns3 className="size-3.5" /> Columns <ChevronDown className="size-3 text-gray-400" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -137,7 +137,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
                   const align = meta?.align;
                   const hasMenu = h.column.getCanSort() || Boolean(meta?.filter);
                   return (
-                    <TableHead key={h.id} className={cn("h-9 whitespace-nowrap px-4 font-mono text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground first:pl-5 last:pr-5", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: h.getSize() !== 150 ? h.getSize() : undefined }}>
+                    <TableHead key={h.id} className={cn("h-10 whitespace-nowrap px-4 text-[14px] font-medium text-muted-foreground first:pl-5 last:pr-5", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: h.getSize() !== 150 ? h.getSize() : undefined }}>
                       {h.isPlaceholder ? null : hasMenu ? (
                         <HeaderMenu column={h.column} align={align} label={flexRender(h.column.columnDef.header, h.getContext())} filterable={Boolean(meta?.filter)} />
                       ) : flexRender(h.column.columnDef.header, h.getContext())}
@@ -149,14 +149,14 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableRow className="hover:bg-transparent"><TableCell colSpan={allColumns.length} className="px-5 py-12 text-center"><div className="font-medium text-text-strong">{emptyTitle}</div>{emptyHint && <div className="mt-1 text-[13px] text-muted-foreground">{emptyHint}</div>}</TableCell></TableRow>
+              <TableRow className="hover:bg-transparent"><TableCell colSpan={allColumns.length} className="px-5 py-12 text-center"><div className="font-medium text-text-strong">{emptyTitle}</div>{emptyHint && <div className="mt-1 text-[14px] text-muted-foreground">{emptyHint}</div>}</TableCell></TableRow>
             ) : rows.map((row) => {
               const href = rowHref?.(row.original);
               return (
                 <TableRow key={row.id} onClick={href ? () => router.push(href) : undefined} data-state={row.getIsSelected() ? "selected" : undefined} className={cn("border-line-soft", href && "cursor-pointer", row.getIsSelected() && "bg-primary-soft/40")}>
                   {row.getVisibleCells().map((cell) => {
                     const align = (cell.column.columnDef.meta as ColumnMeta | undefined)?.align;
-                    return <TableCell key={cell.id} className={cn("px-4 align-middle first:pl-5 last:pr-5", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;
+                    return <TableCell key={cell.id} className={cn("px-4 align-middle text-[14.5px] first:pl-5 last:pr-5", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;
                   })}
                 </TableRow>
               );
@@ -166,7 +166,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
       </div>
 
       {pageCount > 1 && (
-        <div className="flex items-center justify-between border-t border-line-soft px-4 py-2 text-[13px] text-muted-foreground">
+        <div className="flex items-center justify-between border-t border-line-soft px-4 py-2 text-[14px] text-muted-foreground">
           <span>Page {pageIndex + 1} of {pageCount}</span>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}><ChevronLeft className="size-3.5" /></Button>
