@@ -108,16 +108,7 @@ export function sectionRow(pathname: string, role: Role, c: NavCounts): SectionE
     ];
   }
 
-  if (pathname === "/attention") {
-    return [
-      { href: "/attention", label: "Everything", count: c.review, match: noParam("kind") },
-      { href: "/attention?kind=returned", label: "Returned notes", count: c.returned || undefined, hot: c.returned > 0, match: param("kind", "returned") },
-      { href: "/attention?kind=unsigned", label: "Unsigned", count: c.unsigned || undefined, hot: c.unsigned > 0, match: param("kind", "unsigned") },
-      { href: "/attention?kind=manual", label: "Manual EVV", count: c.manual || undefined, match: param("kind", "manual") },
-      { href: "/attention?kind=missed_shift", label: "Missed shifts", count: c.missed || undefined, match: param("kind", "missed_shift") },
-      { href: "/attention?kind=compliance", label: "Credentials", count: c.compliance || undefined, match: param("kind", "compliance") },
-    ];
-  }
+  // The review queue has no section row: its own issue-type and priority menus do that job.
 
   if (pathname === "/evv") {
     return [
