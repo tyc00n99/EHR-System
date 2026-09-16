@@ -32,31 +32,30 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
   return (
     <div>
       {openVisit && <VisitSheet id={openVisit} />}
+      {/* One header: the title, then the pay period as the line under it with its pager and the
+          period's totals. The section row above already carries the state filters. */}
       <PageHeader
         eyebrow={person && <><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Notes</Crumb></>}
         title={title}
-        meta={state && <span>Showing only notes {stateLabel[state]} in this pay period. <Link href={periodHref(period)} className="text-primary hover:underline">Show all notes</Link></span>}
+        meta={<>
+          <span className="inline-flex items-center gap-1">
+            <Link href={periodHref(prev)} aria-label="Previous pay period" className="flex size-6 items-center justify-center rounded-md hover:bg-tab-hover">‹</Link>
+            <span className="font-medium text-text-strong">{period.label}</span>
+            <Link href={periodHref(next)} aria-label="Next pay period" className="flex size-6 items-center justify-center rounded-md hover:bg-tab-hover">›</Link>
+          </span>
+          {isCurrent ? <span>current pay period</span> : <Link href={periodHref(currentPayPeriod())} className="text-primary hover:underline">Jump to current</Link>}
+          <span className="tabular-nums"><span className="text-text-strong">{all.length}</span> visits</span>
+          <span className="tabular-nums"><span className="text-text-strong">{units}</span> units</span>
+          <span className="tabular-nums"><span className="text-text-strong">{Math.round(minutes / 6) / 10}</span> hours</span>
+          {all.some((r) => r.visit.manualEntry) && <span className="tabular-nums"><span className="font-medium text-warn">{all.filter((r) => r.visit.manualEntry).length}</span> manual</span>}
+          {all.some((r) => r.visit.status === "completed" && !r.visit.clientSignedAt) && <span className="tabular-nums"><span className="font-medium text-danger">{all.filter((r) => r.visit.status === "completed" && !r.visit.clientSignedAt).length}</span> unsigned</span>}
+          {state && <span>Showing only notes {stateLabel[state]}. <Link href={periodHref(period)} className="text-primary hover:underline">Show all</Link></span>}
+        </>}
         actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a note manually</LinkButton>}
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-sidebar px-3 py-2">
-        <Link href={periodHref(prev)} aria-label="Previous pay period" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</Link>
-        <div className="min-w-56">
-          <div className="text-[13px] font-medium text-text-strong">{isCurrent ? "Current pay period" : "Pay period"} <span className="font-normal text-muted-foreground">· {period.label}</span></div>
-        </div>
-        <Link href={periodHref(next)} aria-label="Next pay period" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</Link>
-        {!isCurrent && <Link href={periodHref(currentPayPeriod())} className="text-[13px] text-primary hover:underline">Jump to current</Link>}
-        <div className="ml-auto flex gap-5 text-[13px] tabular-nums text-muted-foreground">
-          <span><span className="font-medium text-text-strong">{all.length}</span> visits</span>
-          <span><span className="font-medium text-text-strong">{units}</span> units</span>
-          <span><span className="font-medium text-text-strong">{Math.round(minutes / 6) / 10}</span> hours</span>
-          {all.some((r) => r.visit.manualEntry) && <span><span className="font-medium text-warn">{all.filter((r) => r.visit.manualEntry).length}</span> manual</span>}
-          {all.some((r) => r.visit.status === "completed" && !r.visit.clientSignedAt) && <span><span className="font-medium text-danger">{all.filter((r) => r.visit.status === "completed" && !r.visit.clientSignedAt).length}</span> unsigned</span>}
-        </div>
-      </div>
-
       <Card>
-        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} exportHref={can(user, "edit_visits") ? `/reports/visits.csv?period=${period.startDate}` : undefined} />
+        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} showChips={user.role === "dsp"} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?period=${period.startDate}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?period=${period.startDate}` : undefined} />
       </Card>
     </div>
   );
