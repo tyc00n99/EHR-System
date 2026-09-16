@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Columns3, ListFilter, Search } from "lucide-react";
 import {
   type Column,
@@ -34,6 +34,8 @@ export interface DataTableProps<T> {
   data: T[];
   /** Placeholder for the global search box. Omit to hide search. */
   searchPlaceholder?: string;
+  /** Grouped names offered under the search box on focus; picking one fills the search. */
+  suggestions?: { label: string; items: string[] }[];
   /** Row click target. */
   rowHref?: (row: T) => string | undefined;
   /** Filter chips rendered left of the search. */
@@ -52,7 +54,7 @@ export interface DataTableProps<T> {
   bulk?: (selected: T[], clear: () => void) => ReactNode;
 }
 
-export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips, actions, emptyTitle = "Nothing here yet", emptyHint, pageSize = 25, initialSorting = [], dense, getRowId, selectable, bulk }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, rowHref, chips, actions, emptyTitle = "Nothing here yet", emptyHint, pageSize = 25, initialSorting = [], dense, getRowId, selectable, bulk }: DataTableProps<T>) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -100,12 +102,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
     <div>
       <div className="flex flex-wrap items-center gap-2 border-b border-line-soft bg-sidebar px-3 py-2">
         {selected.length > 0 && bulk ? bulk(selected, () => table.resetRowSelection()) : (<>
-          {searchPlaceholder && (
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
-              <Input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)} placeholder={searchPlaceholder} className="h-8 w-64 bg-page pl-8 text-[14px]" />
-            </div>
-          )}
+          {searchPlaceholder && <SearchBox value={globalFilter} onChange={setGlobalFilter} placeholder={searchPlaceholder} suggestions={suggestions} />}
           {chips}
           <span className="text-[14px] text-muted-foreground">{total === data.length ? `${total} row${total === 1 ? "" : "s"}` : `${total} of ${data.length}`}</span>
           {activeFilters > 0 && <button type="button" onClick={() => table.resetColumnFilters()} className="text-[14px] font-medium text-primary hover:underline">Clear {activeFilters === 1 ? "filter" : `${activeFilters} filters`}</button>}
@@ -172,6 +169,53 @@ export function DataTable<T>({ columns, data, searchPlaceholder, rowHref, chips,
             <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}><ChevronLeft className="size-3.5" /></Button>
             <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}><ChevronRight className="size-3.5" /></Button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The search box. With suggestions it behaves like the scheduler's participant search: focusing
+ * it lists the names in groups, typing narrows them, and picking one fills the box.
+ */
+function SearchBox({ value, onChange, placeholder, suggestions }: { value: string; onChange: (v: string) => void; placeholder: string; suggestions?: { label: string; items: string[] }[] }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!suggestions) return;
+    const away = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, [suggestions]);
+  const needle = value.trim().toLowerCase();
+  const groups = (suggestions ?? []).map((g) => ({ label: g.label, items: g.items.filter((n) => !needle || n.toLowerCase().includes(needle)) }));
+  const any = groups.some((g) => g.items.length);
+  return (
+    <div ref={box} className="relative">
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
+      <Input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+        placeholder={placeholder}
+        role={suggestions ? "combobox" : undefined}
+        aria-expanded={suggestions ? open : undefined}
+        className="h-8 w-64 bg-page pl-8 pr-7 text-[14px]"
+      />
+      {value && <button type="button" onClick={() => { onChange(""); setOpen(false); }} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground hover:text-text-strong">✕</button>}
+      {suggestions && open && (
+        <div role="listbox" className="absolute left-0 top-full z-30 mt-1.5 max-h-80 w-72 overflow-y-auto rounded-lg border border-line bg-card py-2 shadow-lg">
+          {!any && <p className="px-4 py-2 text-[14px] text-muted-foreground">Nothing matches.</p>}
+          {groups.map((g) => g.items.length > 0 && (
+            <div key={g.label} className="px-2 pb-1">
+              <div className="flex items-center gap-3 px-2 pb-1 pt-1.5"><span className="shrink-0 text-[13.5px] text-hint">{g.label}</span><span className="h-px flex-1 bg-line" /></div>
+              {g.items.map((n) => (
+                <button key={n} type="button" role="option" aria-selected={value === n} onClick={() => { onChange(n); setOpen(false); }} className="block w-full rounded-md px-2 py-1.5 text-left text-[14.5px] text-text-strong hover:bg-hover">{n}</button>
+              ))}
+            </div>
+          ))}
         </div>
       )}
     </div>

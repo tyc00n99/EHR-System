@@ -65,6 +65,11 @@ export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { 
         </div>
       )}
       searchPlaceholder="Search client, caregiver, code…"
+      suggestions={[
+        { label: "Clients", items: [...new Set(rows.map((r) => r.client))].sort() },
+        { label: "Team Members", items: [...new Set(rows.map((r) => r.staff))].sort() },
+        { label: "Services", items: [...new Set(rows.map((r) => r.service))].sort() },
+      ]}
       rowHref={(r) => `?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)), note: r.id })}`}
       chips={showChips && !state ? <FilterChips value={chip} onChange={setChip} options={[{ key: "all", label: "All", count: rows.length }, { key: "unsigned", label: "Unsigned", count: rows.filter((r) => r.status === "completed" && !r.signed).length }, { key: "manual", label: "Manual", count: rows.filter((r) => r.manual).length }, { key: "open", label: "In progress", count: rows.filter((r) => r.status === "in_progress").length }]} /> : undefined}
       actions={(exportCsv || exportPdf) && <>{exportCsv && <a href={exportCsv} className={exportLink}>Export CSV</a>}{exportPdf && <a href={exportPdf} className={exportLink}>Export PDF</a>}</>}
