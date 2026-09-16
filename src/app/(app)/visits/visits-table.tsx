@@ -26,7 +26,7 @@ export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { 
   const data = useMemo(() => rows.filter((r) => (flag === "unsigned" ? r.status === "completed" && !r.signed : flag === "returned" ? r.returned : flag === "manual" ? r.manual : flag === "open" ? r.status === "in_progress" : true)).sort(byDate), [rows, flag]);
   const columns: ColumnDef<VisitRow, unknown>[] = [
     { accessorKey: "clockInIso", header: "Clock in", cell: ({ row }) => <span className="ident text-text-strong">{row.original.clockIn}</span> },
-    { accessorKey: "minutes", header: "Duration", cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="ident">{fmtHours(row.original.minutes)}</span> },
+    { accessorKey: "minutes", header: "Duration", enableSorting: false, cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="ident">{fmtHours(row.original.minutes)}</span> },
     { accessorKey: "client", header: "Client", meta: { filter: true }, cell: ({ row }) => <Link href={`/clients/${row.original.personId}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{row.original.client}</Link> },
     { accessorKey: "staff", header: "Caregiver", meta: { filter: true } },
     { accessorKey: "service", header: "Service", meta: { filter: true }, cell: ({ getValue }) => <span className="ident">{String(getValue())}</span> },
