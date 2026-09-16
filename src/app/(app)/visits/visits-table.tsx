@@ -35,7 +35,7 @@ export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { 
       const r = row.original; const st = standingOf(r);
       return (
         <span className="flex flex-wrap gap-1">
-          {st === "signed" ? <span className="text-muted-foreground">Signed</span>
+          {st === "signed" ? null
             : st === "returned" ? <Badge tone="warn">returned</Badge>
             : st === "in progress" ? <Badge tone="accent">in progress</Badge>
             : st === "void" ? <Badge tone="neutral">void</Badge>

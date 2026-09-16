@@ -21,7 +21,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -196,15 +196,14 @@ function HeaderMenu<T>({ column, label, align, filterable }: { column: Column<T,
         {selected.length > 0 && <span className="rounded-full bg-primary-soft px-1 text-[11px] leading-4 text-primary">{selected.length}</span>}
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align === "right" ? "end" : "start"} className="w-auto min-w-52 max-w-80">
-        {column.getCanSort() && (<>
+        {/* A column with a value list is a filter, nothing else; sorting stays on the date and number columns. */}
+        {column.getCanSort() && !filterable && (<>
           <DropdownMenuItem onClick={() => column.toggleSorting(false)}><ArrowUp className="size-3.5" /> Sort ascending</DropdownMenuItem>
           <DropdownMenuItem onClick={() => column.toggleSorting(true)}><ArrowDown className="size-3.5" /> Sort descending</DropdownMenuItem>
           {dir && <DropdownMenuItem onClick={() => column.clearSorting()}>Clear sort</DropdownMenuItem>}
         </>)}
         {filterable && facets.length > 0 && (<>
-          {column.getCanSort() && <DropdownMenuSeparator />}
           <DropdownMenuGroup>
-            <DropdownMenuLabel className="text-[12px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Show only</DropdownMenuLabel>
           {facets.map((v) => (
             <DropdownMenuCheckboxItem key={v} closeOnClick={false} checked={selected.includes(v)} onCheckedChange={(on) => { const next = on ? [...selected, v] : selected.filter((x) => x !== v); column.setFilterValue(next.length ? next : undefined); }}>
               <span className="truncate">{v}</span>
