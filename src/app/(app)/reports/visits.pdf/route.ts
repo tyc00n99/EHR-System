@@ -1,7 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getOrganization, listVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
-import { payPeriodFromParam } from "@/lib/pay-period";
+import { resolveVisitRange } from "@/lib/visit-range";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { minutesBetween } from "@/lib/units";
 import { ReportPdf } from "../report-pdf";
@@ -20,9 +20,9 @@ const standing = (v: { returnedAt: Date | null; status: string; clientSignedAt: 
 export async function GET(req: Request) {
   await requireUser(["admin", "supervisor"]);
   const sp = new URL(req.url).searchParams;
-  const period = payPeriodFromParam(sp.get("period") ?? undefined);
+  const range = resolveVisitRange(sp);
   const ids = new Set((sp.get("ids") ?? "").split(",").filter((s) => /^[0-9a-f-]{36}$/.test(s)));
-  const [rows, org] = await Promise.all([listVisits({ from: period.start, to: period.end, limit: 5000 }), getOrganization()]);
+  const [rows, org] = await Promise.all([listVisits({ from: range.start, to: range.end, limit: 5000 }), getOrganization()]);
   const picked = (ids.size ? rows.filter((r) => ids.has(r.visit.id)) : rows).slice().sort((a, b) => a.visit.clockInAt.getTime() - b.visit.clockInAt.getTime());
   const completed = picked.filter((r) => r.visit.status === "completed");
   const minutes = completed.reduce((n, r) => n + (r.visit.clockOutAt ? minutesBetween(r.visit.clockInAt, r.visit.clockOutAt) : 0), 0);
@@ -30,9 +30,9 @@ export async function GET(req: Request) {
   const unsigned = completed.filter((r) => !r.visit.clientSignedAt).length;
   registerPdfFonts();
   const buffer = await renderToBuffer(ReportPdf({
-    title: `Notes · ${period.label}`,
+    title: `Notes · ${range.label}`,
     org: org.name,
-    subtitle: ids.size ? `${picked.length} selected visits` : `All visits in the pay period`,
+    subtitle: ids.size ? `${picked.length} selected visits` : range.kind === "period" ? "All visits in the pay period" : `All visits ${range.label}`,
     landscape: true,
     summary: [
       { label: "Visits", value: String(picked.length) },
@@ -68,5 +68,5 @@ export async function GET(req: Request) {
     })),
     totals: { date: "Total", in: "", out: "", hours: hours(minutes), client: `${picked.length} visits`, staff: "", service: "", units, status: unsigned ? `${unsigned} unsigned` : "", evv: "", note: "" },
   }));
-  return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="notes-${period.startDate}${ids.size ? "-selected" : ""}.pdf"` } });
+  return new Response(new Uint8Array(buffer), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="notes-${range.slug}${ids.size ? "-selected" : ""}.pdf"` } });
 }

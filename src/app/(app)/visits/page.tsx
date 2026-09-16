@@ -5,7 +5,8 @@ import { VisitSheet } from "./record/visit-sheet";
 import { getPerson, listVisits } from "@/db/queries";
 import { can, requireUser } from "@/lib/auth";
 import { fmtDateTime, fullName } from "@/lib/format";
-import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam } from "@/lib/pay-period";
+import { rangeParamFor, resolveVisitRange, type RangeKind } from "@/lib/visit-range";
+import { RangeNav } from "./range-nav";
 import { minutesBetween } from "@/lib/units";
 
 export const metadata = { title: "Notes" };
@@ -15,15 +16,16 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
   const user = await requireUser();
   const sp = await searchParams;
   const personId = typeof sp.person === "string" ? sp.person : undefined;
-  const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
-  const isCurrent = period.index === currentPayPeriod().index;
-  const prev = payPeriodByIndex(period.index - 1), next = payPeriodByIndex(period.index + 1);
+  // Pay period by default; ?week=, ?month= or ?from=&to= pick another window.
+  const range = resolveVisitRange(sp);
   const person = personId ? await getPerson(personId) : null;
-  const all = await listVisits({ personId, staffId: user.role === "dsp" ? (user.staffId ?? undefined) : undefined, from: period.start, to: period.end, limit: 1000 });
+  const all = await listVisits({ personId, staffId: user.role === "dsp" ? (user.staffId ?? undefined) : undefined, from: range.start, to: range.end, limit: 1000 });
   const completed = all.filter((r) => r.visit.status === "completed");
   const units = completed.reduce((n, r) => n + r.visit.units, 0);
   const minutes = completed.reduce((n, r) => n + (r.visit.clockOutAt ? minutesBetween(r.visit.clockInAt, r.visit.clockOutAt) : 0), 0);
-  const periodHref = (p: { startDate: string }) => `/visits?period=${p.startDate}${personId ? `&person=${personId}` : ""}`;
+  const extra = personId ? `person=${personId}` : "";
+  const rangeHref = (param: string) => `/visits?${param}${extra ? `&${extra}` : ""}`;
+  const kindParams = Object.fromEntries((["period", "week", "month", "custom"] as RangeKind[]).map((k) => [k, rangeParamFor(k, range)])) as Record<RangeKind, string>;
   const title = person ? `Notes for ${fullName(person)}` : user.role === "dsp" ? "My notes" : "Notes";
 
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
@@ -38,24 +40,19 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
         eyebrow={person && <><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Notes</Crumb></>}
         title={title}
         meta={<>
-          <span className="inline-flex items-center gap-1">
-            <Link href={periodHref(prev)} aria-label="Previous pay period" className="flex size-6 items-center justify-center rounded-md hover:bg-tab-hover">‹</Link>
-            <span className="font-medium text-text-strong">{period.label}</span>
-            <Link href={periodHref(next)} aria-label="Next pay period" className="flex size-6 items-center justify-center rounded-md hover:bg-tab-hover">›</Link>
-          </span>
-          {isCurrent ? <span>current pay period</span> : <Link href={periodHref(currentPayPeriod())} className="text-primary hover:underline">Jump to current</Link>}
+          <RangeNav range={range} base="/visits" extra={extra} kindParams={kindParams} />
           <span className="tabular-nums"><span className="text-text-strong">{all.length}</span> visits</span>
           <span className="tabular-nums"><span className="text-text-strong">{units}</span> units</span>
           <span className="tabular-nums"><span className="text-text-strong">{Math.round(minutes / 6) / 10}</span> hours</span>
           {all.some((r) => r.visit.manualEntry) && <span className="tabular-nums"><span className="font-medium text-warn">{all.filter((r) => r.visit.manualEntry).length}</span> manual</span>}
           {all.some((r) => r.visit.status === "completed" && !r.visit.clientSignedAt) && <span className="tabular-nums"><span className="font-medium text-danger">{all.filter((r) => r.visit.status === "completed" && !r.visit.clientSignedAt).length}</span> unsigned</span>}
-          {state && <span>Showing only notes {stateLabel[state]}. <Link href={periodHref(period)} className="text-primary hover:underline">Show all</Link></span>}
+          {state && <span>Showing only notes {stateLabel[state]}. <Link href={rangeHref(range.param)} className="text-primary hover:underline">Show all</Link></span>}
         </>}
         actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a note manually</LinkButton>}
       />
 
       <Card>
-        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} showChips={user.role === "dsp"} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?period=${period.startDate}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?period=${period.startDate}` : undefined} />
+        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} showChips={user.role === "dsp"} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?${range.param}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?${range.param}` : undefined} />
       </Card>
     </div>
   );
