@@ -39,7 +39,7 @@ export function DocumentsTab({ personId, items, others, archived, summary, manag
   );
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="text-[18px]">Documents</h2>
         <span className="text-[13.5px]">{summary.onFile} of {summary.total} required on file{summary.overdue ? ` · ${summary.overdue} overdue` : ""}</span>

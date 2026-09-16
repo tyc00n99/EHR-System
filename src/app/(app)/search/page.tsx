@@ -17,7 +17,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const agreementHits = agreements.filter((a) => hit(a.agreement.agreementNumber, a.agreement.serviceCode));
   const total = clients.length + staffHits.length + agreementHits.length + docs.length;
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="max-w-4xl">
       <PageHeader title={q ? `Results for “${q}”` : "Search"} meta={<span>{q ? `${total} match${total === 1 ? "" : "es"} across clients, staff, agreements, and documents` : "Type in the search box above to find a client, staff member, PMI, agreement number, or words inside a filed document."}</span>} />
       {q && total === 0 && <Card><Empty icon="search" title="No matches">Try a last name, a PMI number, an agreement number, or a phrase from a document.</Empty></Card>}
       <div className="space-y-4">

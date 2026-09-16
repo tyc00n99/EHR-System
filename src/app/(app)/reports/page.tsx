@@ -31,7 +31,7 @@ export default async function ReportsPage() {
     { key: "payroll", title: "Payroll hours", desc: "Hours, units, and gross pay by caregiver, with unsigned counts. Hand to payroll at the end of each period.", file: "payroll" },
   ];
   return (
-    <div className="mx-auto max-w-6xl">
+    <div>
       <PageHeader title="Reports" meta={<span>Progress notes for the county, payroll by pay period. Claim-line exports live under Billing.</span>} />
       <Card title="Progress notes" description="Every note for one client, filtered by service type and date range. The same document the client's Notes tab downloads." className="mb-4">
         <NotesReport clients={clients} defaultFrom={quarterStart} defaultTo={todayLocal} />

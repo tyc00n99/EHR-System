@@ -26,7 +26,7 @@ export default async function AttentionPage({ searchParams }: PageProps<"/attent
   const items = await attentionItems();
   const groups = Object.keys(KIND).map((k) => ({ k, items: items.filter((i) => i.kind === k) })).filter((g) => g.items.length);
   return (
-    <div className="mx-auto max-w-6xl">
+    <div>
       <PageHeader title="Review queue" meta={<span>{items.length} item{items.length === 1 ? "" : "s"} across visits, staff, clients, and authorizations. Filter by priority or type. Select related records to resolve them together.</span>} />
       {items.length === 0 ? (
         <Card><Empty icon="check" title="Nothing needs attention">Every visit is signed, staff are compliant, and authorizations have room.</Empty></Card>

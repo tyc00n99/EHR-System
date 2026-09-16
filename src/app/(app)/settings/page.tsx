@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   await requireUser(["admin"]);
   const org = await getOrganization();
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="max-w-4xl">
       <PageHeader title="Settings" meta={<span>Organization identity used on every claim line, and how visits are grouped.</span>} />
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <Card title="Organization" description="License holder details" padded><OrgForm org={org} /></Card>

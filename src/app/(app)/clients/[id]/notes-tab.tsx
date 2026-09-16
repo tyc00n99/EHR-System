@@ -117,7 +117,7 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
   const toggleOn = "text-primary shadow-[inset_0_-2px_0_var(--primary)]";
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div>
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
         <h2 className="text-[24px] font-semibold leading-none tracking-[-0.01em] text-text-strong">Sessions</h2>
         <span className="text-[13.5px] tabular-nums">
