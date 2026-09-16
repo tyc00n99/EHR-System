@@ -66,7 +66,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const goalFrom = daysAgo(90);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
-  const noteCode = typeof sp.code === "string" ? sp.code : "";
+  // "service", not "code": the signing-code notice already reads ?code= on this page.
+  const noteCode = typeof sp.service === "string" ? sp.service : "";
   const noteFrom = typeof sp.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.from) ? sp.from : "";
   const noteTo = typeof sp.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.to) ? sp.to : "";
   const noteStaff = typeof sp.staff === "string" && /^[0-9a-f-]{36}$/.test(sp.staff) ? sp.staff : "";
@@ -256,7 +257,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         <NotesTab
           personId={id}
           base={`/clients/${id}`}
-          filters={{ code: noteCode, from: noteFrom, to: noteTo, staff: noteStaff, signed: noteSigned, sort: noteSort }}
+          filters={{ service: noteCode, from: noteFrom, to: noteTo, staff: noteStaff, signed: noteSigned, sort: noteSort }}
           staffOptions={noteStaffOptions.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))}
           totalNotes={noteCount}
           capped={noteRows.length >= NOTE_LIMIT}

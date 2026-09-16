@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowUpDown, BarChart3, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, FileText, Flag, PenLine, Wrench } from "lucide-react";
+import { ArrowUpDown, BarChart3, CalendarDays, ChevronDown, ChevronUp, FileText, Flag, PenLine, Wrench } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import { DownloadButton } from "@/components/download-button";
 import { cx } from "@/components/kit";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { labelForCode } from "@/lib/hcpcs";
 import { fmtDate } from "@/lib/format";
 
@@ -15,6 +16,14 @@ const monthDay = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeri
 const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: TZ });
 const year = new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone: TZ });
 const num = (n: number) => n.toLocaleString("en-US");
+const shortDay = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
+const shortDayYear = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
+/** "Sep 1 – Sep 16, 2026", or the default window when no dates are set. */
+function rangeLabel(from: string, to: string): string {
+  if (!from && !to) return "Last 90 days";
+  if (from && to) return from.slice(0, 4) === to.slice(0, 4) ? `${shortDay(from)} – ${shortDayYear(to)}` : `${shortDayYear(from)} – ${shortDayYear(to)}`;
+  return from ? `From ${shortDayYear(from)}` : `Through ${shortDayYear(to)}`;
+}
 
 export interface NoteRow {
   id: string; clockInAt: Date; clockOutAt: Date | null; serviceCode: string; modifiers: string[]; units: number; status: string; returned: boolean;
@@ -22,7 +31,7 @@ export interface NoteRow {
   approved: boolean; manual: boolean; edits: number; goalYes: number; goalNo: number;
 }
 
-export interface NoteFilters { code: string; from: string; to: string; staff: string; signed: "" | "unsigned"; sort: "newest" | "oldest" }
+export interface NoteFilters { service: string; from: string; to: string; staff: string; signed: "" | "unsigned"; sort: "newest" | "oldest" }
 
 /** Days between two instants on the Chicago calendar, so an overnight shift says so. */
 function daysApart(a: Date, b: Date): number {
@@ -42,13 +51,22 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
   personId: string; rows: NoteRow[]; codes: { code: string; label: string }[]; staffOptions: { id: string; name: string }[];
   filters: NoteFilters; base: string; totalNotes: number; capped: boolean;
 }) {
+  const formId = `notes-filters-${personId}`;
   const formRef = useRef<HTMLFormElement>(null);
+  const fromRef = useRef<HTMLInputElement>(null);
+  const toRef = useRef<HTMLInputElement>(null);
   const submit = () => formRef.current?.requestSubmit();
+  // The date picker lives in a popover outside the form, so it edits a draft and writes the two
+  // hidden inputs on Apply; the other controls keep the chosen range because it is always in the form.
+  const [draft, setDraft] = useState({ from: filters.from, to: filters.to });
+  const applyRange = (from: string, to: string) => { if (fromRef.current) fromRef.current.value = from; if (toRef.current) toRef.current.value = to; submit(); };
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(filters)) if (v && !(k === "sort" && v === "newest")) q.set(k, v);
   const exportQ = new URLSearchParams();
-  for (const k of ["code", "from", "to", "staff"] as const) if (filters[k]) exportQ.set(k, filters[k]);
-  const filtered = Boolean(filters.code || filters.from || filters.to || filters.staff || filters.signed);
+  // The PDF route still calls the service filter "code".
+  if (filters.service) exportQ.set("code", filters.service);
+  for (const k of ["from", "to", "staff"] as const) if (filters[k]) exportQ.set(k, filters[k]);
+  const filtered = Boolean(filters.service || filters.from || filters.to || filters.staff || filters.signed);
 
   const units = rows.filter((r) => r.status === "completed").reduce((n, r) => n + r.units, 0);
   const groups = useMemo(() => {
@@ -60,7 +78,11 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
       .map(([key, items]) => ({ key, items: items.sort((a, b) => (a.clockInAt.getTime() - b.clockInAt.getTime()) * dir), units: items.filter((r) => r.status === "completed").reduce((n, r) => n + r.units, 0) }));
   }, [rows, filters.sort]);
 
-  const control = "h-9 rounded-lg border border-line bg-card px-2.5 text-[13.5px] text-text-strong focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30";
+  const cell = "relative flex h-10 items-center gap-1.5 border-r border-line-soft px-3 text-text-strong";
+  const cellLabel = "text-[12px] font-medium uppercase tracking-[0.06em] text-muted-foreground";
+  const select = "appearance-none bg-transparent pr-4 text-[14px] text-text-strong outline-none focus-visible:underline";
+  const toggle = "px-3.5 text-[14px] font-medium text-text transition-colors hover:bg-tab-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30";
+  const toggleOn = "text-primary shadow-[inset_0_-2px_0_var(--primary)]";
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -69,43 +91,66 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
         <span className="text-[13.5px] tabular-nums">
           {num(rows.length)} {rows.length === 1 ? "session" : "sessions"} · {num(units)} units
           {(filtered || capped) && <span className="text-muted-foreground"> · {num(totalNotes)} notes on file</span>}
+          {filtered && <> · <Link href={`${base}?tab=notes`} className="font-medium text-primary hover:underline">Clear filters</Link></>}
         </span>
         <div className="ml-auto"><DownloadButton href={`/clients/${personId}/notes.pdf?${exportQ}`} variant="outline">Download PDF</DownloadButton></div>
       </div>
 
-      <form ref={formRef} action={base} className="mb-5 flex flex-wrap items-center gap-2">
+      {/* One bar, hairline dividers, our own chevrons: the native select and date skins never show. */}
+      <form id={formId} ref={formRef} action={base} className="mb-5 flex flex-wrap items-stretch rounded-[10px] border border-line bg-card text-[14px]">
         <input type="hidden" name="tab" value="notes" />
-        <select name="code" defaultValue={filters.code} onChange={submit} aria-label="Service" className={cx(control, "max-w-[240px]")}>
-          <option value="">All services</option>
-          {codes.map((c) => <option key={c.code} value={c.code}>{c.label} · {c.code}</option>)}
-        </select>
-        <div className={cx(control, "flex items-center gap-1.5 px-2")} role="group" aria-label="Date range">
-          <CalendarDays size={15} className="shrink-0 text-muted-foreground" aria-hidden />
-          <input name="from" type="date" defaultValue={filters.from} onChange={submit} aria-label="From date" className="bg-transparent text-[13.5px] outline-none" />
-          <span aria-hidden>–</span>
-          <input name="to" type="date" defaultValue={filters.to} onChange={submit} aria-label="To date" className="bg-transparent text-[13.5px] outline-none" />
-        </div>
-        {staffOptions.length > 0 && (
-          <select name="staff" defaultValue={filters.staff} onChange={submit} aria-label="Staff" className={cx(control, "max-w-[180px]")}>
-            <option value="">All staff</option>
-            {staffOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+        <input ref={fromRef} type="hidden" name="from" defaultValue={filters.from} />
+        <input ref={toRef} type="hidden" name="to" defaultValue={filters.to} />
+        <label className={cell}>
+          <span className={cellLabel}>Service</span>
+          <select name="service" defaultValue={filters.service} onChange={submit} aria-label="Service" className={cx(select, "max-w-[170px] truncate")}>
+            <option value="">All services</option>
+            {codes.map((c) => <option key={c.code} value={c.code}>{c.label} · {c.code}</option>)}
           </select>
-        )}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <div className="inline-flex h-9 overflow-hidden rounded-lg border border-line bg-card" role="group" aria-label="Signature">
-            <button type="submit" name="signed" value="" aria-pressed={filters.signed === ""} className={cx("px-3 text-[13.5px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", filters.signed === "" ? "bg-primary-soft text-primary" : "text-text hover:bg-hover")}>All notes</button>
-            <button type="submit" name="signed" value="unsigned" aria-pressed={filters.signed === "unsigned"} className={cx("border-l border-line px-3 text-[13.5px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", filters.signed === "unsigned" ? "bg-primary-soft text-primary" : "text-text hover:bg-hover")}>Unsigned</button>
-          </div>
-          <label className={cx(control, "flex items-center gap-1.5 pl-2")}>
-            <ArrowUpDown size={15} className="shrink-0 text-muted-foreground" aria-hidden />
-            <span className="sr-only">Sort</span>
-            <select name="sort" defaultValue={filters.sort} onChange={submit} className="bg-transparent pr-1 text-[13.5px] outline-none">
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
+          <ChevronDown size={15} aria-hidden className="pointer-events-none -ml-1 text-muted-foreground" />
+        </label>
+        <Popover>
+          <PopoverTrigger render={<button type="button" aria-label={`Dates: ${rangeLabel(filters.from, filters.to)}`} className={cx(cell, "hover:bg-tab-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30")} />}>
+            <span className={cellLabel}>Dates</span>
+            <CalendarDays size={15} aria-hidden className="text-muted-foreground" />
+            <span className="whitespace-nowrap">{rangeLabel(filters.from, filters.to)}</span>
+            <ChevronDown size={15} aria-hidden className="text-muted-foreground" />
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-auto gap-3 p-3">
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-[12px] font-medium uppercase tracking-[0.06em] text-muted-foreground">From<input type="date" aria-label="From date" value={draft.from} max={draft.to || undefined} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} className="mt-1 block h-9 w-full rounded-md border border-line bg-card px-2 text-[14px] normal-case tracking-normal text-text-strong" /></label>
+              <label className="block text-[12px] font-medium uppercase tracking-[0.06em] text-muted-foreground">To<input type="date" aria-label="To date" value={draft.to} min={draft.from || undefined} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} className="mt-1 block h-9 w-full rounded-md border border-line bg-card px-2 text-[14px] normal-case tracking-normal text-text-strong" /></label>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <button type="button" onClick={() => applyRange("", "")} className="text-[13.5px] font-medium text-primary hover:underline">Last 90 days</button>
+              <button type="button" onClick={() => applyRange(draft.from, draft.to)} className="h-8 rounded-md bg-primary px-3 text-[13.5px] font-medium text-primary-foreground hover:bg-primary-hover">Apply</button>
+            </div>
+          </PopoverContent>
+        </Popover>
+        {staffOptions.length > 0 && (
+          <label className={cell}>
+            <span className={cellLabel}>Staff</span>
+            <select name="staff" defaultValue={filters.staff} onChange={submit} aria-label="Staff" className={cx(select, "max-w-[140px] truncate")}>
+              <option value="">All staff</option>
+              {staffOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
+            <ChevronDown size={15} aria-hidden className="pointer-events-none -ml-1 text-muted-foreground" />
           </label>
-          {filtered && <Link href={`${base}?tab=notes`} className="text-[13.5px] font-medium text-primary hover:underline">Clear</Link>}
+        )}
+        <div className="min-w-4 flex-1" />
+        <div className="flex items-stretch border-l border-line-soft" role="group" aria-label="Signature">
+          <button type="submit" name="signed" value="" aria-pressed={filters.signed === ""} className={cx(toggle, filters.signed === "" && toggleOn)}>All notes</button>
+          <button type="submit" name="signed" value="unsigned" aria-pressed={filters.signed === "unsigned"} className={cx(toggle, filters.signed === "unsigned" && toggleOn)}>Unsigned</button>
         </div>
+        <label className={cx(cell, "border-r-0")}>
+          <ArrowUpDown size={15} aria-hidden className="text-muted-foreground" />
+          <span className="sr-only">Sort</span>
+          <select name="sort" defaultValue={filters.sort} onChange={submit} className={select}>
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+          <ChevronDown size={15} aria-hidden className="pointer-events-none -ml-1 text-muted-foreground" />
+        </label>
       </form>
 
       {capped && <p className="mb-4 rounded-lg border border-warn/30 bg-warn-soft px-3 py-2 text-[13.5px] text-warn">Only the first {num(rows.length)} sessions in this range are shown. Narrow the dates to see the rest.</p>}
@@ -139,8 +184,8 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
   );
 }
 
-function Pill({ tone, icon, children }: { tone: "ok" | "warn" | "neutral" | "accent"; icon?: ReactNode; children: ReactNode }) {
-  const cls = { ok: "bg-ok-soft text-ok", warn: "bg-warn-soft text-warn", neutral: "bg-panel text-text", accent: "bg-primary-soft text-primary" }[tone];
+function Pill({ tone, icon, children }: { tone: "warn" | "neutral" | "accent"; icon?: ReactNode; children: ReactNode }) {
+  const cls = { warn: "bg-warn-soft text-warn", neutral: "bg-panel text-text", accent: "bg-primary-soft text-primary" }[tone];
   return <span className={cx("inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[13.5px] font-medium", cls)}>{icon}{children}</span>;
 }
 
@@ -149,7 +194,7 @@ function SessionCard({ r, href }: { r: NoteRow; href: string }) {
   const [folded, setFolded] = useState(false);
   const extra = r.clockOutAt ? daysApart(r.clockInAt, r.clockOutAt) : 0;
   const title = labelForCode(r.serviceCode, r.modifiers);
-  const review = r.returned ? { tone: "warn" as const, label: "Returned" } : r.approved ? { tone: "ok" as const, label: "Accepted", icon: <CheckCircle2 size={15} aria-hidden /> } : r.status === "in_progress" ? { tone: "accent" as const, label: "In progress" } : r.note ? { tone: "neutral" as const, label: "Draft" } : { tone: "neutral" as const, label: "No note" };
+  const review = r.returned ? { tone: "warn" as const, label: "Returned" } : r.approved ? null : r.status === "in_progress" ? { tone: "accent" as const, label: "In progress" } : r.note ? { tone: "neutral" as const, label: "Draft" } : { tone: "neutral" as const, label: "No note" };
   const detailsId = `details-${r.id}`;
   const hasDetails = Boolean(r.interaction || r.skills.length || r.activities.length || r.goalYes + r.goalNo > 0 || r.manual || r.edits > 0);
 
@@ -169,7 +214,7 @@ function SessionCard({ r, href }: { r: NoteRow; href: string }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Pill tone={review.tone} icon={review.icon}>{review.label}</Pill>
+          {review && <Pill tone={review.tone}>{review.label}</Pill>}
           {unsigned(r) && <Pill tone="warn" icon={<PenLine size={15} aria-hidden />}>Unsigned</Pill>}
           {r.manual && <Pill tone="warn">Manual</Pill>}
           {r.edits > 0 && <Pill tone="neutral">Edited</Pill>}
