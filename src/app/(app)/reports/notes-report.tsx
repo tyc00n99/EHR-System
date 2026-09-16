@@ -1,8 +1,9 @@
 "use client";
 
+import { FilterMenu } from "@/components/filter-menu";
 import { useState } from "react";
 import { DownloadButton } from "@/components/download-button";
-import { Field, Input, Select } from "@/components/kit";
+import { Field, Input } from "@/components/kit";
 
 export interface NotesReportClient { id: string; name: string; pmi: string; services: { code: string; label: string }[] }
 
@@ -20,15 +21,10 @@ export function NotesReport({ clients, defaultFrom, defaultTo }: { clients: Note
   return (
     <div className="grid gap-4 px-5 py-4 md:grid-cols-[1.6fr_1.8fr_1fr_1fr_auto] md:items-end">
       <Field label="Client">
-        <Select value={clientId} onChange={(e) => { setClientId(e.target.value); setCode(""); }}>
-          {clients.map((c) => <option key={c.id} value={c.id}>{c.name} · PMI {c.pmi}</option>)}
-        </Select>
+        <FilterMenu aria-label="Client" value={clientId} onChange={(v) => { setClientId(v); setCode(""); }} className="w-full" options={clients.map((c) => ({ value: c.id, label: c.name, hint: `PMI ${c.pmi}` }))} />
       </Field>
       <Field label="Service type">
-        <Select value={code} onChange={(e) => setCode(e.target.value)}>
-          <option value="">All services</option>
-          {client?.services.map((s) => <option key={s.code} value={s.code}>{s.label} · {s.code}</option>)}
-        </Select>
+        <FilterMenu aria-label="Service type" value={code} onChange={setCode} className="w-full" options={[{ value: "", label: "All services" }, ...(client?.services ?? []).map((s) => ({ value: s.code, label: s.label, hint: s.code }))]} />
       </Field>
       <Field label="From"><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
       <Field label="To"><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></Field>

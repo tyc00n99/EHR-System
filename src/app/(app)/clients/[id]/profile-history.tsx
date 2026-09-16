@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterMenu } from "@/components/filter-menu";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
@@ -79,13 +80,7 @@ export function ProfileHistory({ rows }: { rows: HistoryRow[] }) {
       <div className="mt-2 flex items-center gap-3">
         <label className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
           Load
-          <select
-            value={size}
-            onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
-            className="h-7 rounded-md border border-line bg-card px-1.5 text-[13px] text-text"
-          >
-            {SIZES.map((n) => <option key={n} value={n}>{n} rows</option>)}
-          </select>
+          <FilterMenu aria-label="Rows to load" value={String(size)} onChange={(v) => { setSize(Number(v)); setPage(0); }} className="h-7 px-2 text-[13px]" options={SIZES.map((n) => ({ value: String(n), label: `${n} rows` }))} />
         </label>
 
         {pages > 1 && (

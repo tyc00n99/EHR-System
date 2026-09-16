@@ -1,5 +1,6 @@
 "use client";
 
+import { FilterMenu } from "@/components/filter-menu";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -142,10 +143,7 @@ export function ScheduleToolbar({
           </Link>
         </div>
 
-        <label className="sr-only" htmlFor="sched-view">Calendar view</label>
-        <select id="sched-view" value={state.view} onChange={(e) => go({ view: e.target.value })} className={cx(CONTROL, "h-9 px-3 font-medium text-text-strong")}>
-          {VIEWS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-        </select>
+        <FilterMenu aria-label="Calendar view" value={state.view} onChange={(v) => go({ view: v })} className="font-medium" options={VIEWS.map(([v, label]) => ({ value: v, label }))} />
 
         <div className="flex items-center rounded-lg border border-line bg-panel p-0.5">
           {(["team", "clients"] as const).map((m) => (
@@ -329,22 +327,13 @@ function FilterPopover({ state, services, careTeam, onApply }: { state: ToolbarS
       {open && (
         <div className="absolute left-0 top-full z-30 mt-1.5 w-[300px] rounded-lg border border-line bg-card p-4 shadow-lg">
           <Field label="Event types">
-            <select value={code} onChange={(e) => setCode(e.target.value)} className={cx(CONTROL, "h-10 w-full px-3")}>
-              <option value="">Select a session type</option>
-              {services.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
-            </select>
+            <FilterMenu aria-label="Event types" value={code} onChange={setCode} className="h-10 w-full" options={[{ value: "", label: "Select a session type" }, ...services.map((s) => ({ value: s.code, label: s.label }))]} />
           </Field>
           <Field label="Event status">
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className={cx(CONTROL, "h-10 w-full px-3")}>
-              <option value="">Select an event status</option>
-              {STATUSES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
+            <FilterMenu aria-label="Event status" value={status} onChange={setStatus} className="h-10 w-full" options={[{ value: "", label: "Select an event status" }, ...STATUSES.map(([v, l]) => ({ value: v, label: l }))]} />
           </Field>
           <Field label="Client's care team">
-            <select value={staff} onChange={(e) => setStaff(e.target.value)} className={cx(CONTROL, "h-10 w-full px-3")}>
-              <option value="">Select a team member</option>
-              {careTeam.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            <FilterMenu aria-label="Client's care team" value={staff} onChange={setStaff} className="h-10 w-full" options={[{ value: "", label: "Select a team member" }, ...careTeam.map((s) => ({ value: s.id, label: s.name }))]} />
           </Field>
           <div className="mt-4 flex items-center justify-between">
             <button type="button" onClick={() => { setCode(""); setStatus(""); setStaff(""); setOpen(false); onApply({ code: "", status: "", staff: "" }); }} className="h-10 rounded-lg border border-line px-4 text-[14.5px] font-medium text-text-strong hover:bg-hover">

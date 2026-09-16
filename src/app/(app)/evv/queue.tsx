@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Badge, Button, Empty, Input, PageHeader, Select } from "@/components/kit";
+import { FilterMenu } from "@/components/filter-menu";
+import { Badge, Button, Empty, Input, PageHeader } from "@/components/kit";
 import { COMPLIANCE, SUBMISSION, reasonLabel } from "@/evv/labels";
 import type { reviewQueue } from "@/evv/review";
 import { fmtDate } from "@/lib/format";
@@ -40,9 +41,9 @@ export function Queue({ queue, filter, names, people, staff }: { queue: QueueDat
         {Object.entries(filter).filter(([k]) => ["openExceptionsOnly", "complianceStatus", "manualOrCorrected", "rejected", "approachingDeadline"].includes(k)).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
         <Input type="date" name="from" defaultValue={filter.from ?? ""} aria-label="From" />
         <Input type="date" name="to" defaultValue={filter.to ?? ""} aria-label="To" />
-        <Select name="personId" defaultValue={filter.personId ?? ""} aria-label="Client"><option value="">Any client</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select>
-        <Select name="staffId" defaultValue={filter.staffId ?? ""} aria-label="Caregiver"><option value="">Any caregiver</option>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
-        <Select name="submissionStatus" defaultValue={filter.submissionStatus ?? ""} aria-label="Submission status"><option value="">Any submission status</option>{Object.entries(SUBMISSION).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select>
+        <FilterMenu submit aria-label="Client" name="personId" value={filter.personId ?? ""} options={[{ value: "", label: "Any client" }, ...people.map((p) => ({ value: p.id, label: p.name }))]} />
+        <FilterMenu submit aria-label="Caregiver" name="staffId" value={filter.staffId ?? ""} options={[{ value: "", label: "Any caregiver" }, ...staff.map((s) => ({ value: s.id, label: s.name }))]} />
+        <FilterMenu submit aria-label="Submission status" name="submissionStatus" value={filter.submissionStatus ?? ""} options={[{ value: "", label: "Any submission status" }, ...Object.entries(SUBMISSION).map(([k, v]) => ({ value: k, label: v.label }))]} />
         <div className="flex gap-2"><Input name="serviceCode" defaultValue={filter.serviceCode ?? ""} placeholder="Service code" aria-label="Service code" /><Button type="submit" variant="secondary" className="shrink-0">Filter</Button></div>
       </form>
 

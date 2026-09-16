@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleHelp } from "lucide-react";
+import { FilterMenu } from "@/components/filter-menu";
 import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
@@ -121,9 +122,7 @@ function GoalDetail({ personId, g, manage, rangeLabel }: { personId: string; g: 
         {manage && (<>
           <Button variant="outline" className="h-8" onClick={() => { setEditing((v) => !v); setReviewing(false); }}>{editing ? "Close" : "Edit"}</Button>
           {g.status === "active" && <Button variant="outline" className="h-8" onClick={() => { setReviewing((v) => !v); setEditing(false); }}>{reviewing ? "Close" : "Review"}</Button>}
-          <div className="w-36"><Select value={g.status} onChange={(e) => start(async () => { await setGoalStatus(g.id, personId, e.target.value as GoalView["status"]); toast.success("Status updated"); })} disabled={pending} className="h-8 text-[13px]">
-            <option value="active">Active</option><option value="met">Met</option><option value="discontinued">Discontinued</option>
-          </Select></div>
+          <FilterMenu aria-label="Goal status" value={g.status} disabled={pending} className="h-8" onChange={(v) => start(async () => { await setGoalStatus(g.id, personId, v as GoalView["status"]); toast.success("Status updated"); })} options={[{ value: "active", label: "Active" }, { value: "met", label: "Met" }, { value: "discontinued", label: "Discontinued" }]} />
         </>)}
       </div>
 

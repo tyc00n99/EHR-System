@@ -2,10 +2,10 @@
 
 import { ArrowUpDown, BarChart3, CalendarDays, ChevronDown, ChevronUp, FileText, Flag, PenLine, Wrench } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { DownloadButton } from "@/components/download-button";
 import { cx } from "@/components/kit";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FilterMenu } from "@/components/filter-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { labelForCode } from "@/lib/hcpcs";
 import { fmtDate } from "@/lib/format";
@@ -45,36 +45,6 @@ const unsigned = (r: NoteRow) => r.status === "completed" && !r.clientSigned;
 const cell = "relative flex h-10 items-center gap-1.5 border-r border-line-soft px-3 text-[14px] text-text-strong";
 const cellLabel = "text-[12px] font-medium uppercase tracking-[0.06em] text-muted-foreground";
 const cellButton = "hover:bg-tab-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30";
-
-/**
- * One filter in the bar. The choice is held in a hidden input inside the GET form and the menu is
- * the app's own dropdown, not the operating system's — a native select pops a system-styled list
- * (dark on a dark-mode Mac) that matches nothing else on the page.
- */
-function FilterMenu({ label, icon, name, value, options, form, last }: { label?: string; icon?: ReactNode; name: string; value: string; options: { value: string; label: string; hint?: string }[]; form: RefObject<HTMLFormElement | null>; last?: boolean }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const current = options.find((o) => o.value === value) ?? options[0];
-  return (<>
-    <input ref={ref} type="hidden" name={name} defaultValue={value} />
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<button type="button" aria-label={`${label ?? name}: ${current.label}`} className={cx(cell, cellButton, last && "border-r-0")} />}>
-        {label && <span className={cellLabel}>{label}</span>}
-        {icon}
-        <span className="max-w-[180px] truncate">{current.label}</span>
-        <ChevronDown size={15} aria-hidden className="text-muted-foreground" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-auto min-w-64 max-w-[440px]">
-        <DropdownMenuRadioGroup value={value} onValueChange={(v) => { if (ref.current) ref.current.value = String(v); form.current?.requestSubmit(); }}>
-          {options.map((o) => (
-            <DropdownMenuRadioItem key={o.value} value={o.value} aria-label={o.hint ? ` · ` : o.label} className="py-1.5 pr-9 pl-2.5 text-[14px]">
-              <span className="whitespace-nowrap">{o.label}</span>{o.hint && <span className="ml-1 shrink-0 whitespace-nowrap text-muted-foreground">· {o.hint}</span>}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </>);
-}
 
 /**
  * The client's Sessions tab: every visit in the range, grouped by the Chicago date it started,
@@ -133,7 +103,7 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
         <input type="hidden" name="tab" value="notes" />
         <input ref={fromRef} type="hidden" name="from" defaultValue={filters.from} />
         <input ref={toRef} type="hidden" name="to" defaultValue={filters.to} />
-        <FilterMenu label="Service" name="service" value={filters.service} form={formRef} options={[{ value: "", label: "All services" }, ...codes.map((c) => ({ value: c.code, label: c.label, hint: c.code }))]} />
+        <FilterMenu variant="cell" submit label="Service" name="service" value={filters.service} options={[{ value: "", label: "All services" }, ...codes.map((c) => ({ value: c.code, label: c.label, hint: c.code }))]} />
         <Popover>
           <PopoverTrigger render={<button type="button" aria-label={`Dates: ${rangeLabel(filters.from, filters.to)}`} className={cx(cell, cellButton)} />}>
             <span className={cellLabel}>Dates</span>
@@ -152,13 +122,13 @@ export function NotesTab({ personId, rows, codes, staffOptions, filters, base, t
             </div>
           </PopoverContent>
         </Popover>
-        {staffOptions.length > 0 && <FilterMenu label="Staff" name="staff" value={filters.staff} form={formRef} options={[{ value: "", label: "All staff" }, ...staffOptions.map((o) => ({ value: o.id, label: o.name }))]} />}
+        {staffOptions.length > 0 && <FilterMenu variant="cell" submit label="Staff" name="staff" value={filters.staff} options={[{ value: "", label: "All staff" }, ...staffOptions.map((o) => ({ value: o.id, label: o.name }))]} />}
         <div className="min-w-4 flex-1" />
         <div className="flex items-stretch border-l border-line-soft" role="group" aria-label="Signature">
           <button type="submit" name="signed" value="" aria-pressed={filters.signed === ""} className={cx(toggle, filters.signed === "" && toggleOn)}>All notes</button>
           <button type="submit" name="signed" value="unsigned" aria-pressed={filters.signed === "unsigned"} className={cx(toggle, filters.signed === "unsigned" && toggleOn)}>Unsigned</button>
         </div>
-        <FilterMenu name="sort" value={filters.sort} form={formRef} last icon={<ArrowUpDown size={15} aria-hidden className="text-muted-foreground" />} options={[{ value: "newest", label: "Newest first" }, { value: "oldest", label: "Oldest first" }]} />
+        <FilterMenu variant="cell" submit className="border-r-0" name="sort" value={filters.sort} icon={<ArrowUpDown size={15} aria-hidden className="text-muted-foreground" />} options={[{ value: "newest", label: "Newest first" }, { value: "oldest", label: "Oldest first" }]} />
       </form>
 
       {capped && <p className="mb-4 rounded-lg border border-warn/30 bg-warn-soft px-3 py-2 text-[13.5px] text-warn">Only the first {num(rows.length)} sessions in this range are shown. Narrow the dates to see the rest.</p>}

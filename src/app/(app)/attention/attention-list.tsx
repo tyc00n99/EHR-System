@@ -1,9 +1,10 @@
 "use client";
 
+import { FilterMenu } from "@/components/filter-menu";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, Empty, Input, Select, cx } from "@/components/kit";
+import { Badge, Button, Card, Empty, Input, cx } from "@/components/kit";
 import { Icon } from "@/components/icons";
 import { bulkCancelShifts, bulkConfirmManualEvidence, bulkRecordUnableToSign, undoBulk } from "./actions";
 
@@ -72,10 +73,8 @@ export function AttentionList({ groups, initialKind = "all" }: { groups: Group[]
           <div className="flex items-center gap-3"><span className="figure text-3xl">{allRows.length}</span><span className="text-sm text-muted-foreground">open items<br /><span className="font-medium text-danger">{allRows.filter((r) => r.severity === "danger").length} high priority</span></span></div>
           <div className="flex w-full flex-wrap gap-2 sm:w-auto">
             <Input aria-label="Search review queue" placeholder="Search client, staff, or issue…" value={query} disabled={pending} onChange={(e) => { setQuery(e.target.value); resetSelection(); }} className="sm:w-64" />
-            <Select aria-label="Issue type" value={kind} disabled={pending} onChange={(e) => { setKind(e.target.value); resetSelection(); }} className="sm:w-52">
-              <option value="all">All issue types</option>{kind !== "all" && !groups.some((g) => g.kind === kind) && <option value={kind}>{kind.replaceAll("_", " ")} (0)</option>}{groups.map((g) => <option key={g.kind} value={g.kind}>{g.label} ({g.rows.length})</option>)}
-            </Select>
-            <Select aria-label="Priority" value={severity} disabled={pending} onChange={(e) => { setSeverity(e.target.value); resetSelection(); }} className="sm:w-40"><option value="all">All priorities</option><option value="danger">High priority</option><option value="warn">Needs review</option><option value="accent">Information</option></Select>
+            <FilterMenu aria-label="Issue type" value={kind} disabled={pending} onChange={(v) => { setKind(v); resetSelection(); }} options={[{ value: "all", label: "All issue types" }, ...(kind !== "all" && !groups.some((g) => g.kind === kind) ? [{ value: kind, label: kind.replaceAll("_", " "), hint: "0" }] : []), ...groups.map((g) => ({ value: g.kind, label: g.label, hint: String(g.rows.length) }))]} />
+            <FilterMenu aria-label="Priority" value={severity} disabled={pending} onChange={(v) => { setSeverity(v); resetSelection(); }} options={[{ value: "all", label: "All priorities" }, { value: "danger", label: "High priority" }, { value: "warn", label: "Needs review" }, { value: "accent", label: "Information" }]} />
           </div>
         </div>
         <p role="status" className="mt-3 text-[13px] text-muted-foreground">{visibleCount} matching items · Grouped by issue; high priority first within each group.</p>
