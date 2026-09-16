@@ -50,6 +50,6 @@ export function RangeNav({ range, base, extra, kindParams }: { range: VisitRange
       </Popover>
       {range.next && <Link href={href(range.next)} aria-label={`Next ${kindLabel.toLowerCase()}`} className={arrow}>›</Link>}
     </span>
-    {range.isCurrent ? <span>{range.kind === "period" ? "current pay period" : range.kind === "week" ? "this week" : range.kind === "month" ? "this month" : "includes today"}</span> : range.kind !== "custom" && <Link href={href(range.current)} className="text-primary hover:underline">Jump to current</Link>}
+    {range.isCurrent ? <span className="text-muted-foreground">· {range.kind === "period" ? "current pay period" : range.kind === "week" ? "this week" : range.kind === "month" ? "this month" : "includes today"}</span> : range.kind !== "custom" && <Link href={href(range.current)} className="text-primary hover:underline">Jump to current</Link>}
   </>);
 }

@@ -41,11 +41,22 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
         title={title}
         meta={<>
           <RangeNav range={range} base="/visits" extra={extra} kindParams={kindParams} />
-          <span className="tabular-nums"><span className="text-text-strong">{all.length}</span> visits</span>
-          <span className="tabular-nums"><span className="text-text-strong">{units}</span> units</span>
-          <span className="tabular-nums"><span className="text-text-strong">{Math.round(minutes / 6) / 10}</span> hours</span>
-          {all.some((r) => r.visit.manualEntry) && <span className="tabular-nums"><span className="font-medium text-warn">{all.filter((r) => r.visit.manualEntry).length}</span> manual</span>}
-          {all.some((r) => r.visit.status === "completed" && !r.visit.clientSignedAt) && <span className="tabular-nums"><span className="font-medium text-danger">{all.filter((r) => r.visit.status === "completed" && !r.visit.clientSignedAt).length}</span> unsigned</span>}
+          {/* The totals get their own line so they read as one quiet sentence, not a run-on. */}
+          <span aria-hidden className="basis-full" />
+          <span className="inline-flex flex-wrap items-center gap-x-2 text-[14px] tabular-nums">
+            {[
+            { n: all.length, label: "visits" },
+            { n: units, label: "units" },
+            { n: Math.round(minutes / 6) / 10, label: "hours" },
+            ...(all.some((r) => r.visit.manualEntry) ? [{ n: all.filter((r) => r.visit.manualEntry).length, label: "manual", tone: "text-warn" }] : []),
+            ...(all.some((r) => r.visit.status === "completed" && !r.visit.clientSignedAt) ? [{ n: all.filter((r) => r.visit.status === "completed" && !r.visit.clientSignedAt).length, label: "unsigned", tone: "text-danger" }] : [])
+            ].map((x, i) => (
+              <span key={x.label} className="inline-flex items-center gap-x-2">
+                {i > 0 && <span aria-hidden className="text-hint">·</span>}
+                <span><span className={`font-medium ${x.tone ?? "text-text-strong"}`}>{x.n}</span> {x.label}</span>
+              </span>
+            ))}
+          </span>
           {state && <span>Showing only notes {stateLabel[state]}. <Link href={rangeHref(range.param)} className="text-primary hover:underline">Show all</Link></span>}
         </>}
         actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a note manually</LinkButton>}
