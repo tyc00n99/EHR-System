@@ -36,7 +36,7 @@ export function NotePreview() {
         </DialogTitle>
         <div className="relative min-h-0 flex-1 bg-panel">
           {loaded !== id && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted-foreground"><Loader2 className="size-4 animate-spin" aria-hidden /> Preparing the note…</div>}
-          <iframe key={id} src={`${src}#toolbar=0&view=FitH`} title="Daily service note" onLoad={() => setLoaded(id)} className="size-full" />
+          <iframe key={id} src={`${src}#toolbar=0&view=Fit&zoom=page-fit`} title="Daily service note" onLoad={() => setLoaded(id)} className="size-full" />
         </div>
       </DialogContent>
     </Dialog>
