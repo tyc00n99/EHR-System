@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/data-table";
@@ -21,6 +21,9 @@ export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { 
   // The section row owns this filter when it is present; the chips are the fallback for phones
   // and for caregivers, who have no second row.
   const [chip, setChip] = useState<"all" | "unsigned" | "manual" | "open">("all");
+  // Hovering a row asks the server to render its PDF, so the preview is usually ready on click.
+  const warmed = useRef(new Set<string>());
+  const warm = (r: VisitRow) => { if (warmed.current.has(r.id)) return; warmed.current.add(r.id); fetch(`/visits/${r.id}/note.pdf`, { priority: "low" }).catch(() => {}); };
   const flag = state ?? chip;
   const byDate = (a: VisitRow, b: VisitRow) => (a.clockInIso < b.clockInIso ? 1 : a.clockInIso > b.clockInIso ? -1 : 0);
   const data = useMemo(() => rows.filter((r) => (flag === "unsigned" ? r.status === "completed" && !r.signed : flag === "returned" ? r.returned : flag === "manual" ? r.manual : flag === "open" ? r.status === "in_progress" : true)).sort(byDate), [rows, flag]);
@@ -55,6 +58,7 @@ export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { 
       columns={columns}
       data={data}
       getRowId={(r) => r.id}
+      onRowHover={warm}
       selectable={Boolean(exportCsv || exportPdf)}
       bulk={(selected, clear) => (
         <div className="flex flex-wrap items-center gap-2">

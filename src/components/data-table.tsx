@@ -49,12 +49,14 @@ export interface DataTableProps<T> {
   dense?: boolean;
   /** Stable id per row; needed for selection to survive sorting and filtering. */
   getRowId?: (row: T) => string;
+  /** Called when the pointer enters a row; use it to warm whatever a click will open. */
+  onRowHover?: (row: T) => void;
   /** Adds a checkbox column. `bulk` renders the toolbar while rows are selected. */
   selectable?: boolean;
   bulk?: (selected: T[], clear: () => void) => ReactNode;
 }
 
-export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, rowHref, chips, actions, emptyTitle = "Nothing here yet", emptyHint, pageSize = 25, initialSorting = [], dense, getRowId, selectable, bulk }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, rowHref, chips, actions, emptyTitle = "Nothing here yet", emptyHint, pageSize = 25, initialSorting = [], dense, getRowId, selectable, bulk, onRowHover }: DataTableProps<T>) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -150,7 +152,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
             ) : rows.map((row) => {
               const href = rowHref?.(row.original);
               return (
-                <TableRow key={row.id} onClick={href ? () => router.push(href) : undefined} data-state={row.getIsSelected() ? "selected" : undefined} className={cn("border-line-soft", href && "cursor-pointer", row.getIsSelected() && "bg-primary-soft/40")}>
+                <TableRow key={row.id} onMouseEnter={onRowHover ? () => onRowHover(row.original) : undefined} onClick={href ? () => { if (href.startsWith("?")) { window.history.pushState(null, "", href); } else router.push(href); } : undefined} data-state={row.getIsSelected() ? "selected" : undefined} className={cn("border-line-soft", href && "cursor-pointer", row.getIsSelected() && "bg-primary-soft/40")}>
                   {row.getVisibleCells().map((cell) => {
                     const align = (cell.column.columnDef.meta as ColumnMeta | undefined)?.align;
                     return <TableCell key={cell.id} className={cn("px-4 align-middle text-[14.5px] first:pl-5 last:pr-5", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { Loader2, Pencil } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -12,13 +13,14 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
  */
 export function NotePreview() {
   const params = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const id = params.get("note");
+  const [loaded, setLoaded] = useState<string | null>(null);
+  // Closing only touches the URL: no server render, so the list underneath does not flash.
   const close = () => {
     const next = new URLSearchParams(params.toString());
     next.delete("note");
-    router.replace(next.size ? `${pathname}?${next}` : pathname, { scroll: false });
+    window.history.replaceState(null, "", next.size ? `${pathname}?${next}` : pathname);
   };
   if (!id) return null;
   const src = `/visits/${id}/note.pdf`;
@@ -32,7 +34,10 @@ export function NotePreview() {
             <DownloadButton href={src} className="h-7 px-2.5 text-[13px]">Download</DownloadButton>
           </span>
         </DialogTitle>
-        <iframe src={`${src}#toolbar=0&view=FitH`} title="Daily service note" className="min-h-0 flex-1 bg-panel" />
+        <div className="relative min-h-0 flex-1 bg-panel">
+          {loaded !== id && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted-foreground"><Loader2 className="size-4 animate-spin" aria-hidden /> Preparing the note…</div>}
+          <iframe key={id} src={`${src}#toolbar=0&view=FitH`} title="Daily service note" onLoad={() => setLoaded(id)} className="size-full" />
+        </div>
       </DialogContent>
     </Dialog>
   );

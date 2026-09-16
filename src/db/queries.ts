@@ -178,6 +178,8 @@ export async function staffPeriodTotals(staffId: string, from: Date, to: Date) {
 }
 
 export interface VisitFilter {
+  /** One visit by id; the other filters still apply. */
+  id?: string;
   serviceCode?: string;
   personId?: string;
   staffId?: string;
@@ -189,6 +191,7 @@ export interface VisitFilter {
 export async function listVisits(f: VisitFilter = {}) {
   const db = await getDb();
   const where = [
+    f.id ? eq(visits.id, f.id) : undefined,
     f.personId ? eq(visits.personId, f.personId) : undefined,
     f.staffId ? eq(visits.staffId, f.staffId) : undefined,
     f.serviceCode ? eq(visits.serviceCode, f.serviceCode) : undefined,
