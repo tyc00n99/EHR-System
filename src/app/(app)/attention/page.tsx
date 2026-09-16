@@ -1,4 +1,4 @@
-import { Card, Empty, PageHeader } from "@/components/kit";
+import { Card, Empty } from "@/components/kit";
 import { AttentionList } from "./attention-list";
 import { Icon } from "@/components/icons";
 import { requireUser } from "@/lib/auth";
@@ -27,7 +27,6 @@ export default async function AttentionPage({ searchParams }: PageProps<"/attent
   const groups = Object.keys(KIND).map((k) => ({ k, items: items.filter((i) => i.kind === k) })).filter((g) => g.items.length);
   return (
     <div>
-      <PageHeader title="Review queue" meta={<span>{items.length} item{items.length === 1 ? "" : "s"} across visits, staff, clients, and authorizations. Filter by priority or type. Select related records to resolve them together.</span>} />
       {items.length === 0 ? (
         <Card><Empty icon="check" title="Nothing needs attention">Every visit is signed, staff are compliant, and authorizations have room.</Empty></Card>
       ) : (

@@ -5,6 +5,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
+import { PdfPages, type PdfFit } from "@/components/pdf-pages";
+import { cx } from "@/components/kit";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 /**
@@ -16,6 +18,7 @@ export function NotePreview() {
   const pathname = usePathname();
   const id = params.get("note");
   const [loaded, setLoaded] = useState<string | null>(null);
+  const [fit, setFit] = useState<PdfFit>("page");
   // Closing only touches the URL: no server render, so the list underneath does not flash.
   const close = () => {
     const next = new URLSearchParams(params.toString());
@@ -30,13 +33,17 @@ export function NotePreview() {
         <DialogTitle className="flex h-12 shrink-0 items-center gap-3 whitespace-nowrap border-b border-line-soft bg-page pl-4 pr-14 text-[13.5px] font-medium">
           <span className="min-w-0 flex-1 truncate">Daily service note</span>
           <span className="ml-auto flex shrink-0 items-center gap-1.5">
+            <span className="mr-1 inline-flex h-7 overflow-hidden rounded-md border border-line text-[13px] font-medium" role="group" aria-label="Zoom">
+              <button type="button" onClick={() => setFit("page")} aria-pressed={fit === "page"} className={cx("px-2.5", fit === "page" ? "bg-primary-soft text-primary" : "hover:bg-hover")}>Fit page</button>
+              <button type="button" onClick={() => setFit("width")} aria-pressed={fit === "width"} className={cx("border-l border-line px-2.5", fit === "width" ? "bg-primary-soft text-primary" : "hover:bg-hover")}>Fit width</button>
+            </span>
             <Link href={`${pathname}?visit=${id}`} scroll={false} onClick={close} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Pencil className="size-3.5" /> Open record</Link>
             <DownloadButton href={src} className="h-7 px-2.5 text-[13px]">Download</DownloadButton>
           </span>
         </DialogTitle>
         <div className="relative min-h-0 flex-1 bg-panel">
           {loaded !== id && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted-foreground"><Loader2 className="size-4 animate-spin" aria-hidden /> Preparing the note…</div>}
-          <iframe key={id} src={`${src}#toolbar=0&view=Fit&zoom=page-fit`} title="Daily service note" onLoad={() => setLoaded(id)} className="size-full" />
+          <PdfPages key={id} src={src} fit={fit} onFirstPage={() => setLoaded(id)} />
         </div>
       </DialogContent>
     </Dialog>
