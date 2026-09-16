@@ -7,6 +7,7 @@ import { can, requireUser } from "@/lib/auth";
 import { fmtDateTime, fullName } from "@/lib/format";
 import { rangeParamFor, resolveVisitRange, type RangeKind } from "@/lib/visit-range";
 import { RangeNav } from "./range-nav";
+import { abbreviationForCode } from "@/lib/hcpcs";
 import { minutesBetween } from "@/lib/units";
 
 export const metadata = { title: "Notes" };
@@ -63,7 +64,7 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
       />
 
       <Card>
-        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: v.serviceCode, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} showChips={user.role === "dsp"} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?${range.param}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?${range.param}` : undefined} />
+        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${abbreviationForCode(v.serviceCode, v.modifiers) ? ` (${abbreviationForCode(v.serviceCode, v.modifiers)})` : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} showChips={user.role === "dsp"} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?${range.param}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?${range.param}` : undefined} />
       </Card>
     </div>
   );

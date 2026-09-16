@@ -89,3 +89,19 @@ export function labelForCode(code: string, modifiers: string[]): string {
   const byCode = SERVICE_CODES.find((s) => s.code === code);
   return byCode ? byCode.label.replace(/,\s*1:\d$/, "") : key;
 }
+
+/** Short tags for dense tables, keyed by service type: a code alone means little at a glance. */
+const ABBREVIATIONS: Record<string, string> = {
+  "ihs-with-training": "IHS", "ihs-without-training": "IHS", "ihs-family-training": "IHS",
+  "respite-in-home": "Respite", "respite-out-of-home": "Respite", "crisis-respite": "Crisis",
+  homemaker: "HM", "adult-companion": "AC", "night-supervision": "NS", "emergency-assistance": "EA",
+  icls: "ICLS", "positive-support": "PS", "day-support": "DS", prevocational: "Prevoc",
+  "employment-exploration": "EE", "employment-development": "ED", "employment-support": "ES", sils: "ILS",
+};
+
+/** "IHS", "NS", "HM"… for a code + modifier combination; empty when the catalogue does not know it. */
+export function abbreviationForCode(code: string, modifiers: string[]): string {
+  const key = [code, ...modifiers].join(" ");
+  const match = SERVICE_CODES.find((s) => serviceCodeKey(s) === key) ?? SERVICE_CODES.find((s) => s.code === code);
+  return match ? ABBREVIATIONS[match.serviceTypeId] ?? "" : "";
+}
