@@ -19,6 +19,8 @@ import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { buildPersonnelFile, personnelSummary } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
+import { AboutSection } from "./about";
+import { Plain, Rows } from "./plain";
 
 
 export default async function StaffPage({ params, searchParams }: PageProps<"/staff/[id]">) {
@@ -78,16 +80,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
 
       {tab === "overview" && (
         <div className="max-w-3xl">
-          <Plain title="About" action={user.role === "admin" && <Link href={`/staff/${id}/edit`} className="text-[13.5px] font-medium text-primary hover:underline">Edit</Link>}>
-            <Rows rows={[
-              ["Job", s.title],
-              ["Started", fmtDate(s.hireDate)],
-              ["Phone", s.phone || <span className="text-muted-foreground">Not added</span>],
-              ["Email", s.email || <span className="text-muted-foreground">Not added</span>],
-              ["Address", [s.address1, s.address2, `${s.city}, ${s.state} ${s.zip}`].filter(Boolean).join(", ")],
-              ...(user.role === "admin" ? [["Pay", <span key="pay" className="tabular-nums">{fmtMoney(s.payRate)} an hour</span>] as const, ["SSN", <SsnField key="ssn" staffId={id} last4={s.ssnLast4} canReveal />] as const] : []),
-            ]} />
-          </Plain>
+          <AboutSection staffId={id} canEdit={user.role === "admin"} ssn={user.role === "admin" ? <SsnField staffId={id} last4={s.ssnLast4} canReveal /> : undefined} v={{ firstName: s.firstName, lastName: s.lastName, dob: s.dob, gender: s.gender, npi: s.npi, umpi: s.umpi, active: s.active, title: s.title, hireDate: s.hireDate, phone: s.phone, email: s.email, address1: s.address1, address2: s.address2, city: s.city, state: s.state, zip: s.zip, payRate: s.payRate }} />
           <Plain title="Works" action={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
             {availability.length > 0 ? <AvailabilityCards rows={availability} /> : <p className="text-[15px] text-muted-foreground">No days recorded yet, so scheduling does not know when {s.firstName} is free.</p>}
           </Plain>
@@ -151,17 +144,3 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   );
 }
 
-/** A plain section: a title, an optional action on the same line, and the content below. No card. */
-function Plain({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section className="border-b border-line-soft py-5 last:border-b-0">
-      <div className="mb-3 flex items-baseline gap-3"><h2 className="text-[16px] font-semibold text-text-strong">{title}</h2>{action}</div>
-      {children}
-    </section>
-  );
-}
-
-/** Label / value pairs, one per line, in plain words. */
-function Rows({ rows }: { rows: readonly (readonly [string, React.ReactNode])[] }) {
-  return <dl className="grid grid-cols-[150px_1fr] gap-y-2 text-[15px]">{rows.map(([k, v]) => <div key={k} className="contents"><dt className="text-muted-foreground">{k}</dt><dd className="m-0">{v}</dd></div>)}</dl>;
-}
