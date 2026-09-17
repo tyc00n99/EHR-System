@@ -185,6 +185,9 @@ export const users = pgTable(
     role: userRole("role").notNull(),
     staffId: uuid("staff_id").references(() => staff.id),
     active: boolean("active").notNull().default(true),
+    /** Consecutive failed sign-ins; reset on success. Five in a row locks the account for a while. */
+    failedLogins: integer("failed_logins").notNull().default(0),
+    lockedUntil: timestamp("locked_until", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [uniqueIndex("users_email_idx").on(sql`lower(${t.email})`)],
