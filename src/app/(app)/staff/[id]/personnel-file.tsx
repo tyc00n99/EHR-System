@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { credentialLabel } from "@/lib/credentials";
 import { fmtDate } from "@/lib/format";
 import type { PersonnelItem, PersonnelStatus } from "@/lib/personnel-file";
@@ -39,54 +40,80 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
 export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId: string; items: PersonnelItem[]; aiReady: boolean; staffName: string; documents: { id: string; title: string; fileName: string; credentialId: string | null; createdAt: string }[] }) {
   const [key, setKey] = useState(items.find((i) => i.status !== "ok")?.key ?? items[0].key);
   const current = items.find((i) => i.key === key) ?? items[0];
-  const groups = useMemo(() => {
-    const out: { label: string; items: PersonnelItem[] }[] = [];
-    for (const it of items) {
-      const g = out.find((x) => x.label === it.group);
-      if (g) g.items.push(it); else out.push({ label: it.group, items: [it] });
-    }
-    return out;
-  }, [items]);
   const required = items.filter((i) => i.required);
   const satisfied = required.filter((i) => i.status === "ok" || i.status === "due_soon").length;
 
+  const [open, setOpen] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const inDays = (iso: string) => Math.round((Date.parse(iso + "T12:00:00Z") - Date.parse(today + "T12:00:00Z")) / 86_400_000);
+  const overdue = required.filter((i) => i.status === "overdue" || i.status === "missing" || i.status === "undocumented");
+  const dueSoon = required.filter((i) => i.due && i.status !== "overdue" && inDays(i.due) >= 0 && inDays(i.due) <= 90);
+  const dueYear = required.filter((i) => i.due && i.status !== "overdue" && inDays(i.due) >= 0 && inDays(i.due) <= 365);
+  const renewing = items.filter((i) => i.renews !== "never");
+  const once = items.filter((i) => i.renews === "never");
+  const pick = (k: string) => { setKey(k); setOpen(true); };
+  // The renewals strip: twelve months from today, a tag per item due inside it.
+  const months = Array.from({ length: 12 }, (_, i) => { const d = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1 + i, 1)); return { label: d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }) + (d.getUTCMonth() === 0 ? " ’" + String(d.getUTCFullYear()).slice(2) : "") }; });
+  // Tags that would overlap drop to the next lane, so three items due the same day stay readable.
+  const strip = items.filter((i) => i.due && inDays(i.due) >= 0 && inDays(i.due) < 365).map((i) => ({ item: i, left: Math.min((inDays(i.due!) / 365) * 100, 86), lane: 0 })).sort((a, b) => a.left - b.left);
+  const laneEnds: number[] = [];
+  for (const t of strip) { let l = 0; while (laneEnds[l] != null && laneEnds[l] > t.left) l++; t.lane = l; laneEnds[l] = t.left + 16; }
+  const lanes = Math.max(1, laneEnds.length);
+  const tone = (st: PersonnelStatus) => (st === "overdue" || st === "missing" || st === "undocumented" ? "bg-danger-soft text-danger" : st === "due_soon" ? "bg-warn-soft text-warn" : "bg-ok-soft text-ok");
+  const last = (it: PersonnelItem) => it.records[0]?.completedOn;
+  const doc = (it: PersonnelItem) => it.records.flatMap((r) => r.documents)[0];
+
   return (
-    <div className="overflow-hidden rounded-xl border border-line">
-      <div className="flex items-center gap-3 border-b border-line px-5 py-3.5">
-        <div className="text-[17px] font-semibold text-text-strong">Personnel file</div>
-        <span className={cx("rounded-full px-2 py-0.5 text-[13px] font-semibold", satisfied === required.length ? "bg-ok-soft text-ok" : "bg-danger-soft text-danger")}>{satisfied} / {required.length}</span>
-        <span className="text-[14px] text-muted-foreground">of the licensor&apos;s items satisfied, each with its document attached</span>
+    <div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pb-4 text-[14.5px]">
+        <span><b className={overdue.length ? "text-danger" : "text-text-strong"}>{overdue.length}</b> <span className="text-muted-foreground">{overdue.length === 1 ? "needs attention" : "need attention"}</span></span><span className="text-hint">·</span>
+        <span><b className="text-text-strong">{dueSoon.length}</b> <span className="text-muted-foreground">due within 90 days</span></span><span className="text-hint">·</span>
+        <span><b className="text-text-strong">{dueYear.length}</b> <span className="text-muted-foreground">due within 12 months</span></span>
+        <span className="ml-auto text-[13.5px] text-muted-foreground">{satisfied} of {required.length} on file</span>
       </div>
 
-      <div className="grid lg:grid-cols-[400px_minmax(0,1fr)]">
-        <nav aria-label="Personnel file items" className="border-r border-line">
-          {groups.map((g) => (
-            <div key={g.label}>
-              <div className="border-b border-line bg-panel px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{g.label}</div>
-              {g.items.map((it) => {
-                const t = TONE[it.status];
-                const on = it.key === current.key;
-                return (
-                  <button
-                    key={it.key}
-                    type="button"
-                    onClick={() => setKey(it.key)}
-                    aria-current={on ? "true" : undefined}
-                    className={cx("flex w-full items-center gap-2.5 border-b border-line px-4 py-3 text-left text-[15px] transition-colors", on ? "bg-tab-hover font-semibold text-primary shadow-[inset_3px_0_0_var(--primary)]" : "text-text-strong hover:bg-tab-hover")}
-                  >
-                    <span className={cx("flex size-[22px] shrink-0 items-center justify-center rounded-full text-[12px] font-bold", t.ring)}>{t.mark}</span>
-                    <span className="min-w-0 flex-1 truncate">{it.label}</span>
-                    {it.due && (it.status === "due_soon" || it.status === "overdue" || it.renews === "annual") && <span className={cx("shrink-0 text-[13px]", it.status === "overdue" ? "text-danger" : "text-hint")}>due {fmtDate(it.due)}</span>}
-                    {it.status === "pending" && <span className="shrink-0 text-[13px] text-hint">pending</span>}
-                  </button>
-                );
-              })}
-            </div>
+      <div className="mb-5">
+        <div className="mb-1 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Renewals · next 12 months</div>
+        <div className="relative border-y border-line-soft" style={{ height: 18 + lanes * 19 }}>
+          {months.map((m, i) => <div key={i} className="absolute inset-y-0 border-l border-line-soft" style={{ left: `${(i / 12) * 100}%` }}><span className="absolute left-1 top-0.5 text-[10.5px] text-hint">{m.label}</span></div>)}
+          {strip.map(({ item, left, lane }) => (
+            <button key={item.key} type="button" onClick={() => pick(item.key)} className={cx("absolute h-4 whitespace-nowrap rounded px-1.5 text-[11px] leading-4 hover:brightness-95", tone(item.status))} style={{ left: `${left}%`, top: 15 + lane * 19 }}>{item.label.replace(" training", "")} · {fmtDate(item.due!)}</button>
           ))}
-        </nav>
-
-        <Detail key={current.key} staffId={staffId} item={current} aiReady={aiReady} staffName={staffName} />
+        </div>
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-line">
+          <div className="border-b border-line-soft px-4 py-2.5 text-[14.5px] font-semibold text-text-strong">Renews</div>
+          {renewing.map((it) => (
+            <button key={it.key} type="button" onClick={() => pick(it.key)} className="flex w-full items-center gap-3 border-b border-line-soft px-4 py-2.5 text-left text-[14.5px] last:border-b-0 hover:bg-tab-hover">
+              <span className="min-w-0 flex-1 truncate">{it.label}</span>
+              <span className="w-28 shrink-0 text-muted-foreground">{last(it) ? fmtDate(last(it)) : "—"}</span>
+              <span className={cx("w-36 shrink-0 text-right", it.status === "overdue" ? "text-danger" : it.status === "due_soon" ? "text-warn" : "")}>{it.due ? (it.renews === "expiry" ? "Expires " : "Due ") + fmtDate(it.due) : it.status === "optional" ? <span className="text-muted-foreground">Not recorded</span> : <span className="text-danger">Missing</span>}</span>
+            </button>
+          ))}
+        </div>
+        <div className="rounded-xl border border-line">
+          <div className="border-b border-line-soft px-4 py-2.5 text-[14.5px] font-semibold text-text-strong">Done once · on file</div>
+          {once.map((it) => (
+            <button key={it.key} type="button" onClick={() => pick(it.key)} className="flex w-full items-center gap-3 border-b border-line-soft px-4 py-2.5 text-left text-[14.5px] last:border-b-0 hover:bg-tab-hover">
+              <span className="min-w-0 flex-1 truncate">{it.label}</span>
+              {it.key === "hire" ? <span className="text-muted-foreground">{it.detail.replace(/\..*$/, "")}</span>
+                : it.status === "ok" ? (doc(it) ? <span className="text-[13px] font-medium text-primary">{doc(it)!.fileName.toLowerCase().endsWith(".pdf") ? "PDF" : "File"}</span> : <span className="text-[13px] text-muted-foreground">On file</span>)
+                : it.status === "pending" ? <span className="text-[13px] text-muted-foreground">Pending</span>
+                : <span className="rounded bg-danger-soft px-1.5 text-[12.5px] font-medium text-danger">{it.status === "undocumented" ? "No document" : "Missing"}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="right" showCloseButton={false} className="w-full overflow-y-auto p-0 data-[side=right]:sm:max-w-[760px]">
+          <SheetTitle className="sr-only">{current.label}</SheetTitle>
+          <div className="flex items-center gap-3 border-b border-line px-5 py-3"><div className="text-[15px] font-semibold text-text-strong">{current.label}</div><button type="button" onClick={() => setOpen(false)} aria-label="Close" className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={16} className="rotate-45" /></button></div>
+          <Detail key={current.key} staffId={staffId} item={current} aiReady={aiReady} staffName={staffName} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
