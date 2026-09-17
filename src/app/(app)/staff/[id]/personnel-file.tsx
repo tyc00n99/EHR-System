@@ -53,12 +53,12 @@ export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId:
   const once = items.filter((i) => i.renews === "never");
   const pick = (k: string) => { setKey(k); setOpen(true); };
   // The renewals strip: twelve months from today, a tag per item due inside it.
-  const months = Array.from({ length: 12 }, (_, i) => { const d = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1 + i, 1)); return { label: d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }) + (d.getUTCMonth() === 0 ? " ’" + String(d.getUTCFullYear()).slice(2) : "") }; });
-  // Tags that would overlap drop to the next lane, so three items due the same day stay readable.
-  const strip = items.filter((i) => i.due && inDays(i.due) >= 0 && inDays(i.due) < 365).map((i) => ({ item: i, left: Math.min((inDays(i.due!) / 365) * 100, 86), lane: 0 })).sort((a, b) => a.left - b.left);
-  const laneEnds: number[] = [];
-  for (const t of strip) { let l = 0; while (laneEnds[l] != null && laneEnds[l] > t.left) l++; t.lane = l; laneEnds[l] = t.left + 16; }
-  const lanes = Math.max(1, laneEnds.length);
+  const months = Array.from({ length: 12 }, (_, i) => { const d = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1 + i, 1)); return { key: d.toISOString().slice(0, 7), label: d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }) + (d.getUTCMonth() === 0 ? " ’" + String(d.getUTCFullYear()).slice(2) : "") }; });
+  // Each of the next twelve months is a cell; the items due in that month are listed inside it,
+  // so nothing is drawn over anything else.
+  const ym = (iso: string) => iso.slice(0, 7);
+  const byMonth = new Map<string, PersonnelItem[]>();
+  for (const i of items) if (i.due && inDays(i.due) >= 0 && inDays(i.due) < 365) byMonth.set(ym(i.due), [...(byMonth.get(ym(i.due)) ?? []), i]);
   const tone = (st: PersonnelStatus) => (st === "overdue" || st === "missing" || st === "undocumented" ? "bg-danger-soft text-danger" : st === "due_soon" ? "bg-warn-soft text-warn" : "bg-ok-soft text-ok");
   const last = (it: PersonnelItem) => it.records[0]?.completedOn;
   const doc = (it: PersonnelItem) => it.records.flatMap((r) => r.documents)[0];
@@ -74,11 +74,18 @@ export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId:
 
       <div className="mb-5">
         <div className="mb-1 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Renewals · next 12 months</div>
-        <div className="relative border-y border-line-soft" style={{ height: 24 + lanes * 19 }}>
-          {months.map((m, i) => <div key={i} className="absolute inset-y-0 border-l border-line-soft" style={{ left: `${(i / 12) * 100}%` }}><span className="absolute left-1 top-0.5 whitespace-nowrap text-[10.5px] text-hint">{m.label}</span></div>)}
-          {strip.map(({ item, left, lane }) => (
-            <button key={item.key} type="button" onClick={() => pick(item.key)} className={cx("absolute h-4 whitespace-nowrap rounded px-1.5 text-[11px] leading-4 hover:brightness-95", tone(item.status))} style={{ left: `${left}%`, top: 21 + lane * 19 }}>{item.label.replace(" training", "")} · {fmtDate(item.due!)}</button>
-          ))}
+        <div className="grid grid-cols-12 overflow-hidden rounded-lg border border-line-soft">
+          {months.map((m, i) => {
+            const due = byMonth.get(m.key) ?? [];
+            return (
+              <div key={m.key} className={cx("min-h-14 px-1.5 py-1.5", i > 0 && "border-l border-line-soft", due.length > 0 && "bg-sidebar")}>
+                <div className="text-[11px] text-hint">{m.label}</div>
+                {due.map((it) => (
+                  <button key={it.key} type="button" onClick={() => pick(it.key)} title={`${it.label} · ${fmtDate(it.due!)}`} className={cx("mt-1 block w-full truncate rounded px-1 text-left text-[11px] leading-[18px] hover:brightness-95", tone(it.status))}>{it.label.replace(" training", "").replace(" reporting", "")}</button>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </div>
 
