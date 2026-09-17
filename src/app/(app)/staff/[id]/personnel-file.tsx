@@ -74,10 +74,10 @@ export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId:
 
       <div className="mb-5">
         <div className="mb-1 text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Renewals · next 12 months</div>
-        <div className="relative border-y border-line-soft" style={{ height: 18 + lanes * 19 }}>
-          {months.map((m, i) => <div key={i} className="absolute inset-y-0 border-l border-line-soft" style={{ left: `${(i / 12) * 100}%` }}><span className="absolute left-1 top-0.5 text-[10.5px] text-hint">{m.label}</span></div>)}
+        <div className="relative border-y border-line-soft" style={{ height: 24 + lanes * 19 }}>
+          {months.map((m, i) => <div key={i} className="absolute inset-y-0 border-l border-line-soft" style={{ left: `${(i / 12) * 100}%` }}><span className="absolute left-1 top-0.5 whitespace-nowrap text-[10.5px] text-hint">{m.label}</span></div>)}
           {strip.map(({ item, left, lane }) => (
-            <button key={item.key} type="button" onClick={() => pick(item.key)} className={cx("absolute h-4 whitespace-nowrap rounded px-1.5 text-[11px] leading-4 hover:brightness-95", tone(item.status))} style={{ left: `${left}%`, top: 15 + lane * 19 }}>{item.label.replace(" training", "")} · {fmtDate(item.due!)}</button>
+            <button key={item.key} type="button" onClick={() => pick(item.key)} className={cx("absolute h-4 whitespace-nowrap rounded px-1.5 text-[11px] leading-4 hover:brightness-95", tone(item.status))} style={{ left: `${left}%`, top: 21 + lane * 19 }}>{item.label.replace(" training", "")} · {fmtDate(item.due!)}</button>
           ))}
         </div>
       </div>
