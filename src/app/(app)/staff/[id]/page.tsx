@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, Properties, RecordHeader, Table, Tabs, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
-import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listStaffAvailability, listStaffDocuments, listVisits } from "@/db/queries";
+import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, RecordHeader, Table, Tabs, Td, Th, Thead, Tr } from "@/components/kit";
+import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listRecentLogins, listStaffAvailability, listStaffDocuments, listVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
-import { complianceSummary, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
+import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
-import { GENDERS } from "@/lib/validation";
 import { DeleteDocument, DocumentForm, LoginPanel } from "./panels";
 import { DocumentTextChip } from "@/components/document-text-chip";
 import { PersonnelFile } from "./personnel-file";
@@ -17,12 +16,10 @@ import { AvailabilityCards } from "@/components/availability-cards";
 import { isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
-import { buildPersonnelFile } from "@/lib/personnel-file";
+import { buildPersonnelFile, personnelSummary } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
 
-const STATUS_TONE: Record<ComplianceStatus, Tone> = { ok: "ok", due_soon: "warn", overdue: "danger", missing: "danger" };
-const STATUS_LABEL: Record<ComplianceStatus, string> = { ok: "current", due_soon: "due soon", overdue: "overdue", missing: "missing" };
 
 export default async function StaffPage({ params, searchParams }: PageProps<"/staff/[id]">) {
   const user = await requireUser(["admin", "supervisor"]);
@@ -41,6 +38,11 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const noteClients = [...new Map(allVisits.map((r) => [r.visit.personId, `${r.personFirst} ${r.personLast}`])).entries()].map(([pid, name]) => ({ id: pid, name })).sort((a, b) => a.name.localeCompare(b.name));
   const noteCodes = [...new Set(allVisits.map((r) => r.visit.serviceCode))].sort().map((c) => ({ code: c, label: labelForCode(c, []) }));
   const personnel = buildPersonnelFile(s.hireDate, credentials, documents);
+  const paper = personnelSummary(personnel);
+  const today = isoDay(0);
+  const nextDue = personnel.filter((i) => i.required && i.due && i.due >= today).sort((a, b) => (a.due! < b.due! ? -1 : 1))[0];
+  const overdue = personnel.filter((i) => i.required && (i.status === "overdue" || i.status === "missing" || i.status === "undocumented"));
+  const recentLogins = login ? await listRecentLogins(login.id) : [];
   const availability = await listStaffAvailability(id);
   const schedule = {
     startDate: availability[0]?.startDate ?? isoDay(0),
@@ -75,32 +77,32 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       <Tabs tabs={tabs} current={tab} base={`/staff/${id}`} />
 
       {tab === "overview" && (
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
-          <Card title="Personnel file" padded>
-            <Properties labelWidth={104} items={[
-              { icon: "calendar", label: "Born", value: fmtDate(s.dob) },
-              { icon: "user", label: "Gender", value: GENDERS.find((g) => g[0] === s.gender)?.[1] ?? s.gender },
-              { icon: "id", label: "SSN", value: <SsnField staffId={id} last4={s.ssnLast4} canReveal={user.role === "admin"} /> },
-              { icon: "pin", label: "Address", value: [s.address1, s.address2, `${s.city}, ${s.state} ${s.zip}`].filter(Boolean).join(", ") },
-              { icon: "phone", label: "Phone", value: s.phone },
-              { icon: "mail", label: "Email", value: s.email },
-              { icon: "calendar", label: "Hired", value: fmtDate(s.hireDate) },
-              ...(user.role === "admin" ? [{ icon: "units" as const, label: "Pay rate", value: <span className="tabular-nums">{fmtMoney(s.payRate)} / hour</span> }] : []),
+        <div className="max-w-3xl">
+          <Plain title="About" action={user.role === "admin" && <Link href={`/staff/${id}/edit`} className="text-[13.5px] font-medium text-primary hover:underline">Edit</Link>}>
+            <Rows rows={[
+              ["Job", s.title],
+              ["Started", fmtDate(s.hireDate)],
+              ["Phone", s.phone || <span className="text-muted-foreground">Not added</span>],
+              ["Email", s.email || <span className="text-muted-foreground">Not added</span>],
+              ["Address", [s.address1, s.address2, `${s.city}, ${s.state} ${s.zip}`].filter(Boolean).join(", ")],
+              ...(user.role === "admin" ? [["Pay", <span key="pay" className="tabular-nums">{fmtMoney(s.payRate)} an hour</span>] as const, ["SSN", <SsnField key="ssn" staffId={id} last4={s.ssnLast4} canReveal />] as const] : []),
             ]} />
-          </Card>
-          <div className="space-y-4">
-            <Card title="Availability" description="When this caregiver can be scheduled" actions={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />} padded>
-              {availability.length > 0
-                ? <AvailabilityCards rows={availability} />
-                : <p className="text-[14px] text-muted-foreground">No availability recorded. Scheduling has no idea when this person is free.</p>}
-            </Card>
-            <Card title="Compliance at a glance" actions={<Link href={`/staff/${id}?tab=compliance`} className="text-[13px] font-medium text-primary hover:underline">Details</Link>}>
-              <ul className="grid gap-px sm:grid-cols-2">{items.map((i) => <li key={i.type} className="flex items-center justify-between gap-3 px-5 py-2.5"><span className="truncate text-[13px]">{i.label}</span><Badge tone={STATUS_TONE[i.status]}>{STATUS_LABEL[i.status]}</Badge></li>)}</ul>
-            </Card>
-            <Card title="Assigned clients" actions={<ManageAssignments staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />}>
-              {activeAssignments.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No clients assigned.</p> : <ul className="divide-y divide-line-soft">{activeAssignments.map((a) => <li key={a.assignment.id} className="flex items-center justify-between px-5 py-2.5"><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <Badge tone="ok">oriented</Badge> : <Badge tone="warn">orientation pending</Badge>}</li>)}</ul>}
-            </Card>
-          </div>
+          </Plain>
+          <Plain title="Works" action={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
+            {availability.length > 0 ? <AvailabilityCards rows={availability} /> : <p className="text-[15px] text-muted-foreground">No days recorded yet, so scheduling does not know when {s.firstName} is free.</p>}
+          </Plain>
+          <Plain title="Clients" action={<ManageAssignments staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />}>
+            {activeAssignments.length === 0 ? <p className="text-[15px] text-muted-foreground">No clients yet.</p> : (
+              <ul className="space-y-1.5 text-[15px]">{activeAssignments.map((a) => <li key={a.assignment.id}><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <span className="text-muted-foreground"> · since {fmtDate(a.assignment.orientedOn)}</span> : <span className="text-warn"> · orientation pending</span>}</li>)}</ul>
+            )}
+          </Plain>
+          <Plain title="Paperwork" action={<Link href={`/staff/${id}?tab=compliance`} className="text-[13.5px] font-medium text-primary hover:underline">See all</Link>}>
+            <p className="text-[15px]">
+              <span className={`mr-2 inline-block size-2 rounded-full align-[1px] ${overdue.length ? "bg-danger" : "bg-ok"}`} aria-hidden />
+              {overdue.length ? <>{overdue.length} of {paper.total} items need attention: {overdue.slice(0, 3).map((i) => i.label.toLowerCase()).join(", ")}{overdue.length > 3 ? "…" : ""}.</> : <>Everything is on file.</>}
+              {nextDue && <> Next thing due: {nextDue.label.toLowerCase()}, <span className="font-medium text-text-strong">{fmtDate(nextDue.due)}</span>.</>}
+            </p>
+          </Plain>
         </div>
       )}
 
@@ -125,8 +127,41 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "login" && user.role === "admin" && (
-        <div className="max-w-md"><Card title="Login" description="Administrators see everything including pay rates. Supervisors see clients and notes. Caregivers see only the people assigned to them." padded><LoginPanel staffId={id} login={login} defaultEmail={s.email ?? ""} isSelf={login?.id === user.id} /></Card></div>
+        <div className="max-w-3xl">
+          {login ? (<>
+            <Plain title="Login">
+              <Rows rows={[
+                ["Email", login.email],
+                ["Can do", login.role === "admin" ? <>Everything <span className="text-muted-foreground">(admin, including pay rates)</span></> : login.role === "supervisor" ? <>Clients and notes <span className="text-muted-foreground">(supervisor)</span></> : <>Their own clients and notes <span className="text-muted-foreground">(caregiver)</span></>],
+                ["Status", <Badge key="st" tone={login.active ? "ok" : "neutral"}>{login.active ? "Active" : "Turned off"}</Badge>],
+              ]} />
+            </Plain>
+            <Plain title="Recent sign-ins">
+              {recentLogins.length === 0 ? <p className="text-[15px] text-muted-foreground">Has not signed in yet.</p> : <ul className="space-y-1 text-[15px]">{recentLogins.map((r, i) => <li key={i}>{fmtDateTime(r.at)}</li>)}</ul>}
+            </Plain>
+            <Plain title="Change">
+              <div className="max-w-md"><LoginPanel staffId={id} login={login} defaultEmail={s.email ?? ""} isSelf={login?.id === user.id} /></div>
+            </Plain>
+          </>) : (
+            <Plain title="Login"><div className="max-w-md"><LoginPanel staffId={id} login={login} defaultEmail={s.email ?? ""} isSelf={false} /></div></Plain>
+          )}
+        </div>
       )}
     </div>
   );
+}
+
+/** A plain section: a title, an optional action on the same line, and the content below. No card. */
+function Plain({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="border-b border-line-soft py-5 last:border-b-0">
+      <div className="mb-3 flex items-baseline gap-3"><h2 className="text-[16px] font-semibold text-text-strong">{title}</h2>{action}</div>
+      {children}
+    </section>
+  );
+}
+
+/** Label / value pairs, one per line, in plain words. */
+function Rows({ rows }: { rows: readonly (readonly [string, React.ReactNode])[] }) {
+  return <dl className="grid grid-cols-[150px_1fr] gap-y-2 text-[15px]">{rows.map(([k, v]) => <div key={k} className="contents"><dt className="text-muted-foreground">{k}</dt><dd className="m-0">{v}</dd></div>)}</dl>;
 }

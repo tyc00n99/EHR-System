@@ -639,3 +639,9 @@ export async function listVisitStaffForPerson(personId: string) {
     .where(eq(visits.personId, personId))
     .orderBy(staff.lastName, staff.firstName);
 }
+
+/** The last few sign-ins for one login, newest first, from the audit log. */
+export async function listRecentLogins(userId: string, limit = 3) {
+  const db = await getDb();
+  return db.select({ at: schema.auditLog.at }).from(schema.auditLog).where(and(eq(schema.auditLog.actorUserId, userId), eq(schema.auditLog.action, "login"))).orderBy(desc(schema.auditLog.at)).limit(limit);
+}
