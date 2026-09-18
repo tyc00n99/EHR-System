@@ -55,10 +55,10 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
   const filtered = Boolean(filters.client.length || filters.staff.length || filters.service.length || filters.state);
 
   const columns: ColumnDef<VisitRow, unknown>[] = useMemo(() => [
-    { accessorKey: "clockInIso", header: "Date", meta: { width: 150 }, cell: ({ row }) => <TwoLine top={row.original.day} bottom={row.original.time} /> },
+    { accessorKey: "clockInIso", header: "Date", cell: ({ row }) => <TwoLine top={row.original.day} bottom={row.original.time} /> },
     ...(showClient ? [{ accessorKey: "client", header: "Client" } as ColumnDef<VisitRow, unknown>] : []),
     { accessorKey: "staff", header: "Caregiver" },
-    { accessorKey: "serviceLabel", header: "Service", cell: ({ row }) => <span className="block max-w-[260px]"><TwoLine top={<span className="block truncate" title={row.original.serviceLabel}>{row.original.serviceLabel}</span>} bottom={row.original.serviceKey} strong /></span> },
+    { accessorKey: "serviceLabel", header: "Service", cell: ({ row }) => <TwoLine top={row.original.serviceLabel} bottom={row.original.serviceKey} strong /> },
     { accessorKey: "minutes", header: "Hours", enableSorting: false, meta: { align: "right" }, cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="tabular-nums">{fmtHours(row.original.minutes)}</span> },
     { accessorKey: "units", header: "Units", meta: { align: "right" } },
     { id: "status", accessorFn: standingOf, header: "Status", enableSorting: false, cell: ({ row }) => {

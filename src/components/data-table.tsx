@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, Columns3, MoreVertical, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Columns3, MoreVertical, Search } from "lucide-react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -171,16 +171,9 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
                 {hg.headers.map((h) => {
                   const meta = h.column.columnDef.meta as ColumnMeta | undefined;
                   const align = meta?.align;
-                  const sortable = h.column.getCanSort();
-                  const dir = h.column.getIsSorted();
                   return (
                     <TableHead key={h.id} className={cn("h-11 whitespace-nowrap px-3 text-[13.5px] font-medium text-text-strong first:pl-4 last:pr-4", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: meta?.width ?? (h.getSize() !== 150 ? h.getSize() : undefined) }}>
-                      {h.isPlaceholder ? null : sortable ? (
-                        <button type="button" onClick={h.column.getToggleSortingHandler()} className={cn("inline-flex items-center gap-1 rounded-md py-0.5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", dir && "text-primary")}>
-                          {flexRender(h.column.columnDef.header, h.getContext())}
-                          {dir === "asc" ? <ArrowUp className="size-3.5" /> : dir === "desc" ? <ArrowDown className="size-3.5" /> : <ChevronsUpDown className="size-3.5 text-hint" />}
-                        </button>
-                      ) : flexRender(h.column.columnDef.header, h.getContext())}
+                      {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
                     </TableHead>
                   );
                 })}

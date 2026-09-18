@@ -44,13 +44,13 @@ export function QueueTable({ rows, filter, options, presets, rangeLabel }: { row
   });
 
   const columns: ColumnDef<QueueRow, unknown>[] = useMemo(() => [
-    { accessorKey: "dateIso", header: "Date", meta: { width: 150 }, cell: ({ row }) => <TwoLine top={row.original.day} bottom={row.original.time} /> },
+    { accessorKey: "dateIso", header: "Date", cell: ({ row }) => <TwoLine top={row.original.day} bottom={row.original.time} /> },
     { accessorKey: "client", header: "Client" },
     { accessorKey: "caregiver", header: "Caregiver" },
-    { accessorKey: "serviceLabel", header: "Service", cell: ({ row }) => <span className="block max-w-[240px]"><TwoLine top={<span className="block truncate" title={row.original.serviceLabel}>{row.original.serviceLabel}</span>} bottom={row.original.serviceKey} strong /></span> },
+    { accessorKey: "serviceLabel", header: "Service", cell: ({ row }) => <TwoLine top={row.original.serviceLabel} bottom={row.original.serviceKey} strong /> },
     { id: "compliance", accessorFn: (r) => r.compliance.label, header: "Compliance", enableSorting: false, cell: ({ row }) => <span className="flex flex-wrap gap-1"><Badge tone={row.original.compliance.tone}>{row.original.compliance.label}</Badge>{!row.original.evvRequired && <Badge>Not required</Badge>}{row.original.openExceptions > 0 && <Badge tone="warn">{row.original.openExceptions} open</Badge>}</span> },
     { id: "submission", accessorFn: (r) => r.submission?.label ?? "", header: "Submission", enableSorting: false, cell: ({ row }) => row.original.submission ? <Badge tone={row.original.submission.tone}>{row.original.submission.label}</Badge> : null },
-    { accessorKey: "dueIso", header: "Due", meta: { width: 96 }, cell: ({ row }) => <span className={row.original.overdue ? "font-medium text-danger" : ""}>{row.original.due}</span> },
+    { accessorKey: "dueIso", header: "Due", cell: ({ row }) => <span className={row.original.overdue ? "font-medium text-danger" : ""}>{row.original.due}</span> },
   ], []);
   const bulkBtn = "inline-flex h-8 items-center rounded-md px-3 text-[14px] font-medium text-text hover:bg-tab-hover disabled:opacity-50";
 

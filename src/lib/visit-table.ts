@@ -27,17 +27,22 @@ export async function buildVisitTable({ sp, personId, staffId, defaultParam }: {
   const inRange = await listVisits({ personId, staffId, from: range.start, to: range.end, limit: 1000 });
   type Row = (typeof inRange)[number];
   const matchesState = (v: Row["visit"]) => state === "unsigned" ? v.status === "completed" && !v.clientSignedAt : state === "returned" ? Boolean(v.returnedAt) : state === "manual" ? v.manualEntry : state === "open" ? v.status === "in_progress" : true;
-  const all = inRange.filter(({ visit: v }) => (!fClient.length || fClient.includes(v.personId)) && (!fStaff.length || fStaff.includes(v.staffId)) && (!fService.length || fService.includes(serviceKey(v))) && matchesState(v));
+  const passes = (v: Row["visit"], skip?: "client" | "staff" | "service") =>
+    (skip === "client" || !fClient.length || fClient.includes(v.personId)) && (skip === "staff" || !fStaff.length || fStaff.includes(v.staffId)) && (skip === "service" || !fService.length || fService.includes(serviceKey(v))) && matchesState(v);
+  const all = inRange.filter(({ visit: v }) => passes(v));
 
-  const count = <K,>(pick: (r: Row) => { k: K; label: string; hint?: string }): PillOption[] => {
+  const count = <K,>(skip: "client" | "staff" | "service", pick: (r: Row) => { k: K; label: string; hint?: string }): PillOption[] => {
     const m = new Map<K, { label: string; hint?: string; n: number }>();
-    for (const r of inRange) { const { k, label, hint } = pick(r); const cur = m.get(k); if (cur) cur.n++; else m.set(k, { label, hint, n: 1 }); }
+    for (const r of inRange) { if (!passes(r.visit, skip)) continue; const { k, label, hint } = pick(r); const cur = m.get(k); if (cur) cur.n++; else m.set(k, { label, hint, n: 1 }); }
+    // A chosen value stays listed even if the other filters leave it at zero, so it can be unticked.
+    const chosen = skip === "client" ? fClient : skip === "staff" ? fStaff : fService;
+    for (const r of inRange) { const { k, label, hint } = pick(r); if (chosen.includes(String(k)) && !m.has(k)) m.set(k, { label, hint, n: 0 }); }
     return [...m.entries()].map(([k, v]) => ({ value: String(k), label: v.label, hint: v.hint, count: v.n })).sort((x, y) => x.label.localeCompare(y.label));
   };
   const options = {
-    clients: personId ? [] : count((r) => ({ k: r.visit.personId, label: `${r.personFirst} ${r.personLast}` })),
-    staff: staffId ? [] : count((r) => ({ k: r.visit.staffId, label: `${r.staffFirst} ${r.staffLast}` })),
-    services: count((r) => ({ k: serviceKey(r.visit), label: labelForCode(r.visit.serviceCode, r.visit.modifiers), hint: serviceKey(r.visit) })),
+    clients: personId ? [] : count("client", (r) => ({ k: r.visit.personId, label: `${r.personFirst} ${r.personLast}` })),
+    staff: staffId ? [] : count("staff", (r) => ({ k: r.visit.staffId, label: `${r.staffFirst} ${r.staffLast}` })),
+    services: count("service", (r) => ({ k: serviceKey(r.visit), label: labelForCode(r.visit.serviceCode, r.visit.modifiers), hint: serviceKey(r.visit) })),
   };
   const cur = currentPayPeriod(), last = payPeriodByIndex(cur.index - 1);
   const today = isoDay(0), ago90 = isoDay(-90);
