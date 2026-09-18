@@ -15,7 +15,6 @@ import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { VisitsTable } from "../../visits/visits-table";
-import { VisitTotals } from "../../visits/visit-totals";
 import { buildVisitTable } from "@/lib/visit-table";
 import { StatusControl } from "./status-control";
 import { MedicationSupportToggle } from "./med-toggle";
@@ -192,8 +191,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
       {tab === "notes" && vt && (
         <div>
-          <div className="mb-3 flex flex-wrap items-center gap-x-3"><VisitTotals t={vt.totals} /><span className="text-[13.5px] text-muted-foreground">· {noteCount} notes on file</span></div>
-          <VisitsTable rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/clients/${id}`, keep: { tab: "notes" } }} showClient={false} exportPdf={`/clients/${id}/notes.pdf?from=${vt.range.from}&to=${vt.range.to}${vt.single.staff ? `&staff=${vt.single.staff}` : ""}${vt.single.service ? `&code=${vt.single.service}` : ""}`} />
+          <VisitsTable search={false} rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/clients/${id}`, keep: { tab: "notes" } }} showClient={false} exportPdf={`/clients/${id}/notes.pdf?from=${vt.range.from}&to=${vt.range.to}${vt.single.staff ? `&staff=${vt.single.staff}` : ""}${vt.single.service ? `&code=${vt.single.service}` : ""}`} />
         </div>
       )}
 

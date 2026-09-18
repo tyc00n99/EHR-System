@@ -27,13 +27,14 @@ const STATES: PillOption[] = [{ value: "", label: "All notes" }, { value: "unsig
  * sortable table with a checkbox, Open and ⋮ on every row. Filters live in the URL, so the exports
  * see the same selection and a filtered list can be linked to.
  */
-export function VisitsTable({ rows, filters, options, presets, base, showClient = true, exportCsv, exportPdf }: {
+export function VisitsTable({ rows, filters, options, presets, base, showClient = true, search = true, exportCsv, exportPdf }: {
   rows: VisitRow[];
   filters: VisitFilters;
   options: { clients: PillOption[]; staff: PillOption[]; services: PillOption[] };
   presets: { label: string; param: string }[];
   /** The path filters navigate to, plus any params that must survive (e.g. person=). */
   base: { path: string; keep: Record<string, string> };
+  search?: boolean;
   showClient?: boolean;
   exportCsv?: string;
   exportPdf?: string;
@@ -88,7 +89,7 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
         {exportPdf && <a href={withIds(exportPdf, selected.map((r) => r.id))} className={bulkBtn}>Export PDF</a>}
         {exportCsv && <a href={withIds(exportCsv, selected.map((r) => r.id))} className={bulkBtn}>Export CSV</a>}
       </>)}
-      searchPlaceholder="Search client, caregiver, service…"
+      searchPlaceholder={search ? "Search client, caregiver, service…" : undefined}
       suggestions={[
         ...(showClient ? [{ label: "Clients", items: [...new Set(rows.map((r) => r.client))].sort() }] : []),
         { label: "Team Members", items: [...new Set(rows.map((r) => r.staff))].sort() },

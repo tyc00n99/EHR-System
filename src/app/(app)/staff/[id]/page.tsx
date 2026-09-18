@@ -18,7 +18,6 @@ import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
 import { AboutSection } from "./about";
 import { VisitsTable } from "../../visits/visits-table";
-import { VisitTotals } from "../../visits/visit-totals";
 import { buildVisitTable } from "@/lib/visit-table";
 import { Plain, Rows } from "./plain";
 
@@ -116,8 +115,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
 
       {tab === "visits" && vt && (
         <div>
-          <div className="mb-3"><VisitTotals t={vt.totals} /></div>
-          <VisitsTable rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/staff/${id}`, keep: { tab: "visits" } }} exportCsv={user.role !== "dsp" ? `/reports/visits.csv?${vt.range.param}&staff=${id}` : undefined} exportPdf={user.role !== "dsp" ? `/reports/visits.pdf?${vt.range.param}&staff=${id}` : undefined} />
+          <VisitsTable search={false} rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/staff/${id}`, keep: { tab: "visits" } }} exportCsv={user.role !== "dsp" ? `/reports/visits.csv?${vt.range.param}&staff=${id}` : undefined} exportPdf={user.role !== "dsp" ? `/reports/visits.pdf?${vt.range.param}&staff=${id}` : undefined} />
         </div>
       )}
 
