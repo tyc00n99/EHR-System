@@ -87,7 +87,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
 
       <Suspense fallback={null}><SectionNav role={user.role} counts={counts} /></Suspense>
 
-      <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 md:px-8 md:py-6">
+      <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-16 pt-5 md:px-8 md:pb-20 md:pt-6">
         {/* One gutter and one content width for every page: pages do not centre themselves. */}
         <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col">{children}</div>
       </main>
