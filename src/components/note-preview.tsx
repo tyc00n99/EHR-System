@@ -20,6 +20,7 @@ export function NotePreview() {
   const [loaded, setLoaded] = useState<string | null>(null);
   const [fit, setFit] = useState<PdfFit>("page");
   // Closing only touches the URL: no server render, so the list underneath does not flash.
+  const recordHref = (() => { const n = new URLSearchParams(params.toString()); n.delete("note"); n.set("visit", id ?? ""); return `${pathname}?${n}`; })();
   const close = () => {
     const next = new URLSearchParams(params.toString());
     next.delete("note");
@@ -37,7 +38,7 @@ export function NotePreview() {
               <button type="button" onClick={() => setFit("page")} aria-pressed={fit === "page"} className={cx("px-2.5", fit === "page" ? "bg-primary-soft text-primary" : "hover:bg-hover")}>Fit page</button>
               <button type="button" onClick={() => setFit("width")} aria-pressed={fit === "width"} className={cx("border-l border-line px-2.5", fit === "width" ? "bg-primary-soft text-primary" : "hover:bg-hover")}>Fit width</button>
             </span>
-            <Link href={`${pathname}?visit=${id}`} scroll={false} onClick={close} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Pencil className="size-3.5" /> Open record</Link>
+            <Link href={recordHref} scroll={false} onClick={close} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Pencil className="size-3.5" /> Open record</Link>
             <DownloadButton href={src} className="h-7 px-2.5 text-[13px]">Download</DownloadButton>
           </span>
         </DialogTitle>

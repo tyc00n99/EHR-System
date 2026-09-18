@@ -107,7 +107,7 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
       rowAction={{ label: "Open", href: (r) => noteHref(r.id) }}
       rowMenu={(r) => [
         { label: "Open note", onSelect: () => window.history.pushState(null, "", noteHref(r.id)) },
-        { label: "Open record", onSelect: () => router.push(`${base.path}?${new URLSearchParams({ ...base.keep, visit: r.id })}`) },
+        { label: "Open record", onSelect: () => { const p = new URLSearchParams(window.location.search); for (const [k, v] of Object.entries(base.keep)) if (v) p.set(k, v); p.delete("note"); p.set("visit", r.id); router.push(`${base.path}?${p}`); } },
         { label: "Download PDF", onSelect: () => window.open(`/visits/${r.id}/note.pdf`, "_blank") },
       ]}
       onRowHover={warm}
