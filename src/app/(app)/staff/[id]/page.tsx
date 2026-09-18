@@ -12,7 +12,7 @@ import { NoteRows } from "./note-rows";
 import { NoteFilters } from "./note-filters";
 import { StaffAvailabilityButton } from "./availability-panel";
 import { ManageAssignments } from "./manage-assignments";
-import { AvailabilityCards } from "@/components/availability-cards";
+import { AvailabilityList } from "@/components/availability-cards";
 import { isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
@@ -79,15 +79,19 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       <Tabs tabs={tabs} current={tab} base={`/staff/${id}`} />
 
       {tab === "overview" && (
-        <div className="max-w-3xl">
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Two columns so the whole record fits one screen without scrolling (Sept 18, 2026, user's request). */}
+          <div>
           <AboutSection staffId={id} canEdit={user.role === "admin"} ssn={user.role === "admin" ? <SsnField staffId={id} last4={s.ssnLast4} canReveal /> : undefined} v={{ firstName: s.firstName, lastName: s.lastName, dob: s.dob, gender: s.gender, npi: s.npi, umpi: s.umpi, active: s.active, title: s.title, hireDate: s.hireDate, phone: s.phone, email: s.email, address1: s.address1, address2: s.address2, city: s.city, state: s.state, zip: s.zip, payRate: s.payRate }} />
-          <Plain title="Works" action={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
-            {availability.length > 0 ? <AvailabilityCards rows={availability} /> : <p className="text-[15px] text-muted-foreground">No days recorded yet, so scheduling does not know when {s.firstName} is free.</p>}
-          </Plain>
           <Plain title="Clients" action={<ManageAssignments staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />}>
             {activeAssignments.length === 0 ? <p className="text-[15px] text-muted-foreground">No clients yet.</p> : (
               <ul className="space-y-1.5 text-[15px]">{activeAssignments.map((a) => <li key={a.assignment.id}><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <span className="text-muted-foreground"> · since {fmtDate(a.assignment.orientedOn)}</span> : <span className="text-warn"> · orientation pending</span>}</li>)}</ul>
             )}
+          </Plain>
+          </div>
+          <div>
+          <Plain title="Works" action={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
+            {availability.length > 0 ? <AvailabilityList rows={availability} /> : <p className="text-[14.5px] text-muted-foreground">No days recorded yet, so scheduling does not know when {s.firstName} is free.</p>}
           </Plain>
           <Plain title="Paperwork" action={<Link href={`/staff/${id}?tab=compliance`} className="text-[13.5px] font-medium text-primary hover:underline">See all</Link>}>
             <p className="text-[15px]">
@@ -96,6 +100,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
               {nextDue && <> Next thing due: {nextDue.label.toLowerCase()}, <span className="font-medium text-text-strong">{fmtDate(nextDue.due)}</span>.</>}
             </p>
           </Plain>
+          </div>
         </div>
       )}
 

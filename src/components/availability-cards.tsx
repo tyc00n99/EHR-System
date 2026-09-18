@@ -42,3 +42,31 @@ export function AvailabilityCards({ rows }: { rows: AvailabilityRow[] }) {
     </div>
   );
 }
+
+/** The week as seven short lines, for a narrow column where the day cards would not fit. */
+export function AvailabilityList({ rows }: { rows: AvailabilityRow[] }) {
+  if (rows.length === 0) return null;
+  const first = rows[0];
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px]">
+        <Icon.calendar size={15} className="text-muted-foreground" />
+        <span className="text-muted-foreground">From</span><span className="ident font-medium text-text-strong">{first.startDate ? fmtDate(first.startDate) : "—"}</span>
+        <span className="text-muted-foreground">to</span><span className="ident font-medium text-text-strong">{first.endDate ? fmtDate(first.endDate) : "open"}</span>
+        <span className="text-muted-foreground">· updated {fmtDate(first.updatedAt.toISOString().slice(0, 10))}</span>
+      </div>
+      <dl className="grid grid-cols-[44px_1fr] gap-y-1 text-[14px]">
+        {[0, 1, 2, 3, 4, 5, 6].map((d) => {
+          const windows = rows.filter((a) => a.weekday === d);
+          return (
+            <div key={d} className="contents">
+              <dt className="font-medium text-text-strong">{DOW[d]}</dt>
+              <dd className="m-0">{windows.length === 0 ? <span className="text-hint">Unavailable</span> : windows.map((w) => <span key={w.id} className="ident mr-3 text-text-strong">{hhmm(w.startTime)} – {hhmm(w.endTime)}</span>)}</dd>
+            </div>
+          );
+        })}
+      </dl>
+      <p className="mt-2 text-[13px] text-muted-foreground">Central Time — Minnesota.</p>
+    </div>
+  );
+}
