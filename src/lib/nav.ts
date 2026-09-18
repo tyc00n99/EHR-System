@@ -88,7 +88,6 @@ export interface SectionEntry {
   match?: (path: string, params: URLSearchParams) => boolean;
 }
 
-const noParam = (key: string) => (_path: string, p: URLSearchParams) => !p.get(key);
 const param = (key: string, value: string) => (_path: string, p: URLSearchParams) => p.get(key) === value;
 
 /**
