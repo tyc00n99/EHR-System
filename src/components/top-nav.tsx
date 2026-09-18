@@ -1,7 +1,5 @@
 "use client";
 
-import { WorkspaceSwitch } from "@/components/workspace-switch";
-import type { Workspace } from "@/lib/workspace";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icons";
@@ -9,13 +7,13 @@ import { cx } from "@/components/kit";
 import { primaryNav, sectionRow, type NavCounts, type Role } from "@/lib/nav";
 
 /** The tabs across the top bar. Hidden on phones, where the bottom tab bar takes over. */
-export function TopNav({ role, workspace, counts }: { role: Role; workspace: Workspace; counts: NavCounts }) {
+export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
   const pathname = usePathname();
   const isActive = (href: string, also?: string[]) =>
     href === "/" ? pathname === "/" : [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
   return (
     <nav aria-label="Main" className="hidden min-w-0 items-center gap-0.5 md:flex">
-      {primaryNav(role, workspace).map((d) => {
+      {primaryNav(role).map((d) => {
         const Ic = Icon[d.icon];
         const active = isActive(d.href, d.also);
         const badge = d.badge ? counts[d.badge] : 0;
@@ -45,12 +43,11 @@ export function TopNav({ role, workspace, counts }: { role: Role; workspace: Wor
  * The second row. Only sections with real depth get one, so it appears and disappears rather than
  * sitting there empty — that absence is how you know Today has nothing hiding under it.
  */
-export function SectionNav({ role, workspace, counts }: { role: Role; workspace: Workspace; counts: NavCounts }) {
+export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const entries = sectionRow(pathname, role, counts);
   if (!entries) return null;
-  const canSwitch = role !== "dsp";
   return (
     <nav aria-label="Section" className="z-10 flex h-10 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
       {entries.map((e) => {
@@ -72,7 +69,6 @@ export function SectionNav({ role, workspace, counts }: { role: Role; workspace:
           </Link>
         );
       })}
-      {canSwitch && <span className="ml-auto flex shrink-0 items-center pl-4"><WorkspaceSwitch value={workspace} compact /></span>}
     </nav>
   );
 }

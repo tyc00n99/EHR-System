@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
-import { getWorkspace } from "@/lib/workspace-server";
 import type { PaletteEntry } from "@/components/command-palette";
 import { getOrganization, listPeople, listStaff } from "@/db/queries";
 import { attentionItems } from "@/lib/attention";
@@ -31,6 +30,5 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ...people.map((p) => ({ id: p.id, label: `${p.firstName} ${p.lastName}`, hint: `PMI ${p.pmi} · ${p.waiverProgram}`, href: `/clients/${p.id}`, group: "Clients" as const })),
     ...staff.map((s) => ({ id: s.id, label: `${s.firstName} ${s.lastName}`, hint: s.title, href: `/staff/${s.id}`, group: "Staff" as const })),
   ];
-  const workspace = await getWorkspace(user.role);
-  return <AppShell user={user} workspace={workspace} orgName={org.name} counts={counts} palette={palette}>{children}</AppShell>;
+  return <AppShell user={user} orgName={org.name} counts={counts} palette={palette}>{children}</AppShell>;
 }

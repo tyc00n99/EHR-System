@@ -1,5 +1,4 @@
 import type { IconName } from "@/components/icons";
-import { railAllows, type Workspace } from "./workspace";
 
 /**
  * The whole navigation, in one place, so the top bar, the section row, the gear menu and the
@@ -38,11 +37,7 @@ export interface Destination {
 }
 
 /** The tabs across the top, in the order they are read. */
-export function primaryNav(role: Role, workspace: Workspace = "clinical"): Destination[] {
-  return allNav(role).filter((d) => role === "dsp" || railAllows(workspace, d.href));
-}
-
-function allNav(role: Role): Destination[] {
+export function primaryNav(role: Role): Destination[] {
   if (role === "dsp") {
     return [
       { href: "/", label: "Today", icon: "home" },

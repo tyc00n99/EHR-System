@@ -1,6 +1,5 @@
 "use client";
 
-import type { Workspace } from "@/lib/workspace";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, User } from "lucide-react";
@@ -13,9 +12,9 @@ import { gearGroups, primaryNav, type Role } from "@/lib/nav";
  * The phone's tab bar. It shows the same destinations as the top bar, because a caregiver's four
  * fit a phone exactly; office roles get the first four plus a menu for the rest.
  */
-export function MobileNav({ role, workspace, review }: { role: Role; workspace: Workspace; review: number }) {
+export function MobileNav({ role, review }: { role: Role; review: number }) {
   const pathname = usePathname();
-  const primary = primaryNav(role, workspace);
+  const primary = primaryNav(role);
   const items = role === "dsp" ? primary : primary.slice(0, 4);
   const rest = role === "dsp" ? [] : primary.slice(4);
   const more = [
