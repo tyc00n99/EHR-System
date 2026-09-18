@@ -1,20 +1,18 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
-import { ChartAlert, ChartCol, ChartGrid, ChartLine, ChartSection, PatientBanner, ServiceDot, UnitBar } from "@/components/chart";
+import { ChartCol, ChartGrid, ChartLine, ChartSection, PatientBanner, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
 import { ClientPhoto } from "./client-photo";
 import { ProfileHistory } from "./profile-history";
 import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
-import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { getOrganization } from "@/db/queries";
-import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
+import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { VisitsTable } from "../../visits/visits-table";
 import { VisitTotals } from "../../visits/visit-totals";
@@ -24,13 +22,13 @@ import { MedicationSupportToggle } from "./med-toggle";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { buildDocumentChecklist, checklistSummary, REQUIRED_CATEGORIES } from "@/lib/client-documents";
-import { fmtDate, fmtDateNum, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
+import { fmtDate, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
-import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-status";
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DocumentsTab } from "./documents-tab";
+import { AuthorizationsPanel } from "./authorizations-panel";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { VisitSheet } from "../../visits/record/visit-sheet";
 
@@ -56,22 +54,17 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const tab = typeof sp.tab === "string" ? sp.tab : "overview";
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
   const newCode = typeof sp.code === "string" ? sp.code : null;
-  const periodsToShow = Math.min(26, Math.max(1, Number(sp.periods) || 1));
   const person = await getPerson(id);
   if (!person || !(await canViewPerson(user, id))) notFound();
   const manage = can(user, "manage_people");
   const aiReady = aiConfigured();
-  const current = currentPayPeriod();
-  const oldest = payPeriodByIndex(current.index - (periodsToShow - 1));
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : new Date().toISOString().slice(0, 7);
   const goalFrom = daysAgo(90);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
   const vt = tab === "notes" ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
-  const [agreements, visits, documents, team, goals, meds, admins] = await Promise.all([
+  const [agreements, documents, team, goals, meds, admins] = await Promise.all([
     listAgreementsForPerson(id),
-    // Wide enough that "recent notes" is never empty because the pay period just turned over.
-    listVisits({ personId: id, from: oldest.start < daysAgo(90) ? oldest.start : daysAgo(90), to: current.end, limit: 500 }),
     listClientDocuments(id),
     listAssignmentsForPerson(id),
     listGoalsWithStats(id, goalFrom, new Date()),
@@ -93,26 +86,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const liveAgreements = agreements.filter((a) => !a.agreement.archivedAt);
   const archived = agreements.filter((a) => a.agreement.archivedAt);
   const active = liveAgreements.filter((a) => a.agreement.status === "active");
-  const unitsLeft = active.reduce((n, a) => n + (a.agreement.authorizedUnits - a.unitsUsed), 0);
-  const periodVisits = visits.filter(({ visit: v }) => v.clockInAt >= current.start && v.status === "completed");
-  const unsigned = visits.filter(({ visit: v }) => v.status === "completed" && !v.clientSignedAt && !v.clientUnsignedReason).length;
   const activeTeam = team.filter((t) => t.assignment.active);
-  const periodUnits = periodVisits.reduce((n, r) => n + r.visit.units, 0);
-  const periodHours = Math.round(periodVisits.reduce((n, r) => n + (r.visit.clockOutAt ? minutesBetween(r.visit.clockInAt, r.visit.clockOutAt) : 0), 0) / 6) / 10;
 
-  // The right column answers "what do I do about this person", which is why the record is open.
-  const soon = isoDay(60);
-  const alerts: { tone: "danger" | "warn"; body: ReactNode; href?: string; cta?: string }[] = [];
-  if (person.status === "active" && !person.signatureCodeHash) alerts.push({ tone: "danger", body: <><span className="font-medium">No signing code has been issued.</span> Nobody can co-sign a note until one exists.</>, href: `/clients/${id}`, cta: "Issue a code" });
-  if (person.status === "active" && !person.phone) alerts.push({ tone: "warn", body: <><span className="font-medium">No mobile number on file,</span> so a signing code has nowhere to be sent.</>, href: `/clients/${id}/edit`, cta: "Add a number" });
-  if (unsigned) alerts.push({ tone: "warn", body: <><span className="font-medium">{unsigned} note{unsigned === 1 ? " is" : "s are"} unsigned</span> in the periods shown.</>, href: `/clients/${id}?tab=notes`, cta: "Review them" });
-  if (person.status === "active" && active.length === 0) alerts.push({ tone: "danger", body: <><span className="font-medium">No active authorization.</span> Notes cannot be recorded or billed.</>, href: `/clients/${id}/agreements/new`, cta: "Add an agreement" });
-  for (const { agreement: a, unitsUsed } of active) {
-    const pct = a.authorizedUnits ? Math.round((unitsUsed / a.authorizedUnits) * 100) : 0;
-    if (pct >= 75) alerts.push({ tone: pct >= 90 ? "danger" : "warn", body: <><span className="font-medium">{labelForCode(a.serviceCode, a.modifiers)} is {pct}% used</span> with {(a.authorizedUnits - unitsUsed).toLocaleString()} units left.</>, href: `/clients/${id}/agreements/${a.id}`, cta: "Open authorization" });
-    else if (a.endDate <= soon) alerts.push({ tone: "warn", body: <><span className="font-medium">{labelForCode(a.serviceCode, a.modifiers)} ends {fmtDate(a.endDate)}.</span> Renewal has to be in before then.</>, href: `/clients/${id}/agreements/${a.id}`, cta: "Open authorization" });
-  }
-  for (const t of team.filter((x) => x.assignment.active && !x.assignment.orientedOn)) alerts.push({ tone: "warn", body: <><span className="font-medium">{t.staff.firstName} {t.staff.lastName} is not oriented</span> to this person, which blocks clock-in.</>, href: `/staff/${t.staff.id}`, cta: "Record orientation" });
 
   // Everything the Profile tab is a checklist of, built once so the tab badge and the section list
   // agree about what is still missing.
@@ -167,24 +142,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       {tab === "overview" && (
         <ChartGrid columns="two">
           <ChartCol>
-            <ChartSection label={`Authorizations · ${active.length} active`} action={<Link href={`/clients/${id}?tab=authorizations`} className="text-primary hover:underline">Manage →</Link>}>
-              {active.length === 0 ? (
-                <Empty icon="doc" title="No active authorization" action={manage && <LinkButton href={`/clients/${id}/agreements/new`} variant="primary">Add an agreement</LinkButton>}>Notes cannot be recorded until one exists.</Empty>
-              ) : active.map(({ agreement: a, unitsUsed }) => (
-                <Link key={a.id} href={`/clients/${id}/agreements/${a.id}`} className="block border-b border-line-soft py-2.5 last:border-0 hover:bg-hover">
-                  <div className="flex items-baseline gap-2.5">
-                    <ServiceDot code={a.serviceCode} className="translate-y-[-1px]" />
-                    <span className="min-w-0 flex-1 truncate font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
-                  </div>
-                  <div className="ml-[18px] mt-0.5 text-[13px]">
-                    <span className="ident">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
-                    {" · "}<span className="ident font-medium text-text-strong">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
-                    {" · through "}<span className="ident">{fmtDateNum(a.endDate)}</span>
-                  </div>
-                  <div className="ml-[18px] max-w-[240px]"><UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
-                </Link>
-              ))}
-            </ChartSection>
+            <AuthorizationsPanel personId={id} manage={manage} defaultCounty={person.county} aiReady={aiReady} items={active.map(({ agreement: a, unitsUsed }) => ({ id: a.id, agreementNumber: a.agreementNumber, serviceCode: a.serviceCode, modifiers: a.modifiers, authorizedUnits: a.authorizedUnits, unitsUsed, unitRate: a.unitRate, startDate: a.startDate, endDate: a.endDate, authorizingCounty: a.authorizingCounty, status: a.status, documentPath: a.documentPath, documentName: a.documentName }))} />
             <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="text-primary hover:underline">All →</Link>}>
               {activeTeam.length === 0 ? <p className="text-[13px]">No caregivers assigned yet.</p> : (
                 <div className="grid gap-x-8 sm:grid-cols-2">
@@ -206,17 +164,6 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 <ClientCodePanel personId={id} manage={manage} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} rotatesOn={person.signatureCodeSetAt ? fmtDate(new Date(person.signatureCodeSetAt.getTime() + CODE_ROTATION_DAYS * 86_400_000)) : null} sentAt={person.signatureCodeSentAt ? fmtDate(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
               </ChartSection>
             )}
-            <ChartSection label="This pay period">
-              <ChartLine><span className="flex-1">Units</span><span className="ident font-medium text-text-strong">{periodUnits}</span></ChartLine>
-              <ChartLine><span className="flex-1">Hours</span><span className="ident font-medium text-text-strong">{periodHours}</span></ChartLine>
-              <ChartLine><span className="flex-1">Notes</span><span className="ident font-medium text-text-strong">{periodVisits.length}</span></ChartLine>
-              <ChartLine><span className="flex-1">Units left</span><span className="ident font-medium text-text-strong">{unitsLeft.toLocaleString()}</span></ChartLine>
-            </ChartSection>
-            <ChartSection label={alerts.length ? `Needs attention · ${alerts.length}` : "Needs attention"}>
-              {alerts.length === 0 ? (
-                <p className="text-[13px]">Nothing outstanding. Notes are signed, the authorizations have room, and the team is oriented.</p>
-              ) : alerts.map((a, i) => <ChartAlert key={i} tone={a.tone} action={a.href && <Link href={a.href} className="font-medium underline underline-offset-2">{a.cta}</Link>}>{a.body}</ChartAlert>)}
-            </ChartSection>
             {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
           </ChartCol>
         </ChartGrid>

@@ -7,8 +7,8 @@ import type { ActionState } from "@/lib/validation";
 
 const OTHER = "__other__";
 
-export function AgreementEditForm({ action, defaults, cancelHref }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; defaults: { agreementNumber: string; serviceCode: string; modifiers: string[]; authorizedUnits: number; unitRate: string; startDate: string; endDate: string; authorizingCounty: string; status: string }; cancelHref: string }) {
-  const [state, submit, pending] = useActionState(action, {});
+export function AgreementEditForm({ action, defaults, cancelHref, onSaved, onCancel }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; defaults: { agreementNumber: string; serviceCode: string; modifiers: string[]; authorizedUnits: number; unitRate: string; startDate: string; endDate: string; authorizingCounty: string; status: string }; cancelHref: string; onSaved?: () => void; onCancel?: () => void }) {
+  const [state, submit, pending] = useActionState(onSaved ? async (p: ActionState, fd: FormData) => { const r = await action(p, fd); if (r.ok) onSaved(); return r; } : action, {});
   const e = state.errors ?? {};
   const initialKey = SERVICE_CODES.find((s) => s.code === defaults.serviceCode && s.modifiers.join(" ") === defaults.modifiers.join(" ")) ?? SERVICE_CODES.find((s) => s.code === defaults.serviceCode);
   const [codeKey, setCodeKey] = useState(initialKey ? serviceCodeKey(initialKey) : OTHER);
@@ -21,6 +21,7 @@ export function AgreementEditForm({ action, defaults, cancelHref }: { action: (p
     <form action={submit} className="space-y-5">
       <FormError message={state.errors ? state.message : undefined} />
       <input type="hidden" name="serviceCode" value={serviceCode} />
+      {onSaved && <input type="hidden" name="stay" value="1" />}
       {modifiers.map((m) => <input key={m} type="hidden" name="modifiers[]" value={m} />)}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
         <Field label="Agreement number" error={e.agreementNumber} className="md:col-span-3"><Input name="agreementNumber" defaultValue={defaults.agreementNumber} required /></Field>
@@ -42,7 +43,7 @@ export function AgreementEditForm({ action, defaults, cancelHref }: { action: (p
         <Field label="Start date" error={e.startDate} className="md:col-span-3"><Input name="startDate" type="date" defaultValue={defaults.startDate} required /></Field>
         <Field label="End date" error={e.endDate} className="md:col-span-3"><Input name="endDate" type="date" defaultValue={defaults.endDate} required /></Field>
       </div>
-      <div className="flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button><LinkButton href={cancelHref} variant="ghost">Cancel</LinkButton></div>
+      <div className="flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>{onCancel ? <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button> : <LinkButton href={cancelHref} variant="ghost">Cancel</LinkButton>}</div>
     </form>
   );
 }

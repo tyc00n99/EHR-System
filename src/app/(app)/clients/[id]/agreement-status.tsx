@@ -9,7 +9,7 @@ export function AgreementStatusButton({ id, personId, status }: { id: string; pe
   if (status === "active") {
     return (
       <button disabled={pending} className={`${cls} text-danger`} onClick={() => { if (confirm("Cancel this service agreement? Visits can no longer be recorded against it.")) start(() => setAgreementStatus(id, personId, "cancelled")); }}>
-        Cancel
+        Cancel agreement
       </button>
     );
   }

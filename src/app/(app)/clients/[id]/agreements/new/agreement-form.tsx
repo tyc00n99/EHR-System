@@ -13,8 +13,8 @@ type Extract = (p: ExtractState, fd: FormData) => Promise<ExtractState>;
 
 const OTHER = "__other__";
 
-export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiReady }: { action: Action; extract: Extract; cancelHref: string; defaultCounty: string; aiReady: boolean }) {
-  const [state, submit, pending] = useActionState(action, {});
+export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiReady, onSaved, onCancel }: { action: Action; extract: Extract; cancelHref: string; defaultCounty: string; aiReady: boolean; onSaved?: () => void; onCancel?: () => void }) {
+  const [state, submit, pending] = useActionState(onSaved ? async (p: ActionState, fd: FormData) => { const r = await action(p, fd); if (r.ok) onSaved(); return r; } : action, {});
   const [ex, runExtract, extracting] = useActionState(extract, {});
   const e = state.errors ?? {};
 
@@ -116,6 +116,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
         {ex.documentPath && <input type="hidden" name="documentPath" value={ex.documentPath} />}
         {ex.documentName && <input type="hidden" name="documentName" value={ex.documentName} />}
         <input type="hidden" name="serviceCode" value={serviceCode} />
+        {onSaved && <input type="hidden" name="stay" value="1" />}
         {modifiers.map((m) => <input key={m} type="hidden" name="modifiers[]" value={m} />)}
 
         <FormSection title="Authorization" description="From the DHS service agreement letter.">
@@ -164,7 +165,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
 
         <FormActions>
           <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save agreement"}</Button>
-          <LinkButton href={cancelHref} variant="ghost">Cancel</LinkButton>
+          {onCancel ? <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button> : <LinkButton href={cancelHref} variant="ghost">Cancel</LinkButton>}
         </FormActions>
       </form>
     </div>

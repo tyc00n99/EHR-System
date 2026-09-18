@@ -92,6 +92,7 @@ export async function createAgreement(personId: string, _prev: ActionState, fd: 
   const { unitRate, ...rest } = parsed.data;
   await audited(db, { userId: user.id }).insert(schema.serviceAgreements, { ...rest, unitRate: unitRate.toFixed(2), unitMinutes: 15 });
   revalidatePath(`/clients/${personId}`);
+  if (fd.get("stay")) return { ok: true };
   redirect(`/clients/${personId}`);
 }
 
@@ -191,6 +192,7 @@ export async function updateAgreement(agreementId: string, personId: string, _pr
   void _p; void _d; void _n;
   await audited(db, { userId: user.id }).update(schema.serviceAgreements, agreementId, { ...rest, unitRate: unitRate.toFixed(2), status: status as "active" | "exhausted" | "expired" | "cancelled" });
   revalidatePath(`/clients/${personId}`);
+  if (fd.get("stay")) return { ok: true };
   redirect(`/clients/${personId}?tab=authorizations`);
 }
 
