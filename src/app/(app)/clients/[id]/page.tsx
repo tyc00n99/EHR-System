@@ -17,7 +17,7 @@ import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits, listVisitStaffForPerson } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { NotesTab, type NoteFilters, type NoteRow } from "./notes-tab";
-import { HiddenTabsHint } from "@/components/workspace-switch";
+import { HiddenTabsHint, WorkspaceSwitch } from "@/components/workspace-switch";
 import { hiddenTabsHint, tabsFor } from "@/lib/workspace";
 import { getWorkspace } from "@/lib/workspace-server";
 import { StatusControl } from "./status-control";
@@ -176,7 +176,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
           {person.status === "active" && !person.signatureCodeHash && <Badge tone="danger">no signing code</Badge>}
         </>}
-        actions={<><span className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-line bg-card px-2.5 text-[13.5px] text-muted-foreground"><Icon.building size={14} />{org.name}</span></>}
+        actions={<>{user.role !== "dsp" && <WorkspaceSwitch value={workspace} />}<span className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-line bg-card px-2.5 text-[13.5px] text-muted-foreground"><Icon.building size={14} />{org.name}</span></>}
       />
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
       {user.role !== "dsp" && <HiddenTabsHint labels={hidden.labels} target={hidden.target} />}

@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkspaceSwitch } from "@/components/workspace-switch";
 import type { Workspace } from "@/lib/workspace";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -49,6 +50,7 @@ export function SectionNav({ role, workspace, counts }: { role: Role; workspace:
   const params = useSearchParams();
   const entries = sectionRow(pathname, role, counts);
   if (!entries) return null;
+  const canSwitch = role !== "dsp";
   return (
     <nav aria-label="Section" className="z-10 flex h-10 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
       {entries.map((e) => {
@@ -70,6 +72,7 @@ export function SectionNav({ role, workspace, counts }: { role: Role; workspace:
           </Link>
         );
       })}
+      {canSwitch && <span className="ml-auto flex shrink-0 items-center pl-4"><WorkspaceSwitch value={workspace} compact /></span>}
     </nav>
   );
 }

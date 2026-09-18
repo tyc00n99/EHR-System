@@ -8,9 +8,6 @@ import { Badge, Card, Empty, LinkButton, Notice, StatTile } from "@/components/k
 import { getOpenVisitForStaff, getStaff, listAssignmentsForStaff, listCredentials, listPeople, listShifts, listVisits, staffPeriodTotals } from "@/db/queries";
 import { labelForCode } from "@/lib/hcpcs";
 import { requireUser } from "@/lib/auth";
-import { WorkspaceSwitch } from "@/components/workspace-switch";
-import type { Workspace } from "@/lib/workspace";
-import { getWorkspace } from "@/lib/workspace-server";
 import { evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fullName } from "@/lib/format";
 import { currentPayPeriod } from "@/lib/pay-period";
@@ -24,7 +21,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireUser();
   const sp = await searchParams;
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
-  return (<>{openVisit && <VisitSheet id={openVisit} />}{user.role === "dsp" && user.staffId ? <CaregiverHome staffId={user.staffId} name={user.staffName} /> : <OfficeHome user={user} workspace={await getWorkspace(user.role)} />}</>);
+  return (<>{openVisit && <VisitSheet id={openVisit} />}{user.role === "dsp" && user.staffId ? <CaregiverHome staffId={user.staffId} name={user.staffName} /> : <OfficeHome user={user} />}</>);
 }
 
 /* ---------- caregiver home ---------- */
@@ -160,12 +157,10 @@ async function CaregiverHome({ staffId, name }: { staffId: string; name: string 
  * user's request). The counters, the board and the recent notes it used to carry all live where
  * they are acted on: the Review queue, the Schedule, and Notes.
  */
-function OfficeHome({ user, workspace }: { user: { staffName: string | null; email: string }; workspace: Workspace }) {
+function OfficeHome({ user }: { user: { staffName: string | null; email: string } }) {
   const firstName = user.staffName?.split(" ")[0] ?? user.email.split("@")[0];
   return (
-    <div className="relative flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-      {/* The one place the Clinical / Practice Management switch lives (Sept 18, 2026, user's request). */}
-      <div className="absolute right-0 top-0"><WorkspaceSwitch value={workspace} /></div>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
       <p className="text-[32px] font-bold tracking-tight text-primary">Welcome, {firstName}</p>
     </div>
   );
