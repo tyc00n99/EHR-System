@@ -100,7 +100,6 @@ export function sectionRow(pathname: string, role: Role, c: NavCounts): SectionE
 
   if (pathname === "/visits" || pathname === "/notes") {
     return [
-      { href: "/visits", label: "All notes", match: noParam("state") },
       { href: "/visits?state=unsigned", label: "Awaiting signature", count: c.unsigned || undefined, hot: c.unsigned > 0, match: param("state", "unsigned") },
       { href: "/visits?state=returned", label: "Returned", count: c.returned || undefined, hot: c.returned > 0, match: param("state", "returned") },
       { href: "/visits?state=manual", label: "Manual entries", count: c.manual || undefined, match: param("state", "manual") },
