@@ -73,7 +73,7 @@ export function DocumentsTab({ personId, items, others, archived, summary, manag
         </ul>
       </section>
 
-      <DocFold personId={personId} docs={others} manage={manage} noun="other file" hint="medical orders, correspondence, anything staff should read before a shift" empty="No other files yet. Medical orders, correspondence, photos of paperwork — anything staff should read before a shift." groupBy={(d) => DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category} />
+      <DocFold personId={personId} docs={others} manage={manage} noun="other file" hint="medical orders, correspondence, anything staff should read before a shift" empty="medical orders, correspondence, photos of paperwork; add one with Upload" groupBy={(d) => DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category} />
 
       {archived.length > 0 && <DocFold personId={personId} docs={archived} manage={manage} noun="archived document" hint="kept for the record, restorable any time" groupBy={(d) => (d.archivedAt ? `Archived ${fmtDate(d.archivedAt)}` : "Archived earlier")} />}
     </div>
@@ -89,9 +89,13 @@ function DocFold({ personId, docs, manage, noun, hint, empty, groupBy }: { perso
   const [open, setOpen] = useState(false);
   const groups = new Map<string, ClientDocument[]>();
   for (const d of docs) { const k = groupBy(d); groups.set(k, [...(groups.get(k) ?? []), d]); }
-  if (docs.length === 0) return <section className="rounded-xl border border-line bg-card px-5 py-3.5 text-[14px] text-muted-foreground">{empty ?? `No ${noun}s.`}</section>;
+  if (docs.length === 0) return (
+    <section className="mt-5 flex items-center gap-2.5 rounded-xl border border-line bg-card px-5 py-3.5 text-[14px]">
+      <span className="font-medium text-text-strong">0 {noun}s</span><span className="text-muted-foreground">· {empty ?? hint}</span>
+    </section>
+  );
   return (
-    <section className="overflow-hidden rounded-xl border border-line bg-card">
+    <section className="mt-5 overflow-hidden rounded-xl border border-line bg-card">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left text-[14px] hover:bg-sidebar">
         <span className="font-medium text-text-strong">{docs.length} {noun}{docs.length === 1 ? "" : "s"}</span>
         <span className="text-muted-foreground">· {hint}</span>
