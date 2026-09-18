@@ -17,6 +17,9 @@ import { getOrganization } from "@/db/queries";
 import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits, listVisitStaffForPerson } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { NotesTab, type NoteFilters, type NoteRow } from "./notes-tab";
+import { HiddenTabsHint, WorkspaceSwitch } from "@/components/workspace-switch";
+import { hiddenTabsHint, tabsFor } from "@/lib/workspace";
+import { getWorkspace } from "@/lib/workspace-server";
 import { StatusControl } from "./status-control";
 import { MedicationSupportToggle } from "./med-toggle";
 import { fromLocalInput } from "@/lib/format";
@@ -141,7 +144,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   ];
   const profileOutstanding = profileSections.filter((s) => !s.done && s.key !== "history").length;
 
-  const tabs = [
+  const workspace = await getWorkspace(user.role);
+  const allTabs = [
     { key: "overview", label: "Overview" },
     { key: "lifeplan", label: "Programming", count: goals.filter((g) => g.goal.status === "active").length },
     { key: "notes", label: "Sessions", count: noteCount },
@@ -149,6 +153,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     { key: "medical", label: "Medication", count: person.medicationSupport ? meds.filter((m) => m.active).length || undefined : undefined },
     { key: "profile", label: "Profile", count: profileOutstanding || undefined },
   ];
+  const tabs = tabsFor("client", workspace, allTabs, tab);
+  const hidden = hiddenTabsHint("client", workspace, allTabs);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -170,9 +176,10 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           {manage ? <StatusControl personId={id} status={person.status} /> : <Badge tone={statusTone[person.status]}>{person.status}</Badge>}
           {person.status === "active" && !person.signatureCodeHash && <Badge tone="danger">no signing code</Badge>}
         </>}
-        actions={<span className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-line bg-card px-2.5 text-[13.5px] text-muted-foreground"><Icon.building size={14} />{org.name}</span>}
+        actions={<>{user.role !== "dsp" && <WorkspaceSwitch value={workspace} />}<span className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-line bg-card px-2.5 text-[13.5px] text-muted-foreground"><Icon.building size={14} />{org.name}</span></>}
       />
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
+      {user.role !== "dsp" && <HiddenTabsHint labels={hidden.labels} target={hidden.target} />}
 
       {tab === "overview" && (
         <ChartGrid columns="two">

@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { primaryNav, type NavCounts, type Role } from "@/lib/nav";
+import type { Workspace } from "@/lib/workspace";
 import { useModulePanel } from "@/components/module-panel";
 
 /**
@@ -17,7 +18,7 @@ import { useModulePanel } from "@/components/module-panel";
  * destination in one place and denied it in another. Labels live in the tooltip and the accessible
  * name rather than on screen, which is what buys back the width.
  */
-export function SideRail({ role, counts, orgName, footer }: { role: Role; counts: NavCounts; orgName: string; footer?: ReactNode }) {
+export function SideRail({ role, workspace, counts, orgName, footer }: { role: Role; workspace: Workspace; counts: NavCounts; orgName: string; footer?: ReactNode }) {
   const pathname = usePathname();
   const panel = useModulePanel();
   // The hovered tile's label. Rendered through a portal at the top of the document with fixed
@@ -45,7 +46,7 @@ export function SideRail({ role, counts, orgName, footer }: { role: Role; counts
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
         <img src="/evvora-tile.png" alt="" width={64} height={64} className="size-full object-cover" />
       </Link>
-      {primaryNav(role).map((d) => {
+      {primaryNav(role, workspace).map((d) => {
         const Ic = Icon[d.icon];
         const active = isActive(d.href, d.also);
         const badge = d.badge ? counts[d.badge] : 0;

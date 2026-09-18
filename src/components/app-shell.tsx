@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { MobileNav } from "@/components/mobile-nav";
 import { SectionNav } from "@/components/top-nav";
 import { SideRail } from "@/components/side-rail";
+import type { Workspace } from "@/lib/workspace";
 import { ModulePanelProvider } from "@/components/module-panel";
 import { Avatar } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -24,7 +25,7 @@ async function logout() {
 
 const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" } as const;
 
-export function AppShell({ user, orgName, counts, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
+export function AppShell({ user, workspace, orgName, counts, palette, children }: { user: CurrentUser; workspace: Workspace; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
   const gear = gearGroups(user.role);
   return (
     <ModulePanelProvider>
@@ -33,6 +34,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
 
       <SideRail
         role={user.role}
+        workspace={workspace}
         counts={counts}
         orgName={orgName}
         footer={<>
@@ -82,13 +84,13 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
           top of the page. ⌘K still works — the palette stays mounted, just not drawn. */}
       <div className="sr-only"><CommandPalette entries={palette} role={user.role} /></div>
 
-      <Suspense fallback={null}><SectionNav role={user.role} counts={counts} /></Suspense>
+      <Suspense fallback={null}><SectionNav role={user.role} workspace={workspace} counts={counts} /></Suspense>
 
       <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 md:px-8 md:py-6">
         {/* One gutter and one content width for every page: pages do not centre themselves. */}
         <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col">{children}</div>
       </main>
-      <MobileNav role={user.role} review={counts.review} />
+      <MobileNav role={user.role} workspace={workspace} review={counts.review} />
       </div>
       <Suspense fallback={null}><NotePreview /></Suspense>
       <Toaster position="bottom-right" richColors closeButton />
