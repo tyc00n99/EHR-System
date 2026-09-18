@@ -87,19 +87,43 @@ export function DocumentsTab({ personId, items, others, archived, summary, manag
         )}
       </section>
 
-      {archived.length > 0 && (
-        <section className="mt-5 overflow-hidden rounded-xl border border-line bg-card opacity-80">
-          <div className="border-b border-line px-5 py-3 text-[13px] font-medium uppercase tracking-[0.11em]">Archived · {archived.length}</div>
-          <ul className="divide-y divide-line-soft">
-            {archived.map((d) => (
-              <li key={d.id} className="px-5 py-3">
-                <div className="mb-1 text-[13px] uppercase tracking-[0.06em] opacity-60">{DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category}{d.archivedAt ? ` · archived ${fmtDate(d.archivedAt)}` : ""}</div>
-                <FileRow d={d} primary />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {archived.length > 0 && <ArchivedFold personId={personId} docs={archived} manage={manage} />}
     </div>
+  );
+}
+
+/**
+ * Archived documents fold away behind one line (option C, 2026-09-18). Open, they group by the day
+ * they were archived, and each row is just the name with restore and delete: no category or dates.
+ */
+function ArchivedFold({ personId, docs, manage }: { personId: string; docs: ClientDocument[]; manage: boolean }) {
+  const [open, setOpen] = useState(false);
+  const groups = new Map<string, ClientDocument[]>();
+  for (const d of docs) { const k = d.archivedAt ? fmtDate(d.archivedAt) : "Earlier"; groups.set(k, [...(groups.get(k) ?? []), d]); }
+  return (
+    <section className="mt-5 overflow-hidden rounded-xl border border-line bg-card">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left text-[14px] hover:bg-sidebar">
+        <span className="font-medium text-text-strong">{docs.length} archived document{docs.length === 1 ? "" : "s"}</span>
+        <span className="text-muted-foreground">· kept for the record, restorable any time</span>
+        <Icon.chevron size={18} className={cx("ml-auto text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && [...groups.entries()].map(([day, list]) => (
+        <div key={day}>
+          <div className="border-t border-line px-5 pb-1.5 pt-2.5 text-[12.5px] font-medium uppercase tracking-[0.06em] text-hint">Archived {day}</div>
+          {list.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 border-t border-line-soft px-5 py-2">
+              <PreviewButton variant="icon" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
+              <span className="min-w-0 truncate text-[14px] font-medium text-text-strong">{d.title}</span>
+              {manage && (
+                <span className="ml-auto flex gap-1.5">
+                  <ArchiveDocument id={d.id} personId={personId} archived icon />
+                  <DeleteDocument id={d.id} personId={personId} icon />
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </section>
   );
 }

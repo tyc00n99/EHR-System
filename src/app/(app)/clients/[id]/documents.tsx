@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useTransition } from "react";
+import { Icon } from "@/components/icons";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import { DOCUMENT_CATEGORIES } from "@/lib/validation";
 import { deleteClientDocument, setClientDocumentArchived, uploadClientDocument } from "../document-actions";
@@ -25,12 +26,19 @@ export function DocumentUpload({ personId, defaultCategory = "support_plan", onD
   );
 }
 
-export function DeleteDocument({ id, personId }: { id: string; personId: string }) {
+export function DeleteDocument({ id, personId, icon }: { id: string; personId: string; icon?: boolean }) {
   const [pending, start] = useTransition();
-  return <button disabled={pending} onClick={() => { if (confirm("Delete this file? Staff will no longer be able to open it.")) start(() => deleteClientDocument(id, personId)); }} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">Delete</button>;
+  const onClick = () => { if (confirm("Delete this file? Staff will no longer be able to open it.")) start(() => deleteClientDocument(id, personId)); };
+  if (icon) return <button disabled={pending} onClick={onClick} aria-label="Delete" title="Delete" className={ICON_BTN + " text-danger"}><Icon.trash size={15} /></button>;
+  return <button disabled={pending} onClick={onClick} className="text-[13px] font-medium text-danger hover:underline disabled:opacity-50">Delete</button>;
 }
 
-export function ArchiveDocument({ id, personId, archived }: { id: string; personId: string; archived: boolean }) {
+export function ArchiveDocument({ id, personId, archived, icon }: { id: string; personId: string; archived: boolean; icon?: boolean }) {
   const [pending, start] = useTransition();
-  return <button disabled={pending} onClick={() => start(() => setClientDocumentArchived(id, personId, !archived))} className="text-[13px] font-medium text-muted-foreground hover:underline disabled:opacity-50">{archived ? "Restore" : "Archive"}</button>;
+  const onClick = () => start(() => setClientDocumentArchived(id, personId, !archived));
+  const label = archived ? "Restore" : "Archive";
+  if (icon) return <button disabled={pending} onClick={onClick} aria-label={label} title={label} className={ICON_BTN + " text-muted-foreground"}><Icon.history size={15} /></button>;
+  return <button disabled={pending} onClick={onClick} className="text-[13px] font-medium text-muted-foreground hover:underline disabled:opacity-50">{label}</button>;
 }
+
+const ICON_BTN = "flex size-[30px] items-center justify-center rounded-lg border border-line bg-card hover:bg-hover disabled:opacity-50";
