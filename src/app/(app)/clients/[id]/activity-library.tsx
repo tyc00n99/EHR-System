@@ -3,7 +3,7 @@
 import { Pencil, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Button, Card, Input } from "@/components/kit";
+import { Button, Input } from "@/components/kit";
 import { setActivityLibrary } from "../actions";
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -32,7 +32,8 @@ export function ActivityLibrary({ personId, firstName, library, defaults, manage
     });
 
   return (
-    <Card title="Daily activity library" description={`What caregivers can pick under Daily activities on ${firstName}'s notes.${custom ? "" : " This is the standard list; change anything and it becomes this client's own."}`} className="mt-6">
+    <div>
+      <p className="px-5 pb-1 pt-3 text-[13px] text-muted-foreground">{`What caregivers can pick under Daily activities on ${firstName}'s notes.${custom ? "" : " This is the standard list; change anything and it becomes this client's own."}`}</p>
       <ol className="divide-y divide-line-soft">
         {rows.map((a, i) => (
           <li key={`${i}-${a}`} className="flex items-center gap-3 px-5 py-2 text-[13.5px]">
@@ -65,6 +66,6 @@ export function ActivityLibrary({ personId, firstName, library, defaults, manage
           <p className="mt-1.5 text-[13px]">Write it the way it should read on a note, using {firstName}&apos;s name.</p>
         </form>
       )}
-    </Card>
+    </div>
   );
 }

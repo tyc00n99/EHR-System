@@ -435,8 +435,8 @@ export async function listGoalsWithStats(personId: string, from: Date, to: Date)
     goal: g,
     reviews: reviews.filter((r) => r.review.goalId === g.id).map((r) => ({ ...r.review, by: r.first ? `${r.first} ${r.last}` : (r.email ?? "—") })),
     questions: qs.filter((q) => q.goalId === g.id).map((q) => {
-      const mine = rs.filter((r) => r.questionId === q.id);
-      return { question: q, yes: mine.filter((r) => r.response === "yes").length, no: mine.filter((r) => r.response === "no").length, na: mine.filter((r) => r.response === "na").length };
+      const mine = rs.filter((r) => r.questionId === q.id).sort((a, b) => a.at.getTime() - b.at.getTime());
+      return { question: q, yes: mine.filter((r) => r.response === "yes").length, no: mine.filter((r) => r.response === "no").length, na: mine.filter((r) => r.response === "na").length, recent: mine.slice(-12).map((r) => r.response) };
     }),
   }));
 }

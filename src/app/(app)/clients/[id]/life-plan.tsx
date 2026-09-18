@@ -3,6 +3,7 @@
 import { CircleHelp } from "lucide-react";
 import { FilterMenu } from "@/components/filter-menu";
 import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
+import { Icon } from "@/components/icons";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
 import { fmtDate, fmtDateTime } from "@/lib/format";
@@ -11,7 +12,7 @@ import { addGoalQuestion, addGoalReview, createGoal, reinstateGoalQuestion, reti
 
 export interface GoalView {
   id: string; title: string; outcome: string | null; description: string | null; category: string; status: "active" | "met" | "discontinued"; startDate: string | null; targetDate: string | null;
-  questions: { id: string; prompt: string; active: boolean; yes: number; no: number; na: number }[];
+  questions: { id: string; prompt: string; active: boolean; yes: number; no: number; na: number; recent: string[] }[];
   reviews: { id: string; assessment: string; note: string; reviewedAt: Date; by: string }[];
 }
 
@@ -56,43 +57,70 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
   const rank = (g: GoalView) => { const a = g.reviews[0]?.assessment; return a === "needs_attention" || a === "not_met" ? 0 : !a ? 1 : 2; };
   const lastReview = (g: GoalView) => g.reviews[0]?.reviewedAt.getTime() ?? 0;
   const active = goals.filter((g) => g.status === "active").sort((a, b) => rank(a) - rank(b) || lastReview(a) - lastReview(b) || a.title.localeCompare(b.title));
-  const groups: { label: string; items: GoalView[] }[] = [
-    { label: "Active", items: active },
-    { label: "Met", items: goals.filter((g) => g.status === "met") },
-    { label: "Discontinued", items: goals.filter((g) => g.status === "discontinued") },
-  ].filter((x) => x.items.length);
 
+  const done = goals.filter((g) => g.status !== "active");
   return (
     <div>
       {manage && <div className="mb-3 flex justify-end"><Button variant="outline" className="h-9" onClick={() => setSelected("new")}>+ New goal</Button></div>}
       {goals.length === 0 && <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-[13px]">{manage ? "No goals yet. Add the outcomes from the support plan." : "A supervisor adds goals from the support plan."}</div>}
-      {groups.map((grp) => (
-        <section key={grp.label} className="mb-4 overflow-hidden rounded-xl border border-line bg-card">
-          <div className="border-b border-line px-4 py-2.5 text-[13px] font-medium uppercase tracking-[0.11em]">{grp.label} · {grp.items.length}</div>
-          <ul className="divide-y divide-line-soft">
-            {grp.items.map((g, i) => { const st = standing(g); const latest = g.reviews[0]; return (
-              <li key={g.id}>
-                <button type="button" onClick={() => setSelected(g.id)} className={cx("flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-hover", g.status !== "active" && "opacity-70")}>
-                  <span className="w-6 shrink-0 text-right text-[13.5px] tabular-nums">{i + 1}.</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
-                    {g.outcome && <span className="mt-0.5 block text-[13.5px] leading-snug">{g.outcome}</span>}
-                    <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px]">
-                      <span>{g.questions.filter((q) => q.active).length ? `${g.questions.filter((q) => q.active).length} question${g.questions.filter((q) => q.active).length === 1 ? "" : "s"} on every note` : "Judged at review"}</span>
-                      {latest && <span>Reviewed {fmtDate(latest.reviewedAt)}</span>}
-                      {g.targetDate && <span>Target {fmtDate(g.targetDate)}</span>}
-                    </span>
-                  </span>
-                  <Badge tone={st.tone}>{st.label}</Badge>
-                  <span className="mt-0.5 text-[13px]">›</span>
-                </button>
-              </li>
-            ); })}
-          </ul>
+      {active.length > 0 && (
+        <section className="overflow-hidden rounded-xl border border-line bg-card">
+          <div className={cx(ROW, "border-b border-line py-2 text-[12.5px] text-muted-foreground")}><span /><span>Goal</span><span>Answered yes on notes</span><span>Trend</span><span>Last review</span><span /></div>
+          {active.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} />)}
         </section>
-      ))}
-      {library && <div className="mt-2">{library}</div>}
+      )}
+      {done.length > 0 && (
+        <Fold label={`${done.length} goal${done.length === 1 ? "" : "s"} ${done.every((g) => g.status === "met") ? "met" : "closed"}`} hint={done.map((g) => g.title).join(", ")}>
+          {done.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} muted />)}
+        </Fold>
+      )}
+      {library && <Fold label="Daily activities" hint="what caregivers pick from on every note">{library}</Fold>}
     </div>
+  );
+}
+
+const ROW = "grid grid-cols-[6px_minmax(0,1fr)_190px_130px_170px_140px] items-center gap-x-5 pr-5";
+
+/** One goal, read left to right: how it stands, what it is, what the notes say, and when it was last looked at. */
+function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?: boolean }) {
+  const st = standing(g);
+  const latest = g.reviews[0];
+  const live = g.questions.filter((q) => q.active);
+  const yes = live.reduce((n, q) => n + q.yes, 0), answered = live.reduce((n, q) => n + q.yes + q.no, 0);
+  const pct = answered ? Math.round((yes / answered) * 100) : null;
+  const trend = live.length ? live.reduce((best, q) => (q.recent.length > best.recent.length ? q : best), live[0]).recent.filter((r) => r !== "na") : [];
+  const barTone = st.tone === "warn" || st.tone === "danger" ? "bg-warn" : st.tone === "ok" ? "bg-ok" : "bg-primary";
+  return (
+    <button type="button" onClick={onOpen} className={cx(ROW, "w-full border-t border-line-soft py-3 text-left transition-colors first:border-t-0 hover:bg-sidebar", muted && "opacity-70")}>
+      <span className={cx("h-10 rounded-r-[3px]", st.dot)} />
+      <span className="min-w-0">
+        <span className="block truncate text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
+        {g.outcome && <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">{g.outcome}</span>}
+      </span>
+      <span className="text-[13px] text-muted-foreground">
+        {pct == null ? (live.length ? "No answers yet" : "Judged at review") : <>
+          <span className="block h-1.5 w-full overflow-hidden rounded-full bg-panel"><span className={cx("block h-full rounded-full", barTone)} style={{ width: `${pct}%` }} /></span>
+          <span className="mt-1 block tabular-nums">{pct}% · {yes} of {answered}</span>
+        </>}
+      </span>
+      <span className="flex h-[18px] items-end gap-[3px]">{trend.length ? trend.map((r, i) => <span key={i} className={cx("w-[5px] rounded-[1px]", r === "yes" ? "h-full bg-primary" : "h-[8px] bg-primary/25")} />) : <span className="text-hint">—</span>}</span>
+      <span className="text-[13.5px] text-muted-foreground"><span className="block">{latest ? fmtDate(latest.reviewedAt) : "Not reviewed yet"}</span>{g.targetDate && <span className="block text-[12.5px] text-hint">target {fmtDate(g.targetDate)}</span>}</span>
+      <span className="flex justify-end"><Badge tone={st.tone}>{st.label}</Badge></span>
+    </button>
+  );
+}
+
+function Fold({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="mt-4 overflow-hidden rounded-xl border border-line bg-card">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left text-[14px] hover:bg-sidebar">
+        <span className="shrink-0 font-medium text-text-strong">{label}</span>
+        <span className="min-w-0 truncate text-muted-foreground">· {hint}</span>
+        <Icon.chevron size={18} className={cx("ml-auto shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
+      </button>
+      {open && <div className="border-t border-line">{children}</div>}
+    </section>
   );
 }
 
