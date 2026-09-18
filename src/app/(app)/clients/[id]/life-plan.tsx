@@ -12,7 +12,7 @@ import { addGoalQuestion, addGoalReview, createGoal, reinstateGoalQuestion, reti
 
 export interface GoalView {
   id: string; title: string; outcome: string | null; description: string | null; category: string; status: "active" | "met" | "discontinued"; startDate: string | null; targetDate: string | null;
-  questions: { id: string; prompt: string; active: boolean; yes: number; no: number; na: number; recent: string[] }[];
+  questions: { id: string; prompt: string; active: boolean; yes: number; no: number; na: number; thisMonth: { yes: number; no: number }; lastMonth: { yes: number; no: number } }[];
   reviews: { id: string; assessment: string; note: string; reviewedAt: Date; by: string }[];
 }
 
@@ -65,7 +65,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
       {goals.length === 0 && <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-[13px]">{manage ? "No goals yet. Add the outcomes from the support plan." : "A supervisor adds goals from the support plan."}</div>}
       {active.length > 0 && (
         <section className="overflow-hidden rounded-xl border border-line bg-card">
-          <div className={cx(ROW, "border-b border-line py-2 text-[12.5px] text-muted-foreground")}><span /><span>Goal</span><span className={WIDE}>Answered yes on notes</span><span className={WIDE}>Trend</span><span className={WIDE}>Last review</span><span /></div>
+          <div className={cx(ROW, "border-b border-line py-2 text-[12.5px] text-muted-foreground")}><span /><span>Goal</span><span className={WIDE}>Answered yes on notes</span><span className={WIDE}>Last review</span><span /></div>
           {active.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} />)}
         </section>
       )}
@@ -79,7 +79,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
   );
 }
 
-const ROW = "grid grid-cols-[6px_minmax(0,1fr)_140px] items-center gap-x-5 pr-5 xl:grid-cols-[6px_minmax(0,1fr)_190px_130px_170px_140px]";
+const ROW = "grid grid-cols-[6px_minmax(0,1fr)_140px] items-center gap-x-5 pr-5 xl:grid-cols-[6px_minmax(0,1fr)_220px_170px_140px]";
 const WIDE = "hidden xl:block";
 
 /** One goal, read left to right: how it stands, what it is, what the notes say, and when it was last looked at. */
@@ -89,7 +89,10 @@ function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?
   const live = g.questions.filter((q) => q.active);
   const yes = live.reduce((n, q) => n + q.yes, 0), answered = live.reduce((n, q) => n + q.yes + q.no, 0);
   const pct = answered ? Math.round((yes / answered) * 100) : null;
-  const trend = live.length ? live.reduce((best, q) => (q.recent.length > best.recent.length ? q : best), live[0]).recent.filter((r) => r !== "na") : [];
+  // Month over month: the yes rate for the last 30 days against the 30 before, once both have enough answers to mean something.
+  const rate = (pick: (q: GoalView["questions"][number]) => { yes: number; no: number }) => { const y = live.reduce((n, q) => n + pick(q).yes, 0), t = live.reduce((n, q) => n + pick(q).yes + pick(q).no, 0); return t >= 3 ? Math.round((y / t) * 100) : null; };
+  const now = rate((q) => q.thisMonth), before = rate((q) => q.lastMonth);
+  const delta = now != null && before != null ? now - before : null;
   const barTone = st.tone === "warn" || st.tone === "danger" ? "bg-warn" : st.tone === "ok" ? "bg-ok" : "bg-primary";
   return (
     <button type="button" onClick={onOpen} className={cx(ROW, "w-full border-t border-line-soft py-3 text-left transition-colors first:border-t-0 hover:bg-sidebar", muted && "opacity-70")}>
@@ -101,10 +104,9 @@ function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?
       <span className={cx(WIDE, "text-[13px] text-muted-foreground")}>
         {pct == null ? (live.length ? "No answers yet" : "Judged at review") : <>
           <span className="block h-1.5 w-full overflow-hidden rounded-full bg-panel"><span className={cx("block h-full rounded-full", barTone)} style={{ width: `${pct}%` }} /></span>
-          <span className="mt-1 block tabular-nums">{pct}% · {yes} of {answered}</span>
+          <span className="mt-1 block tabular-nums">{pct}% · {yes} of {answered}{delta != null && (delta > 2 ? <span className="ml-1.5 font-semibold text-ok">▲{delta}</span> : delta < -2 ? <span className="ml-1.5 font-semibold text-danger">▼{-delta}</span> : <span className="ml-1.5 text-hint" title="About the same as last month">→</span>)}</span>
         </>}
       </span>
-      <span className="hidden h-[18px] items-end gap-[3px] xl:flex">{trend.length ? trend.map((r, i) => <span key={i} className={cx("w-[5px] rounded-[1px]", r === "yes" ? "h-full bg-primary" : "h-[8px] bg-primary/25")} />) : <span className="text-hint">—</span>}</span>
       <span className={cx(WIDE, "text-[13.5px] text-muted-foreground")}><span className="block">{latest ? fmtDate(latest.reviewedAt) : "Not reviewed yet"}</span>{g.targetDate && <span className="block text-[12.5px] text-hint">target {fmtDate(g.targetDate)}</span>}</span>
       <span className="flex justify-end"><Badge tone={st.tone}>{st.label}</Badge></span>
     </button>

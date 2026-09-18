@@ -435,8 +435,10 @@ export async function listGoalsWithStats(personId: string, from: Date, to: Date)
     goal: g,
     reviews: reviews.filter((r) => r.review.goalId === g.id).map((r) => ({ ...r.review, by: r.first ? `${r.first} ${r.last}` : (r.email ?? "—") })),
     questions: qs.filter((q) => q.goalId === g.id).map((q) => {
-      const mine = rs.filter((r) => r.questionId === q.id).sort((a, b) => a.at.getTime() - b.at.getTime());
-      return { question: q, yes: mine.filter((r) => r.response === "yes").length, no: mine.filter((r) => r.response === "no").length, na: mine.filter((r) => r.response === "na").length, recent: mine.slice(-12).map((r) => r.response) };
+      const mine = rs.filter((r) => r.questionId === q.id);
+      const tally = (from: number, until: number) => { const w = mine.filter((r) => r.at.getTime() >= from && r.at.getTime() < until); return { yes: w.filter((r) => r.response === "yes").length, no: w.filter((r) => r.response === "no").length }; };
+      const end = to.getTime(), month = 30 * 86_400_000;
+      return { question: q, yes: mine.filter((r) => r.response === "yes").length, no: mine.filter((r) => r.response === "no").length, na: mine.filter((r) => r.response === "na").length, thisMonth: tally(end - month, end + 1), lastMonth: tally(end - 2 * month, end - month) };
     }),
   }));
 }
