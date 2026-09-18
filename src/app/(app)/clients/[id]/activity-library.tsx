@@ -57,13 +57,13 @@ export function ActivityLibrary({ personId, firstName, library, defaults, manage
         ))}
       </ol>
       {manage && (
-        <form className="border-t border-line-soft px-5 py-4" onSubmit={(e) => { e.preventDefault(); const t = draft.trim(); if (t.length < 3) { toast.error("Write the activity first."); return; } save([...rows, t], "Activity added."); }}>
+        <form className="border-t border-line-soft px-5 pb-8 pt-5" onSubmit={(e) => { e.preventDefault(); const t = draft.trim(); if (t.length < 3) { toast.error("Write the activity first."); return; } save([...rows, t], "Activity added."); }}>
           <div className="flex items-center gap-2">
             <Input value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={240} placeholder={`Walked with ${firstName} to the mailbox and back`} aria-label="New activity" className="h-9 flex-1" />
             <Button type="submit" className="h-9 shrink-0" disabled={pending}>{pending ? "Saving…" : "Add"}</Button>
             {custom && <Button type="button" variant="outline" className="h-9 shrink-0" disabled={pending} onClick={() => save([], "Standard list restored.")}>Back to standard list</Button>}
           </div>
-          <p className="mt-1.5 text-[13px]">Write it the way it should read on a note, using {firstName}&apos;s name.</p>
+          <p className="mt-2 text-[13px] text-muted-foreground">Write it the way it should read on a note, using {firstName}&apos;s name.</p>
         </form>
       )}
     </div>
