@@ -366,3 +366,4 @@ The paper that enters the agency is now read, not only stored. `src/lib/ai/read-
 - Column headers in the shared table are labels only (no click-to-sort arrows); the default order stays newest first.
 - Date/Service/Due columns no longer force widths or truncate, so the service name reads in full and the table stops leaving a gap before Hours.
 - Filter-pill counts are faceted: each pill counts rows that pass the date range and every *other* active filter, and a value already ticked stays listed at 0 so it can be unticked (`src/lib/visit-table.ts`).
+- The service record (`?visit=`) opens as a centred window (`RouteSheet` → Dialog, 960px wide, screen height minus a margin, scrolls inside). The old right-hand drawer was capped at 384px because the base sheet's own `data-[side=right]:sm:max-w-sm` outranked the width passed in; anything that needs a wide drawer must use `data-[side=right]:sm:max-w-[…]`.
