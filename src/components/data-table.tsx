@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, Columns3, ListFilter, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, ChevronsUpDown, Columns3, MoreVertical, Search } from "lucide-react";
 import {
-  type Column,
   type ColumnDef,
   type ColumnFiltersState,
   type RowSelectionState,
@@ -11,8 +10,6 @@ import {
   type VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -21,26 +18,28 @@ import {
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 /** Per-column options read from `columnDef.meta`. */
-export interface ColumnMeta { align?: "left" | "right"; /** Offer the column's distinct values as a "show only" filter in its header menu. */ filter?: boolean }
+export interface ColumnMeta { align?: "left" | "right"; /** Fixed pixel width. */ width?: number }
+
+export interface RowMenuItem { label: string; onSelect: () => void; danger?: boolean }
 
 export interface DataTableProps<T> {
   columns: ColumnDef<T, unknown>[];
   data: T[];
-  /** Placeholder for the global search box. Omit to hide search. */
+  /** Placeholder for the search box. Omit to hide search. */
   searchPlaceholder?: string;
   /** Grouped names offered under the search box on focus; picking one fills the search. */
   suggestions?: { label: string; items: string[] }[];
-  /** Row click target. */
+  /** Row click target. A query-only href updates the URL in place without a server render. */
   rowHref?: (row: T) => string | undefined;
-  /** Filter chips rendered left of the search. */
+  /** Rendered left of the count in the tool row (filter pills, chips). */
   chips?: ReactNode;
-  /** Right-side toolbar actions. */
+  /** Right-side tool-row actions. */
   actions?: ReactNode;
   emptyTitle?: string;
   emptyHint?: string;
@@ -49,23 +48,54 @@ export interface DataTableProps<T> {
   dense?: boolean;
   /** Stable id per row; needed for selection to survive sorting and filtering. */
   getRowId?: (row: T) => string;
-  /** Called when the pointer enters a row; use it to warm whatever a click will open. */
-  onRowHover?: (row: T) => void;
-  /** Adds a checkbox column. `bulk` renders the toolbar while rows are selected. */
+  /** Adds a checkbox column. `bulk` renders the actions in the selection bar above the table. */
   selectable?: boolean;
   bulk?: (selected: T[], clear: () => void) => ReactNode;
+  /** Called when the pointer enters a row; use it to warm whatever a click will open. */
+  onRowHover?: (row: T) => void;
+  /** A primary button at the end of every row. */
+  rowAction?: { label: string; href: (row: T) => string };
+  /** The ⋮ menu at the end of every row. */
+  rowMenu?: (row: T) => RowMenuItem[];
 }
 
-export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, rowHref, chips, actions, emptyTitle = "Nothing here yet", emptyHint, pageSize = 25, initialSorting = [], dense, getRowId, selectable, bulk, onRowHover }: DataTableProps<T>) {
+const PAGE_SIZES = [10, 25, 50, 100];
+
+/**
+ * The records table, in the shape the user picked from DocuSign (Sept 18, 2026): a tool row with
+ * search and filters, a selection bar that appears above the table while rows are ticked, sortable
+ * headers you click (an arrow shows the direction), a checkbox on every row, a primary button and
+ * a ⋮ menu at the row's end, tinted ticked rows, and a page-size and pager footer.
+ */
+export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, rowHref, chips, actions, emptyTitle = "Nothing here yet", emptyHint, pageSize = 25, initialSorting = [], dense, getRowId, selectable, bulk, onRowHover, rowAction, rowMenu }: DataTableProps<T>) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [globalFilter, setGlobalFilter] = useState("");
-  // Columns that offer a value filter match any of the ticked values; the checkbox column sits first.
+  const go = (href: string) => { if (href.startsWith("?")) window.history.pushState(null, "", href); else router.push(href); };
+
   const allColumns = useMemo<ColumnDef<T, unknown>[]>(() => {
-    const cols = columns.map((c) => ((c.meta as ColumnMeta | undefined)?.filter && !c.filterFn ? { ...c, filterFn: "arrIncludesSome" as const } : c));
+    const cols = [...columns];
+    if (rowAction || rowMenu) {
+      cols.push({
+        id: "__actions", enableSorting: false, enableHiding: false, enableGlobalFilter: false, size: 120, header: "",
+        cell: ({ row }) => (
+          <span className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+            {rowAction && <button type="button" onClick={() => go(rowAction.href(row.original))} className="inline-flex h-8 items-center rounded-md bg-primary px-3.5 text-[13.5px] font-medium text-primary-foreground hover:bg-primary-hover">{rowAction.label}</button>}
+            {rowMenu && (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<button type="button" aria-label="More" className="flex size-8 items-center justify-center rounded-md text-text hover:bg-hover" />}><MoreVertical className="size-4" /></DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-44">
+                  {rowMenu(row.original).map((m) => <DropdownMenuItem key={m.label} variant={m.danger ? "destructive" : "default"} onClick={m.onSelect}>{m.label}</DropdownMenuItem>)}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </span>
+        ),
+      });
+    }
     if (!selectable) return cols;
     const select: ColumnDef<T, unknown> = {
       id: "__select", enableSorting: false, enableHiding: false, enableGlobalFilter: false, size: 36,
@@ -73,7 +103,9 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
       cell: ({ row }) => <span onClick={(e) => e.stopPropagation()} className="flex"><Checkbox aria-label="Select row" checked={row.getIsSelected()} onCheckedChange={(v) => row.toggleSelected(Boolean(v))} /></span>,
     };
     return [select, ...cols];
-  }, [columns, selectable]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `go` is stable enough; the columns rarely change
+  }, [columns, selectable, rowAction, rowMenu]);
+
   const table = useReactTable({
     data,
     columns: allColumns,
@@ -88,57 +120,66 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize } },
   });
   const rows = table.getRowModel().rows;
   const total = table.getFilteredRowModel().rows.length;
-  const { pageIndex } = table.getState().pagination;
-  const pageCount = table.getPageCount();
+  const { pageIndex, pageSize: size } = table.getState().pagination;
+  const pageCount = Math.max(1, table.getPageCount());
   const selected = table.getSelectedRowModel().rows.map((r) => r.original);
-  const activeFilters = columnFilters.length;
+  const hasTools = Boolean(searchPlaceholder || chips || actions);
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 border-b border-line-soft bg-sidebar px-3 py-2">
-        {selected.length > 0 && bulk ? bulk(selected, () => table.resetRowSelection()) : (<>
+      {hasTools && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           {searchPlaceholder && <SearchBox value={globalFilter} onChange={setGlobalFilter} placeholder={searchPlaceholder} suggestions={suggestions} />}
           {chips}
-          <span className="text-[14px] text-muted-foreground">{total === data.length ? `${total} row${total === 1 ? "" : "s"}` : `${total} of ${data.length}`}</span>
-          {activeFilters > 0 && <button type="button" onClick={() => table.resetColumnFilters()} className="text-[14px] font-medium text-primary hover:underline">Clear {activeFilters === 1 ? "filter" : `${activeFilters} filters`}</button>}
-        </>)}
-        <div className="ml-auto flex items-center gap-2">
-          {actions}
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1.5 text-[14px]" />}>
-              <Columns3 className="size-3.5" /> Columns <ChevronDown className="size-3 text-gray-400" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              {table.getAllLeafColumns().filter((c) => c.getCanHide()).map((c) => (
-                <DropdownMenuCheckboxItem key={c.id} checked={c.getIsVisible()} onCheckedChange={(v) => c.toggleVisibility(Boolean(v))}>
-                  {typeof c.columnDef.header === "string" ? c.columnDef.header : c.id}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {total !== data.length && <span className="text-[13.5px] text-muted-foreground">{total} of {data.length}</span>}
+          <div className="ml-auto flex items-center gap-2">
+            {actions}
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-9 gap-1.5 text-[14px]" />}>
+                <Columns3 className="size-3.5" /> Columns <ChevronDown className="size-3 text-gray-400" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {table.getAllLeafColumns().filter((c) => c.getCanHide()).map((c) => (
+                  <DropdownMenuCheckboxItem key={c.id} checked={c.getIsVisible()} onCheckedChange={(v) => c.toggleVisibility(Boolean(v))}>
+                    {typeof c.columnDef.header === "string" ? c.columnDef.header : c.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="overflow-x-auto">
+      {selectable && selected.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-1 rounded-[10px] border border-line bg-card py-1.5 pl-4 pr-2 text-[14px] shadow-[var(--shadow-sm)]">
+          <span className="mr-2 font-medium text-text-strong">{selected.length} selected</span>
+          {bulk?.(selected, () => table.resetRowSelection())}
+          <button type="button" onClick={() => table.resetRowSelection()} className="ml-auto rounded-md px-3 py-1.5 text-[14px] font-medium text-primary hover:bg-tab-hover">Clear</button>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-xl border border-line bg-card">
         <Table>
-          <TableHeader className="bg-sidebar">
+          <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id} className="hover:bg-transparent">
                 {hg.headers.map((h) => {
                   const meta = h.column.columnDef.meta as ColumnMeta | undefined;
                   const align = meta?.align;
-                  const hasMenu = h.column.getCanSort() || Boolean(meta?.filter);
+                  const sortable = h.column.getCanSort();
+                  const dir = h.column.getIsSorted();
                   return (
-                    <TableHead key={h.id} className={cn("h-10 whitespace-nowrap px-4 text-[14px] font-medium text-muted-foreground first:pl-5 last:pr-5", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: h.getSize() !== 150 ? h.getSize() : undefined }}>
-                      {h.isPlaceholder ? null : hasMenu ? (
-                        <HeaderMenu column={h.column} align={align} label={flexRender(h.column.columnDef.header, h.getContext())} filterable={Boolean(meta?.filter)} />
+                    <TableHead key={h.id} className={cn("h-11 whitespace-nowrap px-3 text-[13.5px] font-medium text-text-strong first:pl-4 last:pr-4", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: meta?.width ?? (h.getSize() !== 150 ? h.getSize() : undefined) }}>
+                      {h.isPlaceholder ? null : sortable ? (
+                        <button type="button" onClick={h.column.getToggleSortingHandler()} className={cn("inline-flex items-center gap-1 rounded-md py-0.5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", dir && "text-primary")}>
+                          {flexRender(h.column.columnDef.header, h.getContext())}
+                          {dir === "asc" ? <ArrowUp className="size-3.5" /> : dir === "desc" ? <ArrowDown className="size-3.5" /> : <ChevronsUpDown className="size-3.5 text-hint" />}
+                        </button>
                       ) : flexRender(h.column.columnDef.header, h.getContext())}
                     </TableHead>
                   );
@@ -148,14 +189,14 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableRow className="hover:bg-transparent"><TableCell colSpan={allColumns.length} className="px-5 py-12 text-center"><div className="font-medium text-text-strong">{emptyTitle}</div>{emptyHint && <div className="mt-1 text-[14px] text-muted-foreground">{emptyHint}</div>}</TableCell></TableRow>
+              <TableRow className="hover:bg-transparent"><TableCell colSpan={allColumns.length} className="px-5 py-12 text-center"><div className="font-medium text-text-strong">{emptyTitle}</div>{emptyHint && <div className="mt-1 text-[13.5px] text-muted-foreground">{emptyHint}</div>}</TableCell></TableRow>
             ) : rows.map((row) => {
               const href = rowHref?.(row.original);
               return (
-                <TableRow key={row.id} onMouseEnter={onRowHover ? () => onRowHover(row.original) : undefined} onClick={href ? () => { if (href.startsWith("?")) { window.history.pushState(null, "", href); } else router.push(href); } : undefined} data-state={row.getIsSelected() ? "selected" : undefined} className={cn("border-line-soft", href && "cursor-pointer", row.getIsSelected() && "bg-primary-soft/40")}>
+                <TableRow key={row.id} onMouseEnter={onRowHover ? () => onRowHover(row.original) : undefined} onClick={href ? () => go(href) : undefined} data-state={row.getIsSelected() ? "selected" : undefined} className={cn("border-line-soft transition-colors", href && "cursor-pointer", row.getIsSelected() ? "bg-tab-hover hover:bg-tab-hover" : "hover:bg-sidebar")}>
                   {row.getVisibleCells().map((cell) => {
                     const align = (cell.column.columnDef.meta as ColumnMeta | undefined)?.align;
-                    return <TableCell key={cell.id} className={cn("px-4 align-middle text-[14.5px] first:pl-5 last:pr-5", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;
+                    return <TableCell key={cell.id} className={cn("px-3 align-middle text-[14px] first:pl-4 last:pr-4", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;
                   })}
                 </TableRow>
               );
@@ -164,15 +205,21 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
         </Table>
       </div>
 
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between border-t border-line-soft px-4 py-2 text-[14px] text-muted-foreground">
-          <span>Page {pageIndex + 1} of {pageCount}</span>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}><ChevronLeft className="size-3.5" /></Button>
-            <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}><ChevronRight className="size-3.5" /></Button>
-          </div>
+      <div className="mt-3 flex items-center justify-between text-[14px]">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<button type="button" aria-label="Rows per page" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-[14px] hover:bg-tab-hover" />}>{size} / page <ChevronDown className="size-3.5 text-muted-foreground" /></DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-auto min-w-32">
+            <DropdownMenuRadioGroup value={String(size)} onValueChange={(v) => table.setPageSize(Number(v))}>
+              {PAGE_SIZES.map((n) => <DropdownMenuRadioItem key={n} value={String(n)} className="py-1.5 pr-9 pl-2.5 text-[14px]">{n} / page</DropdownMenuRadioItem>)}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <span>Page {pageIndex + 1}{pageCount > 1 ? ` of ${pageCount}` : ""}</span>
+          <button type="button" aria-label="Previous page" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-tab-hover hover:text-text-strong disabled:opacity-40"><ChevronLeft className="size-4" /></button>
+          <button type="button" aria-label="Next page" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-tab-hover hover:text-text-strong disabled:opacity-40"><ChevronRight className="size-4" /></button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -195,7 +242,7 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
   const any = groups.some((g) => g.items.length);
   return (
     <div ref={box} className="relative">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
       <Input
         value={value}
         onChange={(e) => { onChange(e.target.value); setOpen(true); }}
@@ -204,7 +251,7 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
         placeholder={placeholder}
         role={suggestions ? "combobox" : undefined}
         aria-expanded={suggestions ? open : undefined}
-        className="h-8 w-64 bg-page pl-8 pr-7 text-[14px]"
+        className="h-9 w-56 rounded-lg bg-card pl-9 pr-7 text-[14px]"
       />
       {value && <button type="button" onClick={() => { onChange(""); setOpen(false); }} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground hover:text-text-strong">✕</button>}
       {suggestions && open && (
@@ -224,44 +271,10 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
   );
 }
 
-/**
- * A column header is a menu, not a toggle: sort either way, and for columns that carry a
- * `filter` meta, tick the values to show. The header shows an arrow while sorted and a funnel while
- * filtered, so the state of the table is readable from the header row alone.
- */
-function HeaderMenu<T>({ column, label, align, filterable }: { column: Column<T, unknown>; label: ReactNode; align?: "left" | "right"; filterable: boolean }) {
-  const dir = column.getIsSorted();
-  const selected = (column.getFilterValue() as string[] | undefined) ?? [];
-  const facets = filterable ? [...column.getFacetedUniqueValues().keys()].filter((v) => v != null && v !== "").map(String).sort((a, b) => a.localeCompare(b)) : [];
-  const active = dir || selected.length > 0;
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<button type="button" aria-label={`${typeof label === "string" ? label : column.id} options`} className={cn("inline-flex items-center gap-1 rounded-md py-0.5 hover:text-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", active && "text-primary")} />}>
-        {label}
-        {dir === "asc" ? <ArrowUp className="size-3" /> : dir === "desc" ? <ArrowDown className="size-3" /> : selected.length > 0 ? <ListFilter className="size-3" /> : <ChevronDown className="size-3 opacity-40" />}
-        {selected.length > 0 && <span className="rounded-full bg-primary-soft px-1 text-[11px] leading-4 text-primary">{selected.length}</span>}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align === "right" ? "end" : "start"} className="w-auto min-w-52 max-w-80">
-        {/* A column with a value list is a filter, nothing else; sorting stays on the date and number columns. */}
-        {column.getCanSort() && !filterable && (<>
-          <DropdownMenuItem onClick={() => column.toggleSorting(false)}><ArrowUp className="size-3.5" /> Sort ascending</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => column.toggleSorting(true)}><ArrowDown className="size-3.5" /> Sort descending</DropdownMenuItem>
-          {dir && <DropdownMenuItem onClick={() => column.clearSorting()}>Clear sort</DropdownMenuItem>}
-        </>)}
-        {filterable && facets.length > 0 && (<>
-          <DropdownMenuGroup>
-          {facets.map((v) => (
-            <DropdownMenuCheckboxItem key={v} closeOnClick={false} checked={selected.includes(v)} onCheckedChange={(on) => { const next = on ? [...selected, v] : selected.filter((x) => x !== v); column.setFilterValue(next.length ? next : undefined); }}>
-              <span className="truncate">{v}</span>
-            </DropdownMenuCheckboxItem>
-          ))}
-          </DropdownMenuGroup>
-          {selected.length > 0 && <DropdownMenuItem onClick={() => column.setFilterValue(undefined)}>Clear filter</DropdownMenuItem>}
-        </>)}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 /** Convenience for a non-sortable, non-searchable column of actions. */
 export const actionColumn = { id: "actions", enableSorting: false, enableHiding: false, enableGlobalFilter: false } as const;
+
+/** A two-line cell: the main text over a smaller, quieter line. */
+export function TwoLine({ top, bottom, strong }: { top: ReactNode; bottom?: ReactNode; strong?: boolean }) {
+  return <span className="block"><span className={cn("block leading-snug", strong ? "font-medium text-text-strong" : "text-text")}>{top}</span>{bottom && <span className="block text-[12.5px] leading-snug text-muted-foreground">{bottom}</span>}</span>;
+}

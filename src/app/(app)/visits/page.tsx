@@ -1,71 +1,36 @@
-import Link from "next/link";
-import { Card, Crumb, CrumbSep, LinkButton, PageHeader } from "@/components/kit";
-import { VisitsTable, type VisitRow } from "./visits-table";
+import { Crumb, CrumbSep, LinkButton, PageHeader } from "@/components/kit";
+import { VisitsTable } from "./visits-table";
+import { VisitTotals } from "./visit-totals";
 import { VisitSheet } from "./record/visit-sheet";
-import { getPerson, listVisits } from "@/db/queries";
+import { getPerson } from "@/db/queries";
 import { can, requireUser } from "@/lib/auth";
-import { fmtDateTime, fullName } from "@/lib/format";
-import { rangeParamFor, resolveVisitRange, type RangeKind } from "@/lib/visit-range";
-import { RangeNav } from "./range-nav";
-import { abbreviationForCode } from "@/lib/hcpcs";
-import { minutesBetween } from "@/lib/units";
+import { fullName } from "@/lib/format";
+import { buildVisitTable } from "@/lib/visit-table";
 
 export const metadata = { title: "Notes" };
+
 
 
 export default async function VisitsPage({ searchParams }: PageProps<"/visits">) {
   const user = await requireUser();
   const sp = await searchParams;
   const personId = typeof sp.person === "string" ? sp.person : undefined;
-  // Pay period by default; ?week=, ?month= or ?from=&to= pick another window.
-  const range = resolveVisitRange(sp);
   const person = personId ? await getPerson(personId) : null;
-  const all = await listVisits({ personId, staffId: user.role === "dsp" ? (user.staffId ?? undefined) : undefined, from: range.start, to: range.end, limit: 1000 });
-  const completed = all.filter((r) => r.visit.status === "completed");
-  const units = completed.reduce((n, r) => n + r.visit.units, 0);
-  const minutes = completed.reduce((n, r) => n + (r.visit.clockOutAt ? minutesBetween(r.visit.clockInAt, r.visit.clockOutAt) : 0), 0);
-  const extra = personId ? `person=${personId}` : "";
-  const rangeHref = (param: string) => `/visits?${param}${extra ? `&${extra}` : ""}`;
-  const kindParams = Object.fromEntries((["period", "week", "month", "custom"] as RangeKind[]).map((k) => [k, rangeParamFor(k, range)])) as Record<RangeKind, string>;
+  const vt = await buildVisitTable({ sp, personId, staffId: user.role === "dsp" ? (user.staffId ?? undefined) : undefined });
   const title = person ? `Notes for ${fullName(person)}` : user.role === "dsp" ? "My notes" : "Notes";
-
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
-  const state = typeof sp.state === "string" && ["unsigned", "returned", "manual", "open"].includes(sp.state) ? sp.state : undefined;
-  const stateLabel: Record<string, string> = { unsigned: "awaiting a signature", returned: "returned for correction", manual: "entered manually", open: "still in progress" };
+  const exportQ = `${vt.range.param}${vt.single.staff ? `&staff=${vt.single.staff}` : ""}`;
   return (
     <div>
       {openVisit && <VisitSheet id={openVisit} />}
-      {/* One header: the title, then the pay period as the line under it with its pager and the
-          period's totals. The section row above already carries the state filters. */}
       <PageHeader
         eyebrow={person && <><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${person.id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Notes</Crumb></>}
         title={title}
-        meta={<>
-          <RangeNav range={range} base="/visits" extra={extra} kindParams={kindParams} />
-          {/* The totals get their own line so they read as one quiet sentence, not a run-on. */}
-          <span aria-hidden className="basis-full" />
-          <span className="inline-flex flex-wrap items-center gap-x-2 text-[14px] tabular-nums">
-            {[
-            { n: all.length, label: "visits" },
-            { n: units, label: "units" },
-            { n: Math.round(minutes / 6) / 10, label: "hours" },
-            ...(all.some((r) => r.visit.manualEntry) ? [{ n: all.filter((r) => r.visit.manualEntry).length, label: "manual", tone: "text-warn" }] : []),
-            ...(all.some((r) => r.visit.status === "completed" && !r.visit.clientSignedAt) ? [{ n: all.filter((r) => r.visit.status === "completed" && !r.visit.clientSignedAt).length, label: "unsigned", tone: "text-danger" }] : [])
-            ].map((x, i) => (
-              <span key={x.label} className="inline-flex items-center gap-x-2">
-                {i > 0 && <span aria-hidden className="text-hint">·</span>}
-                <span><span className={`font-medium ${x.tone ?? "text-text-strong"}`}>{x.n}</span> {x.label}</span>
-              </span>
-            ))}
-          </span>
-          {state && <span>Showing only notes {stateLabel[state]}. <Link href={rangeHref(range.param)} className="text-primary hover:underline">Show all</Link></span>}
-        </>}
+        meta={<VisitTotals t={vt.totals} />}
         actions={can(user, "edit_visits") && <LinkButton href="/visits/new" variant="outline">Enter a note manually</LinkButton>}
       />
-
-      <Card>
-        <VisitsTable rows={all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }): VisitRow => ({ id: v.id, clockIn: fmtDateTime(v.clockInAt), clockInIso: v.clockInAt.toISOString(), minutes: v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null, client: `${personFirst} ${personLast}`, personId: v.personId, staff: `${staffFirst} ${staffLast}`, service: `${v.serviceCode}${abbreviationForCode(v.serviceCode, v.modifiers) ? ` (${abbreviationForCode(v.serviceCode, v.modifiers)})` : ""}`, units: v.units, status: v.status, manual: v.manualEntry, returned: Boolean(v.returnedAt), edits: editCount, signed: Boolean(v.clientSignedAt), evv: v.evvStatus }))} state={state} showChips={user.role === "dsp"} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?${range.param}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?${range.param}` : undefined} />
-      </Card>
+      <VisitsTable rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: "/visits", keep: personId ? { person: personId } : {} }} showClient={!person} exportCsv={can(user, "edit_visits") ? `/reports/visits.csv?${exportQ}` : undefined} exportPdf={can(user, "edit_visits") ? `/reports/visits.pdf?${exportQ}` : undefined} />
     </div>
   );
 }
+

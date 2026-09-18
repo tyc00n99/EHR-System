@@ -14,12 +14,13 @@ import { minutesBetween } from "@/lib/units";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { getOrganization } from "@/db/queries";
-import { canViewPerson, getPerson, goalCountsForVisits, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits, listVisitStaffForPerson } from "@/db/queries";
+import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes, listVisits } from "@/db/queries";
 import { LifePlan } from "./life-plan";
-import { NotesTab, type NoteFilters, type NoteRow } from "./notes-tab";
+import { VisitsTable } from "../../visits/visits-table";
+import { VisitTotals } from "../../visits/visit-totals";
+import { buildVisitTable } from "@/lib/visit-table";
 import { StatusControl } from "./status-control";
 import { MedicationSupportToggle } from "./med-toggle";
-import { fromLocalInput } from "@/lib/format";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
 import { buildDocumentChecklist, checklistSummary, REQUIRED_CATEGORIES } from "@/lib/client-documents";
@@ -66,18 +67,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const goalFrom = daysAgo(90);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
-  // "service", not "code": the signing-code notice already reads ?code= on this page.
-  const noteCode = typeof sp.service === "string" ? sp.service : "";
-  const noteFrom = typeof sp.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.from) ? sp.from : "";
-  const noteTo = typeof sp.to === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.to) ? sp.to : "";
-  const noteStaff = typeof sp.staff === "string" && /^[0-9a-f-]{36}$/.test(sp.staff) ? sp.staff : "";
-  const noteSigned: NoteFilters["signed"] = sp.signed === "unsigned" ? "unsigned" : "";
-  const noteSort: NoteFilters["sort"] = sp.sort === "oldest" ? "oldest" : "newest";
-  const NOTE_LIMIT = 2000;
-  // Service and staff go to the query so the filter runs over the whole range, not the loaded page.
-  const noteRows = tab === "notes" ? await listVisits({ personId: id, serviceCode: noteCode || undefined, staffId: noteStaff || undefined, from: noteFrom ? fromLocalInput(`${noteFrom}T00:00`) : daysAgo(90), to: noteTo ? new Date(fromLocalInput(`${noteTo}T00:00`).getTime() + 86_399_000) : undefined, limit: NOTE_LIMIT }) : [];
-  const noteStaffOptions = tab === "notes" ? await listVisitStaffForPerson(id) : [];
-  const noteResponses = tab === "notes" && noteRows.length ? await goalCountsForVisits(noteRows.map((r) => r.visit.id)) : new Map<string, { yes: number; no: number }>();
+  const vt = tab === "notes" ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
   const [agreements, visits, documents, team, goals, meds, admins] = await Promise.all([
     listAgreementsForPerson(id),
     // Wide enough that "recent notes" is never empty because the pay period just turned over.
@@ -253,17 +243,11 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
         </>
       )}
 
-      {tab === "notes" && (
-        <NotesTab
-          personId={id}
-          base={`/clients/${id}`}
-          filters={{ service: noteCode, from: noteFrom, to: noteTo, staff: noteStaff, signed: noteSigned, sort: noteSort }}
-          staffOptions={noteStaffOptions.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))}
-          totalNotes={noteCount}
-          capped={noteRows.length >= NOTE_LIMIT}
-          codes={Array.from(new Map(agreements.map((a) => [a.agreement.serviceCode, { code: a.agreement.serviceCode, label: labelForCode(a.agreement.serviceCode, a.agreement.modifiers) }])).values())}
-          rows={noteRows.filter((r) => noteSigned !== "unsigned" || (r.visit.status === "completed" && !r.visit.clientSignedAt)).map(({ visit: v, staffFirst, staffLast, editCount }): NoteRow => ({ returned: Boolean(v.returnedAt), id: v.id, clockInAt: v.clockInAt, clockOutAt: v.clockOutAt, serviceCode: v.serviceCode, modifiers: v.modifiers, units: v.units, status: v.status, note: v.shiftNote, interaction: v.interactionLevel, skills: v.skills, activities: v.activities, staff: `${staffFirst} ${staffLast}`, staffSigned: Boolean(v.staffSignedAt), clientSigned: Boolean(v.clientSignedAt), approved: Boolean(v.approvedAt), manual: v.manualEntry, edits: editCount, goalYes: noteResponses.get(v.id)?.yes ?? 0, goalNo: noteResponses.get(v.id)?.no ?? 0 }))}
-        />
+      {tab === "notes" && vt && (
+        <div>
+          <div className="mb-3 flex flex-wrap items-center gap-x-3"><VisitTotals t={vt.totals} /><span className="text-[13.5px] text-muted-foreground">· {noteCount} notes on file</span></div>
+          <VisitsTable rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/clients/${id}`, keep: { tab: "notes" } }} showClient={false} exportPdf={`/clients/${id}/notes.pdf?from=${vt.range.from}&to=${vt.range.to}${vt.single.staff ? `&staff=${vt.single.staff}` : ""}${vt.single.service ? `&code=${vt.single.service}` : ""}`} />
+        </div>
       )}
 
       {tab === "files" && (

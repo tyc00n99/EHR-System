@@ -1,82 +1,116 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/data-table";
-import { FilterChips } from "@/components/filter-chips";
+import { DataTable, TwoLine } from "@/components/data-table";
+import { DateRangePill, FilterPill, type PillOption } from "@/components/filter-pill";
 import { Badge } from "@/components/kit";
 
-export interface VisitRow { id: string; clockIn: string; clockInIso: string; minutes: number | null; client: string; personId: string; staff: string; service: string; units: number; status: "in_progress" | "completed" | "void"; manual: boolean; returned: boolean; edits: number; signed: boolean; evv: "pending" | "exported" | "accepted" | "rejected" }
+export interface VisitRow {
+  id: string; clockIn: string; day: string; time: string; clockInIso: string; minutes: number | null;
+  client: string; personId: string; staff: string; staffId: string;
+  serviceLabel: string; serviceKey: string; serviceCode: string; units: number;
+  status: "in_progress" | "completed" | "void"; manual: boolean; returned: boolean; edits: number; signed: boolean;
+  evv: "pending" | "exported" | "accepted" | "rejected";
+}
+
+export interface VisitFilters { client: string[]; staff: string[]; service: string[]; state: string; rangeParam: string; rangeLabel: string; from: string; to: string }
 
 const evvTone = { pending: "neutral", exported: "accent", accepted: "ok", rejected: "danger" } as const;
-
-/** Whole hours and halves read at a glance; anything else keeps one decimal. */
 export const fmtHours = (minutes: number) => `${(minutes / 60).toFixed(1).replace(/\.0$/, "")} h`;
-
-/** The one word that says where a note stands; "signed" is the clean case and wears no badge. */
 export const standingOf = (r: VisitRow) => (r.returned ? "returned" : r.status === "in_progress" ? "in progress" : r.status === "void" ? "void" : !r.signed ? "unsigned" : r.manual ? "manual" : "signed");
+const STATES: PillOption[] = [{ value: "", label: "All notes" }, { value: "unsigned", label: "Awaiting signature" }, { value: "returned", label: "Returned" }, { value: "manual", label: "Manual entries" }, { value: "open", label: "In progress" }];
 
-export function VisitsTable({ rows, exportCsv, exportPdf, state, showChips }: { rows: VisitRow[]; exportCsv?: string; exportPdf?: string; state?: string; showChips?: boolean }) {
-  // The section row owns this filter when it is present; the chips are the fallback for phones
-  // and for caregivers, who have no second row.
-  const [chip, setChip] = useState<"all" | "unsigned" | "manual" | "open">("all");
-  // Hovering a row asks the server to render its PDF, so the preview is usually ready on click.
+/**
+ * The Notes list in the DocuSign shape: filter pills that open checklists, a selection bar, a
+ * sortable table with a checkbox, Open and ⋮ on every row. Filters live in the URL, so the exports
+ * see the same selection and a filtered list can be linked to.
+ */
+export function VisitsTable({ rows, filters, options, presets, base, showClient = true, exportCsv, exportPdf }: {
+  rows: VisitRow[];
+  filters: VisitFilters;
+  options: { clients: PillOption[]; staff: PillOption[]; services: PillOption[] };
+  presets: { label: string; param: string }[];
+  /** The path filters navigate to, plus any params that must survive (e.g. person=). */
+  base: { path: string; keep: Record<string, string> };
+  showClient?: boolean;
+  exportCsv?: string;
+  exportPdf?: string;
+}) {
+  const router = useRouter();
   const warmed = useRef(new Set<string>());
   const warm = (r: VisitRow) => { if (warmed.current.has(r.id)) return; warmed.current.add(r.id); fetch(`/visits/${r.id}/note.pdf`, { priority: "low" }).catch(() => {}); };
-  const flag = state ?? chip;
-  const byDate = (a: VisitRow, b: VisitRow) => (a.clockInIso < b.clockInIso ? 1 : a.clockInIso > b.clockInIso ? -1 : 0);
-  const data = useMemo(() => rows.filter((r) => (flag === "unsigned" ? r.status === "completed" && !r.signed : flag === "returned" ? r.returned : flag === "manual" ? r.manual : flag === "open" ? r.status === "in_progress" : true)).sort(byDate), [rows, flag]);
-  const columns: ColumnDef<VisitRow, unknown>[] = [
-    { accessorKey: "clockInIso", header: "Clock in", cell: ({ row }) => <span className="ident text-text-strong">{row.original.clockIn}</span> },
-    { accessorKey: "minutes", header: "Duration", enableSorting: false, cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="ident">{fmtHours(row.original.minutes)}</span> },
-    { accessorKey: "client", header: "Client", meta: { filter: true }, cell: ({ row }) => <Link href={`/clients/${row.original.personId}`} className="hover:underline" onClick={(e) => e.stopPropagation()}>{row.original.client}</Link> },
-    { accessorKey: "staff", header: "Caregiver", meta: { filter: true } },
-    { accessorKey: "service", header: "Service", meta: { filter: true }, cell: ({ getValue }) => <span className="ident">{String(getValue())}</span> },
-    { accessorKey: "units", header: "Units", enableSorting: false, meta: { align: "right" } },
-    { id: "status", accessorFn: standingOf, header: "Status", meta: { filter: true }, cell: ({ row }) => {
+
+  const navigate = (patch: Partial<{ client: string[]; staff: string[]; service: string[]; state: string; rangeParam: string }>) => {
+    const next = { ...filters, ...patch };
+    const p = new URLSearchParams(next.rangeParam);
+    for (const [k, v] of Object.entries(base.keep)) if (v) p.set(k, v);
+    if (next.client.length) p.set("client", next.client.join(","));
+    if (next.staff.length) p.set("staff", next.staff.join(","));
+    if (next.service.length) p.set("service", next.service.join(","));
+    if (next.state) p.set("state", next.state);
+    router.push(`${base.path}?${p}`);
+  };
+  const filtered = Boolean(filters.client.length || filters.staff.length || filters.service.length || filters.state);
+
+  const columns: ColumnDef<VisitRow, unknown>[] = useMemo(() => [
+    { accessorKey: "clockInIso", header: "Date", meta: { width: 150 }, cell: ({ row }) => <TwoLine top={row.original.day} bottom={row.original.time} /> },
+    ...(showClient ? [{ accessorKey: "client", header: "Client" } as ColumnDef<VisitRow, unknown>] : []),
+    { accessorKey: "staff", header: "Caregiver" },
+    { accessorKey: "serviceLabel", header: "Service", cell: ({ row }) => <span className="block max-w-[260px]"><TwoLine top={<span className="block truncate" title={row.original.serviceLabel}>{row.original.serviceLabel}</span>} bottom={row.original.serviceKey} strong /></span> },
+    { accessorKey: "minutes", header: "Hours", enableSorting: false, meta: { align: "right" }, cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="tabular-nums">{fmtHours(row.original.minutes)}</span> },
+    { accessorKey: "units", header: "Units", meta: { align: "right" } },
+    { id: "status", accessorFn: standingOf, header: "Status", enableSorting: false, cell: ({ row }) => {
       const r = row.original; const st = standingOf(r);
       return (
         <span className="flex flex-wrap gap-1">
-          {st === "signed" ? null
-            : st === "returned" ? <Badge tone="warn">returned</Badge>
-            : st === "in progress" ? <Badge tone="accent">in progress</Badge>
-            : st === "void" ? <Badge tone="neutral">void</Badge>
-            : st === "unsigned" ? <Badge tone="danger">unsigned</Badge>
-            : <Badge tone="warn">manual</Badge>}
+          {st === "signed" ? null : st === "returned" ? <Badge tone="warn">returned</Badge> : st === "in progress" ? <Badge tone="accent">in progress</Badge> : st === "void" ? <Badge tone="neutral">void</Badge> : st === "unsigned" ? <Badge tone="danger">Unsigned</Badge> : <Badge tone="warn">manual</Badge>}
           {r.manual && st !== "manual" && <Badge tone="warn">manual</Badge>}
-          {r.edits > 0 && <Badge tone="warn">{r.edits} edit{r.edits === 1 ? "" : "s"}</Badge>}
+          {r.edits > 0 && <Badge tone="neutral">{r.edits} edit{r.edits === 1 ? "" : "s"}</Badge>}
         </span>
       );
     } },
-    { accessorKey: "evv", header: "EVV", meta: { filter: true }, cell: ({ row }) => <Badge tone={evvTone[row.original.evv]}>{row.original.evv}</Badge> },
-  ];
+    { accessorKey: "evv", header: "EVV", enableSorting: false, cell: ({ row }) => <Badge tone={evvTone[row.original.evv]}>{row.original.evv}</Badge> },
+  ], [showClient]);
+
   const withIds = (href: string, ids: string[]) => `${href}${href.includes("?") ? "&" : "?"}ids=${ids.join(",")}`;
-  const exportLink = "inline-flex h-8 items-center rounded-md border border-line bg-page px-3 text-[13px] font-medium hover:bg-hover";
+  const bulkBtn = "inline-flex h-8 items-center rounded-md px-3 text-[14px] font-medium text-text hover:bg-tab-hover";
+  const noteHref = (id: string) => `?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)), note: id })}`;
+
   return (
     <DataTable
       columns={columns}
-      data={data}
+      data={rows}
       getRowId={(r) => r.id}
-      onRowHover={warm}
       selectable={Boolean(exportCsv || exportPdf)}
-      bulk={(selected, clear) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[13px] font-medium text-text-strong">{selected.length} selected</span>
-          {exportCsv && <a href={withIds(exportCsv, selected.map((r) => r.id))} className={exportLink}>Export CSV</a>}
-          {exportPdf && <a href={withIds(exportPdf, selected.map((r) => r.id))} className={exportLink}>Export PDF</a>}
-          <button type="button" onClick={clear} className="text-[13px] font-medium text-primary hover:underline">Clear selection</button>
-        </div>
-      )}
-      searchPlaceholder="Search client, caregiver, code…"
+      bulk={(selected) => (<>
+        {exportPdf && <a href={withIds(exportPdf, selected.map((r) => r.id))} className={bulkBtn}>Export PDF</a>}
+        {exportCsv && <a href={withIds(exportCsv, selected.map((r) => r.id))} className={bulkBtn}>Export CSV</a>}
+      </>)}
+      searchPlaceholder="Search client, caregiver, service…"
       suggestions={[
-        { label: "Clients", items: [...new Set(rows.map((r) => r.client))].sort() },
+        ...(showClient ? [{ label: "Clients", items: [...new Set(rows.map((r) => r.client))].sort() }] : []),
         { label: "Team Members", items: [...new Set(rows.map((r) => r.staff))].sort() },
-        { label: "Services", items: [...new Set(rows.map((r) => r.service))].sort() },
+        { label: "Services", items: [...new Set(rows.map((r) => r.serviceLabel))].sort() },
       ]}
-      rowHref={(r) => `?${new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)), note: r.id })}`}
-      chips={showChips && !state ? <FilterChips value={chip} onChange={setChip} options={[{ key: "all", label: "All", count: rows.length }, { key: "unsigned", label: "Unsigned", count: rows.filter((r) => r.status === "completed" && !r.signed).length }, { key: "manual", label: "Manual", count: rows.filter((r) => r.manual).length }, { key: "open", label: "In progress", count: rows.filter((r) => r.status === "in_progress").length }]} /> : undefined}
-      actions={(exportCsv || exportPdf) && <>{exportCsv && <a href={exportCsv} className={exportLink}>Export CSV</a>}{exportPdf && <a href={exportPdf} className={exportLink}>Export PDF</a>}</>}
+      chips={<>
+        <DateRangePill label={filters.rangeLabel} presets={presets} current={{ param: filters.rangeParam, from: filters.from, to: filters.to }} onApply={(param) => navigate({ rangeParam: param })} />
+        {showClient && options.clients.length > 0 && <FilterPill label="Client" value={filters.client} options={options.clients} search={options.clients.length > 8} onApply={(v) => navigate({ client: v })} />}
+        {options.staff.length > 0 && <FilterPill label="Caregiver" value={filters.staff} options={options.staff} search={options.staff.length > 8} onApply={(v) => navigate({ staff: v })} />}
+        {options.services.length > 0 && <FilterPill label="Service" value={filters.service} options={options.services} search={options.services.length > 8} onApply={(v) => navigate({ service: v })} />}
+        <FilterPill label="Status" value={filters.state ? [filters.state] : []} options={STATES} single onApply={(v) => navigate({ state: v[0] ?? "" })} />
+        {filtered && <button type="button" onClick={() => navigate({ client: [], staff: [], service: [], state: "" })} className="text-[14px] font-medium text-primary hover:underline">Clear</button>}
+      </>}
+      actions={(exportCsv || exportPdf) && <>{exportPdf && <a href={exportPdf} className="inline-flex h-9 items-center rounded-lg border border-line bg-card px-3 text-[14px] font-medium hover:bg-tab-hover">Export PDF</a>}{exportCsv && <a href={exportCsv} className="inline-flex h-9 items-center rounded-lg border border-line bg-card px-3 text-[14px] font-medium hover:bg-tab-hover">Export CSV</a>}</>}
+      rowHref={(r) => noteHref(r.id)}
+      rowAction={{ label: "Open", href: (r) => noteHref(r.id) }}
+      rowMenu={(r) => [
+        { label: "Open note", onSelect: () => window.history.pushState(null, "", noteHref(r.id)) },
+        { label: "Open record", onSelect: () => router.push(`${base.path}?${new URLSearchParams({ ...base.keep, visit: r.id })}`) },
+        { label: "Download PDF", onSelect: () => window.open(`/visits/${r.id}/note.pdf`, "_blank") },
+      ]}
+      onRowHover={warm}
       emptyTitle="No notes match"
       initialSorting={[{ id: "clockInIso", desc: true }]}
       dense

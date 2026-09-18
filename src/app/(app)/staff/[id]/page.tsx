@@ -4,22 +4,22 @@ import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, RecordHeader, Table, T
 import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listRecentLogins, listStaffAvailability, listStaffDocuments, listVisits } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
-import { fmtDate, fmtDateTime, fmtMoney, fullName } from "@/lib/format";
+import { fmtDate, fmtDateTime, fullName } from "@/lib/format";
 import { DeleteDocument, DocumentForm, LoginPanel } from "./panels";
 import { DocumentTextChip } from "@/components/document-text-chip";
 import { PersonnelFile } from "./personnel-file";
-import { NoteRows } from "./note-rows";
-import { NoteFilters } from "./note-filters";
 import { StaffAvailabilityButton } from "./availability-panel";
 import { ManageAssignments } from "./manage-assignments";
 import { AvailabilityList } from "@/components/availability-cards";
 import { isoDay } from "@/lib/format";
-import { labelForCode } from "@/lib/hcpcs";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { buildPersonnelFile, personnelSummary } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
 import { AboutSection } from "./about";
+import { VisitsTable } from "../../visits/visits-table";
+import { VisitTotals } from "../../visits/visit-totals";
+import { buildVisitTable } from "@/lib/visit-table";
 import { Plain, Rows } from "./plain";
 
 
@@ -36,9 +36,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   if (!s) notFound();
   const [login, assignments, credentials, visits, people, documents] = await Promise.all([getUserForStaff(id), listAssignmentsForStaff(id), listCredentials(id), listVisits({ staffId: id, limit: 25, personId: clientFilter || undefined, serviceCode: codeFilter || undefined }), listPeople(), listStaffDocuments(id)]);
   // The filter options come from everything this person has ever written, not from the filtered page.
-  const allVisits = tab === "visits" ? await listVisits({ staffId: id, limit: 1000 }) : [];
-  const noteClients = [...new Map(allVisits.map((r) => [r.visit.personId, `${r.personFirst} ${r.personLast}`])).entries()].map(([pid, name]) => ({ id: pid, name })).sort((a, b) => a.name.localeCompare(b.name));
-  const noteCodes = [...new Set(allVisits.map((r) => r.visit.serviceCode))].sort().map((c) => ({ code: c, label: labelForCode(c, []) }));
+  const vt = tab === "visits" ? await buildVisitTable({ sp, staffId: id }) : null;
   const personnel = buildPersonnelFile(s.hireDate, credentials, documents);
   const paper = personnelSummary(personnel);
   const today = isoDay(0);
@@ -116,12 +114,11 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
         </div>
       )}
 
-      {tab === "visits" && (
-        <Card title="Recent notes" actions={<div className="flex items-center gap-3"><NoteFilters staffId={id} client={clientFilter} code={codeFilter} clients={noteClients} codes={noteCodes} /><Link href={`/visits?staff=${id}`} className="text-[13px] font-medium text-primary hover:underline">All notes</Link></div>}>
-          {visits.length === 0 ? <Empty icon="clock" title={clientFilter || codeFilter ? "No notes match those filters" : "No notes yet"} /> : (
-            <Table><Thead><Th>Clock in</Th><Th>Client</Th><Th>Service</Th><Th align="right">Units</Th><Th>Status</Th></Thead><NoteRows staffId={id} rows={visits.map(({ visit: v, personFirst, personLast }) => ({ id: v.id, when: fmtDateTime(v.clockInAt), client: `${personFirst} ${personLast}`, personId: v.personId, code: v.serviceCode, units: v.units, status: v.status, unsigned: v.status === "completed" && !v.clientSignedAt }))} /></Table>
-          )}
-        </Card>
+      {tab === "visits" && vt && (
+        <div>
+          <div className="mb-3"><VisitTotals t={vt.totals} /></div>
+          <VisitsTable rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/staff/${id}`, keep: { tab: "visits" } }} exportCsv={user.role !== "dsp" ? `/reports/visits.csv?${vt.range.param}&staff=${id}` : undefined} exportPdf={user.role !== "dsp" ? `/reports/visits.pdf?${vt.range.param}&staff=${id}` : undefined} />
+        </div>
       )}
 
       {tab === "login" && user.role === "admin" && (
