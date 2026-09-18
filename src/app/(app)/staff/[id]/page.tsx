@@ -20,7 +20,7 @@ import { buildPersonnelFile, personnelSummary } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
 import { AboutSection } from "./about";
-import { HiddenTabsHint, WorkspaceSwitch } from "@/components/workspace-switch";
+import { HiddenTabsHint } from "@/components/workspace-switch";
 import { hiddenTabsHint, tabsFor } from "@/lib/workspace";
 import { getWorkspace } from "@/lib/workspace-server";
 import { Plain, Rows } from "./plain";
@@ -80,7 +80,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
         title={`${s.firstName} ${s.lastName}`}
         chips={<><Badge tone={s.active ? "ok" : "neutral"}>{s.active ? "active" : "inactive"}</Badge>{summary.overdue > 0 ? <Badge tone="danger">{summary.overdue} overdue</Badge> : summary.dueSoon > 0 ? <Badge tone="warn">{summary.dueSoon} due soon</Badge> : <Badge tone="ok">compliant</Badge>}</>}
         subtitle={<><span>{s.title}</span><span className="text-hint">·</span><span>Hired {fmtDate(s.hireDate)}</span><span className="text-hint">·</span><span className="tabular-nums">{s.npi ? `NPI ${s.npi}` : `UMPI ${s.umpi}`}</span>{login && <><span className="text-hint">·</span><span>{login.email}</span></>}</>}
-        actions={<>{user.role !== "dsp" && <WorkspaceSwitch value={workspace} />}{user.role === "admin" && <LinkButton href={`/staff/${id}/edit`} variant="outline">Edit</LinkButton>}</>}
+        actions={<>{user.role === "admin" && <LinkButton href={`/staff/${id}/edit`} variant="outline">Edit</LinkButton>}</>}
       />
       <Tabs tabs={tabs} current={tab} base={`/staff/${id}`} />
       {user.role !== "dsp" && <HiddenTabsHint labels={hidden.labels} target={hidden.target} />}
