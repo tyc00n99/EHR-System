@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 /** A plain section: a title, an optional action on the same line, and the content below. No card. */
 export function Plain({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="border-b border-line-soft py-5 last:border-b-0">
+    <section className="mb-4 rounded-xl border border-line bg-card px-5 py-4 last:mb-0">
       <div className="mb-3 flex items-baseline gap-3"><h2 className="text-[16px] font-semibold text-text-strong">{title}</h2>{action}</div>
       {children}
     </section>

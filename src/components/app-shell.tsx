@@ -6,7 +6,7 @@ import { CommandPalette, type PaletteEntry } from "@/components/command-palette"
 import { Icon } from "@/components/icons";
 import { MobileNav } from "@/components/mobile-nav";
 import { SectionNav } from "@/components/top-nav";
-import { SideRail } from "@/components/side-rail";
+import { Sidebar } from "@/components/sidebar";
 import { ModulePanelProvider } from "@/components/module-panel";
 import { Avatar } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -31,19 +31,20 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
     <div className="flex h-screen overflow-hidden bg-page-bg">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 
-      <SideRail
+      <Suspense fallback={<div className="hidden w-[240px] shrink-0 border-r border-line bg-sidebar md:block" />}>
+      <Sidebar
         role={user.role}
         counts={counts}
         orgName={orgName}
         footer={<>
           {!loginRequired() && (
-            <span title="This link opens without a password, so anyone who has it can read every record. Set REQUIRE_LOGIN=1 to turn the login back on." className="flex size-12 items-center justify-center rounded-lg text-warn" aria-label="No password set on this deployment">
-              <span className="flex size-2.5 rounded-full bg-warn" />
+            <span title="This link opens without a password, so anyone who has it can read every record. Set REQUIRE_LOGIN=1 to turn the login back on." className="flex h-9 items-center gap-3 px-4 text-[13px] text-warn" aria-label="No password set on this deployment">
+              <span className="flex size-2.5 rounded-full bg-warn" /> No password on this link
             </span>
           )}
           {gear.length > 0 && (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" className="flex size-12 items-center justify-center rounded-lg text-muted-foreground hover:bg-hover hover:text-text-strong" />}><Settings className="size-[22px]" /></DropdownMenuTrigger>
+              <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" className="flex h-10 w-full items-center gap-3 px-4 text-left text-[14.5px] text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[18px] shrink-0" /> Setup &amp; reports</DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="right" className="w-60">
                 {gear.map((g, i) => (
                   <DropdownMenuGroup key={g.label}>
@@ -59,8 +60,9 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
             </DropdownMenu>
           )}
           <DropdownMenu>
-            <DropdownMenuTrigger render={<button aria-label="Account and appearance" className="flex size-12 items-center justify-center rounded-lg hover:bg-hover" />}>
-              <Avatar name={user.staffName ?? user.email} size={32} />
+            <DropdownMenuTrigger render={<button aria-label="Account and appearance" className="flex h-12 w-full items-center gap-3 px-4 text-left hover:bg-tab-hover" />}>
+              <Avatar name={user.staffName ?? user.email} size={30} />
+              <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-medium text-text-strong">{user.staffName ?? user.email}</span><span className="block truncate text-[12.5px] text-muted-foreground">{ROLE_LABEL[user.role]}</span></span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="right" className="w-60">
               <DropdownMenuGroup><DropdownMenuLabel><div className="truncate text-[13px] font-medium text-text-strong">{user.staffName ?? user.email}</div><div className="truncate text-[13px] font-normal text-muted-foreground">{user.email} · {ROLE_LABEL[user.role]}</div></DropdownMenuLabel></DropdownMenuGroup>
@@ -76,6 +78,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
           </DropdownMenu>
         </>}
       />
+      </Suspense>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       {/* No top bar: the reference puts everything in the rail, so the record starts at the very

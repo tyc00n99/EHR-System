@@ -48,16 +48,16 @@ export function BannerFact({ label, children }: { label?: string; children: Reac
 }
 
 export function ChartGrid({ children, columns = "three" }: { children: ReactNode; columns?: "three" | "two" }) {
-  return <div className={cx("grid gap-0 border-t border-line", columns === "two" ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-[248px_minmax(0,1fr)_268px]")}>{children}</div>;
+  return <div className={cx("grid gap-4", columns === "two" ? "lg:grid-cols-[minmax(0,1fr)_320px]" : "lg:grid-cols-[248px_minmax(0,1fr)_268px]")}>{children}</div>;
 }
 
 export function ChartCol({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx("min-w-0 border-line px-0 py-4 lg:px-5 lg:[&+&]:border-l", className)}>{children}</div>;
+  return <div className={cx("min-w-0", className)}>{children}</div>;
 }
 
 export function ChartSection({ label, action, children }: { label: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="mb-4 border-line pb-4 last:mb-0 last:border-0 last:pb-0 [&+&]:border-t [&+&]:pt-4">
+    <section className="mb-4 rounded-xl border border-line bg-card px-5 py-4 last:mb-0">
       <div className="mb-2 flex items-baseline gap-3">
         <div className="text-[13px] font-medium uppercase tracking-[0.11em] text-hint">{label}</div>
         {action && <div className="ml-auto text-[13px]">{action}</div>}
