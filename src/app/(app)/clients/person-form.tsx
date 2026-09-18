@@ -65,13 +65,6 @@ export function PersonForm({ action, defaults, cancelHref }: { action: Action; d
         <Field label="Email" error={e.guardianEmail} className="md:col-span-3"><Input name="guardianEmail" type="email" defaultValue={d.guardianEmail ?? ""} /></Field>
       </FormSection>
 
-      <FormSection title="Consultation Services provider" description="The waiver Consultation Services provider supporting this person's plan, if any.">
-        <Field label="Provider" error={e.consultProviderName} className="md:col-span-3"><Input name="consultProviderName" defaultValue={d.consultProviderName ?? ""} /></Field>
-        <Field label="Contact name" error={e.consultContactName} className="md:col-span-3"><Input name="consultContactName" defaultValue={d.consultContactName ?? ""} /></Field>
-        <Field label="Phone" error={e.consultPhone} className="md:col-span-3"><Input name="consultPhone" type="tel" defaultValue={d.consultPhone ?? ""} /></Field>
-        <Field label="Email" error={e.consultEmail} className="md:col-span-3"><Input name="consultEmail" type="email" defaultValue={d.consultEmail ?? ""} /></Field>
-      </FormSection>
-
       <FormSection title="Address and contact">
         <Field label="Street address" error={e.address1} className="col-span-2 md:col-span-4"><Input name="address1" defaultValue={d.address1 ?? ""} /></Field>
         <Field label="Apt / unit" error={e.address2} className="md:col-span-2"><Input name="address2" defaultValue={d.address2 ?? ""} /></Field>
