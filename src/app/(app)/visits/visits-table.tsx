@@ -104,12 +104,6 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
       </>}
       actions={(exportCsv || exportPdf) && <>{exportPdf && <a href={exportPdf} className="inline-flex h-9 items-center rounded-lg border border-line bg-card px-3 text-[14px] font-medium hover:bg-tab-hover">Export PDF</a>}{exportCsv && <a href={exportCsv} className="inline-flex h-9 items-center rounded-lg border border-line bg-card px-3 text-[14px] font-medium hover:bg-tab-hover">Export CSV</a>}</>}
       rowHref={(r) => noteHref(r.id)}
-      rowAction={{ label: "Open", href: (r) => noteHref(r.id) }}
-      rowMenu={(r) => [
-        { label: "Open note", onSelect: () => window.history.pushState(null, "", noteHref(r.id)) },
-        { label: "Open record", onSelect: () => { const p = new URLSearchParams(window.location.search); for (const [k, v] of Object.entries(base.keep)) if (v) p.set(k, v); p.delete("note"); p.set("visit", r.id); router.push(`${base.path}?${p}`); } },
-        { label: "Download PDF", onSelect: () => window.open(`/visits/${r.id}/note.pdf`, "_blank") },
-      ]}
       onRowHover={warm}
       emptyTitle="No notes match"
       initialSorting={[{ id: "clockInIso", desc: true }]}

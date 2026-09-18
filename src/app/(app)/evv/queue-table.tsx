@@ -75,12 +75,6 @@ export function QueueTable({ rows, filter, options, presets, rangeLabel }: { row
         {filtered && <button type="button" onClick={() => router.push("/evv")} className="text-[14px] font-medium text-primary hover:underline">Clear</button>}
       </>}
       rowHref={(r) => visitHref(r.id)}
-      rowAction={{ label: "Open", href: (r) => visitHref(r.id) }}
-      rowMenu={(r) => [
-        { label: "Open", onSelect: () => router.push(visitHref(r.id)) },
-        { label: "Resubmit", onSelect: () => run("Resubmit", [r.id], resubmitAction, () => {}) },
-        { label: "Mark reviewed", onSelect: () => run("Mark reviewed", [r.id], (id) => reviewVisitAction(id), () => {}) },
-      ]}
       emptyTitle="Nothing matches"
       emptyHint="Visits appear here as caregivers clock in and out. Change the filters or pick another view."
       initialSorting={[{ id: "dateIso", desc: true }]}
