@@ -37,7 +37,7 @@ export function ArchiveDocument({ id, personId, archived, icon }: { id: string; 
   const [pending, start] = useTransition();
   const onClick = () => start(() => setClientDocumentArchived(id, personId, !archived));
   const label = archived ? "Restore" : "Archive";
-  if (icon) return <button disabled={pending} onClick={onClick} aria-label={label} title={label} className={ICON_BTN + " text-muted-foreground"}><Icon.history size={15} /></button>;
+  if (icon) return <button disabled={pending} onClick={onClick} aria-label={label} title={label} className={ICON_BTN + " text-muted-foreground"}>{archived ? <Icon.history size={15} /> : <Icon.archive size={15} />}</button>;
   return <button disabled={pending} onClick={onClick} className="text-[13px] font-medium text-muted-foreground hover:underline disabled:opacity-50">{label}</button>;
 }
 

@@ -73,50 +73,40 @@ export function DocumentsTab({ personId, items, others, archived, summary, manag
         </ul>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-line bg-card">
-        <div className="border-b border-line px-5 py-3 text-[13px] font-medium uppercase tracking-[0.11em]">Other files · {others.length}</div>
-        {others.length === 0 ? <p className="px-5 py-5 text-[13px]">Medical orders, correspondence, photos of paperwork — anything staff should read before a shift.</p> : (
-          <ul className="divide-y divide-line-soft">
-            {others.map((d) => (
-              <li key={d.id} className="px-5 py-4">
-                <div className="mb-2 text-[13px] uppercase tracking-[0.06em] opacity-60">{DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category}</div>
-                <FileRow d={d} primary />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <DocFold personId={personId} docs={others} manage={manage} noun="other file" hint="medical orders, correspondence, anything staff should read before a shift" empty="No other files yet. Medical orders, correspondence, photos of paperwork — anything staff should read before a shift." groupBy={(d) => DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category} />
 
-      {archived.length > 0 && <ArchivedFold personId={personId} docs={archived} manage={manage} />}
+      {archived.length > 0 && <DocFold personId={personId} docs={archived} manage={manage} noun="archived document" hint="kept for the record, restorable any time" groupBy={(d) => (d.archivedAt ? `Archived ${fmtDate(d.archivedAt)}` : "Archived earlier")} />}
     </div>
   );
 }
 
 /**
- * Archived documents fold away behind one line (option C, 2026-09-18). Open, they group by the day
- * they were archived, and each row is just the name with restore and delete: no category or dates.
+ * A document list folded behind one line (option C, 2026-09-18). Open, rows group under small
+ * headings and each row is just the file icon (preview), the title, and icon buttons: no category or
+ * dates on the row itself. Used for "Other files" (grouped by category) and "Archived" (by date).
  */
-function ArchivedFold({ personId, docs, manage }: { personId: string; docs: ClientDocument[]; manage: boolean }) {
+function DocFold({ personId, docs, manage, noun, hint, empty, groupBy }: { personId: string; docs: ClientDocument[]; manage: boolean; noun: string; hint: string; empty?: string; groupBy: (d: ClientDocument) => string }) {
   const [open, setOpen] = useState(false);
   const groups = new Map<string, ClientDocument[]>();
-  for (const d of docs) { const k = d.archivedAt ? fmtDate(d.archivedAt) : "Earlier"; groups.set(k, [...(groups.get(k) ?? []), d]); }
+  for (const d of docs) { const k = groupBy(d); groups.set(k, [...(groups.get(k) ?? []), d]); }
+  if (docs.length === 0) return <section className="rounded-xl border border-line bg-card px-5 py-3.5 text-[14px] text-muted-foreground">{empty ?? `No ${noun}s.`}</section>;
   return (
-    <section className="mt-5 overflow-hidden rounded-xl border border-line bg-card">
+    <section className="overflow-hidden rounded-xl border border-line bg-card">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left text-[14px] hover:bg-sidebar">
-        <span className="font-medium text-text-strong">{docs.length} archived document{docs.length === 1 ? "" : "s"}</span>
-        <span className="text-muted-foreground">· kept for the record, restorable any time</span>
+        <span className="font-medium text-text-strong">{docs.length} {noun}{docs.length === 1 ? "" : "s"}</span>
+        <span className="text-muted-foreground">· {hint}</span>
         <Icon.chevron size={18} className={cx("ml-auto text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
-      {open && [...groups.entries()].map(([day, list]) => (
-        <div key={day}>
-          <div className="border-t border-line px-5 pb-1.5 pt-2.5 text-[12.5px] font-medium uppercase tracking-[0.06em] text-hint">Archived {day}</div>
+      {open && [...groups.entries()].map(([heading, list]) => (
+        <div key={heading}>
+          <div className="border-t border-line px-5 pb-1.5 pt-2.5 text-[12.5px] font-medium uppercase tracking-[0.06em] text-hint">{heading}</div>
           {list.map((d) => (
             <div key={d.id} className="flex items-center gap-3 border-t border-line-soft px-5 py-2">
               <PreviewButton variant="icon" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
               <span className="min-w-0 truncate text-[14px] font-medium text-text-strong">{d.title}</span>
               {manage && (
                 <span className="ml-auto flex gap-1.5">
-                  <ArchiveDocument id={d.id} personId={personId} archived icon />
+                  <ArchiveDocument id={d.id} personId={personId} archived={Boolean(d.archivedAt)} icon />
                   <DeleteDocument id={d.id} personId={personId} icon />
                 </span>
               )}
