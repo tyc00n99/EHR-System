@@ -41,12 +41,12 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
 
   return (
     <>
-      <MarginSection label="Authorizations" action={manage && <button type="button" onClick={() => setOpen("new")} className="hover:underline">Add →</button>}>
+      <MarginSection label="Authorizations" action={manage && <button type="button" onClick={() => setOpen("new")} className="hover:underline">Manage →</button>}>
         {items.length === 0 ? (
           <p className="py-2 text-[14px] text-muted-foreground">No active authorization. Notes cannot be recorded until one exists.</p>
         ) : (
           <div>
-            <div className={cx(cols, "pb-1.5 text-[12.5px] text-muted-foreground")}><span>Service</span><span>Claim line</span><span>Units left</span><span>Through</span></div>
+            <div className={cx(cols, "pb-1.5 text-[12.5px] text-muted-foreground")}><span>Service</span><span>Service code</span><span>Units left</span><span>Through</span></div>
             {items.map((a) => manage
               ? <button key={a.id} type="button" onClick={() => setOpen(a.id)} className={cx(rowCls, "hover:bg-sidebar")}>{row(a)}</button>
               : <div key={a.id} className={rowCls}>{row(a)}</div>)}
