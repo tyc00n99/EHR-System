@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { Rule } from "@/components/rule";
 import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/icons";
 import { Badge, Card, Empty, LinkButton, Table, Tabs, Td, Th, Thead, Tr, cx, Notice } from "@/components/kit";
-import { ChartCol, ChartGrid, ChartLine, ChartSection, PatientBanner, UnitBar } from "@/components/chart";
+import { MarginSection, PatientBanner, UnitBar } from "@/components/chart";
 import { ClientProfile, type Entity, type Field, type Section } from "./client-profile";
 import { ClientPhoto } from "./client-photo";
 import { ProfileHistory } from "./profile-history";
@@ -139,33 +138,23 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       <Tabs tabs={tabs} current={tab} base={`/clients/${id}`} />
 
       {tab === "overview" && (
-        <ChartGrid columns="two">
-          <ChartCol>
-            <AuthorizationsPanel personId={id} manage={manage} defaultCounty={person.county} aiReady={aiReady} items={active.map(({ agreement: a, unitsUsed }) => ({ id: a.id, agreementNumber: a.agreementNumber, serviceCode: a.serviceCode, modifiers: a.modifiers, authorizedUnits: a.authorizedUnits, unitsUsed, unitRate: a.unitRate, startDate: a.startDate, endDate: a.endDate, authorizingCounty: a.authorizingCounty, status: a.status, documentPath: a.documentPath, documentName: a.documentName }))} />
-            <ChartSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="text-primary hover:underline">All →</Link>}>
-              {activeTeam.length === 0 ? <p className="text-[13px]">No caregivers assigned yet.</p> : (
-                <div className="grid gap-x-8 sm:grid-cols-2">
-                  {activeTeam.slice(0, 6).map((t) => (
-                    <ChartLine key={t.assignment.id}>
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] text-primary-foreground">{t.staff.firstName[0]}{t.staff.lastName[0]}</span>
-                      <Link href={`/staff/${t.staff.id}`} className="min-w-0 flex-1 truncate hover:underline">{t.staff.firstName} {t.staff.lastName}</Link>
-                      <Badge tone={t.assignment.orientedOn ? "ok" : "warn"}>{t.assignment.orientedOn ? "Oriented" : "Orientation due"}</Badge>
-                    </ChartLine>
-                  ))}
-                </div>
-              )}
-            </ChartSection>
-          </ChartCol>
-
-          <ChartCol>
-            {manage && (
-              <ChartSection label="Signing code" action={<Rule name="code" />}>
-                <ClientCodePanel personId={id} manage={manage} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} rotatesOn={person.signatureCodeSetAt ? fmtDate(new Date(person.signatureCodeSetAt.getTime() + CODE_ROTATION_DAYS * 86_400_000)) : null} sentAt={person.signatureCodeSentAt ? fmtDate(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />
-              </ChartSection>
+        <div>
+          <AuthorizationsPanel personId={id} manage={manage} defaultCounty={person.county} aiReady={aiReady} items={active.map(({ agreement: a, unitsUsed }) => ({ id: a.id, agreementNumber: a.agreementNumber, serviceCode: a.serviceCode, modifiers: a.modifiers, authorizedUnits: a.authorizedUnits, unitsUsed, unitRate: a.unitRate, startDate: a.startDate, endDate: a.endDate, authorizingCounty: a.authorizingCounty, status: a.status, documentPath: a.documentPath, documentName: a.documentName }))} />
+          <MarginSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="hover:underline">All →</Link>}>
+            {activeTeam.length === 0 ? <p className="py-2 text-[14px] text-muted-foreground">No caregivers assigned yet.</p> : (
+              <div className="grid gap-x-10 md:grid-cols-2">
+                {activeTeam.map((t) => (
+                  <div key={t.assignment.id} className="flex items-center justify-between gap-3 border-b border-line-soft py-2 text-[14px]">
+                    <Link href={`/staff/${t.staff.id}`} className="min-w-0 truncate font-medium text-text-strong hover:underline">{t.staff.firstName} {t.staff.lastName}</Link>
+                    <span className="shrink-0 text-[13px] text-muted-foreground">{t.staff.title}{!t.assignment.orientedOn && <span className="text-warn"> · orientation due</span>}</span>
+                  </div>
+                ))}
+              </div>
             )}
-            {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-3"><MedicationSupportToggle personId={id} on={false} manage /></div>}
-          </ChartCol>
-        </ChartGrid>
+          </MarginSection>
+          {manage && <ClientCodePanel layout="line" personId={id} manage={manage} hasCode={Boolean(person.signatureCodeHash)} setAt={person.signatureCodeSetAt ? fmtDate(person.signatureCodeSetAt) : null} rotatesOn={person.signatureCodeSetAt ? fmtDate(new Date(person.signatureCodeSetAt.getTime() + CODE_ROTATION_DAYS * 86_400_000)) : null} sentAt={person.signatureCodeSentAt ? fmtDate(person.signatureCodeSentAt) : null} sentTo={person.signatureCodeSentTo} phone={person.phone} consent={person.smsConsent} />}
+          {manage && !person.medicationSupport && meds.length === 0 && <div className="mt-4"><MedicationSupportToggle personId={id} on={false} manage /></div>}
+        </div>
       )}
 
       {tab === "authorizations" && (

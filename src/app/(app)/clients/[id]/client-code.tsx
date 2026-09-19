@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
+import { MarginSection } from "@/components/chart";
+import { Rule } from "@/components/rule";
 import { cx } from "@/components/kit";
 import { revealClientCode, setClientCode } from "../actions";
 
@@ -14,10 +16,12 @@ import { revealClientCode, setClientCode } from "../actions";
  * read it out — but every look is written to the audit log, so "who saw this code" is answerable.
  */
 export function ClientCodePanel({
-  personId, hasCode, setAt, rotatesOn, sentAt, sentTo, phone, consent, manage,
+  personId, hasCode, setAt, rotatesOn, sentAt, sentTo, phone, consent, manage, layout,
 }: {
   personId: string; hasCode: boolean; setAt: string | null; rotatesOn: string | null;
   sentAt: string | null; sentTo: string | null; phone: string | null; consent: boolean; manage: boolean;
+  /** "line": the Overview's margin-labelled row (code, Show, dates on one line; the action and delivery note in the margin). */
+  layout?: "line";
 }) {
   const [code, setCode] = useState<string>();
   const [fresh, setFresh] = useState(false);
@@ -50,6 +54,26 @@ export function ClientCodePanel({
       : !consent
         ? { tone: "warn" as const, text: "The client has not agreed to receive texts, so this has to be read to them." }
         : { tone: "warn" as const, text: "Texting is not switched on yet, so this has to be read to the client." };
+
+  const generateBtn = manage && (
+    <button type="button" onClick={generate} disabled={pending} className="hover:underline disabled:opacity-60">{pending ? "Generating…" : hasCode ? "Generate a new code" : "Generate a code"}</button>
+  );
+  if (layout === "line") {
+    return (
+      <MarginSection label="Signing code" labelAfter={<Rule name="code" />} action={generateBtn} note={hasCode ? <span className={delivery.tone === "ok" ? undefined : "text-warn"}>{delivery.text}</span> : undefined}>
+        {!hasCode ? (
+          <p className="py-2 text-[14px] text-muted-foreground">No signing code yet. Without one this person cannot sign a shift note.</p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-1.5">
+            <span className={cx("ident inline-flex h-8 items-center rounded-md border px-3 text-[16px] tracking-[0.22em]", code ? "border-primary bg-primary-soft text-primary" : "border-line bg-panel text-text-strong")}>{code ?? "••••••"}</span>
+            {manage && <button type="button" onClick={reveal} disabled={pending} className="inline-flex h-8 items-center rounded-md border border-line bg-card px-3 text-[13.5px] font-medium hover:bg-hover disabled:opacity-60">{code ? "Hide" : "Show"}</button>}
+            <span className="ident text-[14px] text-muted-foreground">Set {setAt}{rotatesOn && ` · rotates ${rotatesOn}`}</span>
+            {fresh && <span className="text-[13px] text-ok">New code. Give it to the person now.</span>}
+          </div>
+        )}
+      </MarginSection>
+    );
+  }
 
   if (!hasCode) {
     return (

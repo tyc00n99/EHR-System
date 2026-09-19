@@ -68,6 +68,38 @@ export function ChartSection({ label, action, children }: { label: string; actio
 }
 
 /** One row in a chart section. Dividers, not borders — a list, not a stack of cards. */
+/**
+ * A section whose name sits in the left margin beside its rows (the client Overview since
+ * 2026-09-19). No card: sections are divided by a single rule.
+ */
+export function MarginSection({ label, labelAfter, action, note, children }: { label: string; labelAfter?: ReactNode; action?: ReactNode; note?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="grid gap-y-3 border-t border-line py-5 first:border-t-0 first:pt-1 md:grid-cols-[200px_minmax(0,1fr)] md:gap-x-8">
+      <div className="md:pt-2">
+        <div className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}{labelAfter}</div>
+        {action && <div className="mt-2 text-[13.5px] font-medium text-primary">{action}</div>}
+        {note && <div className="mt-2 text-[13px] leading-snug text-muted-foreground">{note}</div>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
+
+/** Units left on an authorization: a ring in the service colour, the share as a small chip, then the count. */
+export function UnitsLeft({ used, total, code }: { used: number; total: number; code: string }) {
+  const left = Math.max(0, total - used);
+  const pct = total > 0 ? Math.min(100, Math.max(0, Math.round((left / total) * 100))) : 0;
+  const color = serviceColor(code);
+  const r = 9, c = 2 * Math.PI * r;
+  return (
+    <span className="inline-flex items-center gap-2.5">
+      <svg width="24" height="24" viewBox="0 0 24 24" className="shrink-0" aria-hidden><circle cx="12" cy="12" r={r} fill="none" stroke="var(--color-panel, #eef2f6)" strokeWidth="3" /><circle cx="12" cy="12" r={r} fill="none" stroke={color} strokeWidth="3" strokeDasharray={`${(c * pct) / 100} ${c}`} strokeLinecap="round" transform="rotate(-90 12 12)" /></svg>
+      <span className="ident inline-flex h-5 items-center rounded-full px-2 text-[12px] font-semibold" style={{ background: `${color}1f`, color }}>{pct}%</span>
+      <span className="ident text-[14px]"><span className="font-medium text-text-strong">{left.toLocaleString()}</span> <span className="text-muted-foreground">of {total.toLocaleString()}</span></span>
+    </span>
+  );
+}
+
 export function ChartLine({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cx("flex items-center gap-2.5 border-b border-line-soft py-1.5 text-[13px] last:border-0", className)}>{children}</div>;
 }

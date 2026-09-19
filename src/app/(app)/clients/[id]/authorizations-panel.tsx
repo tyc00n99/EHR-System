@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Empty, cx } from "@/components/kit";
-import { ChartSection, ServiceDot, UnitBar } from "@/components/chart";
+import { Badge, cx } from "@/components/kit";
+import { MarginSection, UnitsLeft } from "@/components/chart";
 import { Icon } from "@/components/icons";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { labelForCode } from "@/lib/hcpcs";
@@ -28,31 +28,31 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
   const done = () => { setOpen(null); router.refresh(); };
   const current = items.find((a) => a.id === open);
 
+  const cols = "grid grid-cols-[minmax(0,1fr)_100px_250px_100px] items-center gap-x-5";
   const row = (a: AuthorizationItem) => (
     <>
-      <div className="flex items-baseline gap-2.5">
-        <ServiceDot code={a.serviceCode} className="translate-y-[-1px]" />
-        <span className="min-w-0 flex-1 truncate font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
-      </div>
-      <div className="ml-[18px] mt-0.5 text-[13px]">
-        <span className="ident">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
-        {" · "}<span className="ident font-medium text-text-strong">{(a.authorizedUnits - a.unitsUsed).toLocaleString()}</span> of {a.authorizedUnits.toLocaleString()} units left
-        {" · through "}<span className="ident">{fmtDateNum(a.endDate)}</span>
-      </div>
-      <div className="ml-[18px] max-w-[240px]"><UnitBar used={a.unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></div>
+      <span className="truncate text-[14px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
+      <span className="ident text-[14px] text-muted-foreground">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
+      <UnitsLeft used={a.unitsUsed} total={a.authorizedUnits} code={a.serviceCode} />
+      <span className="ident text-[14px] text-muted-foreground">{fmtDateNum(a.endDate)}</span>
     </>
   );
-  const rowCls = "block w-full border-b border-line-soft py-2.5 text-left last:border-0";
+  const rowCls = cx(cols, "w-full border-t border-line-soft py-2.5 text-left first:border-t-0");
 
   return (
     <>
-      <ChartSection label={`Authorizations · ${items.length} active`} action={manage && <button type="button" onClick={() => setOpen("new")} className="text-primary hover:underline">Add →</button>}>
+      <MarginSection label="Authorizations" action={manage && <button type="button" onClick={() => setOpen("new")} className="hover:underline">Add →</button>}>
         {items.length === 0 ? (
-          <Empty icon="doc" title="No active authorization">Notes cannot be recorded until one exists.</Empty>
-        ) : items.map((a) => manage
-          ? <button key={a.id} type="button" onClick={() => setOpen(a.id)} className={cx(rowCls, "hover:bg-hover")}>{row(a)}</button>
-          : <div key={a.id} className={rowCls}>{row(a)}</div>)}
-      </ChartSection>
+          <p className="py-2 text-[14px] text-muted-foreground">No active authorization. Notes cannot be recorded until one exists.</p>
+        ) : (
+          <div>
+            <div className={cx(cols, "pb-1.5 text-[12.5px] text-muted-foreground")}><span>Service</span><span>Claim line</span><span>Units left</span><span>Through</span></div>
+            {items.map((a) => manage
+              ? <button key={a.id} type="button" onClick={() => setOpen(a.id)} className={cx(rowCls, "hover:bg-sidebar")}>{row(a)}</button>
+              : <div key={a.id} className={rowCls}>{row(a)}</div>)}
+          </div>
+        )}
+      </MarginSection>
 
       {open && (
         <Sheet open onOpenChange={(o) => { if (!o) setOpen(null); }}>
