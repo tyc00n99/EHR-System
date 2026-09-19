@@ -57,7 +57,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const manage = can(user, "manage_people");
   const aiReady = aiConfigured();
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : new Date().toISOString().slice(0, 7);
-  const goalFrom = daysAgo(90);
+  // How far back the Programming tab counts answers; a quick picker in its margin sets it (2026-09-19).
+  const goalDays = [30, 60, 90, 180, 365].includes(Number(sp.days)) ? Number(sp.days) : 90;
+  const goalFrom = daysAgo(goalDays);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
   const vt = tab === "notes" ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
@@ -190,10 +192,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
 
       {tab === "lifeplan" && (
-        <div>
-          <div className="mb-4 flex items-baseline justify-between"><h2 className="text-[18px]">{person.firstName}&apos;s support plan goals</h2><span className="text-[13px]">Question responses from the last 90 days</span></div>
-          <LifePlan personId={id} manage={manage} rangeLabel="in the last 90 days" goals={goals.map((g) => ({ id: g.goal.id, title: g.goal.title, outcome: g.goal.outcome, description: g.goal.description, category: g.goal.category, status: g.goal.status, startDate: g.goal.startDate, targetDate: g.goal.targetDate, questions: g.questions.map((q) => ({ id: q.question.id, prompt: q.question.prompt, active: q.question.active, yes: q.yes, no: q.no, na: q.na, thisMonth: q.thisMonth, lastMonth: q.lastMonth })), reviews: g.reviews.map((r) => ({ id: r.id, assessment: r.assessment, note: r.note, reviewedAt: r.reviewedAt, by: r.by })) }))} library={<ActivityLibrary personId={id} firstName={person.firstName} library={person.activityLibrary} defaults={DEFAULT_ACTIVITIES} manage={manage} />} />
-        </div>
+        <LifePlan personId={id} manage={manage} rangeLabel={goalDays === 365 ? "in the last year" : `in the last ${goalDays} days`} days={goalDays} goals={goals.map((g) => ({ id: g.goal.id, title: g.goal.title, outcome: g.goal.outcome, description: g.goal.description, category: g.goal.category, status: g.goal.status, startDate: g.goal.startDate, targetDate: g.goal.targetDate, questions: g.questions.map((q) => ({ id: q.question.id, prompt: q.question.prompt, active: q.question.active, yes: q.yes, no: q.no, na: q.na, thisMonth: q.thisMonth, lastMonth: q.lastMonth })), reviews: g.reviews.map((r) => ({ id: r.id, assessment: r.assessment, note: r.note, reviewedAt: r.reviewedAt, by: r.by })) }))} library={<ActivityLibrary personId={id} firstName={person.firstName} library={person.activityLibrary} defaults={DEFAULT_ACTIVITIES} manage={manage} />} />
       )}
 
       {tab === "medical" && (

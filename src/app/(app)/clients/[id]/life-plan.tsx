@@ -3,6 +3,8 @@
 import { CircleHelp } from "lucide-react";
 import { FilterMenu } from "@/components/filter-menu";
 import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { MarginSection } from "@/components/chart";
 import { Icon } from "@/components/icons";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
@@ -40,7 +42,10 @@ function useToast(state: ActionState, onOk?: () => void) {
  * pane. The outcome leads; questions are optional (a goal may be measured only by the
  * supervisor's review); the review history is the record a licensor asks for.
  */
-export function LifePlan({ personId, goals, manage, rangeLabel, library }: { personId: string; goals: GoalView[]; manage: boolean; rangeLabel: string; library?: ReactNode }) {
+const DAY_OPTIONS = [30, 60, 90, 180, 365] as const;
+
+export function LifePlan({ personId, goals, manage, rangeLabel, days, library }: { personId: string; goals: GoalView[]; manage: boolean; rangeLabel: string; days: number; library?: ReactNode }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<string | "new" | null>(null);
   const current = goals.find((g) => g.id === selected) ?? null;
   const back = () => setSelected(null);
@@ -59,32 +64,47 @@ export function LifePlan({ personId, goals, manage, rangeLabel, library }: { per
   const active = goals.filter((g) => g.status === "active").sort((a, b) => rank(a) - rank(b) || lastReview(a) - lastReview(b) || a.title.localeCompare(b.title));
 
   const done = goals.filter((g) => g.status !== "active");
+  const picker = (
+    <FilterMenu aria-label="How far back to count answers" value={String(days)} className="h-8" onChange={(v) => router.push(`/clients/${personId}?tab=lifeplan&days=${v}`)} options={DAY_OPTIONS.map((d) => ({ value: String(d), label: d === 365 ? "Last year" : `Last ${d} days` }))} />
+  );
   return (
     <div>
-      {manage && <div className="mb-3 flex justify-end"><Button variant="outline" className="h-9" onClick={() => setSelected("new")}>+ New goal</Button></div>}
-      {goals.length === 0 && <div className="rounded-xl border border-dashed border-line px-6 py-10 text-center text-[13px]">{manage ? "No goals yet. Add the outcomes from the support plan." : "A supervisor adds goals from the support plan."}</div>}
-      {active.length > 0 && (
-        <section className="overflow-hidden rounded-xl border border-line bg-card">
-          <div className={cx(ROW, "border-b border-line py-2 text-[12.5px] text-muted-foreground")}><span /><span>Goal</span><span className={WIDE}>Answered yes on notes</span><span className={WIDE}>Last review</span><span /></div>
-          {active.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} />)}
-        </section>
-      )}
+      <MarginSection label="Goals" note={<div className="grid gap-2"><span>Question answers from notes</span>{picker}</div>} action={manage && <button type="button" onClick={() => setSelected("new")} className="hover:underline">+ New goal</button>}>
+        {goals.length === 0 ? (
+          <p className="py-2 text-[14px] text-muted-foreground">{manage ? "No goals yet. Add the outcomes from the support plan." : "A supervisor adds goals from the support plan."}</p>
+        ) : active.length === 0 ? (
+          <p className="py-2 text-[14px] text-muted-foreground">Every goal is met or closed.</p>
+        ) : (
+          <div>
+            <div className={cx(ROW, "pb-1.5 text-[12.5px] text-muted-foreground")}><span /><span>Goal</span><span className={WIDE}>Answered yes on notes</span><span className={WIDE}>Last review</span><span /></div>
+            {active.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} />)}
+          </div>
+        )}
+      </MarginSection>
       {done.length > 0 && (
-        <Fold label={`${done.length} goal${done.length === 1 ? "" : "s"} ${done.every((g) => g.status === "met") ? "met" : "closed"}`} hint={done.map((g) => g.title).join(", ")}>
-          {done.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} muted />)}
-        </Fold>
+        <FoldSection label="Met" summary={<><span className="font-medium text-text-strong">{done.length} goal{done.length === 1 ? "" : "s"}</span> · {done.map((g) => g.title).join(", ")}</>}>
+          <div className="mt-2">{done.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} muted />)}</div>
+        </FoldSection>
       )}
-      {library && <Fold label="Daily activities" hint="what caregivers pick from on every note">{library}</Fold>}
+      {library && (
+        <FoldSection label="Daily activities" note="What caregivers pick from on every note." summary="The list caregivers choose from when they write a note">
+          <div className="mt-1">{library}</div>
+        </FoldSection>
+      )}
     </div>
   );
 }
 
-const ROW = "grid grid-cols-[6px_minmax(0,1fr)_140px] items-center gap-x-5 pr-5 xl:grid-cols-[6px_minmax(0,1fr)_220px_170px_140px]";
+const ROW = "grid grid-cols-[4px_minmax(0,1fr)_140px] items-center gap-x-5 xl:grid-cols-[4px_minmax(0,1fr)_260px_170px_140px]";
 const WIDE = "hidden xl:block";
 
-/** One goal, read left to right: how it stands, what it is, what the notes say, and when it was last looked at. */
+/**
+ * One goal, read left to right: what it is, what the notes say, when it was last looked at, how it
+ * stands. Colour is spent on one thing only: a goal that needs attention (user, 2026-09-19).
+ */
 function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?: boolean }) {
   const st = standing(g);
+  const attention = st.tone === "warn" || st.tone === "danger";
   const latest = g.reviews[0];
   const live = g.questions.filter((q) => q.active);
   const yes = live.reduce((n, q) => n + q.yes, 0), answered = live.reduce((n, q) => n + q.yes + q.no, 0);
@@ -93,36 +113,36 @@ function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?
   const rate = (pick: (q: GoalView["questions"][number]) => { yes: number; no: number }) => { const y = live.reduce((n, q) => n + pick(q).yes, 0), t = live.reduce((n, q) => n + pick(q).yes + pick(q).no, 0); return t >= 3 ? Math.round((y / t) * 100) : null; };
   const now = rate((q) => q.thisMonth), before = rate((q) => q.lastMonth);
   const delta = now != null && before != null ? now - before : null;
-  const barTone = st.tone === "warn" || st.tone === "danger" ? "bg-warn" : st.tone === "ok" ? "bg-ok" : "bg-primary";
   return (
-    <button type="button" onClick={onOpen} className={cx(ROW, "w-full border-t border-line-soft py-3 text-left transition-colors first:border-t-0 hover:bg-sidebar", muted && "opacity-70")}>
-      <span className={cx("h-10 rounded-r-[3px]", st.dot)} />
+    <button type="button" onClick={onOpen} className={cx(ROW, "w-full border-t border-line-soft py-3 text-left transition-colors hover:bg-sidebar", muted && "opacity-70")}>
+      <span className={cx("h-9 rounded-[2px]", attention ? "bg-warn" : "bg-transparent")} />
       <span className="min-w-0">
         <span className="block truncate text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
         {g.outcome && <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">{g.outcome}</span>}
       </span>
       <span className={cx(WIDE, "text-[13px] text-muted-foreground")}>
         {pct == null ? (live.length ? "No answers yet" : "Judged at review") : <>
-          <span className="block h-1.5 w-full overflow-hidden rounded-full bg-panel"><span className={cx("block h-full rounded-full", barTone)} style={{ width: `${pct}%` }} /></span>
-          <span className="mt-1 block tabular-nums">{pct}% · {yes} of {answered}{delta != null && (delta > 2 ? <span className="ml-1.5 font-semibold text-ok">▲{delta}</span> : delta < -2 ? <span className="ml-1.5 font-semibold text-danger">▼{-delta}</span> : <span className="ml-1.5 text-hint" title="About the same as last month">→</span>)}</span>
+          <span className="block h-1.5 w-full overflow-hidden rounded-full bg-panel"><span className="block h-full rounded-full bg-hint" style={{ width: `${pct}%` }} /></span>
+          <span className="mt-1 block tabular-nums">{pct}% · {yes} of {answered}{delta != null && <span className="ml-1.5 text-hint" title={delta > 2 ? `Up ${delta} points on last month` : delta < -2 ? `Down ${-delta} points on last month` : "About the same as last month"}>{delta > 2 ? `▲ ${delta}` : delta < -2 ? `▼ ${-delta}` : "→"}</span>}</span>
         </>}
       </span>
       <span className={cx(WIDE, "text-[13.5px] text-muted-foreground")}><span className="block">{latest ? fmtDate(latest.reviewedAt) : "Not reviewed yet"}</span>{g.targetDate && <span className="block text-[12.5px] text-hint">target {fmtDate(g.targetDate)}</span>}</span>
-      <span className="flex justify-end"><Badge tone={st.tone}>{st.label}</Badge></span>
+      <span className={cx("text-right text-[14px]", attention ? "font-semibold text-warn" : "text-muted-foreground")}>{st.label}</span>
     </button>
   );
 }
 
-function Fold({ label, hint, children }: { label: string; hint: string; children: ReactNode }) {
+/** A margin-labelled section that folds: the label row is the toggle, the summary stays visible either way. */
+function FoldSection({ label, note, summary, children }: { label: string; note?: string; summary: ReactNode; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <section className="mt-4 overflow-hidden rounded-xl border border-line bg-card">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left text-[14px] hover:bg-sidebar">
-        <span className="shrink-0 font-medium text-text-strong">{label}</span>
-        <span className="min-w-0 truncate text-muted-foreground">· {hint}</span>
-        <Icon.chevron size={18} className={cx("ml-auto shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
+    <section className="border-t border-line py-5 md:grid md:grid-cols-[200px_minmax(0,1fr)_32px] md:gap-x-8">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="contents text-left">
+        <span className="block md:pt-0.5"><span className="block text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</span>{note && <span className="mt-2 block text-[13px] leading-snug text-muted-foreground">{note}</span>}</span>
+        <span className="mt-2 block min-w-0 truncate text-[14px] text-muted-foreground md:mt-0 md:pt-0.5">{summary}</span>
+        <Icon.chevron size={18} className={cx("mt-2 text-muted-foreground transition-transform md:mt-0 md:justify-self-end", open && "rotate-180")} />
       </button>
-      {open && <div className="border-t border-line">{children}</div>}
+      {open && <div className="min-w-0 md:col-start-2 md:col-span-2">{children}</div>}
     </section>
   );
 }
