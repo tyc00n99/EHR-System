@@ -163,7 +163,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-line bg-card">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -172,7 +172,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
                   const meta = h.column.columnDef.meta as ColumnMeta | undefined;
                   const align = meta?.align;
                   return (
-                    <TableHead key={h.id} className={cn("h-11 whitespace-nowrap px-3 text-[13.5px] font-medium text-text-strong first:pl-4 last:pr-4", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: meta?.width ?? (h.getSize() !== 150 ? h.getSize() : undefined) }}>
+                    <TableHead key={h.id} className={cn("h-11 whitespace-nowrap border-b border-line px-3 text-[13.5px] font-medium text-text-strong first:pl-1 last:pr-1", align === "right" && "text-right", h.column.id === "__select" && "w-9 pr-0")} style={{ width: meta?.width ?? (h.getSize() !== 150 ? h.getSize() : undefined) }}>
                       {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
                     </TableHead>
                   );
@@ -189,7 +189,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
                 <TableRow key={row.id} onMouseEnter={onRowHover ? () => onRowHover(row.original) : undefined} onClick={href ? () => go(href) : undefined} data-state={row.getIsSelected() ? "selected" : undefined} className={cn("border-line-soft transition-colors", href && "cursor-pointer", row.getIsSelected() ? "bg-tab-hover hover:bg-tab-hover" : "hover:bg-sidebar")}>
                   {row.getVisibleCells().map((cell) => {
                     const align = (cell.column.columnDef.meta as ColumnMeta | undefined)?.align;
-                    return <TableCell key={cell.id} className={cn("px-3 align-middle text-[14px] first:pl-4 last:pr-4", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;
+                    return <TableCell key={cell.id} className={cn("px-3 align-middle text-[14px] first:pl-1 last:pr-1", dense ? "py-2" : "py-2.5", align === "right" && "text-right tabular-nums", cell.column.id === "__select" && "w-9 pr-0")}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>;
                   })}
                 </TableRow>
               );

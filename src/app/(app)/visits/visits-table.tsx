@@ -61,7 +61,6 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
     { accessorKey: "staff", header: "Caregiver" },
     { accessorKey: "serviceLabel", header: "Service", cell: ({ row }) => <TwoLine top={row.original.serviceLabel} bottom={row.original.serviceKey} strong /> },
     { accessorKey: "minutes", header: "Hours", enableSorting: false, meta: { align: "right" }, cell: ({ row }) => row.original.minutes == null ? <span className="text-primary">in progress</span> : <span className="tabular-nums">{fmtHours(row.original.minutes)}</span> },
-    { accessorKey: "units", header: "Units", meta: { align: "right" } },
     { id: "status", accessorFn: standingOf, header: "Status", enableSorting: false, cell: ({ row }) => {
       const r = row.original; const st = standingOf(r);
       return (
