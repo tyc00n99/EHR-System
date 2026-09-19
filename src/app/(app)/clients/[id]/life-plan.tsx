@@ -95,7 +95,7 @@ export function LifePlan({ personId, goals, manage, rangeLabel, days, library }:
   );
 }
 
-const ROW = "grid grid-cols-[4px_minmax(0,1fr)_140px] items-center gap-x-5 xl:grid-cols-[4px_minmax(0,1fr)_260px_170px_140px]";
+const ROW = "grid grid-cols-[4px_minmax(0,1fr)_140px] items-start gap-x-5 xl:grid-cols-[4px_minmax(0,1fr)_220px_150px_130px]";
 const WIDE = "hidden xl:block";
 
 /**
@@ -115,19 +115,19 @@ function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?
   const delta = now != null && before != null ? now - before : null;
   return (
     <button type="button" onClick={onOpen} className={cx(ROW, "w-full border-t border-line-soft py-3 text-left transition-colors hover:bg-sidebar", muted && "opacity-70")}>
-      <span className={cx("h-9 rounded-[2px]", attention ? "bg-warn" : "bg-transparent")} />
+      <span className={cx("mt-0.5 h-9 rounded-[2px]", attention ? "bg-warn" : "bg-transparent")} />
       <span className="min-w-0">
-        <span className="block truncate text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
-        {g.outcome && <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">{g.outcome}</span>}
+        <span className="block text-[15px] font-medium leading-snug text-text-strong">{g.title}</span>
+        {g.outcome && <span className="mt-0.5 block text-[13px] leading-[1.45] text-muted-foreground">{g.outcome}</span>}
       </span>
-      <span className={cx(WIDE, "text-[13px] text-muted-foreground")}>
+      <span className={cx(WIDE, "pt-1 text-[13px] text-muted-foreground")}>
         {pct == null ? (live.length ? "No answers yet" : "Judged at review") : <>
           <span className="block h-1.5 w-full overflow-hidden rounded-full bg-panel"><span className="block h-full rounded-full bg-hint" style={{ width: `${pct}%` }} /></span>
           <span className="mt-1 block tabular-nums">{pct}% · {yes} of {answered}{delta != null && <span className="ml-1.5 text-hint" title={delta > 2 ? `Up ${delta} points on last month` : delta < -2 ? `Down ${-delta} points on last month` : "About the same as last month"}>{delta > 2 ? `▲ ${delta}` : delta < -2 ? `▼ ${-delta}` : "→"}</span>}</span>
         </>}
       </span>
-      <span className={cx(WIDE, "text-[13.5px] text-muted-foreground")}><span className="block">{latest ? fmtDate(latest.reviewedAt) : "Not reviewed yet"}</span>{g.targetDate && <span className="block text-[12.5px] text-hint">target {fmtDate(g.targetDate)}</span>}</span>
-      <span className={cx("text-right text-[14px]", attention ? "font-semibold text-warn" : "text-muted-foreground")}>{st.label}</span>
+      <span className={cx(WIDE, "pt-0.5 text-[13.5px] text-muted-foreground")}><span className="block">{latest ? fmtDate(latest.reviewedAt) : "Not reviewed yet"}</span>{g.targetDate && <span className="block text-[12.5px] text-hint">target {fmtDate(g.targetDate)}</span>}</span>
+      <span className={cx("pt-0.5 text-right text-[14px]", attention ? "font-semibold text-warn" : "text-muted-foreground")}>{st.label}</span>
     </button>
   );
 }
