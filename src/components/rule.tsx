@@ -53,6 +53,8 @@ export function Rule({ name, className }: { name: RuleKey; className?: string })
   return (
     <Popover>
       <PopoverTrigger
+        openOnHover
+        delay={120}
         render={
           <button type="button" aria-label={`What the rule says: ${r.title}`} className={cx("inline-flex size-4 shrink-0 items-center justify-center rounded-full text-hint hover:text-primary", className)} />
         }
