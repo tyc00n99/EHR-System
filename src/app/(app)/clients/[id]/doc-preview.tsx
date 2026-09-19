@@ -8,16 +8,20 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
  * Opens a PDF or image in a dialog. `variant="icon"` is a small page icon meant to sit in front of
  * a document's title; a file that cannot be previewed (Word) opens in a new tab instead.
  */
-export function PreviewButton({ href, title, mime, variant = "pill" }: { href: string; title: string; mime: string; variant?: "pill" | "icon" }) {
+export function PreviewButton({ href, title, mime, variant = "pill" }: { href: string; title: string; mime: string; variant?: "pill" | "icon" | "inline" }) {
   const [open, setOpen] = useState(false);
   const previewable = mime === "application/pdf" || mime.startsWith("image/");
+  const inlineCls = "inline-flex min-w-0 items-center gap-1.5 text-[13px] text-muted-foreground hover:text-text-strong hover:underline";
   if (!previewable) {
+    if (variant === "inline") return <a href={href} target="_blank" rel="noreferrer" className={inlineCls}><FileText className="size-3.5 shrink-0" /><span className="truncate">{title}</span></a>;
     if (variant === "icon") return <a href={href} target="_blank" rel="noreferrer" aria-label={`Open ${title}`} title="Open" className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-card hover:bg-hover"><FileText className="size-5" /></a>;
     return null;
   }
   return (
     <>
-      {variant === "icon"
+      {variant === "inline"
+        ? <button type="button" onClick={() => setOpen(true)} className={inlineCls}><FileText className="size-3.5 shrink-0" /><span className="truncate">{title}</span></button>
+        : variant === "icon"
         ? <button type="button" onClick={() => setOpen(true)} aria-label={`Open ${title}`} title="Open" className="flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-card hover:bg-hover"><FileText className="size-5" /></button>
         : <button onClick={() => setOpen(true)} className="inline-flex h-7 items-center gap-1 rounded-full border border-line bg-page px-2.5 text-[13px] font-medium hover:bg-hover"><Eye className="size-3.5" /> Preview</button>}
       <Dialog open={open} onOpenChange={setOpen}>

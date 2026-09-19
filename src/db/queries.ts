@@ -2,7 +2,7 @@ import "server-only";
 import { and, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, sql, sum } from "drizzle-orm";
 import { getDb, schema } from "./index";
 
-const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
+const { people, staff, sites, programs, serviceAgreements, visits, visitEdits, auditLog, users, organizations, assignments, staffCredentials, clientDocuments, documentTypes, goals, goalQuestions, goalResponses, shifts, medications, medicationAdministrations } = schema;
 
 export async function getOrganization() {
   const db = await getDb();
@@ -287,6 +287,12 @@ export async function listAuditForRecord(tableName: string, recordId: string) {
     .leftJoin(users, eq(auditLog.actorUserId, users.id))
     .where(and(eq(auditLog.tableName, tableName), eq(auditLog.recordId, recordId)))
     .orderBy(desc(auditLog.at));
+}
+
+/** Every document type the agency has defined, in checklist order. Inactive ones stay so old files keep a label. */
+export async function listDocumentTypes() {
+  const db = await getDb();
+  return db.select().from(documentTypes).orderBy(documentTypes.sortOrder, documentTypes.createdAt);
 }
 
 export async function listClientDocuments(personId: string) {

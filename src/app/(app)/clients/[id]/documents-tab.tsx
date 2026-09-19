@@ -1,123 +1,118 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { DocumentTextChip } from "@/components/document-text-chip";
+import { MarginSection } from "@/components/chart";
+import { MarginFold } from "@/components/margin-fold";
 import { Icon } from "@/components/icons";
-import { Badge, Button, cx } from "@/components/kit";
-import type { ClientDocument, DocumentCategory } from "@/db/schema";
-import type { ChecklistItem } from "@/lib/client-documents";
+import { cx } from "@/components/kit";
+import type { ClientDocument, DocumentType } from "@/db/schema";
+import { cadenceLabel, typeIdOf, type ChecklistItem } from "@/lib/client-documents";
 import { fmtDate } from "@/lib/format";
-import { DOCUMENT_CATEGORIES } from "@/lib/validation";
 import { PreviewButton } from "./doc-preview";
 import { ArchiveDocument, DeleteDocument, DocumentUpload } from "./documents";
 
-const DOT: Record<ChecklistItem["status"], string> = { ok: "bg-ok", due_soon: "bg-warn", overdue: "bg-danger", missing: "bg-danger" };
-
 /**
- * The client's documents as a checklist first — what a 245D record must hold, ticked or flagged —
- * then everything else. Uploading is a drawer-less inline form that opens on demand, preset to
- * the item you clicked Add on.
+ * The client's documents as a checklist of what this agency requires (set under Settings), then
+ * everything else and the archive folded away. Colour is spent on one thing: a renewal that is due.
  */
-export function DocumentsTab({ personId, items, others, archived, summary, manage, aiReady }: {
-  personId: string; items: ChecklistItem[]; others: ClientDocument[]; archived: ClientDocument[]; summary: { onFile: number; total: number; overdue: number; missing: number }; manage: boolean; aiReady: boolean;
+export function DocumentsTab({ personId, items, others, archived, types, summary, manage, canEditTypes, orgName, aiReady }: {
+  personId: string; items: ChecklistItem[]; others: ClientDocument[]; archived: ClientDocument[]; types: DocumentType[];
+  summary: { onFile: number; total: number; overdue: number; dueSoon: number; missing: number }; manage: boolean; canEditTypes: boolean; orgName: string; aiReady: boolean;
 }) {
-  const [upload, setUpload] = useState<DocumentCategory | null>(null);
-  const open = (c: DocumentCategory) => setUpload((v) => (v === c ? null : c));
-
-  const FileRow = ({ d, primary }: { d: ClientDocument; primary?: boolean }) => (
-    <div className={cx("flex min-h-9 flex-wrap items-center gap-x-4 gap-y-1 text-[13.5px]", !primary && "pl-6")}>
-      <PreviewButton variant="icon" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
-      <span className={cx("min-w-0", primary ? "font-medium text-text-strong" : "")}>{d.title}</span>
-      <span>{d.effectiveOn ? `effective ${fmtDate(d.effectiveOn)}` : `uploaded ${fmtDate(d.createdAt)}`}</span>
-      {d.note && <span>· {d.note}</span>}
-      <span className="ml-auto flex items-center gap-2">
-        {manage && <DocumentTextChip kind="client" id={d.id} ownerId={personId} hasText={Boolean(d.extractedText)} summary={d.extractionSummary} aiReady={aiReady} />}
-        {manage && <ArchiveDocument id={d.id} personId={personId} archived={Boolean(d.archivedAt)} />}
-        {manage && <DeleteDocument id={d.id} personId={personId} />}
-      </span>
-    </div>
-  );
+  const [upload, setUpload] = useState<string | null>(null);
+  const open = (typeId: string) => setUpload((v) => (v === typeId ? null : typeId));
+  const labelOf = (d: ClientDocument) => types.find((t) => t.id === typeIdOf(d, types))?.label ?? "Other file";
+  const fallbackType = types.find((t) => t.active && !t.required)?.id ?? types.find((t) => t.active)?.id ?? "";
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-[18px]">Documents</h2>
-        <span className="text-[13.5px]">{summary.onFile} of {summary.total} required on file{summary.overdue ? ` · ${summary.overdue} overdue` : ""}</span>
-        <span className="flex-1" />
-        {manage && <Button variant={upload === "other" ? "primary" : "outline"} className="h-9" onClick={() => open("other")}><Icon.plus size={15} /> Upload</Button>}
-      </div>
-
       {upload && manage && (
-        <div className="mb-4 rounded-xl border border-primary bg-primary-soft/30 p-4">
+        <div className="mb-5 rounded-xl border border-line p-4">
           <div className="mb-3 flex items-center justify-between"><div className="text-[15px] font-semibold text-text-strong">Upload a document</div><button type="button" onClick={() => setUpload(null)} className="text-[13px] hover:underline">Close</button></div>
-          <DocumentUpload key={upload} personId={personId} defaultCategory={upload} onDone={() => setUpload(null)} />
+          <DocumentUpload key={upload} personId={personId} types={types} defaultTypeId={upload} onDone={() => setUpload(null)} />
         </div>
       )}
 
-      <section className="mb-5 overflow-hidden rounded-xl border border-line bg-card">
-        <div className="grid grid-cols-[minmax(0,1fr)_170px_140px_112px] items-center gap-4 border-b border-line px-5 py-3 text-[13px] font-medium uppercase tracking-[0.11em]">
-          <span>Document</span><span>Renew by</span><span /><span />
-        </div>
-        <ul className="divide-y divide-line-soft">
-          {items.map((it) => { const missing = it.status === "missing"; return (
-            <li key={it.category} className={cx("px-5 py-4", missing && "bg-danger-soft/50")}>
-              <div className="grid grid-cols-[minmax(0,1fr)_170px_140px_112px] items-center gap-4">
-                <div className="flex min-w-0 items-center gap-3"><span className={cx("size-2.5 shrink-0 rounded-full", DOT[it.status])} /><span className="text-[15px] font-medium text-text-strong">{it.label}</span></div>
-                <span className="text-[13.5px]">{it.renewBy ? fmtDate(it.renewBy) : it.cadenceLabel}</span>
-                <span>{it.status === "due_soon" && <Badge tone="warn">Renew soon</Badge>}{it.status === "overdue" && <Badge tone="danger">Renewal overdue</Badge>}{missing && <span className="text-[13.5px] font-medium text-danger">Nothing on file</span>}</span>
-                <span className="text-right">{manage && <Button variant="outline" className="h-8 w-full text-[13px]" onClick={() => open(it.category)}>{it.latest ? "Add new" : "Add"}</Button>}</span>
+      <MarginSection
+        label="Required"
+        note={<>
+          <span className="block">{summary.total === 0 ? `${orgName} has not set a required list yet.` : `${summary.total} document${summary.total === 1 ? "" : "s"} ${orgName} requires for every client.`}{canEditTypes && <> <Link href="/settings?tab=documents" className="underline decoration-line underline-offset-[3px] hover:text-text-strong">Change the list</Link></>}</span>
+          {summary.total > 0 && (
+            <span className="mt-2 block">
+              <span className="font-medium text-text-strong">{summary.onFile} of {summary.total} on file</span>
+              {summary.missing > 0 && <> · {summary.missing} missing</>}
+              {summary.dueSoon > 0 && <> · <span className="font-medium text-warn">{summary.dueSoon} renew{summary.dueSoon === 1 ? "s" : ""} soon</span></>}
+              {summary.overdue > 0 && <> · <span className="font-medium text-warn">{summary.overdue} overdue</span></>}
+            </span>
+          )}
+        </>}
+        action={manage && <button type="button" onClick={() => open(items[0]?.type.id ?? fallbackType)} className="hover:underline">+ Upload</button>}
+      >
+        {items.length === 0 ? (
+          <p className="py-2 text-[14px] text-muted-foreground">Nothing is required yet. An administrator sets the list under Settings.</p>
+        ) : items.map((it) => {
+          const onFile = it.status !== "missing";
+          const due = it.status === "due_soon" || it.status === "overdue";
+          return (
+            <div key={it.type.id} className="grid grid-cols-[22px_minmax(0,1fr)_auto] items-start gap-x-4 border-t border-line-soft py-3.5 first:border-t-0">
+              <span className={cx("mt-0.5 inline-flex size-[22px] items-center justify-center rounded-md border-[1.5px]", onFile ? "border-text-strong bg-text-strong" : "border-line")} aria-label={onFile ? "On file" : "Nothing on file"}>{onFile && <Icon.check size={14} className="text-white" />}</span>
+              <div className="min-w-0">
+                <div className="text-[15px] font-medium leading-snug text-text-strong">{it.type.label}</div>
+                {it.documents.map((d, i) => (
+                  <div key={d.id} className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+                    <PreviewButton variant="inline" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
+                    <span>· {d.effectiveOn ? `effective ${fmtDate(d.effectiveOn)}` : `uploaded ${fmtDate(d.createdAt)}`}</span>
+                    {i === 0 && it.renewBy && <span className={cx(due && "font-medium text-warn")}>· {it.status === "overdue" ? "was due" : due ? "renew by" : "next by"} {fmtDate(it.renewBy)}</span>}
+                    {d.note && <span>· {d.note}</span>}
+                    {manage && <DocumentTextChip kind="client" id={d.id} ownerId={personId} hasText={Boolean(d.extractedText)} summary={d.extractionSummary} aiReady={aiReady} />}
+                    {manage && <span className="ml-1 inline-flex gap-1"><ArchiveDocument id={d.id} personId={personId} archived={false} icon /><DeleteDocument id={d.id} personId={personId} icon /></span>}
+                  </div>
+                ))}
               </div>
-              {it.documents.length > 0 && <div className="mt-3 space-y-2 pl-[22px]">{it.documents.map((d, i) => <FileRow key={d.id} d={d} primary={i === 0} />)}</div>}
-            </li>
-          ); })}
-        </ul>
-      </section>
+              <span className="whitespace-nowrap pt-0.5 text-[13.5px] text-muted-foreground">
+                {cadenceLabel(it.type.renewMonths).toLowerCase()}
+                {manage && <> · <button type="button" onClick={() => open(it.type.id)} className="font-medium text-text-strong underline decoration-line underline-offset-[3px] hover:decoration-text-strong">{onFile ? "replace" : "add"}</button></>}
+              </span>
+            </div>
+          );
+        })}
+      </MarginSection>
 
-      <DocFold personId={personId} docs={others} manage={manage} noun="other file" hint="medical orders, correspondence, anything staff should read before a shift" empty="medical orders, correspondence, photos of paperwork; add one with Upload" groupBy={(d) => DOCUMENT_CATEGORIES.find(([v]) => v === d.category)?.[1] ?? d.category} />
+      <MarginFold label="Other files" note="Medical orders, correspondence, anything staff should read before a shift." summary={others.length ? <><span className="font-medium text-text-strong">{others.length} file{others.length === 1 ? "" : "s"}</span> · {others.map((d) => d.title).join(", ")}</> : "None yet"}>
+        <FileRows personId={personId} docs={others} manage={manage} groupBy={labelOf} />
+      </MarginFold>
 
-      {archived.length > 0 && <DocFold personId={personId} docs={archived} manage={manage} noun="archived document" hint="kept for the record, restorable any time" groupBy={(d) => (d.archivedAt ? `Archived ${fmtDate(d.archivedAt)}` : "Archived earlier")} />}
+      {archived.length > 0 && (
+        <MarginFold label="Archived" note="Kept for the record, restorable any time." summary={<><span className="font-medium text-text-strong">{archived.length} document{archived.length === 1 ? "" : "s"}</span> · {archived.map((d) => d.title).join(", ")}</>}>
+          <FileRows personId={personId} docs={archived} manage={manage} groupBy={(d) => (d.archivedAt ? `Archived ${fmtDate(d.archivedAt)}` : "Archived earlier")} />
+        </MarginFold>
+      )}
     </div>
   );
 }
 
-/**
- * A document list folded behind one line (option C, 2026-09-18). Open, rows group under small
- * headings and each row is just the file icon (preview), the title, and icon buttons: no category or
- * dates on the row itself. Used for "Other files" (grouped by category) and "Archived" (by date).
- */
-function DocFold({ personId, docs, manage, noun, hint, empty, groupBy }: { personId: string; docs: ClientDocument[]; manage: boolean; noun: string; hint: string; empty?: string; groupBy: (d: ClientDocument) => string }) {
-  const [open, setOpen] = useState(false);
+/** Files under small group headings: the icon opens the file, then the title, then restore or archive and delete. */
+function FileRows({ personId, docs, manage, groupBy }: { personId: string; docs: ClientDocument[]; manage: boolean; groupBy: (d: ClientDocument) => string }) {
   const groups = new Map<string, ClientDocument[]>();
   for (const d of docs) { const k = groupBy(d); groups.set(k, [...(groups.get(k) ?? []), d]); }
-  if (docs.length === 0) return (
-    <section className="mt-5 flex items-center gap-2.5 rounded-xl border border-line bg-card px-5 py-3.5 text-[14px]">
-      <span className="font-medium text-text-strong">0 {noun}s</span><span className="text-muted-foreground">· {empty ?? hint}</span>
-    </section>
-  );
+  if (docs.length === 0) return <p className="pt-3 text-[14px] text-muted-foreground">Nothing here yet.</p>;
   return (
-    <section className="mt-5 overflow-hidden rounded-xl border border-line bg-card">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2.5 px-5 py-3.5 text-left text-[14px] hover:bg-sidebar">
-        <span className="font-medium text-text-strong">{docs.length} {noun}{docs.length === 1 ? "" : "s"}</span>
-        <span className="text-muted-foreground">· {hint}</span>
-        <Icon.chevron size={18} className={cx("ml-auto text-muted-foreground transition-transform", open && "rotate-180")} />
-      </button>
-      {open && [...groups.entries()].map(([heading, list]) => (
+    <div className="mt-2">
+      {[...groups.entries()].map(([heading, list]) => (
         <div key={heading}>
-          <div className="border-t border-line px-5 pb-1.5 pt-2.5 text-[12.5px] font-medium uppercase tracking-[0.06em] text-hint">{heading}</div>
+          <div className="pb-1.5 pt-3 text-[12.5px] font-medium uppercase tracking-[0.06em] text-hint">{heading}</div>
           {list.map((d) => (
-            <div key={d.id} className="flex items-center gap-3 border-t border-line-soft px-5 py-2">
+            <div key={d.id} className="flex items-center gap-3 border-t border-line-soft py-2">
               <PreviewButton variant="icon" href={`/clients/${personId}/documents/${d.id}`} title={d.title} mime={d.mimeType} />
               <span className="min-w-0 truncate text-[14px] font-medium text-text-strong">{d.title}</span>
-              {manage && (
-                <span className="ml-auto flex gap-1.5">
-                  <ArchiveDocument id={d.id} personId={personId} archived={Boolean(d.archivedAt)} icon />
-                  <DeleteDocument id={d.id} personId={personId} icon />
-                </span>
-              )}
+              <span className="text-[13px] text-muted-foreground">{d.effectiveOn ? fmtDate(d.effectiveOn) : fmtDate(d.createdAt)}</span>
+              {manage && <span className="ml-auto flex gap-1.5"><ArchiveDocument id={d.id} personId={personId} archived={Boolean(d.archivedAt)} icon /><DeleteDocument id={d.id} personId={personId} icon /></span>}
             </div>
           ))}
         </div>
       ))}
-    </section>
+    </div>
   );
 }

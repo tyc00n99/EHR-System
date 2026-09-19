@@ -2,11 +2,12 @@
 
 import { useActionState, useEffect, useTransition } from "react";
 import { Icon } from "@/components/icons";
-import { Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
-import { DOCUMENT_CATEGORIES } from "@/lib/validation";
+import { Button, Field, FormError, Input, Select } from "@/components/kit";
+import type { DocumentType } from "@/db/schema";
 import { deleteClientDocument, setClientDocumentArchived, uploadClientDocument } from "../document-actions";
 
-export function DocumentUpload({ personId, defaultCategory = "support_plan", onDone }: { personId: string; defaultCategory?: string; onDone?: () => void }) {
+export function DocumentUpload({ personId, types, defaultTypeId, onDone }: { personId: string; types: DocumentType[]; defaultTypeId?: string; onDone?: () => void }) {
+  const choices = [...types.filter((t) => t.active && t.required), ...types.filter((t) => t.active && !t.required)];
   const [state, submit, pending] = useActionState(uploadClientDocument.bind(null, personId), {});
   const e = state.errors ?? {};
   useEffect(() => { if (state.ok) onDone?.(); }, [state, onDone]);
@@ -14,7 +15,7 @@ export function DocumentUpload({ personId, defaultCategory = "support_plan", onD
     <form action={submit} key={pending ? "p" : "i"}>
       <FormError message={state.message} />
       <div className="grid gap-3 md:grid-cols-6">
-        <Field label="Type" error={e.category} className="md:col-span-2"><Select name="category" defaultValue={defaultCategory}>{DOCUMENT_CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
+        <Field label="Type" error={e.documentTypeId} className="md:col-span-2"><Select name="documentTypeId" defaultValue={defaultTypeId ?? choices[0]?.id}>{choices.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</Select></Field>
         <Field label="Title" error={e.title} className="md:col-span-4"><Input name="title" placeholder="CSSP 2026–2027, IAPP signed 7/1/26, Q3 goals…" required /></Field>
         <Field label="File" error={e.file} hint="PDF, image, Word, or text · up to 25 MB" className="col-span-2 md:col-span-4">
           <input type="file" name="file" required accept=".pdf,.png,.jpg,.jpeg,.heic,.doc,.docx,.txt,application/pdf,image/*" className="block h-9 w-full text-[13px] file:mr-3 file:h-9 file:rounded-md file:border file:border-line file:bg-page file:px-3 file:text-[13px] file:font-medium hover:file:bg-hover" />

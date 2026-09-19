@@ -11,7 +11,7 @@ import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { getOrganization } from "@/db/queries";
-import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listGoalsWithStats, listMedAdmins, listMedications, countNotes } from "@/db/queries";
+import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listDocumentTypes, listGoalsWithStats, listMedAdmins, listMedications, countNotes } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { VisitsTable } from "../../visits/visits-table";
 import { buildVisitTable } from "@/lib/visit-table";
@@ -19,7 +19,7 @@ import { StatusControl } from "./status-control";
 import { MedicationSupportToggle } from "./med-toggle";
 import { Medical } from "./medical";
 import { can, requireUser } from "@/lib/auth";
-import { buildDocumentChecklist, checklistSummary, REQUIRED_CATEGORIES } from "@/lib/client-documents";
+import { buildDocumentChecklist, checklistSummary, typeIdOf } from "@/lib/client-documents";
 import { fmtDate, fmtHistoryAt, fmtLongDate, fmtMoney, fullName, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-status";
@@ -63,16 +63,18 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
   const vt = tab === "notes" ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
-  const [agreements, documents, team, goals, meds, admins] = await Promise.all([
+  const [agreements, documents, team, goals, meds, admins, docTypes] = await Promise.all([
     listAgreementsForPerson(id),
     listClientDocuments(id),
     listAssignmentsForPerson(id),
     listGoalsWithStats(id, goalFrom, new Date()),
     listMedications(id),
     listMedAdmins(id, `${month}-01`, monthEnd),
+    listDocumentTypes(),
   ]);
   const liveDocuments = documents.map((d) => d.doc).filter((d) => !d.archivedAt);
-  const checklist = buildDocumentChecklist(liveDocuments);
+  const checklist = buildDocumentChecklist(liveDocuments, docTypes);
+  const requiredTypeIds = new Set(checklist.map((i) => i.type.id));
   const noteCount = await countNotes(id);
   const profile = await getClientProfile(id);
   const org = await getOrganization();
@@ -187,7 +189,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       )}
 
       {tab === "files" && (
-        <DocumentsTab personId={id} items={checklist} others={liveDocuments.filter((d) => !REQUIRED_CATEGORIES.has(d.category))} archived={documents.map((d) => d.doc).filter((d) => Boolean(d.archivedAt))} summary={checklistSummary(checklist)} manage={manage} aiReady={aiReady} />
+        <DocumentsTab personId={id} items={checklist} types={docTypes} others={liveDocuments.filter((d) => !requiredTypeIds.has(typeIdOf(d, docTypes) ?? ""))} archived={documents.map((d) => d.doc).filter((d) => Boolean(d.archivedAt))} summary={checklistSummary(checklist)} manage={manage} canEditTypes={user.role === "admin"} orgName={org.name} aiReady={aiReady} />
       )}
 
 

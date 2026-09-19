@@ -481,6 +481,28 @@ export const visitEdits = pgTable(
 
 // ---------- client documents ----------
 
+/**
+ * The kinds of client document this agency keeps, and which of them every client record must hold.
+ * Seeded with the Minnesota 245D minimum (locked as required); the agency adds its own and sets how
+ * often each renews. Types are deactivated, never deleted, so old files keep their label.
+ */
+export const documentTypes = pgTable("document_types", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /** Stable handle. For the seeded types it equals the legacy `document_category` value. */
+  key: text("key").notNull().unique(),
+  label: text("label").notNull(),
+  /** Counts toward "on file" on every client's checklist. */
+  required: boolean("required").notNull().default(true),
+  /** The 245D minimum: stays required and cannot be removed. */
+  locked: boolean("locked").notNull().default(false),
+  /** Months until a document of this type must be replaced; null means once, at intake. */
+  renewMonths: integer("renew_months"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** Support plans, abuse prevention plans, treatment goals, and other files staff need while serving a person. */
 export const clientDocuments = pgTable(
   "client_documents",
@@ -489,7 +511,9 @@ export const clientDocuments = pgTable(
     personId: uuid("person_id")
       .notNull()
       .references(() => people.id, { onDelete: "cascade" }),
+    /** Legacy bucket, kept for old rows and exports; `documentTypeId` is what the checklist reads. */
     category: documentCategory("category").notNull(),
+    documentTypeId: uuid("document_type_id").references(() => documentTypes.id),
     title: text("title").notNull(),
     fileName: text("file_name").notNull(),
     filePath: text("file_path").notNull(),
@@ -941,6 +965,7 @@ export type VisitEdit = typeof visitEdits.$inferSelect;
 export type AuditEntry = typeof auditLog.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type ClientDocument = typeof clientDocuments.$inferSelect;
+export type DocumentType = typeof documentTypes.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type GoalQuestion = typeof goalQuestions.$inferSelect;
 export type GoalResponse = typeof goalResponses.$inferSelect;

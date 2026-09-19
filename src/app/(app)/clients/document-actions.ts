@@ -30,16 +30,23 @@ export async function uploadClientDocument(personId: string, _prev: ActionState,
   if (!ext) return { errors: { file: "Use a PDF, image, Word document, or text file" } };
   if (file.size > 25 * 1024 * 1024) return { errors: { file: "Files must be under 25 MB" } };
 
+  const db = await getDb();
+  const [type] = await db.select().from(schema.documentTypes).where(eq(schema.documentTypes.id, parsed.data.documentTypeId)).limit(1);
+  if (!type || !type.active) return { errors: { documentTypeId: "Choose a type" } };
+  // The legacy bucket follows the type for the seeded kinds; agency-defined kinds fall under "other".
+  const LEGACY = ["support_plan", "iapp", "treatment_goals", "rights", "release", "medical", "other"] as const;
+  const category = (LEGACY as readonly string[]).includes(type.key) ? (type.key as (typeof LEGACY)[number]) : "other";
+
   const rel = `clients/${personId}/${randomUUID()}${ext}`;
   await putFile(rel, new Uint8Array(await file.arrayBuffer()), file.type || "application/pdf");
 
   // The searchable text, read once at upload. A failed read leaves the file as it is.
   const layer = await textLayerFor(file);
-  const db = await getDb();
   await audited(db, { userId: user.id }).insert(schema.clientDocuments, {
     ...(layer ?? {}),
     personId,
     ...parsed.data,
+    category,
     fileName: file.name,
     filePath: rel,
     mimeType: file.type || "application/pdf",

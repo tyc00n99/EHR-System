@@ -5,7 +5,7 @@ import { FilterMenu } from "@/components/filter-menu";
 import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { MarginSection } from "@/components/chart";
-import { Icon } from "@/components/icons";
+import { MarginFold } from "@/components/margin-fold";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
 import { fmtDate, fmtDateTime } from "@/lib/format";
@@ -82,14 +82,14 @@ export function LifePlan({ personId, goals, manage, rangeLabel, days, library }:
         )}
       </MarginSection>
       {done.length > 0 && (
-        <FoldSection label="Met" summary={<><span className="font-medium text-text-strong">{done.length} goal{done.length === 1 ? "" : "s"}</span> · {done.map((g) => g.title).join(", ")}</>}>
+        <MarginFold label="Met" summary={<><span className="font-medium text-text-strong">{done.length} goal{done.length === 1 ? "" : "s"}</span> · {done.map((g) => g.title).join(", ")}</>}>
           <div className="mt-2">{done.map((g) => <GoalRow key={g.id} g={g} onOpen={() => setSelected(g.id)} muted />)}</div>
-        </FoldSection>
+        </MarginFold>
       )}
       {library && (
-        <FoldSection label="Daily activities" note="What caregivers pick from on every note." summary="The list caregivers choose from when they write a note">
+        <MarginFold label="Daily activities" note="What caregivers pick from on every note." summary="The list caregivers choose from when they write a note">
           <div className="mt-1">{library}</div>
-        </FoldSection>
+        </MarginFold>
       )}
     </div>
   );
@@ -129,21 +129,6 @@ function GoalRow({ g, onOpen, muted }: { g: GoalView; onOpen: () => void; muted?
       <span className={cx(WIDE, "pt-0.5 text-[13.5px] text-muted-foreground")}><span className="block">{latest ? fmtDate(latest.reviewedAt) : "Not reviewed yet"}</span>{g.targetDate && <span className="block text-[12.5px] text-hint">target {fmtDate(g.targetDate)}</span>}</span>
       <span className={cx("pt-0.5 text-right text-[14px]", attention ? "font-semibold text-warn" : "text-muted-foreground")}>{st.label}</span>
     </button>
-  );
-}
-
-/** A margin-labelled section that folds: the label row is the toggle, the summary stays visible either way. */
-function FoldSection({ label, note, summary, children }: { label: string; note?: string; summary: ReactNode; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <section className="border-t border-line py-5 md:grid md:grid-cols-[200px_minmax(0,1fr)_32px] md:gap-x-8">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="contents text-left">
-        <span className="block md:pt-0.5"><span className="block text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</span>{note && <span className="mt-2 block text-[13px] leading-snug text-muted-foreground">{note}</span>}</span>
-        <span className="mt-2 block min-w-0 truncate text-[14px] text-muted-foreground md:mt-0 md:pt-0.5">{summary}</span>
-        <Icon.chevron size={18} className={cx("mt-2 text-muted-foreground transition-transform md:mt-0 md:justify-self-end", open && "rotate-180")} />
-      </button>
-      {open && <div className="min-w-0 md:col-start-2 md:col-span-2">{children}</div>}
-    </section>
   );
 }
 
