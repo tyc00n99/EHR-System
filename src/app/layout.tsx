@@ -4,13 +4,13 @@ import "./globals.css";
 import { DEFAULT_THEME, THEME_BOOT } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 
-// Figtree, the open-licence stand-in for Centra No2 (the face Gusto runs in its product; a
-// commercial font, so we ship the closest OFL match). One variable file covers every weight.
-const figtree = localFont({ variable: "--font-figtree", src: [
-  { path: "../fonts/Figtree-variable.woff2", weight: "300 900", style: "normal" },
+// Instrument Sans (OFL, Sept 20, 2026): the user's pick after comparing seven faces on the real
+// screens. One variable file per style covers 400–700; bundled locally so no font request leaves
+// the app at build or run time.
+const instrument = localFont({ variable: "--font-instrument", src: [
+  { path: "../fonts/InstrumentSans-variable.woff2", weight: "400 700", style: "normal" },
+  { path: "../fonts/InstrumentSans-variable-italic.woff2", weight: "400 700", style: "italic" },
 ] });
-// Identifiers — PMI, HCPCS codes, dates, unit counts — are data, and data reads better in a
-// monospace beside Montserrat. 400 and 500 only, matching the sans.
 
 export const metadata: Metadata = {
   title: { default: "EVVora", template: "%s · EVVora" },
@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", figtree.variable)}>
+    <html lang="en" suppressHydrationWarning data-theme={DEFAULT_THEME} className={cn("h-full", instrument.variable)}>
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         {children}

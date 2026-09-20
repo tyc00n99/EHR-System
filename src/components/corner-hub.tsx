@@ -1,0 +1,187 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { Icon, type IconName } from "@/components/icons";
+import { cx } from "@/components/kit";
+import { useModulePanel } from "@/components/module-panel";
+import { gearGroups, primaryNav, type Destination, type NavCounts, type Role } from "@/lib/nav";
+
+/**
+ * The corner hub (Sept 20, 2026, the user's pick over a sidebar): one round button in the
+ * bottom-right corner is the whole primary navigation. Pressed — or ⌘ . — it fans the areas out in
+ * a quarter circle with their names and a number each, and folds away when one is chosen. The
+ * button itself shows the icon of the area you are in, so it doubles as "where am I"; the strip's
+ * chip at the top says the same in words and is the mouse's second door to the fan.
+ */
+
+const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void }>({ open: false, setOpen: () => {} });
+
+export function HubProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return <Ctx.Provider value={{ open, setOpen }}>{children}</Ctx.Provider>;
+}
+
+export const useHub = () => useContext(Ctx);
+
+/** A record's name keyed by its path, so the chip can say "Clients › Hal Lindqvist". */
+export interface HubName { href: string; label: string }
+
+const isActive = (pathname: string, d: Destination) =>
+  d.href === "/" ? pathname === "/" : [d.href, ...(d.also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
+
+export function whereAmI(pathname: string, role: Role, names: HubName[]): { icon: IconName; area: string; record?: string } {
+  const record = names.find((n) => pathname === n.href || pathname.startsWith(n.href + "/"))?.label;
+  const area = primaryNav(role).find((d) => isActive(pathname, d));
+  if (area) return { icon: area.icon, area: area.label, record };
+  const gear = gearGroups(role).flatMap((g) => g.items).find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
+  if (gear) return { icon: gear.icon, area: gear.label };
+  if (pathname === "/") return { icon: "home", area: "Home" };
+  if (pathname.startsWith("/me")) return { icon: "user", area: "My profile" };
+  if (pathname.startsWith("/search")) return { icon: "search", area: "Search" };
+  return { icon: "home", area: "EVVora" };
+}
+
+/** The "you are here" chip in the top strip. Clicking it opens the fan. */
+export function HereChip({ role, names }: { role: Role; names: HubName[] }) {
+  const pathname = usePathname();
+  const { setOpen } = useHub();
+  const w = whereAmI(pathname, role, names);
+  const Ic = Icon[w.icon];
+  return (
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-label={`${w.area}${w.record ? ` › ${w.record}` : ""}. Open navigation`}
+      className="flex h-[34px] min-w-0 items-center gap-2 rounded-full bg-primary-soft pl-2.5 pr-3 text-[14.5px] font-medium text-primary transition-colors hover:bg-primary-soft/70"
+    >
+      <Ic size={16} className="shrink-0" />
+      <span className="shrink-0">{w.area}</span>
+      {w.record && (<>
+        <span aria-hidden className="opacity-60">›</span>
+        <span className="min-w-0 max-w-[260px] truncate">{w.record}</span>
+      </>)}
+    </button>
+  );
+}
+
+export function CornerHub({ role, counts }: { role: Role; counts: NavCounts }) {
+  const { open, setOpen } = useHub();
+  const pathname = usePathname();
+  const router = useRouter();
+  const panel = useModulePanel();
+  const items = primaryNav(role);
+  const here = items.find((d) => isActive(pathname, d));
+
+  // Spokes sit on a quarter circle from straight left (index 0) to straight up (last). The radius
+  // is CSS, so the arc shrinks on a phone without any measuring: 300px, or less when the window is
+  // small. (No state is set from an effect — the React Compiler lint fails the build on it.)
+  const angle = (i: number) => (items.length > 1 ? (Math.PI / 2) * (i / (items.length - 1)) : Math.PI / 4);
+  const arc = { "--hub-r": "clamp(170px, min(100vw - 150px, 100vh - 170px), 300px)" } as CSSProperties;
+
+  // Each label sits on its own spoke's line, pushed out past the button by its own half-extent so
+  // neighbours never touch. Width is estimated from the text (14px Instrument Sans, medium, plus
+  // the key cap); the 34px base gap absorbs the estimate's error.
+  const labelOffset = (d: Destination, i: number) => {
+    const t = angle(i);
+    const w = 20 + d.label.length * 7.6 + 30, h = 30;
+    const off = 34 + Math.abs(Math.cos(t)) * (w / 2) + Math.abs(Math.sin(t)) * (h / 2);
+    return { x: -Math.cos(t) * off, y: -Math.sin(t) * off };
+  };
+
+  const go = (d: Destination) => {
+    setOpen(false);
+    // On a client or team record, that module's spoke lifts the roster over the record (the
+    // Sept 13 behaviour) so switching person never bounces through the list. Phones, and every
+    // other case, simply navigate.
+    const m = pathname.match(/^\/(clients|staff)\/([^/]+)/);
+    const wide = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
+    if (m && m[2] !== "new" && wide) {
+      if (d.href === "/clients" && m[1] === "clients") { panel.setOpen(panel.open === "clients" ? null : "clients"); return; }
+      if (d.href === "/staff" && m[1] === "staff") { panel.setOpen(panel.open === "team" ? null : "team"); return; }
+    }
+    router.push(d.href);
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === ".") { e.preventDefault(); setOpen(!open); return; }
+      if (!open) return;
+      if (e.key === "Escape") { e.preventDefault(); setOpen(false); return; }
+      const n = Number(e.key);
+      if (n >= 1 && n <= items.length && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); go(items[n - 1]); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- go reads fresh state each render
+  }, [open, items, setOpen]);
+
+  const HubIcon = Icon[here?.icon ?? "home"];
+  const review = counts.review;
+
+  return (<>
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-hidden
+      onClick={() => setOpen(false)}
+      className={cx("fixed inset-0 z-30 cursor-default bg-slate-900/20 transition-opacity duration-200", open ? "opacity-100" : "pointer-events-none opacity-0")}
+    />
+
+    <nav aria-label="Main" aria-hidden={!open} style={arc}>
+      {items.map((d, i) => {
+        const Ic = Icon[d.icon];
+        const t = angle(i);
+        const cx_ = (-Math.cos(t)).toFixed(4), sy = (-Math.sin(t)).toFixed(4);
+        const on = d === here;
+        const badge = d.badge ? counts[d.badge] : 0;
+        const off = labelOffset(d, i);
+        return (
+          <button
+            key={d.href}
+            type="button"
+            onClick={() => go(d)}
+            tabIndex={open ? 0 : -1}
+            aria-current={on ? "page" : undefined}
+            aria-label={`${d.label}${badge > 0 ? `, ${badge} to review` : ""}`}
+            className={cx(
+              "fixed bottom-9 right-9 z-30 flex size-12 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(15,23,42,0.14)] transition-[transform,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+              on ? "border-transparent bg-primary-soft text-primary" : "border-line bg-card text-text-strong hover:bg-tab-hover",
+              open ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+            style={{ transform: open ? `translate(calc(${cx_} * var(--hub-r)), calc(${sy} * var(--hub-r))) scale(1)` : "translate(0, 0) scale(0.5)", transitionDelay: open ? `${i * 22}ms` : "0ms" }}
+          >
+            <Ic size={20} />
+            {badge > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[13px] font-semibold leading-none text-white">{badge}</span>
+            )}
+            <span aria-hidden className="absolute -bottom-1.5 -left-1.5 flex size-5 items-center justify-center rounded-full border-2 border-card bg-text-strong text-[13px] font-semibold leading-none text-white">{i + 1}</span>
+            <span
+              aria-hidden
+              className={cx("pointer-events-none absolute left-1/2 top-1/2 inline-flex items-center gap-2 whitespace-nowrap rounded-lg bg-text-strong px-2.5 py-1.5 text-[14px] font-medium text-white transition-opacity duration-150", open ? "opacity-100 delay-200" : "opacity-0")}
+              style={{ transform: `translate(calc(-50% + ${off.x.toFixed(1)}px), calc(-50% + ${off.y.toFixed(1)}px))` }}
+            >
+              {d.label}
+              <kbd className="rounded border border-white/35 px-1 text-[13px] leading-[1.35] opacity-75">{i + 1}</kbd>
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+
+    <button
+      type="button"
+      onClick={() => setOpen(!open)}
+      aria-expanded={open}
+      aria-label={open ? "Close navigation" : "Open navigation (⌘ .)"}
+      title={open ? "Close" : "Go to… (⌘ .)"}
+      className={cx("fixed bottom-7 right-7 z-30 flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(0,152,192,0.4)] transition-[transform,background-color] duration-200 hover:bg-primary-hover", open && "scale-105")}
+    >
+      <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-90 opacity-0" : "rotate-0 opacity-100")}><HubIcon size={26} /></span>
+      <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-0 opacity-100" : "-rotate-90 opacity-0")}><Icon.plus size={26} className="rotate-45" /></span>
+      {!open && review > 0 && here?.badge !== "review" && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-danger px-1 text-[13px] font-semibold leading-none text-white">{review}</span>
+      )}
+    </button>
+  </>);
+}

@@ -20,12 +20,12 @@
   --gray-800: #2a2726;
   --gray-900: #1b1818;
 
-  --blue-100: #f6f2fc;
-  --blue-200: #e9e1f7;
-  --blue-300: #c9b8ea;
-  --blue-500: #6d4fc2;
-  --blue-600: #5b3fae;
-  --blue-700: #4a3390;
+  --blue-100: #eef9fc;
+  --blue-200: #dff3fa;
+  --blue-300: #9fdcec;
+  --blue-500: #0098c0;
+  --blue-600: #0081a5;
+  --blue-700: #006a88;
 
   --text: #1b1818;
   --text-strong: #1b1818;
@@ -77,9 +77,9 @@
   --card-foreground: var(--text);
   --popover: #ffffff;
   --popover-foreground: var(--text);
-  --primary: #6d4fc2;
+  --primary: #0098c0;
   --primary-foreground: #ffffff;
-  --primary-hover: #5b3fae;
+  --primary-hover: #0081a5;
   --primary-soft: #e1e5f1;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
@@ -90,8 +90,8 @@
   --destructive: var(--danger);
   --border: var(--gray-300);
   --input: var(--gray-300);
-  --ring: #6d4fc2;
-  --chart-1: #6d4fc2;
+  --ring: #0098c0;
+  --chart-1: #0098c0;
   --chart-2: #da8a14;
   --chart-3: #5656b9;
   --chart-4: #1f6b4a;
@@ -119,12 +119,12 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
-  --blue-100: #f6f2fc;
-  --blue-200: #e9e1f7;
-  --blue-300: #c9b8ea;
-  --blue-500: #6d4fc2;
-  --blue-600: #5b3fae;
-  --blue-700: #4a3390;
+  --blue-100: #eef9fc;
+  --blue-200: #dff3fa;
+  --blue-300: #9fdcec;
+  --blue-500: #0098c0;
+  --blue-600: #0081a5;
+  --blue-700: #006a88;
 
   --text: #0f172a;
   --text-strong: #0b1220;
@@ -149,14 +149,14 @@
   --nav-text: #475569;
   --nav-text-strong: #0f172a;
   --nav-hover: rgba(15, 23, 42, 0.04);
-  --nav-active: #f1ecfa;
+  --nav-active: #dff3fa;
   --nav-active-text: #173e6d;
   --nav-group: #94a3b8;
   --nav-badge: #dc2626;
-  --nav-cta: #f1ecfa;
-  --nav-cta-border: #d6c8f0;
-  --nav-cta: #f1ecfa;
-  --nav-cta-border: #d6c8f0;
+  --nav-cta: #dff3fa;
+  --nav-cta-border: #9fdcec;
+  --nav-cta: #dff3fa;
+  --nav-cta-border: #9fdcec;
 
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.06);
@@ -176,10 +176,10 @@
   --card-foreground: var(--text);
   --popover: #ffffff;
   --popover-foreground: var(--text);
-  --primary: #6d4fc2;
+  --primary: #0098c0;
   --primary-foreground: #ffffff;
-  --primary-hover: #5b3fae;
-  --primary-soft: #f1ecfa;
+  --primary-hover: #0081a5;
+  --primary-soft: #dff3fa;
   --secondary: var(--gray-200);
   --secondary-foreground: var(--text-strong);
   --muted: var(--gray-200);
@@ -189,8 +189,8 @@
   --destructive: var(--danger);
   --border: var(--gray-300);
   --input: var(--gray-300);
-  --ring: #6d4fc2;
-  --chart-1: #6d4fc2;
+  --ring: #0098c0;
+  --chart-1: #0098c0;
   --chart-2: #f59e0b;
   --chart-3: #6366f1;
   --chart-4: #0ea5e9;
@@ -232,7 +232,7 @@
   --blue-500: #6366f1;
   --blue-600: #4f46e5;
   --blue-700: #4338ca;
-  --chart-1: #6d4fc2;
+  --chart-1: #0098c0;
   --chart-2: #f97316;
 }
 
@@ -277,7 +277,7 @@
   --blue-500: #3f8a63;
   --blue-600: #2f6f4e;
   --blue-700: #245a3f;
-  --chart-1: #6d4fc2;
+  --chart-1: #0098c0;
   --chart-2: #c2410c;
   --ok: #2f6f4e;
   --ok-soft: #dcefe3;
@@ -340,7 +340,7 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-figtree), "Figtree", system-ui, sans-serif;
+  --font-sans: var(--font-instrument), "Instrument Sans", system-ui, sans-serif;
   --font-serif: var(--font-sans);
   --font-mono: var(--font-sans);
 
@@ -521,16 +521,16 @@ kbd { font-family: var(--font-sans); }
   --banner-line: #e2e8f0;
   --nav: #f8fafb;
   --nav-group: #607381;
-  --nav-active: #f1ecfa;
-  --nav-cta: #f1ecfa;
-  --nav-cta-border: #d6c8f0;
+  --nav-active: #dff3fa;
+  --nav-cta: #dff3fa;
+  --nav-cta-border: #9fdcec;
   --text-muted: #526575;
   --text-hint: #697d8d;
-  --primary: #6d4fc2;
-  --primary-hover: #5b3fae;
-  --primary-soft: #f1ecfa;
-  --blue-500: #6d4fc2;
-  --ring: #6d4fc2;
+  --primary: #0098c0;
+  --primary-hover: #0081a5;
+  --primary-soft: #dff3fa;
+  --blue-500: #0098c0;
+  --ring: #0098c0;
   --radius: 0.75rem;
 }
 /* This later block wins over the one above it, so the heading weight has to be set twice. */
@@ -542,7 +542,7 @@ h1, h2 { font-weight: 700; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
-/* Figtree is a variable font (300–900), so every weight is a real cut and nothing needs clamping. */
+/* Instrument Sans is a variable font (400–700), so every weight is a real cut and nothing needs clamping. */
 .font-semibold, th { font-weight: 600; }
 .font-bold, strong, b { font-weight: 700; }
 

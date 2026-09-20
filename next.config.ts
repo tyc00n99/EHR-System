@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite"],
-  devIndicators: { position: "bottom-right" },
+  // Bottom-left so the dev indicator never sits on the corner hub (Sept 20, 2026).
+  devIndicators: { position: "bottom-left" },
   // PDF routes load font files from disk at render time; make sure they ship in the serverless bundle.
   outputFileTracingIncludes: { "/clients/[id]/notes.pdf": ["./src/fonts/**/*"], "/reports/payroll.pdf": ["./src/fonts/**/*"] },
   // Defence in depth for a PHI app: no framing by other sites, no MIME sniffing, no plugins, forms

@@ -45,7 +45,9 @@ export function TeamRail({ members, canAdd }: { members: RailMember[]; canAdd: b
   // A record is open: it gets the full width — until the rail asks for the list, which then
   // slides in over the record (the reference's behaviour) and closes as soon as a row is picked.
   const over = Boolean(openId) && panel.open === "team";
-  if (openId && !over) return null;
+  // Since the sidebar went (Sept 20, 2026) the list lives on its own page as a table; this panel
+  // exists only as the overlay the hub lifts over a record for switching person.
+  if (!over) return null;
   const close = () => panel.setOpen(null);
 
   return (<>
@@ -56,7 +58,7 @@ export function TeamRail({ members, canAdd }: { members: RailMember[]; canAdd: b
       <div className="flex h-full flex-col">
         <div className="flex h-11 shrink-0 items-center gap-2 px-3">
           <Icon.team size={15} className="shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-strong">Team</span>
+          <Link href="/staff" onClick={close} title="All team members" className="min-w-0 flex-1 truncate text-[15px] font-semibold text-text-strong hover:underline">Team</Link>
           {over && <button type="button" onClick={close} aria-label="Close" className="flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={16} className="rotate-45" /></button>}
         </div>
 

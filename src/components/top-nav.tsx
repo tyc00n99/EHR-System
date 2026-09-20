@@ -41,7 +41,8 @@ export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
 
 /**
  * The second row. Only sections with real depth get one, so it appears and disappears rather than
- * sitting there empty — that absence is how you know Today has nothing hiding under it.
+ * sitting there empty — that absence is how you know Today has nothing hiding under it. Since the
+ * sidebar went (Sept 20, 2026) this is where an area's pages live on every screen size.
  */
 export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) {
   const pathname = usePathname();
@@ -49,7 +50,7 @@ export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) 
   const entries = sectionRow(pathname, role, counts);
   if (!entries) return null;
   return (
-    <nav aria-label="Section" className="z-10 flex h-10 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:hidden">
+    <nav aria-label="Section" className="z-10 flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">
       {entries.map((e) => {
         const active = e.match ? e.match(pathname, params) : pathname === e.href;
         return (
