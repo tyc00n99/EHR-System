@@ -12,9 +12,8 @@ import { gearGroups, primaryNav, type Destination, type NavCounts, type Role } f
  * The corner hub (Sept 20, 2026, the user's pick over a sidebar): one round button in the
  * bottom-right corner is the whole primary navigation. Pressed — or ⌘ . — it fans the areas out in
  * a quarter circle with their names and a number each, and folds away when one is chosen. The
- * button itself shows the icon of the area you are in, so it doubles as "where am I"; the strip's
- * chip at the top says the same in words and links back to the area's list, with a ‹ beside it
- * whenever a record is open (user, Sept 20: going back must not need the hub).
+ * button itself shows the icon of the area you are in, so it doubles as "where am I"; the control
+ * centred in the strip says the same in words and, on a record, is the way back to the list.
  */
 
 const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void }>({ open: false, setOpen: () => {} });
@@ -45,33 +44,27 @@ export function whereAmI(pathname: string, role: Role, names: HubName[]): { icon
 }
 
 /**
- * The "you are here" chip in the top strip. The area part is a link back to that area's list, and
- * while a record is open a ‹ button sits in front of it — one click back, no hub needed.
+ * The "you are here" control, centred in the top strip (user's pick "A", Sept 20, 2026 — the
+ * corner button was too small to notice). Two halves: a filled "‹ Team" that goes back to the
+ * area's list, and the open record's name. On a list page it is one quiet pill naming the area.
  */
 export function HereChip({ role, names }: { role: Role; names: HubName[] }) {
   const pathname = usePathname();
   const w = whereAmI(pathname, role, names);
   const Ic = Icon[w.icon];
-  const back = w.record && pathname !== w.href;
+  const back = Boolean(w.record) && pathname !== w.href;
   return (
-    <div className="flex min-w-0 items-center gap-1.5">
-      {back && (
-        <Link href={w.href} aria-label={`Back to ${w.area}`} title={`Back to ${w.area}`} className="flex size-[34px] shrink-0 items-center justify-center rounded-full border border-line bg-card text-text transition-colors hover:bg-tab-hover hover:text-text-strong">
-          <Icon.chevronLeft size={18} />
+    <div className="flex h-10 max-w-full items-center overflow-hidden rounded-full border border-line bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
+      {back ? (
+        <Link href={w.href} aria-label={`Back to ${w.area}`} title={`Back to ${w.area}`} className="flex h-full shrink-0 items-center gap-1.5 bg-primary-soft pl-3 pr-4 text-[15px] font-semibold text-primary transition-[filter] hover:brightness-95">
+          <Icon.chevronLeft size={18} /> {w.area}
+        </Link>
+      ) : (
+        <Link href={w.href} aria-label={w.area} className="flex h-full shrink-0 items-center gap-2 pl-3.5 pr-4 text-[15px] font-medium text-text-strong hover:bg-tab-hover">
+          <Ic size={16} className="text-primary" /> {w.area}
         </Link>
       )}
-      <Link
-        href={w.href}
-        aria-label={back ? `Back to ${w.area}` : w.area}
-        className="flex h-[34px] min-w-0 items-center gap-2 rounded-full bg-primary-soft pl-2.5 pr-3 text-[14.5px] font-medium text-primary transition-colors hover:bg-primary-soft/70"
-      >
-        <Ic size={16} className="shrink-0" />
-        <span className="shrink-0">{w.area}</span>
-        {w.record && (<>
-          <span aria-hidden className="opacity-60">›</span>
-          <span className="min-w-0 max-w-[260px] truncate">{w.record}</span>
-        </>)}
-      </Link>
+      {w.record && <span className="flex h-full min-w-0 items-center border-l border-line px-4 text-[15px] font-medium text-text-strong"><span className="truncate">{w.record}</span></span>}
     </div>
   );
 }

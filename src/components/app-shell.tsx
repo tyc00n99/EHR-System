@@ -24,9 +24,10 @@ async function logout() {
 const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" } as const;
 
 /**
- * The shell (Sept 20, 2026): no sidebar. A slim strip on top carries the logo, a "you are here"
- * chip, the setup menu and the account; the section row sits under it; the corner hub in the
- * bottom-right is the whole primary navigation. The page gets every pixel of width.
+ * The shell (Sept 20, 2026): no sidebar. A slim strip on top carries the logo, the centred
+ * "you are here" control (which is also the way back from a record), the setup menu and the
+ * account; the section row sits under it; the corner hub in the bottom-right is the whole primary
+ * navigation. The page gets every pixel of width.
  */
 export function AppShell({ user, orgName, counts, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
   const gear = gearGroups(user.role);
@@ -37,13 +38,16 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
     <div className="flex h-screen flex-col overflow-hidden bg-page-bg">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 
-      <header className="flex h-[52px] shrink-0 items-center gap-3 border-b border-line-soft px-4 md:px-5">
+      <header className="relative flex h-[56px] shrink-0 items-center gap-3 border-b border-line-soft px-4 md:px-5">
         <Link href="/" aria-label={`${orgName} home`} title={orgName} className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
           <img src="/evvora-tile.png" alt="" width={32} height={32} className="size-8 rounded-lg object-cover" />
         </Link>
-        <Suspense fallback={null}><HereChip role={user.role} names={names} /></Suspense>
-        <div className="min-w-0 flex-1" />
+        {/* Centred on desktop, where it is the first thing the eye lands on; inline beside the logo on phones. */}
+        <div className="flex min-w-0 flex-1 items-center md:absolute md:left-1/2 md:top-1/2 md:max-w-[min(60vw,720px)] md:-translate-x-1/2 md:-translate-y-1/2">
+          <Suspense fallback={null}><HereChip role={user.role} names={names} /></Suspense>
+        </div>
+        <div className="hidden min-w-0 flex-1 md:block" />
 
         {!loginRequired() && (
           <span title="This link opens without a password, so anyone who has it can read every record. Set REQUIRE_LOGIN=1 to turn the login back on." className="hidden items-center gap-2 text-[13px] text-warn sm:flex" aria-label="No password set on this deployment">
