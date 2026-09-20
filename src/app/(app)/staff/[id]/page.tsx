@@ -66,7 +66,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   return (
     <div>
       <RecordHeader
-        crumbs={<><Crumb href="/staff">Staff</Crumb><CrumbSep /><Crumb>{s.firstName} {s.lastName}</Crumb></>}
+        crumbs={<><Crumb href="/staff">Team</Crumb><CrumbSep /><Crumb>{s.firstName} {s.lastName}</Crumb></>}
         avatar={<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">{s.firstName[0]}{s.lastName[0]}</span>}
         title={`${s.firstName} ${s.lastName}`}
         chips={<><Badge tone={s.active ? "ok" : "neutral"}>{s.active ? "active" : "inactive"}</Badge>{summary.overdue > 0 ? <Badge tone="danger">{summary.overdue} overdue</Badge> : summary.dueSoon > 0 ? <Badge tone="warn">{summary.dueSoon} due soon</Badge> : <Badge tone="ok">compliant</Badge>}</>}
