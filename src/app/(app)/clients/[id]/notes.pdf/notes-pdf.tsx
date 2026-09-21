@@ -57,7 +57,8 @@ export interface PdfNote {
   edits: number;
 }
 
-const INK = "#1b1818", MUTED = "#1b1818", HINT = "#1b1818", GHOST = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
+// Ink is black and the rules are neutral grey (user, Sept 21, 2026: the warm ink read as tan).
+const INK = "#000000", MUTED = "#000000", HINT = "#000000", GHOST = "#737373", LINE = "#d4d4d4", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
 const SANS = "Charter", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
@@ -68,7 +69,7 @@ const s = StyleSheet.create({
   form: { flexDirection: "row", gap: 28, borderTop: `0.75 solid ${LINE}`, borderBottom: `0.75 solid ${LINE}`, paddingVertical: 4, marginTop: 10, marginBottom: 15 },
   formCol: { flex: 1 },
   formColRight: { flex: 1.05 },
-  fr: { flexDirection: "row", alignItems: "baseline", gap: 10, paddingVertical: 3.5, borderBottom: `0.5 solid #ebe8e2` },
+  fr: { flexDirection: "row", alignItems: "baseline", gap: 10, paddingVertical: 3.5, borderBottom: `0.5 solid #e5e5e5` },
   frLast: { borderBottom: 0 },
   fk: { width: 66, fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: INK, fontWeight: 600, paddingTop: 1.5 },
   fv: { flex: 1, fontSize: 10, color: INK, fontWeight: 500, lineHeight: 1.2 },

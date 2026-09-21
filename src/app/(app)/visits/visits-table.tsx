@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, TwoLine } from "@/components/data-table";
 import { DateRangePill, FilterPill, type PillOption } from "@/components/filter-pill";
 import { Badge } from "@/components/kit";
+import { setNoteStrip } from "@/components/note-strip";
 
 export interface VisitRow {
   id: string; clockIn: string; day: string; time: string; clockInIso: string; minutes: number | null;
@@ -41,6 +42,12 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
 }) {
   const router = useRouter();
   const warmed = useRef(new Set<string>());
+  // The note preview's filmstrip steps through these rows, in this order; cleared on unmount so a
+  // page without a notes table shows no strip.
+  useEffect(() => {
+    setNoteStrip(rows.map((r) => ({ id: r.id, day: r.day, time: r.time, staff: r.staff, client: r.client, unsigned: r.status === "completed" && !r.signed })));
+    return () => setNoteStrip([]);
+  }, [rows]);
   const warm = (r: VisitRow) => { if (warmed.current.has(r.id)) return; warmed.current.add(r.id); fetch(`/visits/${r.id}/note.pdf`, { priority: "low" }).catch(() => {}); };
 
   const navigate = (patch: Partial<{ client: string[]; staff: string[]; service: string[]; state: string; rangeParam: string }>) => {

@@ -10,7 +10,7 @@ import type { PdfNote } from "./notes-pdf";
  * signature lines. Modeled on the timesheet counties and MHCP reviewers already read.
  */
 
-const INK = "#1b1818", GHOST = "#8f897f", LINE = "#d6d1c7", SOFT = "#efece5", NAVY = "#0b2672", OK = "#1f6b4a";
+const INK = "#000000", GHOST = "#737373", LINE = "#d4d4d4", SOFT = "#f0f0f0", NAVY = "#0b2672", OK = "#1f6b4a";
 const SANS = "Charter", SCRIPT = "Great Vibes";
 const DAYS_PER_PAGE = 14;
 
