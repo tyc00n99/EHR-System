@@ -146,12 +146,14 @@ export function CornerHub({ role, counts }: { role: Role; counts: NavCounts }) {
   const review = counts.review;
 
   return (<>
+    {/* A click anywhere outside the fan closes it. Invisible on purpose (user, Sept 21: no dimming —
+        the page stays bright while the fan is open). */}
     <button
       type="button"
       tabIndex={-1}
       aria-hidden
       onClick={() => setOpen(false)}
-      className={cx("fixed inset-0 z-30 cursor-default bg-slate-900/20 transition-opacity duration-200", open ? "opacity-100" : "pointer-events-none opacity-0")}
+      className={cx("fixed inset-0 z-30 cursor-default bg-transparent", open ? "" : "pointer-events-none")}
     />
 
     <nav aria-label="Main" aria-hidden={!open} style={arc}>
