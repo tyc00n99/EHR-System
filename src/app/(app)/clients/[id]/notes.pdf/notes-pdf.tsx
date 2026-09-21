@@ -58,7 +58,7 @@ export interface PdfNote {
 }
 
 const INK = "#1b1818", MUTED = "#1b1818", HINT = "#1b1818", GHOST = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
-const SANS = "EB Garamond", SCRIPT = "Great Vibes";
+const SANS = "Geist", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
   page: { paddingTop: 42, paddingHorizontal: 48, paddingBottom: 54, fontSize: 10.5, fontFamily: SANS, color: INK, lineHeight: 1.4 },
