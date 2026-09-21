@@ -95,7 +95,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
       {/* ⌘K still works — the palette stays mounted, just not drawn. */}
       <div className="sr-only"><CommandPalette entries={palette} role={user.role} /></div>
 
-      <Suspense fallback={null}><SectionNav role={user.role} counts={counts} /></Suspense>
+      <Suspense fallback={null}><SectionNav role={user.role} /></Suspense>
 
       <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-28 md:pt-6">
         {/* One gutter and one content width for every page: pages do not centre themselves. */}

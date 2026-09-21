@@ -44,10 +44,10 @@ export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
  * sitting there empty — that absence is how you know Today has nothing hiding under it. Since the
  * sidebar went (Sept 20, 2026) this is where an area's pages live on every screen size.
  */
-export function SectionNav({ role, counts }: { role: Role; counts: NavCounts }) {
+export function SectionNav({ role }: { role: Role }) {
   const pathname = usePathname();
   const params = useSearchParams();
-  const entries = sectionRow(pathname, role, counts);
+  const entries = sectionRow(pathname, role);
   if (!entries) return null;
   return (
     <nav aria-label="Section" className="z-10 flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">

@@ -95,7 +95,7 @@ const param = (key: string, value: string) => (_path: string, p: URLSearchParams
  * depth worth a row — Today, Clients, Team, Schedule, Notes, Billing and every caregiver screen.
  * Only EVV has one now: its entries are different pages, not filters.
  */
-export function sectionRow(pathname: string, role: Role, _counts: NavCounts): SectionEntry[] | null {
+export function sectionRow(pathname: string, role: Role): SectionEntry[] | null {
   if (role === "dsp") return null;
 
   // Notes has no section row (user, Sept 20, 2026): its Status filter pill offers the same four
