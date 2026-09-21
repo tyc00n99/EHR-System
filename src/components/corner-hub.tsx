@@ -84,7 +84,7 @@ export function CornerHub({ role, counts }: { role: Role; counts: NavCounts }) {
   const arc = { "--hub-r": "clamp(170px, min(100vw - 150px, 100vh - 170px), 300px)" } as CSSProperties;
 
   // Each label sits on its own spoke's line, pushed out past the button by its own half-extent so
-  // neighbours never touch. Width is estimated from the text (14px Instrument Sans, medium, plus
+  // neighbours never touch. Width is estimated from the text (14px Geist, medium, plus
   // the key cap); the 34px base gap absorbs the estimate's error.
   const labelOffset = (d: Destination, i: number) => {
     const t = angle(i);
