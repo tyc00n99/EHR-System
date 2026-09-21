@@ -11,7 +11,8 @@ import { gearGroups, primaryNav, type Destination, type NavCounts, type Role } f
 /**
  * The corner hub (Sept 20, 2026, the user's pick over a sidebar): one round button in the
  * bottom-right corner is the whole primary navigation. Pressed — or ⌘ . — it fans the areas out in
- * a quarter circle with their names and a number each, and folds away when one is chosen. The
+ * a quarter circle with their names, and folds away when one is chosen (the digit keys still
+ * choose a spoke, but the numbers are no longer drawn — user, Sept 20: redundant). The
  * button itself shows the icon of the area you are in, so it doubles as "where am I"; the control
  * centred in the strip says the same in words and, on a record, is the way back to the list.
  */
@@ -84,11 +85,11 @@ export function CornerHub({ role, counts }: { role: Role; counts: NavCounts }) {
   const arc = { "--hub-r": "clamp(170px, min(100vw - 150px, 100vh - 170px), 300px)" } as CSSProperties;
 
   // Each label sits on its own spoke's line, pushed out past the button by its own half-extent so
-  // neighbours never touch. Width is estimated from the text (14px Geist, medium, plus
-  // the key cap); the 34px base gap absorbs the estimate's error.
+  // neighbours never touch. Width is estimated from the text (14px Geist, medium); the 34px base
+  // gap absorbs the estimate's error.
   const labelOffset = (d: Destination, i: number) => {
     const t = angle(i);
-    const w = 20 + d.label.length * 7.6 + 30, h = 30;
+    const w = 20 + d.label.length * 7.6, h = 30;
     const off = 34 + Math.abs(Math.cos(t)) * (w / 2) + Math.abs(Math.sin(t)) * (h / 2);
     return { x: -Math.cos(t) * off, y: -Math.sin(t) * off };
   };
@@ -159,14 +160,12 @@ export function CornerHub({ role, counts }: { role: Role; counts: NavCounts }) {
             {badge > 0 && (
               <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[13px] font-semibold leading-none text-white">{badge}</span>
             )}
-            <span aria-hidden className="absolute -bottom-1.5 -left-1.5 flex size-5 items-center justify-center rounded-full border-2 border-card bg-text-strong text-[13px] font-semibold leading-none text-white">{i + 1}</span>
             <span
               aria-hidden
               className={cx("pointer-events-none absolute left-1/2 top-1/2 inline-flex items-center gap-2 whitespace-nowrap rounded-lg bg-text-strong px-2.5 py-1.5 text-[14px] font-medium text-white transition-opacity duration-150", open ? "opacity-100 delay-200" : "opacity-0")}
               style={{ transform: `translate(calc(-50% + ${off.x.toFixed(1)}px), calc(-50% + ${off.y.toFixed(1)}px))` }}
             >
               {d.label}
-              <kbd className="rounded border border-white/35 px-1 text-[13px] leading-[1.35] opacity-75">{i + 1}</kbd>
             </span>
           </button>
         );

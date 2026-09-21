@@ -39,9 +39,12 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 
       <header className="relative flex h-[56px] shrink-0 items-center gap-3 border-b border-line-soft px-4 md:px-5">
-        <Link href="/" aria-label={`${orgName} home`} title={orgName} className="shrink-0">
+        <Link href="/" aria-label={`${orgName} home`} className="flex shrink-0 items-center gap-2.5 rounded-lg pr-1 hover:bg-tab-hover">
           {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
           <img src="/evvora-tile.png" alt="" width={32} height={32} className="size-8 rounded-lg object-cover" />
+          {/* The agency's name, not the product's: the people here work for Sonder. Desktop only —
+              the centred control needs the room on a phone. */}
+          <span className="hidden text-[14.5px] font-medium text-text-strong md:inline">{orgName}</span>
         </Link>
         {/* Centred on desktop, where it is the first thing the eye lands on; inline beside the logo on phones. */}
         <div className="flex min-w-0 flex-1 items-center md:absolute md:left-1/2 md:top-1/2 md:max-w-[min(60vw,720px)] md:-translate-x-1/2 md:-translate-y-1/2">
