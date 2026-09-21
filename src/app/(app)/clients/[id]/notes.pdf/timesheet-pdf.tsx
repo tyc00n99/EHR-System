@@ -11,7 +11,7 @@ import type { PdfNote } from "./notes-pdf";
  */
 
 const INK = "#1b1818", GHOST = "#8f897f", LINE = "#d6d1c7", SOFT = "#efece5", NAVY = "#0b2672", OK = "#1f6b4a";
-const SANS = "Geist", SCRIPT = "Great Vibes";
+const SANS = "Charter", SCRIPT = "Great Vibes";
 const DAYS_PER_PAGE = 14;
 
 const s = StyleSheet.create({

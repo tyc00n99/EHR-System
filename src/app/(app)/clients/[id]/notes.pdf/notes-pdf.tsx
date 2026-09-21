@@ -58,24 +58,22 @@ export interface PdfNote {
 }
 
 const INK = "#1b1818", MUTED = "#1b1818", HINT = "#1b1818", GHOST = "#8f897f", LINE = "#d6d1c7", NAVY = "#0b2672", OK = "#1f6b4a", DANGER = "#b3261e";
-const SANS = "Geist", SCRIPT = "Great Vibes";
+const SANS = "Charter", SCRIPT = "Great Vibes";
 
 const s = StyleSheet.create({
   page: { paddingTop: 42, paddingHorizontal: 48, paddingBottom: 54, fontSize: 10.5, fontFamily: SANS, color: INK, lineHeight: 1.4 },
   eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottom: `1.2 solid ${INK}`, paddingBottom: 7 },
   eyebrow: { fontSize: 16, fontWeight: 600, color: INK, letterSpacing: -0.1 },
   eyebrowRight: { fontSize: 7.5, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 600 },
-  band: { border: `0.75 solid ${LINE}`, borderRadius: 4, paddingHorizontal: 11, marginTop: 10, marginBottom: 15 },
-  brow: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6, borderBottom: `0.75 solid ${LINE}` },
-  browLast: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6 },
-  blast: { borderRight: 0, paddingRight: 0, marginRight: 0 },
-  tvName: { fontSize: 10.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
-  tsCode: { fontSize: 10, color: INK, fontWeight: 600, letterSpacing: 0.3 },
-  bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid ${LINE}` },
-  tk: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, marginBottom: 1.5, fontWeight: 600 },
-  tv: { fontSize: 10, color: INK, lineHeight: 1.15, fontWeight: 500 },
-  tvNum: { fontSize: 10.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
-  ts: { fontSize: 8, color: MUTED, marginTop: 1.5 },
+  form: { flexDirection: "row", gap: 28, borderTop: `0.75 solid ${LINE}`, borderBottom: `0.75 solid ${LINE}`, paddingVertical: 4, marginTop: 10, marginBottom: 15 },
+  formCol: { flex: 1 },
+  formColRight: { flex: 1.05 },
+  fr: { flexDirection: "row", alignItems: "baseline", gap: 10, paddingVertical: 3.5, borderBottom: `0.5 solid #ebe8e2` },
+  frLast: { borderBottom: 0 },
+  fk: { width: 66, fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: INK, fontWeight: 600, paddingTop: 1.5 },
+  fv: { flex: 1, fontSize: 10, color: INK, fontWeight: 500, lineHeight: 1.2 },
+  fvName: { fontWeight: 600 },
+  fvSub: { fontSize: 8.5, fontWeight: 400 },
   columns: { flexDirection: "row", gap: 24 },
   main: { flex: 1.9 },
   side: { flex: 1, borderLeft: `0.75 solid ${LINE}`, paddingLeft: 16 },
@@ -159,20 +157,19 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
               <Text style={s.eyebrowRight}>{org.name}{org.licenseNumber ? ` · 245D license ${org.licenseNumber}` : ""}</Text>
             </View>
 
-            <View style={s.band}>
-              <View style={s.brow}>
-                <View style={[s.bcell, { flex: 2 }]}><Text style={s.tk}>Client</Text><Text style={s.tvName}>{personName}</Text></View>
-                <View style={[s.bcell, { flex: 1.15 }]}><Text style={s.tk}>PMI #</Text><Text style={s.tvNum}>{person.pmi}</Text></View>
-                <View style={[s.bcell, { flex: 1.15 }]}><Text style={s.tk}>Date of birth</Text><Text style={s.tvNum}>{person.dob ? dNum.format(new Date(person.dob + "T12:00:00-05:00")) : "—"}</Text></View>
-                <View style={[s.bcell, { flex: 1.3 }]}><Text style={s.tk}>Date of service</Text><Text style={s.tvNum}>{dNum.format(v.clockInAt)}</Text></View>
-                <View style={[s.bcell, s.blast, { flex: 1.6 }]}><Text style={s.tk}>Setting</Text><Text style={s.tv}>{PLACE[v.placeOfService] ?? "On site"}  ·  POS {v.placeOfService}</Text></View>
+            {/* The header as a form, two columns (user's pick "B", Sept 21, 2026): the person and what
+                they receive on the left, when and by whom on the right. Label left, value right. */}
+            <View style={s.form}>
+              <View style={s.formCol}>
+                <View style={s.fr}><Text style={s.fk}>Client</Text><Text style={s.fv}><Text style={s.fvName}>{personName}</Text><Text style={s.fvSub}> · PMI {person.pmi}</Text></Text></View>
+                <View style={s.fr}><Text style={s.fk}>Date of birth</Text><Text style={s.fv}>{person.dob ? dNum.format(new Date(person.dob + "T12:00:00-05:00")) : "—"}</Text></View>
+                <View style={s.fr}><Text style={s.fk}>Setting</Text><Text style={s.fv}>{PLACE[v.placeOfService] ?? "On site"} · POS {v.placeOfService}</Text></View>
+                <View style={[s.fr, s.frLast]}><Text style={s.fk}>Service</Text><Text style={s.fv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}, <Text style={s.fvName}>{code}</Text></Text></View>
               </View>
-              <View style={s.browLast}>
-                <View style={[s.bcell, { flex: 2.8 }]}><Text style={s.tk}>Service</Text><Text style={s.tv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}, <Text style={s.tsCode}>{code}</Text></Text></View>
-                <View style={[s.bcell, { flex: 0.8 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
-                <View style={[s.bcell, { flex: 0.8 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
-                <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Time</Text><Text style={s.tvNum}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
-                <View style={[s.bcell, s.blast, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text><Text style={s.ts}>{v.renderingIdType.toUpperCase()} {v.renderingId}</Text></View>
+              <View style={[s.formCol, s.formColRight]}>
+                <View style={s.fr}><Text style={s.fk}>Date · time</Text><Text style={s.fv}><Text style={s.fvName}>{dNum.format(v.clockInAt)}</Text> · {tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
+                <View style={s.fr}><Text style={s.fk}>Hours · units</Text><Text style={s.fv}><Text style={s.fvName}>{hours(minutes)}</Text> h · <Text style={s.fvName}>{v.units}</Text> units</Text></View>
+                <View style={[s.fr, s.frLast]}><Text style={s.fk}>Caregiver</Text><Text style={s.fv}>{v.staff}<Text style={s.fvSub}> · {v.renderingIdType.toUpperCase()} {v.renderingId}</Text></Text></View>
               </View>
             </View>
 
