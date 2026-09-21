@@ -65,13 +65,13 @@ const s = StyleSheet.create({
   eyebrowRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", borderBottom: `1.2 solid ${INK}`, paddingBottom: 7 },
   eyebrow: { fontSize: 16, fontWeight: 600, color: INK, letterSpacing: -0.1 },
   eyebrowRight: { fontSize: 7.5, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 600 },
-  band: { backgroundColor: "#f5f4f0", borderRadius: 5, paddingHorizontal: 11, marginTop: 10, marginBottom: 15 },
-  brow: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6, borderBottom: `0.75 solid #e4e0d6` },
+  band: { border: `0.75 solid ${LINE}`, borderRadius: 4, paddingHorizontal: 11, marginTop: 10, marginBottom: 15 },
+  brow: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6, borderBottom: `0.75 solid ${LINE}` },
   browLast: { flexDirection: "row", paddingTop: 5.5, paddingBottom: 6 },
   blast: { borderRight: 0, paddingRight: 0, marginRight: 0 },
   tvName: { fontSize: 10.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
   tsCode: { fontSize: 10, color: INK, fontWeight: 600, letterSpacing: 0.3 },
-  bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid #e4e0d6` },
+  bcell: { paddingRight: 8, marginRight: 8, borderRight: `0.75 solid ${LINE}` },
   tk: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, marginBottom: 1.5, fontWeight: 600 },
   tv: { fontSize: 10, color: INK, lineHeight: 1.15, fontWeight: 500 },
   tvNum: { fontSize: 10.5, color: INK, lineHeight: 1.15, fontWeight: 600 },
@@ -87,7 +87,7 @@ const s = StyleSheet.create({
   prompt: { fontSize: 10.5, lineHeight: 1.3 },
   goal: { fontSize: 8.2, color: HINT, lineHeight: 1.3 },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 2 },
-  tag: { fontSize: 8, color: "#6b4a0c", backgroundColor: "#f4e8cd", border: "0.6 solid #e3cf9f", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
+  tag: { fontSize: 8, color: INK, backgroundColor: "#f1f1f1", border: "0.6 solid #d9d9d9", paddingVertical: 2.5, paddingHorizontal: 7, borderRadius: 10, fontWeight: 600 },
   fact: { marginBottom: 10 },
   factK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, marginBottom: 2, fontWeight: 700 },
   factV: { fontSize: 10.5, fontWeight: 500 },
@@ -100,7 +100,7 @@ const s = StyleSheet.create({
   sig: { flex: 1 },
   ackText: { fontSize: 8, color: MUTED, lineHeight: 1.4, marginTop: 6 },
   ackLead: { fontWeight: 700, color: INK },
-  evv: { flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: "#f5f4f0", borderRadius: 5, paddingHorizontal: 11, paddingVertical: 6, marginTop: 12 },
+  evv: { flexDirection: "row", alignItems: "center", gap: 9, backgroundColor: "#f4f4f4", borderRadius: 5, paddingHorizontal: 11, paddingVertical: 6, marginTop: 12 },
   evvLabel: { fontSize: 6, letterSpacing: 1, textTransform: "uppercase", color: HINT, fontWeight: 600 },
   evvValue: { fontSize: 9.5, fontWeight: 600, color: INK },
   sigBox: { borderLeft: `2 solid ${NAVY}`, paddingLeft: 8, paddingTop: 2, paddingBottom: 2 },
@@ -122,7 +122,6 @@ const hours = (min: number) => { const h = min / 60; return Number.isInteger(h) 
 const PLACE: Record<string, string> = { "12": "Home", "99": "Community", "11": "Office", "14": "Residence", "04": "Shelter" };
 const MED_STATUS: Record<string, string> = { given: "given", refused: "refused", held: "held", missed: "missed" };
 /** Short service names for the header band; the full name still appears in the app and on billing exports. */
-const shortTitle = (t: string) => t.replace(/^Direct support professional$/i, "DSP").replace(/^Designated (coordinator|manager)$/i, (m) => m);
 const shortService = (label: string) => label.replace(/,\s*1:\d$/, "").replace(/^Individualized home supports/i, "IHS").replace(/^Individual community living support \(ICLS\)$/i, "ICLS").replace(/^Independent living skills/i, "ILS");
 
 function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: "ok" | "danger" }) {
@@ -173,7 +172,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
                 <View style={[s.bcell, { flex: 0.8 }]}><Text style={s.tk}>Hours</Text><Text style={s.tvNum}>{hours(minutes)}</Text></View>
                 <View style={[s.bcell, { flex: 0.8 }]}><Text style={s.tk}>Units</Text><Text style={s.tvNum}>{v.units}</Text></View>
                 <View style={[s.bcell, { flex: 1.5 }]}><Text style={s.tk}>Time</Text><Text style={s.tvNum}>{tm.format(v.clockInAt)} – {v.clockOutAt ? tm.format(v.clockOutAt) : "open"}</Text></View>
-                <View style={[s.bcell, s.blast, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}{v.staffTitle ? `, ${shortTitle(v.staffTitle)}` : ""}</Text></View>
+                <View style={[s.bcell, s.blast, { flex: 1.3 }]}><Text style={s.tk}>Caregiver</Text><Text style={s.tv}>{v.staff}</Text><Text style={s.ts}>{v.renderingIdType.toUpperCase()} {v.renderingId}</Text></View>
               </View>
             </View>
 
