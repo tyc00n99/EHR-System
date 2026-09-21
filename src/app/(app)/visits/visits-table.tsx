@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable, TwoLine } from "@/components/data-table";
 import { DateRangePill, FilterPill, type PillOption } from "@/components/filter-pill";
 import { Badge } from "@/components/kit";
+import { prefetchNoteBytes } from "@/components/note-bytes";
 import { setNoteStrip } from "@/components/note-strip";
 
 export interface VisitRow {
@@ -41,14 +42,14 @@ export function VisitsTable({ rows, filters, options, presets, base, showClient 
   exportPdf?: string;
 }) {
   const router = useRouter();
-  const warmed = useRef(new Set<string>());
   // The note preview's filmstrip steps through these rows, in this order; cleared on unmount so a
   // page without a notes table shows no strip.
   useEffect(() => {
     setNoteStrip(rows.map((r) => ({ id: r.id, day: r.day, time: r.time, staff: r.staff, client: r.client, unsigned: r.status === "completed" && !r.signed })));
     return () => setNoteStrip([]);
   }, [rows]);
-  const warm = (r: VisitRow) => { if (warmed.current.has(r.id)) return; warmed.current.add(r.id); fetch(`/visits/${r.id}/note.pdf`, { priority: "low" }).catch(() => {}); };
+  // Hovering a row fetches its note into the viewer's cache, so a click opens it at once.
+  const warm = (r: VisitRow) => prefetchNoteBytes(r.id);
 
   const navigate = (patch: Partial<{ client: string[]; staff: string[]; service: string[]; state: string; rangeParam: string }>) => {
     const next = { ...filters, ...patch };

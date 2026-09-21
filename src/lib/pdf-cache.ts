@@ -2,11 +2,12 @@
  * A small in-memory cache for rendered PDFs. Rendering a note takes half a second warm and
  * seconds cold, and a supervisor opening the same note twice in a minute should not pay twice.
  * Keys carry a hash of the note's content, so an edited note never serves the old page; the TTL
- * bounds staleness for things the key cannot see (a medication logged for that day).
+ * (ten minutes, Sept 21, 2026) bounds staleness for things the key cannot see (a medication
+ * logged for that day).
  */
 import { createHash } from "node:crypto";
 
-const TTL_MS = 60_000;
+const TTL_MS = 10 * 60_000;
 const MAX = 50;
 const store = new Map<string, { at: number; buffer: Buffer }>();
 

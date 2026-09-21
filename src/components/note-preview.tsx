@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Minus, Pencil, Plus } from "lucide-react";
 import { DownloadButton } from "@/components/download-button";
-import { PdfPages, type PdfFit } from "@/components/pdf-pages";
+import { PdfPages, prerender, type PdfFit } from "@/components/pdf-pages";
 import { cx } from "@/components/kit";
 import { useNoteStrip } from "@/components/note-strip";
+import { getNoteBytes, prefetchNoteBytes } from "@/components/note-bytes";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 /**
@@ -20,6 +21,10 @@ export function NotePreview() {
   const id = params.get("note");
   const [loaded, setLoaded] = useState<string | null>(null);
   const [fit, setFit] = useState<PdfFit>("page");
+  // Zoom inside the viewer (user, Sept 21): steps of 25% from half to three times the fit.
+  const [zoom, setZoom] = useState(1);
+  const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
+  const zoomStep = (dir: 1 | -1) => setZoom((z) => { const i = ZOOMS.findIndex((x) => x >= z - 1e-6); const j = Math.min(ZOOMS.length - 1, Math.max(0, (i < 0 ? ZOOMS.length - 1 : i) + dir)); return ZOOMS[j]; });
   // Closing only touches the URL: no server render, so the list underneath does not flash.
   const recordHref = (() => { const n = new URLSearchParams(params.toString()); n.delete("note"); n.set("visit", id ?? ""); return `${pathname}?${n}`; })();
   const close = () => {
@@ -43,12 +48,35 @@ export function NotePreview() {
     if (!id) return;
     stripRef.current?.querySelector<HTMLElement>(`[data-note="${id}"]`)?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [id]);
+  // Fetch the neighbours while this one is being read, and once this one is on screen draw the
+  // nearest two off-screen at the current size, so a step is a single blit.
+  useEffect(() => {
+    if (at < 0) return;
+    for (const k of [1, -1, 2, -2]) { const n = strip[at + k]; if (n) prefetchNoteBytes(n.id); }
+  }, [at, strip]);
+  useEffect(() => {
+    if (at < 0 || loaded !== id) return;
+    let stop = false;
+    (async () => {
+      for (const k of [1, -1, 2, -2]) {
+        const n = strip[at + k];
+        if (!n || stop) continue;
+        await prerender(`/visits/${n.id}/note.pdf`, () => getNoteBytes(n.id), fit, zoom);
+      }
+    })();
+    return () => { stop = true; };
+  }, [at, strip, loaded, id, fit, zoom]);
   useEffect(() => {
     if (!id) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.altKey) return;
+      // ⌘/Ctrl with + − 0 zooms the note, not the browser.
+      if ((e.metaKey || e.ctrlKey) && !["=", "+", "-", "0"].includes(e.key)) return;
       if (e.key === "ArrowLeft" && prev) { e.preventDefault(); go(prev.id); }
       if (e.key === "ArrowRight" && nextNote) { e.preventDefault(); go(nextNote.id); }
+      if (e.key === "=" || e.key === "+") { e.preventDefault(); zoomStep(1); }
+      if (e.key === "-") { e.preventDefault(); zoomStep(-1); }
+      if (e.key === "0") { e.preventDefault(); setZoom(1); }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -66,13 +94,18 @@ export function NotePreview() {
               <button type="button" onClick={() => setFit("page")} aria-pressed={fit === "page"} className={cx("px-2.5", fit === "page" ? "bg-primary-soft text-primary" : "hover:bg-hover")}>Fit page</button>
               <button type="button" onClick={() => setFit("width")} aria-pressed={fit === "width"} className={cx("border-l border-line px-2.5", fit === "width" ? "bg-primary-soft text-primary" : "hover:bg-hover")}>Fit width</button>
             </span>
+            <span className="mr-1 inline-flex h-7 items-center overflow-hidden rounded-md border border-line text-[13px] font-medium" role="group" aria-label="Zoom level">
+              <button type="button" onClick={() => zoomStep(-1)} disabled={zoom <= 0.5} aria-label="Zoom out" title="Zoom out (−)" className="flex h-full w-7 items-center justify-center hover:bg-hover disabled:opacity-40"><Minus className="size-3.5" /></button>
+              <button type="button" onClick={() => setZoom(1)} title="Reset zoom (0)" className="h-full min-w-[46px] border-x border-line px-1.5 tabular-nums hover:bg-hover">{Math.round(zoom * 100)}%</button>
+              <button type="button" onClick={() => zoomStep(1)} disabled={zoom >= 3} aria-label="Zoom in" title="Zoom in (+)" className="flex h-full w-7 items-center justify-center hover:bg-hover disabled:opacity-40"><Plus className="size-3.5" /></button>
+            </span>
             <Link href={recordHref} scroll={false} onClick={close} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Pencil className="size-3.5" /> Open record</Link>
             <DownloadButton href={src} className="h-7 px-2.5 text-[13px]">Download</DownloadButton>
           </span>
         </DialogTitle>
-        <div className="relative min-h-0 flex-1 bg-panel">
+        <div className="relative min-h-0 flex-1 bg-panel" onWheel={(e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoomStep(e.deltaY < 0 ? 1 : -1); } }}>
           {loaded !== id && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted-foreground"><Loader2 className="size-4 animate-spin" aria-hidden /> Preparing the note…</div>}
-          <PdfPages key={id} src={src} fit={fit} onFirstPage={() => setLoaded(id)} />
+          <PdfPages key={id} src={src} bytes={() => getNoteBytes(id)} fit={fit} zoom={zoom} onFirstPage={() => setLoaded(id)} />
         </div>
         {strip.length > 1 && (
           <div className="flex h-14 shrink-0 items-center gap-1.5 border-t border-line bg-page px-2.5">
