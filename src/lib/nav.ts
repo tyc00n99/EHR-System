@@ -92,19 +92,14 @@ const param = (key: string, value: string) => (_path: string, p: URLSearchParams
 
 /**
  * The second row: what belongs to the section you have open. Returns null where a section has no
- * depth worth a row — Today, Schedule, Billing and every caregiver screen.
+ * depth worth a row — Today, Clients, Team, Schedule, Notes, Billing and every caregiver screen.
+ * Only EVV has one now: its entries are different pages, not filters.
  */
 export function sectionRow(pathname: string, role: Role, c: NavCounts): SectionEntry[] | null {
   if (role === "dsp") return null;
 
-  if (pathname === "/visits" || pathname === "/notes") {
-    return [
-      { href: "/visits?state=unsigned", label: "Awaiting signature", count: c.unsigned || undefined, hot: c.unsigned > 0, match: param("state", "unsigned") },
-      { href: "/visits?state=returned", label: "Returned", count: c.returned || undefined, hot: c.returned > 0, match: param("state", "returned") },
-      { href: "/visits?state=manual", label: "Manual entries", count: c.manual || undefined, match: param("state", "manual") },
-      { href: "/visits?state=open", label: "In progress", match: param("state", "open") },
-    ];
-  }
+  // Notes has no section row (user, Sept 20, 2026): its Status filter pill offers the same four
+  // states, so a row above the table said the same thing twice. `/visits?state=` still works.
 
   // The review queue has no section row: its own issue-type and priority menus do that job.
 
