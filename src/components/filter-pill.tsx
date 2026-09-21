@@ -17,7 +17,7 @@ export function FilterPill({ label, value, options, onApply, single, search, sum
   value: string[];
   options: PillOption[];
   onApply: (values: string[]) => void;
-  /** Radio behaviour: one choice, applied at once. */
+  /** Radio behaviour: one choice; choosing it again clears it. */
   single?: boolean;
   /** Show a search box above the list. */
   search?: boolean;
@@ -25,48 +25,42 @@ export function FilterPill({ label, value, options, onApply, single, search, sum
   summary?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<string[]>(value);
   const [q, setQ] = useState("");
   const active = value.length > 0;
   const chosen = options.filter((o) => value.includes(o.value)).map((o) => o.label);
   const text = active ? (summary ?? (chosen.length <= 2 ? chosen.join(", ") : `${chosen.length} ${label.toLowerCase()}s`)) : label;
   const shown = options.filter((o) => !q.trim() || o.label.toLowerCase().includes(q.trim().toLowerCase()));
+  // Every tick applies at once (user, Sept 21: "why do I have to apply when I already clicked?");
+  // the page re-renders with the new filter, which closes the panel.
   const toggle = (v: string) => {
-    if (single) { onApply([v]); setOpen(false); return; }
-    setDraft((d) => (d.includes(v) ? d.filter((x) => x !== v) : [...d, v]));
+    if (single) { onApply(value.includes(v) ? [] : [v]); setOpen(false); return; }
+    onApply(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
   };
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) { setDraft(value); setQ(""); } }}>
+    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setQ(""); }}>
       <PopoverTrigger render={<button type="button" aria-label={`${label}: ${active ? chosen.join(", ") : "any"}`} className={cx("inline-flex h-9 max-w-[260px] items-center gap-1.5 rounded-lg border px-3 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", active || open ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-tab-hover")} />}>
         <span className="truncate">{text}</span><ChevronDown size={14} aria-hidden className="shrink-0 opacity-70" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[300px] gap-0 p-0">
-        <div className="px-3.5 pb-1.5 pt-3 text-[13px] font-semibold text-text-strong">{label}</div>
         {search && (
-          <div className="relative mx-3 mb-2">
+          <div className="relative m-2">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-gray-400" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label={`Search ${label.toLowerCase()}`} className="h-8 w-full rounded-md border border-line bg-card pl-8 pr-2 text-[13.5px] outline-none focus:border-primary" />
           </div>
         )}
-        <div className="max-h-72 overflow-y-auto">
+        <div className="max-h-72 overflow-y-auto py-1">
           {shown.length === 0 && <p className="px-3.5 py-2 text-[13.5px] text-muted-foreground">Nothing matches.</p>}
           {shown.map((o) => {
-            const on = single ? value.includes(o.value) : draft.includes(o.value);
+            const on = value.includes(o.value);
             return (
-              <label key={o.value} className={cx("flex cursor-pointer items-center gap-2.5 px-3.5 py-2 text-[14px]", on && "bg-tab-hover")}>
-                <input type={single ? "radio" : "checkbox"} checked={on} onChange={() => toggle(o.value)} className="size-4 accent-[var(--primary)]" />
+              <label key={o.value} className={cx("flex cursor-pointer items-center gap-2.5 px-3.5 py-2 text-[14px] hover:bg-tab-hover", on && "bg-tab-hover")}>
+                <input type={single ? "radio" : "checkbox"} checked={on} onClick={single ? () => toggle(o.value) : undefined} onChange={single ? () => {} : () => toggle(o.value)} className="size-4 accent-[var(--primary)]" />
                 <span className="min-w-0 flex-1 truncate">{o.label}{o.hint && <span className="text-muted-foreground"> · {o.hint}</span>}</span>
                 {o.count != null && <span className="shrink-0 text-[13px] tabular-nums text-muted-foreground">{o.count}</span>}
               </label>
             );
           })}
         </div>
-        {!single && (
-          <div className="flex items-center gap-2 border-t border-line-soft px-3 py-2.5">
-            <button type="button" onClick={() => { setDraft([]); }} className="text-[13.5px] font-medium text-primary hover:underline">Clear</button>
-            <button type="button" onClick={() => { onApply(draft); setOpen(false); }} className="ml-auto h-8 rounded-md bg-primary px-3.5 text-[13.5px] font-medium text-primary-foreground hover:bg-primary-hover">Apply</button>
-          </div>
-        )}
       </PopoverContent>
     </Popover>
   );
@@ -124,8 +118,8 @@ function Month({ ym, from, to, today, onPick, onPrev, onNext }: { ym: string; fr
 
 /**
  * The date pill (Sept 21, 2026, the user's pick "A" of three pickers): a rail of the ranges people
- * reach for — pay periods first, because that is how notes are billed — beside two months you
- * click across: first day, then last. Presets carry the query fragment the page understands, so
+ * reach for — pay periods first, because that is how notes are billed; no headings, no billing
+ * windows (user, same day) — beside two months you click across: first day, then last. Presets carry the query fragment the page understands, so
  * the pill needs no knowledge of pay periods; the calendar only ever emits `from=…&to=…`. No
  * native date input and no OS calendar anywhere in it.
  */
@@ -147,7 +141,9 @@ export function DateRangePill({ label, presets, current, onApply }: { label: str
   const groups: { name?: string; items: DatePreset[] }[] = [];
   for (const p of presets) { const g = groups.find((x) => x.name === p.group); if (g) g.items.push(p); else groups.push({ name: p.group, items: [p] }); }
   const field = (text: string, on: boolean, name: string) => <span className={cx("flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border px-2.5 text-[14px] text-text-strong", on ? "border-primary ring-[3px] ring-primary-soft" : "border-line")}><span className="text-[13px] text-muted-foreground">{name}</span><span className="truncate">{text}</span></span>;
-  return (
+  return (<>
+    {/* The page blurs behind the picker (user, Sept 21) so the dates are the only thing in focus. */}
+    {open && <div aria-hidden className="fixed inset-0 z-40 bg-white/30 backdrop-blur-[2px]" />}
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) reset(); }}>
       <PopoverTrigger render={<button type="button" aria-label={`Dates: ${label}`} className={cx("inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", open ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-tab-hover")} />}>
         <span className="truncate">{label}</span><ChevronDown size={14} aria-hidden className="shrink-0 opacity-70" />
@@ -157,8 +153,7 @@ export function DateRangePill({ label, presets, current, onApply }: { label: str
           {presets.length > 0 && (
             <div className="w-[212px] shrink-0 border-r border-line p-2">
               {groups.map((g, gi) => (
-                <div key={g.name ?? gi}>
-                  {g.name && <div className="px-2.5 pb-1 pt-2.5 text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground">{g.name}</div>}
+                <div key={g.name ?? gi} className={cx(gi > 0 && "mt-1 border-t border-line-soft pt-1")}>
                   {g.items.map((p) => {
                     const on = !dirty && p.param === current.param;
                     return (
@@ -192,5 +187,5 @@ export function DateRangePill({ label, presets, current, onApply }: { label: str
         </div>
       </PopoverContent>
     </Popover>
-  );
+  </>);
 }

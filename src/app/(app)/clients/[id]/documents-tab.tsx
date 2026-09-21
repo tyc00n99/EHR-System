@@ -38,7 +38,7 @@ export function DocumentsTab({ personId, items, others, archived, types, summary
       <MarginSection
         label="Required"
         note={<>
-          <span className="block">{summary.total === 0 ? `${orgName} has not set a required list yet.` : `${summary.total} document${summary.total === 1 ? "" : "s"} ${orgName} requires for every client.`}{canEditTypes && <> <Link href="/settings?tab=documents" className="underline decoration-line underline-offset-[3px] hover:text-text-strong">Change the list</Link></>}</span>
+          <span className="block">{summary.total === 0 ? `${orgName} has not set a required list yet.` : `${summary.total} document${summary.total === 1 ? "" : "s"} ${orgName} requires for every client.`}</span>
           {summary.total > 0 && (
             <span className="mt-2 block">
               <span className="font-medium text-text-strong">{summary.onFile} of {summary.total} on file</span>
@@ -48,7 +48,11 @@ export function DocumentsTab({ personId, items, others, archived, types, summary
             </span>
           )}
         </>}
-        action={manage && <button type="button" onClick={() => open(items[0]?.type.id ?? fallbackType)} className="hover:underline">+ Upload</button>}
+        action={(manage || canEditTypes) && (<>
+          {manage && <button type="button" onClick={() => open(items[0]?.type.id ?? fallbackType)} className="block hover:underline">+ Upload</button>}
+          {/* The required list is agency policy; editing it is a real action, not a phrase in a sentence (user, Sept 21). */}
+          {canEditTypes && <Link href="/settings?tab=documents" className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[13px] font-medium text-text hover:bg-tab-hover"><Icon.settings size={13} /> Edit required list</Link>}
+        </>)}
       >
         {items.length === 0 ? (
           <p className="py-2 text-[14px] text-muted-foreground">Nothing is required yet. An administrator sets the list under Settings.</p>

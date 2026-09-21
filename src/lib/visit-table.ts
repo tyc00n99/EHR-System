@@ -45,23 +45,21 @@ export async function buildVisitTable({ sp, personId, staffId, defaultParam }: {
     services: count("service", (r) => ({ k: serviceKey(r.visit), label: labelForCode(r.visit.serviceCode, r.visit.modifiers), hint: serviceKey(r.visit) })),
   };
   const cur = currentPayPeriod(), last = payPeriodByIndex(cur.index - 1);
-  const today = isoDay(0), ago30 = isoDay(-29), ago90 = isoDay(-89);
+  const today = isoDay(0);
   const at = (day: string) => ({ ...range, from: day, to: day });
   const weekAgo = isoDay(-7);
   const lastMonthDay = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1, 0)).toISOString().slice(0, 10);
   const span = (r: VisitRange) => r.label;
   // The picker's rail (Sept 21, 2026, "A"): pay periods first, because that is how notes are
   // reviewed and billed; each preset carries its dates as a hint so the rail reads at a glance.
+  // No headings and no "billing" windows (user, same day) — six entries, nothing to scan past.
   const presets = [
-    { group: "Run the agency", label: "This pay period", hint: cur.label, param: `period=${cur.startDate}` },
-    { group: "Run the agency", label: "Last pay period", hint: last.label, param: `period=${last.startDate}` },
-    { group: "Run the agency", label: "This week", hint: span(resolveVisitRange({ week: today })), param: rangeParamFor("week", at(today)) },
-    { group: "Run the agency", label: "Last week", hint: span(resolveVisitRange({ week: weekAgo })), param: rangeParamFor("week", at(weekAgo)) },
-    { group: "Run the agency", label: "This month", hint: span(resolveVisitRange({ month: today.slice(0, 7) })), param: rangeParamFor("month", at(today)) },
-    { group: "Run the agency", label: "Last month", hint: span(resolveVisitRange({ month: lastMonthDay.slice(0, 7) })), param: rangeParamFor("month", at(lastMonthDay)) },
-    { group: "Billing", label: "Last 30 days", hint: span(resolveVisitRange({ from: ago30, to: today })), param: `from=${ago30}&to=${today}` },
-    { group: "Billing", label: "Last 90 days", hint: span(resolveVisitRange({ from: ago90, to: today })), param: `from=${ago90}&to=${today}` },
-    { group: "Billing", label: "Year to date", hint: span(resolveVisitRange({ from: `${today.slice(0, 4)}-01-01`, to: today })), param: `from=${today.slice(0, 4)}-01-01&to=${today}` },
+    { label: "This pay period", hint: cur.label, param: `period=${cur.startDate}` },
+    { label: "Last pay period", hint: last.label, param: `period=${last.startDate}` },
+    { label: "This week", hint: span(resolveVisitRange({ week: today })), param: rangeParamFor("week", at(today)) },
+    { label: "Last week", hint: span(resolveVisitRange({ week: weekAgo })), param: rangeParamFor("week", at(weekAgo)) },
+    { label: "This month", hint: span(resolveVisitRange({ month: today.slice(0, 7) })), param: rangeParamFor("month", at(today)) },
+    { label: "Last month", hint: span(resolveVisitRange({ month: lastMonthDay.slice(0, 7) })), param: rangeParamFor("month", at(lastMonthDay)) },
   ];
   const rows: VisitRow[] = all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }) => ({
     id: v.id, clockIn: fmtDateTime(v.clockInAt), day: fmtDate(v.clockInAt), time: `${fmtTime(v.clockInAt)}${v.clockOutAt ? ` – ${fmtTime(v.clockOutAt)}` : ""}`, clockInIso: v.clockInAt.toISOString(),

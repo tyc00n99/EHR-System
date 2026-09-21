@@ -20,7 +20,7 @@ export interface VisitFilters { client: string[]; staff: string[]; service: stri
 const evvTone = { pending: "neutral", exported: "accent", accepted: "ok", rejected: "danger" } as const;
 export const fmtHours = (minutes: number) => `${(minutes / 60).toFixed(1).replace(/\.0$/, "")} h`;
 export const standingOf = (r: VisitRow) => (r.returned ? "returned" : r.status === "in_progress" ? "in progress" : r.status === "void" ? "void" : !r.signed ? "unsigned" : r.manual ? "manual" : "signed");
-const STATES: PillOption[] = [{ value: "", label: "All notes" }, { value: "unsigned", label: "Awaiting signature" }, { value: "returned", label: "Returned" }, { value: "manual", label: "Manual entries" }, { value: "open", label: "In progress" }];
+const STATES: PillOption[] = [{ value: "unsigned", label: "Awaiting signature" }, { value: "returned", label: "Returned" }, { value: "manual", label: "Manual entries" }, { value: "open", label: "In progress" }];
 
 /**
  * The Notes list in the DocuSign shape: filter pills that open checklists, a selection bar, a
