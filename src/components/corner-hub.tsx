@@ -17,11 +17,32 @@ import { gearGroups, primaryNav, type Destination, type NavCounts, type Role } f
  * centred in the strip says the same in words and, on a record, is the way back to the list.
  */
 
-const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void }>({ open: false, setOpen: () => {} });
+const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void; forget: () => void }>({ open: false, setOpen: () => {}, forget: () => {} });
 
+/**
+ * The fan is open by default on the home page (user, Sept 21: a greeting with nothing to click
+ * is a dead end) and closed everywhere else. A choice the person makes is remembered for the
+ * path it was made on, so a route change falls back to the default without an effect.
+ */
 export function HubProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return <Ctx.Provider value={{ open, setOpen }}>{children}</Ctx.Provider>;
+  const pathname = usePathname();
+  const [choice, setChoice] = useState<{ path: string; open: boolean } | null>(null);
+  const open = choice && choice.path === pathname ? choice.open : pathname === "/";
+  const setOpen = (v: boolean) => setChoice({ path: pathname, open: v });
+  // Arriving at home again should open the fan again, so the home button forgets the last choice.
+  const forget = () => setChoice(null);
+  return <Ctx.Provider value={{ open, setOpen, forget }}>{children}</Ctx.Provider>;
+}
+
+/** The home button in the strip: a house on the soft tint, the agency's name beside it on desktop. */
+export function HomeLink({ orgName }: { orgName: string }) {
+  const { forget } = useHub();
+  return (
+    <Link href="/" aria-label={`${orgName} home`} title="Home" onClick={forget} className="flex h-9 shrink-0 items-center gap-2 rounded-lg px-1.5 text-text-strong hover:bg-tab-hover">
+      <span className="flex size-7 items-center justify-center rounded-md bg-primary-soft text-primary"><Icon.home size={16} /></span>
+      <span className="hidden text-[14.5px] font-medium md:inline">{orgName}</span>
+    </Link>
+  );
 }
 
 export const useHub = () => useContext(Ctx);
