@@ -11,7 +11,7 @@ import { requireUser } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { documentationSchema, fieldErrors, formToObject, medAdminSchema, type ActionState } from "@/lib/validation";
 
-const { visits, goalResponses, medicationAdministrations, people } = schema;
+const { visits, goalResponses, goalEntries, medicationAdministrations, people } = schema;
 
 function revalidateVisit(id: string, personId: string) {
   revalidatePath(`/visits/${id}`);
@@ -54,6 +54,16 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
       noteSavedLng: Number.isFinite(lng) && fd.get("lng") ? lng : v.noteSavedLng,
       updatedBy: user.id,
     });
+    // Outcomes this visit addressed (Sept 22, 2026): one log row per ticked outcome, carrying the
+    // caregiver's optional line. Unticking removes the row. Nothing here is required.
+    const addressed = new Set(fd.getAll("goal_addressed[]").map(String));
+    for (const g of record.activeGoals) {
+      const existing = record.entries.find((x) => x.goalId === g.id);
+      if (!addressed.has(g.id)) { if (existing) await w.delete(goalEntries, existing.id); continue; }
+      const body = String(fd.get(`goalline_${g.id}`) ?? "").trim().slice(0, 2000) || null;
+      if (existing) { if (existing.body !== body) await w.update(goalEntries, existing.id, { body }); }
+      else await w.insert(goalEntries, { goalId: g.id, visitId: v.id, body, recordedBy: user.id });
+    }
     for (const { q } of record.questions) {
       const raw = fd.get(`goal_${q.id}`);
       const response = raw === "yes" || raw === "no" || raw === "na" ? raw : null;
@@ -113,7 +123,7 @@ export async function acceptNote(visitId: string): Promise<ActionState> {
 }
 
 /** Asks Claude to draft the progress review from the structured fields. The caregiver edits it before signing. */
-export async function draftProgressReview(visitId: string, input: { interactionLevel?: string; skills: string[]; goalAnswers: { prompt: string; response: string; note?: string }[]; tasks: string[]; notes: string }): Promise<{ text?: string; message?: string }> {
+export async function draftProgressReview(visitId: string, input: { interactionLevel?: string; skills: string[]; goalAnswers: { prompt: string; response: string; note?: string }[]; outcomes?: { title: string; line: string }[]; tasks: string[]; notes: string }): Promise<{ text?: string; message?: string }> {
   const user = await requireUser();
   if (!aiConfigured()) return { message: "AI drafting is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying." };
   const record = await getVisitRecord(visitId);
@@ -126,6 +136,7 @@ export async function draftProgressReview(visitId: string, input: { interactionL
     input.interactionLevel ? `Level of interaction: ${input.interactionLevel}` : null,
     input.skills.length ? `Skills worked on: ${input.skills.join(", ")}` : null,
     input.tasks.length ? `Tasks completed: ${input.tasks.join(", ")}` : null,
+    ...(input.outcomes ?? []).map((o) => `Outcome addressed "${o.title}"${o.line ? `: ${o.line}` : ""}`),
     ...input.goalAnswers.map((g) => `Goal question "${g.prompt}": ${g.response}${g.note ? ` (${g.note})` : ""}`),
     input.notes ? `Caregiver's rough notes: ${input.notes}` : null,
   ].filter(Boolean).join("\n");

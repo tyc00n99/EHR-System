@@ -410,7 +410,7 @@ export async function getVisitRecord(id: string) {
   const base = await getVisit(id);
   if (!base) return null;
   const db = await getDb();
-  const [questions, responses, meds, admins, program, approver, returnedByName] = await Promise.all([
+  const [questions, responses, meds, admins, program, approver, returnedByName, activeGoals, entries] = await Promise.all([
     db.select({ q: goalQuestions, goal: goals }).from(goalQuestions).innerJoin(goals, eq(goalQuestions.goalId, goals.id)).where(and(eq(goals.personId, base.person.id), eq(goals.status, "active"), eq(goalQuestions.active, true))).orderBy(goals.createdAt, goalQuestions.sortOrder),
     db.select().from(goalResponses).where(eq(goalResponses.visitId, id)),
     db.select().from(medications).where(and(eq(medications.personId, base.person.id), eq(medications.active, true))).orderBy(medications.name),
@@ -418,8 +418,11 @@ export async function getVisitRecord(id: string) {
     base.visit.programId ? db.select().from(programs).where(eq(programs.id, base.visit.programId)).limit(1).then((r) => r[0] ?? null) : Promise.resolve(null),
     base.visit.approvedBy ? db.select({ email: users.email }).from(users).where(eq(users.id, base.visit.approvedBy)).limit(1).then((r) => r[0]?.email ?? null) : Promise.resolve(null),
     base.visit.returnedBy ? db.select({ name: sql<string>`coalesce(${staff.firstName} || ' ' || ${staff.lastName}, ${users.email})` }).from(users).leftJoin(staff, eq(users.staffId, staff.id)).where(eq(users.id, base.visit.returnedBy)).limit(1).then((r) => r[0]?.name ?? null) : Promise.resolve(null),
+    // The outcomes a caregiver can mark as addressed on this note, and what this note already logged.
+    db.select({ id: goals.id, title: goals.title }).from(goals).where(and(eq(goals.personId, base.person.id), eq(goals.status, "active"))).orderBy(goals.createdAt),
+    db.select().from(schema.goalEntries).where(eq(schema.goalEntries.visitId, id)),
   ]);
-  return { ...base, questions, responses, meds, admins, program, approverEmail: approver, returnedByName };
+  return { ...base, questions, responses, meds, admins, program, approverEmail: approver, returnedByName, activeGoals, entries };
 }
 
 /* ---------- life plan ---------- */
@@ -430,6 +433,17 @@ export async function listGoalsWithStats(personId: string, from: Date, to: Date)
   if (gs.length === 0) return [];
   const qs = await db.select().from(goalQuestions).where(sql`${goalQuestions.goalId} in ${gs.map((g) => g.id)}`).orderBy(goalQuestions.sortOrder);
   const reviews = await db.select({ review: schema.goalReviews, email: users.email, first: staff.firstName, last: staff.lastName }).from(schema.goalReviews).leftJoin(users, eq(schema.goalReviews.reviewedBy, users.id)).leftJoin(staff, eq(users.staffId, staff.id)).where(sql`${schema.goalReviews.goalId} in ${gs.map((g) => g.id)}`).orderBy(desc(schema.goalReviews.reviewedAt));
+  // The log under each outcome: every visit that addressed it (newest first) and hand-written entries.
+  const entries = await db
+    .select({ e: schema.goalEntries, visitAt: visits.clockInAt, visitStaffFirst: staff.firstName, visitStaffLast: staff.lastName, byEmail: users.email })
+    .from(schema.goalEntries)
+    .leftJoin(visits, eq(schema.goalEntries.visitId, visits.id))
+    .leftJoin(staff, eq(visits.staffId, staff.id))
+    .leftJoin(users, eq(schema.goalEntries.recordedBy, users.id))
+    .where(sql`${schema.goalEntries.goalId} in ${gs.map((g) => g.id)}`)
+    .orderBy(desc(schema.goalEntries.recordedAt));
+  const authors = await db.select({ userId: users.id, first: staff.firstName, last: staff.lastName, email: users.email }).from(users).leftJoin(staff, eq(users.staffId, staff.id)).where(sql`${users.id} in ${[...new Set(entries.map((e) => e.e.recordedBy).filter(Boolean))].concat(["00000000-0000-0000-0000-000000000000"])}`);
+  const authorName = (id: string | null) => { const a = authors.find((x) => x.userId === id); return a ? (a.first ? `${a.first} ${a.last}` : a.email) : "—"; };
   const rs = qs.length
     ? await db
         .select({ questionId: goalResponses.questionId, response: goalResponses.response, at: visits.clockInAt })
@@ -440,6 +454,13 @@ export async function listGoalsWithStats(personId: string, from: Date, to: Date)
   return gs.map((g) => ({
     goal: g,
     reviews: reviews.filter((r) => r.review.goalId === g.id).map((r) => ({ ...r.review, by: r.first ? `${r.first} ${r.last}` : (r.email ?? "—") })),
+    entries: entries.filter((x) => x.e.goalId === g.id).map((x) => ({
+      id: x.e.id,
+      visitId: x.e.visitId,
+      at: x.visitAt ?? x.e.recordedAt,
+      by: x.e.visitId ? (x.visitStaffFirst ? `${x.visitStaffFirst} ${x.visitStaffLast}` : authorName(x.e.recordedBy)) : authorName(x.e.recordedBy),
+      body: x.e.body,
+    })),
     questions: qs.filter((q) => q.goalId === g.id).map((q) => {
       const mine = rs.filter((r) => r.questionId === q.id);
       const tally = (from: number, until: number) => { const w = mine.filter((r) => r.at.getTime() >= from && r.at.getTime() < until); return { yes: w.filter((r) => r.response === "yes").length, no: w.filter((r) => r.response === "no").length }; };
@@ -584,7 +605,12 @@ export async function notesDetailForVisits(personId: string, visitIds: string[],
     db.select({ visitId: visits.id, name: sql<string>`coalesce(${staff.firstName} || ' ' || ${staff.lastName}, ${users.email})` })
       .from(visits).innerJoin(users, eq(visits.approvedBy, users.id)).leftJoin(staff, eq(users.staffId, staff.id)).where(inArray(visits.id, visitIds)),
   ]);
+  const addressed = await db.select({ visitId: schema.goalEntries.visitId, body: schema.goalEntries.body, goal: goals.title })
+    .from(schema.goalEntries).innerJoin(goals, eq(schema.goalEntries.goalId, goals.id))
+    .where(inArray(schema.goalEntries.visitId, visitIds)).orderBy(goals.createdAt);
   const responses = new Map<string, { goal: string; prompt: string; response: string }[]>();
+  // An outcome the visit addressed prints first (the caregiver's line, or just that it was worked on), then any question answers.
+  for (const a of addressed) if (a.visitId) responses.set(a.visitId, [...(responses.get(a.visitId) ?? []), { goal: a.goal, prompt: a.body?.trim() || "Worked on during this visit.", response: "" }]);
   for (const r of resp) responses.set(r.visitId, [...(responses.get(r.visitId) ?? []), { goal: r.goal, prompt: r.prompt, response: r.response }]);
   const admins = new Map<string, { name: string; dose: string; time: string; status: string }[]>();
   for (const a of adm) admins.set(a.date, [...(admins.get(a.date) ?? []), { name: a.name, dose: a.dose, time: a.time, status: a.status }]);

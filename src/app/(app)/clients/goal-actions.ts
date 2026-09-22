@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { requireUser } from "@/lib/auth";
-import { fieldErrors, formToObject, goalReviewSchema, goalSchema, medicationSchema, type ActionState } from "@/lib/validation";
+import { fieldErrors, formToObject, goalEntrySchema, goalReviewSchema, goalSchema, medicationSchema, type ActionState } from "@/lib/validation";
 
 export async function createGoal(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser(["admin", "supervisor"]);
@@ -30,7 +30,7 @@ export async function updateGoal(goalId: string, personId: string, _prev: Action
   const db = await getDb();
   const [g] = await db.select({ id: schema.goals.id, personId: schema.goals.personId }).from(schema.goals).where(eq(schema.goals.id, goalId)).limit(1);
   if (!g || g.personId !== personId) return { message: "Goal not found." };
-  await audited(db, { userId: user.id }).update(schema.goals, goalId, { ...parsed.data, outcome: parsed.data.outcome ?? null, description: parsed.data.description ?? null, startDate: parsed.data.startDate ?? null, targetDate: parsed.data.targetDate ?? null });
+  await audited(db, { userId: user.id }).update(schema.goals, goalId, { ...parsed.data, outcome: parsed.data.outcome ?? null, supports: parsed.data.supports ?? null, measurement: parsed.data.measurement ?? null, description: parsed.data.description ?? null, startDate: parsed.data.startDate ?? null, targetDate: parsed.data.targetDate ?? null });
   revalidatePath(`/clients/${personId}`);
   return { ok: true, message: "Goal updated." };
 }
@@ -50,6 +50,19 @@ export async function addGoalReview(goalId: string, personId: string, _prev: Act
   });
   revalidatePath(`/clients/${personId}`);
   return { ok: true, message: "Review recorded." };
+}
+
+/** A hand-written line in the outcome's progress log (Sept 22, 2026): a weight, a call with the family, anything a note did not carry. */
+export async function addGoalEntry(goalId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const parsed = goalEntrySchema.safeParse(formToObject(fd));
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
+  const db = await getDb();
+  const [g] = await db.select({ id: schema.goals.id, personId: schema.goals.personId }).from(schema.goals).where(eq(schema.goals.id, goalId)).limit(1);
+  if (!g || g.personId !== personId) return { message: "Goal not found." };
+  await audited(db, { userId: user.id }).insert(schema.goalEntries, { goalId, body: parsed.data.body, recordedBy: user.id });
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true, message: "Entry added." };
 }
 
 export async function setGoalStatus(goalId: string, personId: string, status: "active" | "met" | "discontinued"): Promise<void> {

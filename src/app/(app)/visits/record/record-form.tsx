@@ -11,7 +11,7 @@ import { acceptNote, draftProgressReview, recordMedAdmin, returnNote, saveDocume
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
-export function RecordForm({ visitId, personFirst, locked, skillsOptions, activityOptions, defaults, tasks, questions }: { visitId: string; personFirst: string; locked: boolean; skillsOptions: string[]; activityOptions: string[]; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
+export function RecordForm({ visitId, personFirst, locked, skillsOptions, activityOptions, defaults, tasks, questions, goals, addressed: addressed0 }: { visitId: string; personFirst: string; locked: boolean; skillsOptions: string[]; activityOptions: string[]; goals: { id: string; title: string; questions: string[] }[]; addressed: Record<string, string>; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
   const [state, submit, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
     // Best-effort device location for the note history; never blocks the save.
     const fix = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
@@ -28,14 +28,16 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
   const [note, setNote] = useState(defaults.shiftNote);
   const [answers, setAnswers] = useState<Record<string, string>>(Object.fromEntries(questions.map((q) => [q.id, q.response])));
   const [notes, setNotes] = useState<Record<string, string>>(Object.fromEntries(questions.map((q) => [q.id, q.note])));
+  // Outcomes this visit addressed (Sept 22, 2026, user's pick "D"): tick chips, an optional line each.
+  const [addressed, setAddressed] = useState<Record<string, string>>(addressed0);
+  const toggleGoal = (id: string) => setAddressed((cur) => { if (id in cur) { const next = { ...cur }; delete next[id]; return next; } return { ...cur, [id]: "" }; });
   const [drafting, startDraft] = useTransition();
   const e = state.errors ?? {};
   const toggleSkill = (s: string) => setSkills((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   const draft = () => startDraft(async () => {
-    const r = await draftProgressReview(visitId, { interactionLevel: interaction || undefined, skills, goalAnswers: questions.filter((q) => answers[q.id]).map((q) => ({ prompt: q.prompt, response: answers[q.id], note: notes[q.id] })), tasks: tasks.filter((t) => t.completed).map((t) => t.label), notes: note });
+    const r = await draftProgressReview(visitId, { interactionLevel: interaction || undefined, skills, goalAnswers: questions.filter((q) => answers[q.id]).map((q) => ({ prompt: q.prompt, response: answers[q.id], note: notes[q.id] })), outcomes: goals.filter((g) => g.id in addressed).map((g) => ({ title: g.title, line: addressed[g.id] })), tasks: tasks.filter((t) => t.completed).map((t) => t.label), notes: note });
     if (r.text) { setNote(r.text); toast.success("Draft ready. Read it, fix anything wrong, then sign."); } else toast.error(r.message ?? "Could not draft.");
   });
-  const grouped = questions.reduce<Record<string, Question[]>>((acc, q) => ((acc[q.goal] ??= []).push(q), acc), {});
 
   return (
     <form action={submit} className="space-y-5">
@@ -84,19 +86,27 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
           )}
         </section>
 
-        {questions.length > 0 && (
+        {goals.length > 0 && (
           <section>
-            <div className="mb-2 text-[13px] font-semibold text-text-strong">Support plan goals</div>
-            <div className="space-y-3">
-              {Object.entries(grouped).map(([goal, qs]) => (
-                <div key={goal} className="rounded-md border border-line bg-card">
-                  <div className="border-b border-line-soft bg-sidebar px-3 py-1.5 text-[13px] font-medium text-text-strong">{goal}</div>
+            <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-semibold text-text-strong">Outcomes this visit addressed</span><span className="text-[13px] text-muted-foreground">Optional · tick any you worked on</span></div>
+            <div className="flex flex-wrap gap-1.5">
+              {goals.map((g) => <button key={g.id} type="button" onClick={() => toggleGoal(g.id)} className={cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-left text-[13px] font-medium", g.id in addressed ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-hover")}>{g.id in addressed && <Check className="size-3.5" />}{g.title}</button>)}
+            </div>
+            {goals.filter((g) => g.id in addressed).map((g) => {
+              const qs = questions.filter((q) => g.questions.includes(q.id));
+              return (
+                <div key={g.id} className="mt-3 rounded-md border border-line bg-card">
+                  <input type="hidden" name="goal_addressed[]" value={g.id} />
+                  <div className="border-b border-line-soft bg-sidebar px-3 py-1.5 text-[13px] font-medium text-text-strong">{g.title}</div>
+                  <div className="px-3 py-2.5">
+                    <Input name={`goalline_${g.id}`} value={addressed[g.id]} onChange={(ev) => setAddressed((cur) => ({ ...cur, [g.id]: ev.target.value }))} placeholder="One line for its progress log (optional)" className="h-8 text-[13px]" />
+                  </div>
                   {qs.map((q) => (
-                    <div key={q.id} className="border-b border-line-soft px-3 py-2.5 last:border-b-0">
+                    <div key={q.id} className="border-t border-line-soft px-3 py-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="min-w-0 flex-1 text-[13px]">{q.prompt}</span>
                         <div className="flex gap-1">
-                          {(["yes", "no", "na"] as const).map((v) => <button key={v} type="button" onClick={() => setAnswers((a) => ({ ...a, [q.id]: a[q.id] === v ? "" : v }))} className={cx("h-7 rounded-md border px-2.5 text-[13px] font-medium", answers[q.id] === v ? (v === "yes" ? "border-ok bg-ok-soft text-ok" : v === "no" ? "border-danger bg-danger-soft text-danger" : "border-line bg-panel text-text") : "border-line bg-page text-muted-foreground hover:bg-hover")}>{v === "na" ? "N/A" : v[0].toUpperCase() + v.slice(1)}</button>)}
+                          {(["yes", "no", "na"] as const).map((v) => <button key={v} type="button" onClick={() => setAnswers((a) => ({ ...a, [q.id]: a[q.id] === v ? "" : v }))} className={cx("h-7 rounded-md border px-2.5 text-[13px] font-medium", answers[q.id] === v ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-hover")}>{v === "na" ? "N/A" : v === "yes" ? "Yes" : "No"}</button>)}
                         </div>
                       </div>
                       <input type="hidden" name={`goal_${q.id}`} value={answers[q.id] ?? ""} />
@@ -104,8 +114,8 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </section>
         )}
 

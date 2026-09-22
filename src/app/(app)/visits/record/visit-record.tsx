@@ -63,6 +63,8 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           activityOptions={activitiesFor(person.firstName, person.activityLibrary)}
           defaults={{ interactionLevel: v.interactionLevel ?? "", skills: v.skills, activities: v.activities, shiftNote: v.shiftNote ?? "", staffSigned: Boolean(v.staffSignedAt) }}
           tasks={v.tasks}
+          goals={r.activeGoals.map((g) => ({ id: g.id, title: g.title, questions: r.questions.filter((x) => x.goal.id === g.id).map((x) => x.q.id) }))}
+          addressed={Object.fromEntries(r.entries.map((x) => [x.goalId, x.body ?? ""]))}
           questions={r.questions.map(({ q, goal }) => ({ id: q.id, prompt: q.prompt, goal: goal.title, response: r.responses.find((x) => x.questionId === q.id)?.response ?? "", note: r.responses.find((x) => x.questionId === q.id)?.note ?? "" }))}
         />
 

@@ -631,8 +631,12 @@ export const goals = pgTable(
     description: text("description"),
     /** Short category used for the icon: social, daily_living, health, community, employment, communication, other. */
     category: text("category").notNull().default("other"),
-    /** The measurable outcome the support plan names, in one line: "Fewer than two refused doses a week". */
+    /** The outcome as the support plan addendum states it — a paragraph, not a line (Sept 22, 2026). */
     outcome: text("outcome"),
+    /** Supports and methods: what staff do, when, and how (from the addendum). */
+    supports: text("supports"),
+    /** How progress is measured and how often it is reviewed. */
+    measurement: text("measurement"),
     status: goalStatus("status").notNull().default("active"),
     startDate: date("start_date"),
     targetDate: date("target_date"),
@@ -678,6 +682,25 @@ export const goalResponses = pgTable(
  * A supervisor's periodic judgement of a goal. Goals without yes/no questions are measured only
  * this way; goals with questions get both. Insert-only: the history is the point.
  */
+/**
+ * The progress log under an outcome (Sept 22, 2026, user's pick "D"): one row each time a visit
+ * addressed it (with the caregiver's one line, or none) and for entries a coordinator adds by hand.
+ * Reviews stay in `goal_reviews`; the log on screen merges the two.
+ */
+export const goalEntries = pgTable(
+  "goal_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    goalId: uuid("goal_id").notNull().references(() => goals.id, { onDelete: "cascade" }),
+    /** The visit that addressed the outcome; null for an entry added by hand. */
+    visitId: uuid("visit_id").references(() => visits.id, { onDelete: "cascade" }),
+    body: text("body"),
+    recordedBy: uuid("recorded_by").references(() => users.id),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("goal_entries_goal_idx").on(t.goalId, t.recordedAt), index("goal_entries_visit_idx").on(t.visitId)],
+);
+
 export const goalReviews = pgTable(
   "goal_reviews",
   {

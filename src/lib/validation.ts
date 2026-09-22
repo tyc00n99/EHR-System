@@ -293,13 +293,18 @@ export const documentationSchema = z.object({
   staffSign: z.coerce.boolean().default(false),
 });
 
+export const goalEntrySchema = z.object({ body: z.string().trim().min(2, "Write the entry first").max(2000) });
+
 export const activityLibrarySchema = z.object({ personId: z.uuid(), activities: z.array(z.string().trim().min(3).max(240)).max(60) });
 
 export const goalSchema = z.object({
   title: z.string().min(1, "Required").max(200),
   description: z.string().max(1000).optional(),
   category: z.string().min(1).max(40).default("other"),
-  outcome: z.string().max(300).optional(),
+  /** Paragraphs from the support plan addendum (Sept 22, 2026): the outcome, the supports, the measure. */
+  outcome: z.string().max(4000).optional(),
+  supports: z.string().max(4000).optional(),
+  measurement: z.string().max(2000).optional(),
   startDate: isoDate.optional(),
   targetDate: isoDate.optional(),
   /** Optional: a goal can be judged at review alone, with no per-note questions. */

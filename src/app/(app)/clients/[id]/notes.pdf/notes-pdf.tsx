@@ -149,7 +149,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
         const supports = [...v.tasks.filter((t) => t.completed).map((t) => t.label), ...v.skills].filter((x, j, a) => a.indexOf(x) === j);
         const medsGiven = v.meds.filter((m) => m.status === "given");
         const medsIssues = v.meds.filter((m) => m.status !== "given");
-        const yes = v.outcomes.filter((o) => o.response === "yes").length;
+        const yes = v.outcomes.filter((o) => o.response === "yes" || o.response === "").length;
         const code = `${v.serviceCode}${v.modifiers.length ? " " + v.modifiers.join(" ") : ""}`;
         return (
           <Page key={v.id} size="LETTER" style={s.page} wrap>
@@ -189,7 +189,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
                 <Text style={s.label} minPresenceAhead={46}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
                 {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {first} on this date.</Text> : v.outcomes.map((o, j) => (
                   <View key={j} style={s.outcomeRow} wrap={false}>
-                    <Text style={[s.mark, o.response === "yes" ? s.ok : o.response === "no" ? s.danger : { color: GHOST }]}>{o.response === "yes" ? "YES" : o.response === "no" ? "NO" : "N/A"}</Text>
+                    <Text style={[s.mark, o.response === "yes" ? s.ok : o.response === "no" ? s.danger : { color: GHOST }]}>{o.response === "yes" ? "YES" : o.response === "no" ? "NO" : o.response === "na" ? "N/A" : "•"}</Text>
                     <Text style={{ flex: 1 }}><Text style={s.prompt}>{o.prompt}</Text>{"\n"}<Text style={s.goal}>{o.goal}</Text></Text>
                   </View>
                 ))}
