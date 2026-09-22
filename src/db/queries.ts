@@ -515,9 +515,15 @@ export async function listMedications(personId: string, activeOnly = false) {
   return db.select().from(medications).where(activeOnly ? and(eq(medications.personId, personId), eq(medications.active, true)) : eq(medications.personId, personId)).orderBy(desc(medications.active), medications.name);
 }
 
+/** Administrations in a date range, each with the initials of whoever recorded it (the paper MAR shows initials in every cell). */
 export async function listMedAdmins(personId: string, fromDate: string, toDate: string) {
   const db = await getDb();
-  return db.select().from(medicationAdministrations).where(and(eq(medicationAdministrations.personId, personId), gte(medicationAdministrations.scheduledDate, fromDate), lte(medicationAdministrations.scheduledDate, toDate)));
+  const rows = await db.select({ a: medicationAdministrations, first: staff.firstName, last: staff.lastName, email: users.email })
+    .from(medicationAdministrations)
+    .leftJoin(users, eq(medicationAdministrations.recordedBy, users.id))
+    .leftJoin(staff, eq(users.staffId, staff.id))
+    .where(and(eq(medicationAdministrations.personId, personId), gte(medicationAdministrations.scheduledDate, fromDate), lte(medicationAdministrations.scheduledDate, toDate)));
+  return rows.map((r) => ({ ...r.a, by: r.first ? `${r.first[0] ?? ""}${r.last?.[0] ?? ""}`.toUpperCase() : (r.email?.[0] ?? "?").toUpperCase(), byName: r.first ? `${r.first} ${r.last}` : (r.email ?? "") }));
 }
 
 /* ---------- client feed ---------- */

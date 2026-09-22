@@ -1,28 +1,50 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
+import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ActionState } from "@/lib/validation";
 import { createMedication, deleteMedication, setMedicationActive } from "../goal-actions";
 import { recordMedAdmin } from "../../visits/record-actions";
 import { DateInput } from "@/components/date-input";
 
 export interface MedView { id: string; name: string; dose: string; route: string; frequency: string; times: string[]; instructions: string | null; prescriber: string | null; startDate: string; endDate: string | null; active: boolean }
-export interface AdminView { medicationId: string; date: string; time: string; status: "given" | "refused" | "held" | "missed"; note: string | null }
+export interface AdminView { medicationId: string; date: string; time: string; status: "given" | "refused" | "held" | "missed"; note: string | null; by: string; byName: string }
 
-const DOT: Record<string, string> = { given: "bg-ok", refused: "bg-warn", held: "bg-warn", missed: "bg-danger" };
+type Status = AdminView["status"];
+const LETTER: Record<Status, string> = { given: "G", refused: "R", held: "H", missed: "M" };
+const CELL: Record<Status, string> = { given: "bg-ok-soft text-ok", refused: "bg-warn-soft text-warn", held: "bg-warn-soft text-warn", missed: "bg-danger-soft text-danger" };
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-export function Medical({ personId, meds, admins, month, monthLabel, prevHref, nextHref, manage, canRecord, today }: { personId: string; meds: MedView[]; admins: AdminView[]; month: string; monthLabel: string; prevHref: string; nextHref: string; manage: boolean; canRecord: boolean; today: string }) {
-  const [year, mon] = month.split("-").map(Number);
-  const daysInMonth = new Date(Date.UTC(year, mon, 0)).getUTCDate();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+const addDays = (iso: string, n: number) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const daysInMonth = (month: string) => { const [y, m] = month.split("-").map(Number); return new Date(Date.UTC(y, m, 0)).getUTCDate(); };
+
+/**
+ * The MAR as a paper MAR (Sept 22, 2026, user's pick "D" of four mockups): one week at a time,
+ * seven wide day columns, one row per medication and scheduled time, each cell a letter — G given,
+ * R refused, H held, M missed — with the initials of whoever recorded it. Month totals sit in the
+ * last column. Add, discontinue and the discontinued list are behind a button and a ⋮ menu, not
+ * spread across the page.
+ */
+export function Medical({ personId, meds, admins, week, weekLabel, month, monthLabel, prevHref, nextHref, thisWeekHref, manage, canRecord, today }: { personId: string; meds: MedView[]; admins: AdminView[]; week: string; weekLabel: string; month: string; monthLabel: string; prevHref: string; nextHref: string; thisWeekHref: string | null; manage: boolean; canRecord: boolean; today: string }) {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
   const [pick, setPick] = useState<{ med: MedView; date: string; time: string; current?: AdminView } | null>(null);
+  const [adding, setAdding] = useState(false);
   const [pending, start] = useTransition();
   const active = meds.filter((m) => m.active);
-  const stats = admins.reduce((a, x) => ((a[x.status] = (a[x.status] ?? 0) + 1), a), {} as Record<string, number>);
+  const retired = meds.filter((m) => !m.active);
+  const monthEnd = `${month}-${String(daysInMonth(month)).padStart(2, "0")}`;
+  const inMonth = admins.filter((a) => a.date >= `${month}-01` && a.date <= monthEnd);
+  const stats = inMonth.reduce((a, x) => ((a[x.status] = (a[x.status] ?? 0) + 1), a), {} as Record<string, number>);
 
-  const record = (status: "given" | "refused" | "held" | "missed", note: string) => {
+  const scheduled = (m: MedView, date: string) => date >= m.startDate && (m.endDate == null || date <= m.endDate);
+  /** Doses the month asked for so far (through today), for the "n / N given" column. */
+  const dueInMonth = (m: MedView) => { let n = 0; const last = today < monthEnd ? today : monthEnd; for (let d = `${month}-01`; d <= last; d = addDays(d, 1)) if (scheduled(m, d)) n++; return n; };
+
+  const record = (status: Status, note: string) => {
     if (!pick) return;
     start(async () => {
       const fd = new FormData(); fd.set("medicationId", pick.med.id); fd.set("personId", personId); fd.set("scheduledDate", pick.date); fd.set("scheduledTime", pick.time); fd.set("status", status); if (note) fd.set("note", note);
@@ -33,38 +55,87 @@ export function Medical({ personId, meds, admins, month, monthLabel, prevHref, n
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-sidebar px-3 py-2">
-        <a href={prevHref} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</a>
-        <span className="text-[13px] font-medium text-text-strong">{monthLabel}</span>
-        <a href={nextHref} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</a>
-        <span className="ml-auto flex flex-wrap gap-3 text-[13px] text-muted-foreground"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-ok" />Given {stats.given ?? 0}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-warn" />Refused/held {(stats.refused ?? 0) + (stats.held ?? 0)}</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-danger" />Missed {stats.missed ?? 0}</span></span>
+        <a href={prevHref} aria-label="Previous week" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</a>
+        <span className="text-[13px] font-medium text-text-strong">{weekLabel}</span>
+        <a href={nextHref} aria-label="Next week" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</a>
+        {thisWeekHref && <a href={thisWeekHref} className="text-[13px] font-medium text-primary hover:underline">This week</a>}
+        <span className="ml-auto flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
+          {(["given", "refused", "held", "missed"] as const).map((s) => <span key={s} className="flex items-center gap-1.5"><Cell status={s} small />{s[0].toUpperCase() + s.slice(1)}</span>)}
+        </span>
+        {manage && <Button variant="secondary" className="h-8" onClick={() => setAdding(true)}>+ Add medication</Button>}
       </div>
 
       <div className="overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]">
-        {active.length === 0 ? <p className="px-5 py-8 text-center text-[13px] text-muted-foreground">No active medications. {manage ? "Add one below to start the MAR." : ""}</p> : (
+        {active.length === 0 ? <p className="px-5 py-8 text-center text-[13px] text-muted-foreground">No active medications. {manage ? "Add one to start the MAR." : ""}</p> : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[13px]">
-              <thead className="bg-sidebar"><tr><th className="sticky left-0 z-10 bg-sidebar px-4 py-2 text-left font-medium text-muted-foreground">Medication</th><th className="px-2 py-2 text-left font-medium text-muted-foreground">Time</th>{days.map((d) => <th key={d} className={cx("w-7 py-2 text-center font-medium tabular-nums", `${month}-${String(d).padStart(2, "0")}` === today ? "text-primary" : "text-muted-foreground")}>{d}</th>)}</tr></thead>
+              <thead className="bg-sidebar">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Medication</th>
+                  <th className="px-2 py-2 text-left font-medium text-muted-foreground">Time</th>
+                  {days.map((d) => (
+                    <th key={d} className={cx("px-1 py-1.5 text-center font-medium leading-tight", d === today ? "bg-primary-soft text-primary" : "text-muted-foreground")}>
+                      {DOW[days.indexOf(d)]}<br /><span className={cx("text-[13px] tabular-nums", d === today ? "text-primary" : "text-text-strong")}>{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`))}</span>
+                    </th>
+                  ))}
+                  <th className="whitespace-nowrap px-3 py-2 text-right font-medium text-muted-foreground">{monthLabel.split(" ")[0]}</th>
+                  {manage && <th className="w-9" />}
+                </tr>
+              </thead>
               <tbody>
-                {active.flatMap((m) => m.times.map((t, ti) => (
-                  <tr key={`${m.id}-${t}`} className="border-t border-line-soft">
-                    {ti === 0 && <td rowSpan={m.times.length} className="sticky left-0 z-10 bg-card px-4 py-2 align-top"><div className="font-medium text-text-strong">💊 {m.name}</div><div className="text-[13px] text-muted-foreground">{m.dose} · {m.route} · {m.frequency}</div>{m.instructions && <div className="text-[13px] text-muted-foreground">{m.instructions}</div>}</td>}
-                    <td className="whitespace-nowrap px-2 py-2 tabular-nums text-muted-foreground">{t}</td>
-                    {days.map((d) => {
-                      const date = `${month}-${String(d).padStart(2, "0")}`;
-                      const a = admins.find((x) => x.medicationId === m.id && x.date === date && x.time === t);
-                      const future = date > today, before = date < m.startDate || (m.endDate != null && date > m.endDate);
-                      return (
-                        <td key={d} className="py-2 text-center">
-                          <button disabled={!canRecord || future || before} onClick={() => setPick({ med: m, date, time: t, current: a })} title={a ? `${a.status}${a.note ? ` · ${a.note}` : ""}` : before ? "Not scheduled" : "Not recorded"} className={cx("mx-auto block h-4 w-4 rounded-full transition-transform enabled:hover:scale-125 disabled:cursor-default", a ? DOT[a.status] : before ? "bg-transparent" : future ? "bg-gray-200" : "bg-gray-300")} />
+                {active.flatMap((m) => m.times.map((t, ti) => {
+                  const given = inMonth.filter((a) => a.medicationId === m.id && a.time === t && a.status === "given").length;
+                  return (
+                    <tr key={`${m.id}-${t}`} className={cx("border-t", ti === 0 ? "border-line" : "border-line-soft")}>
+                      {ti === 0 && (
+                        <td rowSpan={m.times.length} className="max-w-[300px] px-4 py-2.5 align-top">
+                          <div className="font-medium text-text-strong">{m.name}</div>
+                          <div className="text-[13px] text-muted-foreground">{m.dose} · {m.route} · {m.frequency}</div>
+                          {m.instructions && <div className="mt-0.5 text-[13px] text-muted-foreground">{m.instructions}</div>}
                         </td>
-                      );
-                    })}
-                  </tr>
-                )))}
+                      )}
+                      <td className="whitespace-nowrap px-2 py-2.5 align-top tabular-nums text-muted-foreground">{t}</td>
+                      {days.map((d) => {
+                        const a = admins.find((x) => x.medicationId === m.id && x.date === d && x.time === t);
+                        const future = d > today, off = !scheduled(m, d);
+                        const picked = pick && pick.med.id === m.id && pick.date === d && pick.time === t;
+                        return (
+                          <td key={d} className={cx("px-1 py-2 text-center align-top", d === today && "bg-primary-soft/40")}>
+                            <button
+                              type="button"
+                              disabled={!canRecord || future || off}
+                              onClick={() => setPick({ med: m, date: d, time: t, current: a })}
+                              title={a ? `${a.status} · ${a.byName}${a.note ? ` · ${a.note}` : ""}` : off ? "Not scheduled" : future ? "Not yet due" : "Not recorded — click to record"}
+                              className={cx("mx-auto block rounded-md px-1 py-0.5 disabled:cursor-default", picked && "ring-2 ring-primary")}
+                            >
+                              {a ? <><Cell status={a.status} /><span className="mt-0.5 block text-[11px] leading-none text-muted-foreground">{a.status === "missed" ? "—" : a.by}</span></> : <span className={cx("inline-block h-6 w-8 rounded-md text-[15px] leading-6", off ? "text-transparent" : future ? "text-line" : "text-hint hover:bg-hover")}>·</span>}
+                            </button>
+                          </td>
+                        );
+                      })}
+                      <td className="whitespace-nowrap px-3 py-2.5 text-right align-top tabular-nums text-muted-foreground">{given} / {dueInMonth(m)} given</td>
+                      {manage && ti === 0 && (
+                        <td rowSpan={m.times.length} className="px-1 py-2 text-center align-top">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger render={<button type="button" aria-label={`Actions for ${m.name}`} className="rounded-md p-1 text-muted-foreground hover:bg-hover hover:text-text-strong" />}><MoreHorizontal className="size-4" /></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem disabled={pending} onClick={() => { if (confirm(`Discontinue ${m.name}?`)) start(() => setMedicationActive(m.id, personId, false)); }}>Discontinue</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                }))}
               </tbody>
             </table>
           </div>
         )}
+        <div className="flex flex-wrap items-center gap-4 border-t border-line-soft bg-sidebar px-4 py-2 text-[13px] text-muted-foreground">
+          <span className="font-medium text-text-strong">{monthLabel}</span>
+          <span>Given {stats.given ?? 0}</span><span>Refused/held {(stats.refused ?? 0) + (stats.held ?? 0)}</span><span>Missed {stats.missed ?? 0}</span>
+          <span className="ml-auto">Initials are the caregiver who recorded the dose. Click an empty cell to record.</span>
+        </div>
       </div>
 
       {pick && (
@@ -74,8 +145,8 @@ export function Medical({ personId, meds, admins, month, monthLabel, prevHref, n
         </div>
       )}
 
-      {meds.some((m) => !m.active) && (
-        <details className="rounded-lg border border-line bg-card"><summary className="cursor-pointer px-4 py-2.5 text-[13px] text-muted-foreground">Discontinued medications ({meds.filter((m) => !m.active).length})</summary><ul className="divide-y divide-line-soft border-t border-line-soft">{meds.filter((m) => !m.active).map((m) => <li key={m.id} className="flex items-center justify-between px-4 py-2 text-[13px]"><span>{m.name} {m.dose} · {m.frequency}</span><span className="text-muted-foreground">ended {m.endDate}</span>{manage && <span className="flex items-center gap-3">
+      {retired.length > 0 && (
+        <details className="rounded-lg border border-line bg-card"><summary className="cursor-pointer px-4 py-2.5 text-[13px] text-muted-foreground">Discontinued medications ({retired.length})</summary><ul className="divide-y divide-line-soft border-t border-line-soft">{retired.map((m) => <li key={m.id} className="flex items-center justify-between px-4 py-2 text-[13px]"><span><span className="font-medium text-text-strong">{m.name}</span> <span className="text-muted-foreground">{m.dose} · {m.frequency}{m.endDate ? ` · ended ${m.endDate}` : ""}</span></span>{manage && <span className="flex gap-3">
   <button disabled={pending} onClick={() => start(() => setMedicationActive(m.id, personId, true))} className="text-primary hover:underline">Reactivate</button>
   <button
     disabled={pending}
@@ -87,13 +158,25 @@ export function Medical({ personId, meds, admins, month, monthLabel, prevHref, n
   >Delete</button>
 </span>}</li>)}</ul></details>
       )}
-      {manage && active.length > 0 && <div className="flex flex-wrap gap-2 text-[13px]">{active.map((m) => <button key={m.id} disabled={pending} onClick={() => { if (confirm(`Discontinue ${m.name}?`)) start(() => setMedicationActive(m.id, personId, false)); }} className="rounded-md border border-line bg-page px-2.5 py-1 text-muted-foreground hover:text-danger">Discontinue {m.name}</button>)}</div>}
-      {manage && <NewMedication personId={personId} />}
+
+      {manage && adding && (
+        <Dialog open onOpenChange={(o) => { if (!o) setAdding(false); }}>
+          <DialogContent showCloseButton className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
+            <DialogTitle className="sr-only">Add a medication</DialogTitle>
+            <NewMedication personId={personId} onDone={() => setAdding(false)} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
 
-function RecordSlot({ pending, onRecord, onCancel }: { pending: boolean; onRecord: (s: "given" | "refused" | "held" | "missed", note: string) => void; onCancel: () => void }) {
+/** One MAR cell: the letter a paper MAR uses, on the status tint. */
+function Cell({ status, small }: { status: Status; small?: boolean }) {
+  return <span className={cx("inline-grid place-items-center rounded-md font-semibold", small ? "h-[18px] w-[22px] text-[11px]" : "h-6 w-8 text-[12.5px]", CELL[status])}>{LETTER[status]}</span>;
+}
+
+function RecordSlot({ pending, onRecord, onCancel }: { pending: boolean; onRecord: (s: Status, note: string) => void; onCancel: () => void }) {
   const [note, setNote] = useState("");
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -104,12 +187,12 @@ function RecordSlot({ pending, onRecord, onCancel }: { pending: boolean; onRecor
   );
 }
 
-function NewMedication({ personId }: { personId: string }) {
-  const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => { const r = await createMedication(personId, p, fd); if (r.message && !r.errors) toast.success(r.message); return r; }, {});
+function NewMedication({ personId, onDone }: { personId: string; onDone: () => void }) {
+  const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => { const r = await createMedication(personId, p, fd); if (r.message && !r.errors) { toast.success(r.message); onDone(); } return r; }, {});
   const e = state.errors ?? {};
   return (
-    <form action={submit} key={String(state.message ?? "")} className="rounded-lg border border-line bg-sidebar p-5">
-      <div className="mb-3 text-[13px] font-semibold text-text-strong">Add a medication</div>
+    <form action={submit} className="p-6">
+      <div className="mb-4 text-[17px] font-semibold text-text-strong">Add a medication</div>
       <FormError message={state.errors ? state.message : undefined} />
       <div className="grid gap-3 md:grid-cols-6">
         <Field label="Medication" error={e.name} className="md:col-span-2"><Input name="name" placeholder="Metformin" required /></Field>
@@ -122,7 +205,7 @@ function NewMedication({ personId }: { personId: string }) {
         <Field label="End" error={e.endDate} className="md:col-span-1"><DateInput name="endDate" /></Field>
         <Field label="Instructions for staff" error={e.instructions} className="md:col-span-6"><Textarea name="instructions" className="min-h-12" placeholder="Give with breakfast. Hold if blood sugar under 70." /></Field>
       </div>
-      <Button type="submit" disabled={pending} className="mt-4">{pending ? "Saving…" : "Add medication"}</Button>
+      <div className="mt-5 flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Add medication"}</Button><Button type="button" variant="ghost" onClick={onDone}>Cancel</Button></div>
     </form>
   );
 }

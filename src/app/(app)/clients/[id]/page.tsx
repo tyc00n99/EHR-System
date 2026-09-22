@@ -56,7 +56,14 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   if (!person || !(await canViewPerson(user, id))) notFound();
   const manage = can(user, "manage_people");
   const aiReady = aiConfigured();
-  const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : new Date().toISOString().slice(0, 7);
+  // The MAR shows one week at a time (Sept 22, 2026, user's pick "D"): `?week=` is the Monday. Month
+  // totals are for the month that Monday falls in.
+  const todayIso = isoDay(0);
+  const mondayOf = (iso: string) => { const d = new Date(`${iso}T12:00:00Z`); const back = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - back); return d.toISOString().slice(0, 10); };
+  const addDays = (iso: string, n: number) => { const d = new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const week = mondayOf(typeof sp.week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.week) ? sp.week : todayIso);
+  const weekEnd = addDays(week, 6);
+  const month = week.slice(0, 7);
   // How far back the Programming tab counts answers; a quick picker in its margin sets it (2026-09-19).
   const goalDays = [30, 60, 90, 180, 365].includes(Number(sp.days)) ? Number(sp.days) : 90;
   const goalFrom = daysAgo(goalDays);
@@ -69,7 +76,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     listAssignmentsForPerson(id),
     listGoalsWithStats(id, goalFrom, new Date()),
     listMedications(id),
-    listMedAdmins(id, `${month}-01`, monthEnd),
+    listMedAdmins(id, `${month}-01` < week ? `${month}-01` : week, monthEnd > weekEnd ? monthEnd : weekEnd),
     listDocumentTypes(),
   ]);
   const liveDocuments = documents.map((d) => d.doc).filter((d) => !d.archivedAt);
@@ -83,7 +90,8 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const history = tab === "profile" ? await listProfileHistory(id, 500) : [];
   const [my, mm] = month.split("-").map(Number);
   const monthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(my, mm - 1, 1)));
-  const shiftMonth = (d: number) => { const x = new Date(Date.UTC(my, mm - 1 + d, 1)); return `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, "0")}`; };
+  const fmtShort = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${iso}T12:00:00Z`));
+  const weekLabel = `Week of ${fmtShort(week)} – ${week.slice(0, 7) === weekEnd.slice(0, 7) ? weekEnd.slice(8).replace(/^0/, "") : fmtShort(weekEnd)}, ${weekEnd.slice(0, 4)}`;
   const address = [person.address1, person.address2, person.city && `${person.city}, ${person.state} ${person.zip ?? ""}`.trim()].filter(Boolean).join(", ");
   const liveAgreements = agreements.filter((a) => !a.agreement.archivedAt);
   const archived = agreements.filter((a) => a.agreement.archivedAt);
@@ -199,9 +207,9 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
       {tab === "medical" && (
         <><div className="mb-3"><MedicationSupportToggle personId={id} on={person.medicationSupport} manage={manage} /></div>
-        {person.medicationSupport && <Medical personId={id} month={month} monthLabel={monthLabel} prevHref={`/clients/${id}?tab=medical&month=${shiftMonth(-1)}`} nextHref={`/clients/${id}?tab=medical&month=${shiftMonth(1)}`} manage={manage} canRecord={Boolean(user.staffId) || manage} today={new Date().toISOString().slice(0, 10)}
+        {person.medicationSupport && <Medical personId={id} week={week} weekLabel={weekLabel} month={month} monthLabel={monthLabel} prevHref={`/clients/${id}?tab=medical&week=${addDays(week, -7)}`} nextHref={`/clients/${id}?tab=medical&week=${addDays(week, 7)}`} thisWeekHref={week === mondayOf(todayIso) ? null : `/clients/${id}?tab=medical`} manage={manage} canRecord={Boolean(user.staffId) || manage} today={todayIso}
           meds={meds.map((m) => ({ id: m.id, name: m.name, dose: m.dose, route: m.route, frequency: m.frequency, times: m.times, instructions: m.instructions, prescriber: m.prescriber, startDate: m.startDate, endDate: m.endDate, active: m.active }))}
-          admins={admins.map((a) => ({ medicationId: a.medicationId, date: a.scheduledDate, time: a.scheduledTime, status: a.status, note: a.note }))} />}</>
+          admins={admins.map((a) => ({ medicationId: a.medicationId, date: a.scheduledDate, time: a.scheduledTime, status: a.status, note: a.note, by: a.by, byName: a.byName }))} />}</>
       )}
 
       {tab === "profile" && (
