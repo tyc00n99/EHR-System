@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Columns3, MoreVertical, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Search } from "lucide-react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -16,9 +16,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -139,18 +138,6 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
           {total !== data.length && <span className="text-[13.5px] text-muted-foreground">{total} of {data.length}</span>}
           <div className="ml-auto flex items-center gap-2">
             {actions}
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-9 gap-1.5 text-[14px]" />}>
-                <Columns3 className="size-3.5" /> Columns <ChevronDown className="size-3 text-gray-400" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {table.getAllLeafColumns().filter((c) => c.getCanHide()).map((c) => (
-                  <DropdownMenuCheckboxItem key={c.id} checked={c.getIsVisible()} onCheckedChange={(v) => c.toggleVisibility(Boolean(v))}>
-                    {typeof c.columnDef.header === "string" ? c.columnDef.header : c.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       )}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Badge, cx } from "@/components/kit";
 import { MarginSection, UnitsLeft } from "@/components/chart";
 import { Icon } from "@/components/icons";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { labelForCode } from "@/lib/hcpcs";
 import { fmtDate, fmtDateNum, fmtMoney } from "@/lib/format";
 import { createAgreement, extractAgreement, updateAgreement } from "../actions";
@@ -54,10 +54,11 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
         )}
       </MarginSection>
 
+      {/* A centred window (user, Sept 22, 2026), the service record's shape, rather than a right-hand sheet. */}
       {open && (
-        <Sheet open onOpenChange={(o) => { if (!o) setOpen(null); }}>
-          <SheetContent side="right" showCloseButton={false} className="w-full overflow-y-auto p-0 data-[side=right]:sm:max-w-[760px]">
-            <SheetTitle className="sr-only">{current ? `Agreement ${current.agreementNumber}` : "New service agreement"}</SheetTitle>
+        <Dialog open onOpenChange={(o) => { if (!o) setOpen(null); }}>
+          <DialogContent showCloseButton={false} className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
+            <DialogTitle className="sr-only">{current ? `Agreement ${current.agreementNumber}` : "New service agreement"}</DialogTitle>
             <div className="flex items-center gap-3 border-b border-line px-6 py-4">
               <div className="min-w-0">
                 <div className="text-[19px] font-semibold text-text-strong">{current ? labelForCode(current.serviceCode, current.modifiers) : "New service agreement"}</div>
@@ -94,8 +95,8 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
                 <AgreementForm action={createAgreement.bind(null, personId)} extract={extractAgreement.bind(null, personId)} cancelHref={`/clients/${personId}`} defaultCounty={defaultCounty} aiReady={aiReady} onSaved={done} onCancel={() => setOpen(null)} />
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
