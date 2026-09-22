@@ -80,7 +80,7 @@ const chicagoToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America
 const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 /** One month of the picker. Days between `from` and `to` are tinted; the ends are filled. */
-function Month({ ym, from, to, today, onPick, onPrev, onNext }: { ym: string; from: string; to: string; today: string; onPick: (iso: string) => void; onPrev?: () => void; onNext?: () => void }) {
+export function Month({ ym, from, to, today, onPick, onPrev, onNext }: { ym: string; from: string; to: string; today: string; onPick: (iso: string) => void; onPrev?: () => void; onNext?: () => void }) {
   const first = `${ym}-01`;
   const gridStart = addDays(first, -new Date(utc(first)).getUTCDay());
   const cells = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));

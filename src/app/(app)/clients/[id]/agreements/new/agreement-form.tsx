@@ -7,6 +7,8 @@ import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, 
 import { MODIFIERS, SERVICE_CODES, serviceCodeKey } from "@/lib/hcpcs";
 import type { ActionState } from "@/lib/validation";
 import type { ExtractState } from "../../../actions";
+import { DateInput } from "@/components/date-input";
+import { MN_COUNTIES } from "@/lib/mn-counties";
 
 type Action = (p: ActionState, fd: FormData) => Promise<ActionState>;
 type Extract = (p: ExtractState, fd: FormData) => Promise<ExtractState>;
@@ -121,9 +123,9 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
 
         <FormSection title="Authorization" description="From the DHS service agreement letter.">
           <Field label="Agreement number" error={e.agreementNumber} className="md:col-span-3"><Input name="agreementNumber" value={fields.agreementNumber} onChange={set("agreementNumber")} required /></Field>
-          <Field label="Authorizing county" error={e.authorizingCounty} className="md:col-span-3"><Input name="authorizingCounty" value={fields.authorizingCounty} onChange={set("authorizingCounty")} required /></Field>
-          <Field label="Start date" error={e.startDate} className="md:col-span-3"><Input name="startDate" type="date" value={fields.startDate} onChange={set("startDate")} required /></Field>
-          <Field label="End date" error={e.endDate} className="md:col-span-3"><Input name="endDate" type="date" value={fields.endDate} onChange={set("endDate")} required /></Field>
+          <Field label="Authorizing county" error={e.authorizingCounty} className="md:col-span-3"><Select name="authorizingCounty" value={fields.authorizingCounty} onChange={set("authorizingCounty")} required><option value="">Choose a county…</option>{fields.authorizingCounty && !MN_COUNTIES.includes(fields.authorizingCounty as (typeof MN_COUNTIES)[number]) && <option value={fields.authorizingCounty}>{fields.authorizingCounty}</option>}{MN_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select></Field>
+          <Field label="Start date" error={e.startDate} className="md:col-span-3"><DateInput name="startDate" value={fields.startDate} onChange={set("startDate")} required /></Field>
+          <Field label="End date" error={e.endDate} className="md:col-span-3"><DateInput name="endDate" value={fields.endDate} onChange={set("endDate")} required /></Field>
         </FormSection>
 
         <FormSection title="Service" description="Procedure code and modifiers from DHS-3945 (April 2026). Picking a service fills in its standard modifiers; adjust if the letter differs.">

@@ -6,6 +6,7 @@ import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/
 import type { ActionState } from "@/lib/validation";
 import { createMedication, deleteMedication, setMedicationActive } from "../goal-actions";
 import { recordMedAdmin } from "../../visits/record-actions";
+import { DateInput } from "@/components/date-input";
 
 export interface MedView { id: string; name: string; dose: string; route: string; frequency: string; times: string[]; instructions: string | null; prescriber: string | null; startDate: string; endDate: string | null; active: boolean }
 export interface AdminView { medicationId: string; date: string; time: string; status: "given" | "refused" | "held" | "missed"; note: string | null }
@@ -117,8 +118,8 @@ function NewMedication({ personId }: { personId: string }) {
         <Field label="Frequency" error={e.frequency} className="md:col-span-2"><Input name="frequency" placeholder="Twice daily with food" required /></Field>
         <Field label="Scheduled times" error={e.times} hint="24-hour, comma-separated: 08:00, 20:00" className="md:col-span-2"><Input name="times" placeholder="08:00, 20:00" required /></Field>
         <Field label="Prescriber" error={e.prescriber} className="md:col-span-2"><Input name="prescriber" /></Field>
-        <Field label="Start" error={e.startDate} className="md:col-span-1"><Input name="startDate" type="date" required /></Field>
-        <Field label="End" error={e.endDate} className="md:col-span-1"><Input name="endDate" type="date" /></Field>
+        <Field label="Start" error={e.startDate} className="md:col-span-1"><DateInput name="startDate" required /></Field>
+        <Field label="End" error={e.endDate} className="md:col-span-1"><DateInput name="endDate" /></Field>
         <Field label="Instructions for staff" error={e.instructions} className="md:col-span-6"><Textarea name="instructions" className="min-h-12" placeholder="Give with breakfast. Hold if blood sugar under 70." /></Field>
       </div>
       <Button type="submit" disabled={pending} className="mt-4">{pending ? "Saving…" : "Add medication"}</Button>

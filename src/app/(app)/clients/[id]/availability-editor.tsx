@@ -7,6 +7,7 @@ import { cx } from "@/components/kit";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { saveAvailability } from "./profile-actions";
 import type { ActionState } from "@/lib/validation";
+import { DateInput } from "@/components/date-input";
 
 /**
  * The availability schedule: every weekday at once, because that is how someone thinks about a
@@ -78,12 +79,12 @@ export function AvailabilityEditor({ personId, initial, onDone, save = saveAvail
             <div className="grid grid-cols-2 gap-4">
               <label className="block">
                 <span className="mb-1.5 block text-[14px] font-medium text-text-strong">Start date <span className="text-danger">*</span></span>
-                <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-10 w-full rounded-lg border border-line bg-card px-3 text-[14px] text-text" />
+                <DateInput required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full" />
                 {state.errors?.startDate && <span className="mt-1 block text-[13px] text-danger">{state.errors.startDate}</span>}
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-[14px] font-medium text-text-strong">End date</span>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-10 w-full rounded-lg border border-line bg-card px-3 text-[14px] text-text" />
+                <DateInput value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full" />
                 {state.errors?.endDate && <span className="mt-1 block text-[13px] text-danger">{state.errors.endDate}</span>}
               </label>
             </div>

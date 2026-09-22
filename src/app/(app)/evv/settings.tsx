@@ -7,6 +7,7 @@ import type { EvvLiveInRelationship, EvvPayer, EvvPolicy, EvvProviderIdentifier,
 import { fmtDate } from "@/lib/format";
 import type { ActionState } from "@/lib/validation";
 import { addIdentifierAction, addLiveInAction, addPayerAction, addRuleAction, endLiveInAction, retireRuleAction, saveProviderAction, savePolicyAction, toggleIdentifierAction } from "./actions";
+import { DateInput } from "@/components/date-input";
 
 function useToast(state: ActionState) {
   useEffect(() => { if (state.ok) toast.success(state.message ?? "Saved."); else if (state.message && !state.errors) toast.error(state.message); }, [state]);
@@ -133,8 +134,8 @@ function RulesCard({ rules }: { rules: EvvServiceRule[] }) {
             <Field label="Excluded modifiers"><Input name="excludedModifiers" defaultValue={supersedes?.excludedModifiers.join(" ") ?? ""} placeholder="UN" /></Field>
             <Field label="Unit type"><Select name="unitType" defaultValue={supersedes?.unitType ?? "fifteen_minute"}>{Object.entries(UNIT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
             <Field label="Label" error={e.label} className="sm:col-span-2"><Input name="label" defaultValue={supersedes?.label ?? ""} required /></Field>
-            <Field label="Effective from" error={e.effectiveFrom}><Input type="date" name="effectiveFrom" required /></Field>
-            <Field label="Effective to"><Input type="date" name="effectiveTo" /></Field>
+            <Field label="Effective from" error={e.effectiveFrom}><DateInput name="effectiveFrom" required /></Field>
+            <Field label="Effective to"><DateInput name="effectiveTo" /></Field>
             <Field label="Source URL" className="sm:col-span-2"><Input name="sourceUrl" defaultValue={supersedes?.sourceUrl ?? ""} placeholder="https://mn.gov/dhs/…" /></Field>
             <Field label="Source label" className="sm:col-span-2"><Input name="sourceLabel" defaultValue={supersedes?.sourceLabel ?? ""} placeholder="DHS bulletin, date" /></Field>
             <div className="-mx-3 flex flex-wrap gap-4 sm:col-span-2 lg:col-span-4">
@@ -178,8 +179,8 @@ function LiveInCard({ liveIns, people, staff }: { liveIns: EvvLiveInRelationship
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Field label="Caregiver"><Select name="staffId" required>{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           <Field label="Client"><Select name="personId" required>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>
-          <Field label="From"><Input type="date" name="effectiveFrom" required /></Field>
-          <Field label="To"><Input type="date" name="effectiveTo" /></Field>
+          <Field label="From"><DateInput name="effectiveFrom" required /></Field>
+          <Field label="To"><DateInput name="effectiveTo" /></Field>
           <div className="flex items-end"><Button type="submit" variant="secondary" disabled={pending} className="h-9 w-full">Record</Button></div>
           <Field label="Documentation" hint="Where the signed live-in documentation is filed" className="sm:col-span-2 lg:col-span-3"><Input name="documentationRef" required placeholder="Personnel file · live-in attestation 2026-09-01" /></Field>
           <Field label="Note" className="sm:col-span-2"><Textarea name="note" className="min-h-9" /></Field>

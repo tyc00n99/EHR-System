@@ -10,6 +10,7 @@ import { fmtDate } from "@/lib/format";
 import type { PersonnelItem, PersonnelStatus } from "@/lib/personnel-file";
 import { addCredential, deleteCredential } from "../actions";
 import { attachToCredential, readCredentialFile } from "../document-actions";
+import { DateInput } from "@/components/date-input";
 
 /**
  * The personnel file as two panes: the licensor's list down the left, ticked as it is satisfied,
@@ -270,13 +271,13 @@ function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: st
         </div>
         <div>
           <Label required>{dateLabel}<FromDoc on={has(r?.completedOn)} /></Label>
-          <input name="completedOn" type="date" required defaultValue={r?.completedOn ?? ""} className={field} />
+          <DateInput name="completedOn" required defaultValue={r?.completedOn ?? ""} className="w-full" />
           {e.completedOn && <p className="mt-1 text-[13px] text-danger">{e.completedOn}</p>}
         </div>
         {dated && (
           <div>
             <Label>Expires on<FromDoc on={has(r?.expiresOn)} /></Label>
-            <input name="expiresOn" type="date" defaultValue={r?.expiresOn ?? ""} className={field} />
+            <DateInput name="expiresOn" defaultValue={r?.expiresOn ?? ""} className="w-full" />
             {e.expiresOn && <p className="mt-1 text-[13px] text-danger">{e.expiresOn}</p>}
           </div>
         )}

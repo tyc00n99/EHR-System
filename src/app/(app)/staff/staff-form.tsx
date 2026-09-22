@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Button, Checkbox, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/kit";
 import { GENDERS, type ActionState } from "@/lib/validation";
 import type { Staff } from "@/db/schema";
+import { DateInput } from "@/components/date-input";
 
 export function StaffForm({ action, defaults, cancelHref }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; defaults?: Partial<Staff>; cancelHref: string }) {
   const [state, submit, pending] = useActionState(action, {});
@@ -16,7 +17,7 @@ export function StaffForm({ action, defaults, cancelHref }: { action: (p: Action
       <FormSection title="Identity" description="Legal name and identifiers as they appear on the background study.">
         <Field label="First name" error={e.firstName} className="md:col-span-3"><Input name="firstName" defaultValue={d.firstName} required /></Field>
         <Field label="Last name" error={e.lastName} className="md:col-span-3"><Input name="lastName" defaultValue={d.lastName} required /></Field>
-        <Field label="Date of birth" error={e.dob} className="md:col-span-2"><Input name="dob" type="date" defaultValue={d.dob ?? ""} required /></Field>
+        <Field label="Date of birth" error={e.dob} className="md:col-span-2"><DateInput name="dob" defaultValue={d.dob ?? ""} required /></Field>
         <Field label="Gender" error={e.gender} className="md:col-span-2">
           <Select name="gender" defaultValue={d.gender ?? ""} required>
             <option value="" disabled>Choose…</option>
@@ -38,7 +39,7 @@ export function StaffForm({ action, defaults, cancelHref }: { action: (p: Action
       </FormSection>
       <FormSection title="Employment" description="Title is the job, not the access level. Access is set on the login. Pay rate is visible to administrators only.">
         <Field label="Title" error={e.title} className="col-span-2 md:col-span-3"><Input name="title" defaultValue={d.title} placeholder="Direct support professional" required /></Field>
-        <Field label="Hire date" error={e.hireDate} className="md:col-span-2"><Input name="hireDate" type="date" defaultValue={d.hireDate ?? ""} required /></Field>
+        <Field label="Hire date" error={e.hireDate} className="md:col-span-2"><DateInput name="hireDate" defaultValue={d.hireDate ?? ""} required /></Field>
         <Field label="Hourly pay rate" error={e.payRate} className="md:col-span-1"><Input name="payRate" type="number" min={0.01} step={0.01} defaultValue={d.payRate ?? ""} required /></Field>
         <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="active" defaultChecked={d.active ?? true} label="Active. Inactive staff cannot clock in." /></div>
       </FormSection>

@@ -564,3 +564,7 @@ h1, h2 { font-weight: 500; }
 }
 .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-hint, .text-muted, .text-muted-foreground { color: var(--text); }
 input::placeholder, textarea::placeholder { color: #94a3b8; opacity: 1; }
+
+/* Number fields have no spinner arrows (user, Sept 22, 2026): units and rates are typed, not nudged. */
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }

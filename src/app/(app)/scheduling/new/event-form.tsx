@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { createShifts } from "../actions";
+import { DateInput } from "@/components/date-input";
 
 /**
  * Create event, laid out field for field as the reference does it: a full page rather than a
@@ -121,7 +122,7 @@ export function EventForm({
           <div className="mb-4 grid gap-4 md:grid-cols-3">
             <div>
               <Label required>Date</Label>
-              <input type="date" name="date" value={date} onChange={(e) => setDate(e.target.value)} className={field} />
+              <DateInput name="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full" />
               {err("date") && <p className="mt-1 text-[13px] text-danger">{err("date")}</p>}
             </div>
             <div>

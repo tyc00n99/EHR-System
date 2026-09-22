@@ -4,6 +4,8 @@ import { useActionState } from "react";
 import { Button, Checkbox, Field, FormActions, FormError, FormSection, Input, LinkButton, Select } from "@/components/kit";
 import { PERSON_STATUS, WAIVERS, type ActionState } from "@/lib/validation";
 import type { Person } from "@/db/schema";
+import { DateInput } from "@/components/date-input";
+import { MN_COUNTIES } from "@/lib/mn-counties";
 
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
 
@@ -19,7 +21,7 @@ export function PersonForm({ action, defaults, cancelHref }: { action: Action; d
         <Field label="First name" error={e.firstName} className="col-span-1 md:col-span-2"><Input name="firstName" defaultValue={d.firstName} required /></Field>
         <Field label="Last name" error={e.lastName} className="col-span-1 md:col-span-2"><Input name="lastName" defaultValue={d.lastName} required /></Field>
         <Field label="Preferred name" error={e.preferredName} className="col-span-2 md:col-span-2"><Input name="preferredName" defaultValue={d.preferredName ?? ""} /></Field>
-        <Field label="Date of birth" error={e.dob} className="md:col-span-2"><Input name="dob" type="date" defaultValue={d.dob ?? ""} required /></Field>
+        <Field label="Date of birth" error={e.dob} className="md:col-span-2"><DateInput name="dob" defaultValue={d.dob ?? ""} required /></Field>
         <Field label="Sex at birth" error={e.sexAtBirth} className="md:col-span-2">
           <Select name="sexAtBirth" defaultValue={d.sexAtBirth ?? ""}>
             <option value="">Not recorded</option>
@@ -40,8 +42,8 @@ export function PersonForm({ action, defaults, cancelHref }: { action: Action; d
         <Field label="Status" error={e.status} className="md:col-span-2">
           <Select name="status" defaultValue={d.status ?? "intake"}>{PERSON_STATUS.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}</Select>
         </Field>
-        <Field label="Service start date" error={e.serviceStartDate} className="md:col-span-2"><Input name="serviceStartDate" type="date" defaultValue={d.serviceStartDate ?? ""} /></Field>
-        <Field label="County of residence" error={e.county} className="col-span-2 md:col-span-2"><Input name="county" defaultValue={d.county} required /></Field>
+        <Field label="Service start date" error={e.serviceStartDate} className="md:col-span-2"><DateInput name="serviceStartDate" defaultValue={d.serviceStartDate ?? ""} /></Field>
+        <Field label="County of residence" error={e.county} className="col-span-2 md:col-span-2"><Select name="county" defaultValue={d.county ?? ""} required><option value="">Choose a county…</option>{d.county && !MN_COUNTIES.includes(d.county as (typeof MN_COUNTIES)[number]) && <option value={d.county}>{d.county}</option>}{MN_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select></Field>
         <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="medicationSupport" value="true" defaultChecked={d.medicationSupport ?? false} label="Staff administer or assist with medications for this person (shows the Medical tab and MAR)" /></div>
       </FormSection>
 

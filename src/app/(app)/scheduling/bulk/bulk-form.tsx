@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { bulkCancelShifts } from "../actions";
+import { DateInput } from "@/components/date-input";
 
 /**
  * Bulk action, laid out as the reference does: the criteria in a narrow left column, the matching
@@ -96,9 +97,9 @@ export function BulkForm({
           <div className="mb-4">
             <Label required>Impacted dates</Label>
             <div className="flex items-center gap-2">
-              <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} aria-label="From" className={field} />
+              <DateInput value={fromDate} onChange={(e) => setFromDate(e.target.value)} aria-label="From" className="w-full" />
               <span className="text-[14px] text-muted-foreground">to</span>
-              <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} aria-label="To" className={field} />
+              <DateInput value={toDate} onChange={(e) => setToDate(e.target.value)} aria-label="To" className="w-full" />
             </div>
           </div>
 

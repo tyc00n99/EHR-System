@@ -3,7 +3,8 @@
 import { FilterMenu } from "@/components/filter-menu";
 import { useState } from "react";
 import { DownloadButton } from "@/components/download-button";
-import { Field, Input } from "@/components/kit";
+import { Field } from "@/components/kit";
+import { DateInput } from "@/components/date-input";
 
 export interface NotesReportClient { id: string; name: string; pmi: string; services: { code: string; label: string }[] }
 
@@ -26,8 +27,8 @@ export function NotesReport({ clients, defaultFrom, defaultTo }: { clients: Note
       <Field label="Service type">
         <FilterMenu aria-label="Service type" value={code} onChange={setCode} className="w-full" options={[{ value: "", label: "All services" }, ...(client?.services ?? []).map((s) => ({ value: s.code, label: s.label, hint: s.code }))]} />
       </Field>
-      <Field label="From"><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
-      <Field label="To"><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
+      <Field label="From"><DateInput value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
+      <Field label="To"><DateInput value={to} onChange={(e) => setTo(e.target.value)} /></Field>
       <DownloadButton href={url} icon="doc" className={clientId ? "" : "pointer-events-none opacity-50"}>Notes PDF</DownloadButton>
     </div>
   );

@@ -11,6 +11,7 @@ import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/
 import { fmtDate, fmtDateTime } from "@/lib/format";
 import type { ActionState } from "@/lib/validation";
 import { addGoalQuestion, addGoalReview, createGoal, reinstateGoalQuestion, retireGoalQuestion, setGoalStatus, updateGoal } from "../goal-actions";
+import { DateInput } from "@/components/date-input";
 
 export interface GoalView {
   id: string; title: string; outcome: string | null; description: string | null; category: string; status: "active" | "met" | "discontinued"; startDate: string | null; targetDate: string | null;
@@ -261,8 +262,8 @@ function EditGoal({ personId, g, onDone }: { personId: string; g: GoalView; onDo
         <Field label="Goal" error={e.title} className="sm:col-span-6"><Input name="title" defaultValue={g.title} required /></Field>
         <Field label="Outcome" error={e.outcome} hint="One measurable line from the support plan" className="sm:col-span-6"><Input name="outcome" defaultValue={g.outcome ?? ""} placeholder="Fewer than two refused doses a week" /></Field>
         <Field label="What this looks like for the person" error={e.description} className="sm:col-span-6"><Textarea name="description" defaultValue={g.description ?? ""} className="min-h-14" /></Field>
-        <Field label="Start" error={e.startDate} className="sm:col-span-3"><Input name="startDate" type="date" defaultValue={g.startDate ?? ""} /></Field>
-        <Field label="Target" error={e.targetDate} className="sm:col-span-3"><Input name="targetDate" type="date" defaultValue={g.targetDate ?? ""} /></Field>
+        <Field label="Start" error={e.startDate} className="sm:col-span-3"><DateInput name="startDate" defaultValue={g.startDate ?? ""} /></Field>
+        <Field label="Target" error={e.targetDate} className="sm:col-span-3"><DateInput name="targetDate" defaultValue={g.targetDate ?? ""} /></Field>
       </div>
       <div className="mt-3 flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save"}</Button><Button type="button" variant="ghost" onClick={onDone}>Cancel</Button></div>
     </form>
@@ -283,8 +284,8 @@ function NewGoal({ personId, onDone }: { personId: string; onDone: () => void })
         <Field label="Goal" error={e.title} className="md:col-span-6"><Input name="title" placeholder="Take every medication as prescribed" required /></Field>
         <Field label="Outcome" error={e.outcome} hint="One measurable line" className="md:col-span-6"><Input name="outcome" placeholder="Fewer than two refused doses a week by December" /></Field>
         <Field label="What this looks like for the person" error={e.description} className="md:col-span-6"><Textarea name="description" className="min-h-14" placeholder="Staff administer from the locked box and record every dose." /></Field>
-        <Field label="Start" error={e.startDate} className="md:col-span-3"><Input name="startDate" type="date" /></Field>
-        <Field label="Target" error={e.targetDate} className="md:col-span-3"><Input name="targetDate" type="date" /></Field>
+        <Field label="Start" error={e.startDate} className="md:col-span-3"><DateInput name="startDate" /></Field>
+        <Field label="Target" error={e.targetDate} className="md:col-span-3"><DateInput name="targetDate" /></Field>
         <div className="md:col-span-6">
           <span className="mb-1.5 block text-[13px] font-medium">Yes/no questions on every note <span className="font-normal">(optional)</span></span>
           {e.questions && <span className="mb-1 block text-[13px] text-danger">{e.questions}</span>}

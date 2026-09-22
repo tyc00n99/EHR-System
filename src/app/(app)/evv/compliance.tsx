@@ -1,7 +1,8 @@
-import { Badge, Button, Card, Input, PageHeader, StatTile, Table, Td, Th, Thead, Tr } from "@/components/kit";
+import { Badge, Button, Card, PageHeader, StatTile, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { SUBMISSION } from "@/evv/labels";
 import type { ComplianceSummary } from "@/evv/reporting";
 import { fmtDate } from "@/lib/format";
+import { DateInput } from "@/components/date-input";
 
 type Names = { person: Record<string, string>; staff: Record<string, string> };
 const pct = (v: number | null) => (v == null ? "—" : `${v}%`);
@@ -13,8 +14,8 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
       <PageHeader title="EVV compliance" meta={<span>{s.label}. DHS measures compliance from what the aggregator holds, across every NPI and UMPI on your tax ID.</span>} />
       <form action="/evv" className="mb-4 flex flex-wrap items-end gap-2">
         <input type="hidden" name="tab" value="compliance" />
-        <label className="text-[13px] text-muted-foreground">From<Input type="date" name="from" defaultValue={s.range.from} className="mt-1 block" /></label>
-        <label className="text-[13px] text-muted-foreground">To<Input type="date" name="to" defaultValue={s.range.to} className="mt-1 block" /></label>
+        <label className="text-[13px] text-muted-foreground">From<DateInput name="from" defaultValue={s.range.from} className="mt-1 block" /></label>
+        <label className="text-[13px] text-muted-foreground">To<DateInput name="to" defaultValue={s.range.to} className="mt-1 block" /></label>
         <Button type="submit" variant="secondary">Update</Button>
       </form>
 

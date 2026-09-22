@@ -4,6 +4,8 @@ import { useActionState, useState } from "react";
 import { Button, Field, FormError, Input, LinkButton, Select, cx } from "@/components/kit";
 import { MODIFIERS, SERVICE_CODES, serviceCodeKey } from "@/lib/hcpcs";
 import type { ActionState } from "@/lib/validation";
+import { DateInput } from "@/components/date-input";
+import { MN_COUNTIES } from "@/lib/mn-counties";
 
 const OTHER = "__other__";
 
@@ -39,9 +41,9 @@ export function AgreementEditForm({ action, defaults, cancelHref, onSaved, onCan
         </div>
         <Field label="Authorized units" error={e.authorizedUnits} hint="15-minute units" className="md:col-span-2"><Input name="authorizedUnits" type="number" min={1} step={1} defaultValue={defaults.authorizedUnits} required /></Field>
         <Field label="Rate per unit" error={e.unitRate} className="md:col-span-2"><Input name="unitRate" type="number" min={0.01} step={0.01} defaultValue={defaults.unitRate} required /></Field>
-        <Field label="Authorizing county" error={e.authorizingCounty} className="md:col-span-2"><Input name="authorizingCounty" defaultValue={defaults.authorizingCounty} required /></Field>
-        <Field label="Start date" error={e.startDate} className="md:col-span-3"><Input name="startDate" type="date" defaultValue={defaults.startDate} required /></Field>
-        <Field label="End date" error={e.endDate} className="md:col-span-3"><Input name="endDate" type="date" defaultValue={defaults.endDate} required /></Field>
+        <Field label="Authorizing county" error={e.authorizingCounty} className="md:col-span-2"><Select name="authorizingCounty" defaultValue={defaults.authorizingCounty} required><option value="">Choose a county…</option>{defaults.authorizingCounty && !MN_COUNTIES.includes(defaults.authorizingCounty as (typeof MN_COUNTIES)[number]) && <option value={defaults.authorizingCounty}>{defaults.authorizingCounty}</option>}{MN_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select></Field>
+        <Field label="Start date" error={e.startDate} className="md:col-span-3"><DateInput name="startDate" defaultValue={defaults.startDate} required /></Field>
+        <Field label="End date" error={e.endDate} className="md:col-span-3"><DateInput name="endDate" defaultValue={defaults.endDate} required /></Field>
       </div>
       <div className="flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button>{onCancel ? <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button> : <LinkButton href={cancelHref} variant="ghost">Cancel</LinkButton>}</div>
     </form>
