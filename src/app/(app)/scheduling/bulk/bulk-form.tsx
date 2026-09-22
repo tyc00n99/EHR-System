@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
-import { cx, Select } from "@/components/kit";
+import { Select } from "@/components/kit";
 import { bulkCancelShifts } from "../actions";
 import { DateInput } from "@/components/date-input";
 
@@ -29,7 +29,6 @@ export interface BulkEvent {
   location: string;
 }
 
-const field = "h-10 w-full rounded-lg border border-line bg-card px-3 text-[14.5px] text-text outline-none focus:border-primary";
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return <div className="mb-1.5 text-[14.5px] text-text-strong">{children}{required && <span className="text-danger"> *</span>}</div>;

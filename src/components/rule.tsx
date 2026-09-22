@@ -64,7 +64,6 @@ export function Rule({ name, className }: { name: RuleKey; className?: string })
       <PopoverContent align="start" className="w-80 p-4 text-left">
         <div className="text-[13.5px] font-semibold text-text-strong">{r.title}</div>
         <p className="mt-1.5 text-[13px] leading-5 text-text">{r.body}</p>
-        <div className="mt-2.5 border-t border-line-soft pt-2 text-[13px] text-muted-foreground">{r.cite}</div>
       </PopoverContent>
     </Popover>
   );

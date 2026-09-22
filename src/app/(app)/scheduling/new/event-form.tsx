@@ -8,6 +8,7 @@ import { Icon } from "@/components/icons";
 import { cx, Select } from "@/components/kit";
 import { createShifts } from "../actions";
 import { DateInput } from "@/components/date-input";
+import { TimeInput } from "@/components/time-input";
 
 /**
  * Create event, laid out field for field as the reference does it: a full page rather than a
@@ -127,12 +128,12 @@ export function EventForm({
             </div>
             <div>
               <Label required>Start time</Label>
-              <input type="time" name="start" value={start} onChange={(e) => setStart(e.target.value)} step={900} className={field} />
+              <TimeInput name="start" value={start} onChange={(e) => setStart(e.target.value)} className="w-full" />
               {err("start") && <p className="mt-1 text-[13px] text-danger">{err("start")}</p>}
             </div>
             <div>
               <Label required>End time</Label>
-              <input type="time" name="end" value={end} onChange={(e) => setEnd(e.target.value)} step={900} className={field} />
+              <TimeInput name="end" value={end} onChange={(e) => setEnd(e.target.value)} className="w-full" />
               {err("end") && <p className="mt-1 text-[13px] text-danger">{err("end")}</p>}
             </div>
           </div>

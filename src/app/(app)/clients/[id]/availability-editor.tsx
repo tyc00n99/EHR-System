@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { saveAvailability } from "./profile-actions";
 import type { ActionState } from "@/lib/validation";
 import { DateInput } from "@/components/date-input";
+import { TimeInput } from "@/components/time-input";
 
 /**
  * The availability schedule: every weekday at once, because that is how someone thinks about a
@@ -118,9 +119,9 @@ export function AvailabilityEditor({ personId, initial, onDone, save = saveAvail
                         <div className="min-w-0 flex-1">
                           {windows.map((w, j) => (
                             <div key={j} className="mb-2 flex flex-nowrap items-center gap-2 last:mb-0">
-                              <input type="time" value={w.start} onChange={(e) => edit(i, j, "start", e.target.value)} className="h-9 w-[140px] rounded-lg border border-line bg-card px-3 text-[14px] text-text" aria-label={`${FULL[i]} window ${j + 1} starts`} />
+                              <TimeInput value={w.start} onChange={(e) => edit(i, j, "start", e.target.value)} className="w-[150px]" aria-label={`${FULL[i]} window ${j + 1} starts`} />
                               <span className="text-muted-foreground">-</span>
-                              <input type="time" value={w.end} onChange={(e) => edit(i, j, "end", e.target.value)} className="h-9 w-[140px] rounded-lg border border-line bg-card px-3 text-[14px] text-text" aria-label={`${FULL[i]} window ${j + 1} ends`} />
+                              <TimeInput value={w.end} onChange={(e) => edit(i, j, "end", e.target.value)} className="w-[150px]" aria-label={`${FULL[i]} window ${j + 1} ends`} />
                               <button type="button" onClick={() => setDay(i, windows.filter((_, n) => n !== j))} aria-label={`Remove ${FULL[i]} window ${j + 1}`} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-danger-soft hover:text-danger">
                                 <Icon.trash size={17} />
                               </button>

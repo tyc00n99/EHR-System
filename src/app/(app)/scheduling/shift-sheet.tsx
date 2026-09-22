@@ -6,10 +6,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/components/kit";
+import { Badge, Button, Field, FormError, Select, Textarea, cx } from "@/components/kit";
 import type { ActionState } from "@/lib/validation";
 import { cancelShift, createShifts, markMissed } from "./actions";
 import { DateInput } from "@/components/date-input";
+import { TimeInput } from "@/components/time-input";
 
 const fmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Chicago" });
 
@@ -73,8 +74,8 @@ export function NewShiftSheet({ defaultDate, staff, agreements }: { defaultDate:
           <Field label="Caregiver" error={e.staffId} hint="Must be assigned, oriented to this client, and current on compliance."><Select name="staffId" defaultValue="">{staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           <div className="grid grid-cols-3 gap-3">
             <Field label="Date" error={e.date}><DateInput name="date" defaultValue={defaultDate} required /></Field>
-            <Field label="Start" error={e.start}><Input name="start" type="time" defaultValue="09:00" required /></Field>
-            <Field label="End" error={e.end}><Input name="end" type="time" defaultValue="12:00" required /></Field>
+            <Field label="Start" error={e.start}><TimeInput name="start" defaultValue="09:00" required /></Field>
+            <Field label="End" error={e.end}><TimeInput name="end" defaultValue="12:00" required /></Field>
           </div>
           <div>
             <span className="mb-1.5 block text-[13px] font-medium text-text">Days of the week</span>

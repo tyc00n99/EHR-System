@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronDown, Search } from "lucide-react";
-import { Children, isValidElement, useEffect, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from "react";
+import { Children, isValidElement, useEffect, useId, useMemo, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /**
@@ -41,6 +41,10 @@ export function SelectMenu({ className, children, value, defaultValue, onChange,
   const current = controlled ? String(value ?? "") : inner;
   const [open, setOpen] = useState(false);
   const sel = useRef<HTMLSelectElement>(null);
+  // Where the popup's first focus lands: the search box, or the chosen row. Left to the library it
+  // would focus the first row a beat after opening, pulling the list to the top mid-typing.
+  const panelId = useId();
+  const initialFocus = () => { const root = document.getElementById(panelId); return root?.querySelector<HTMLElement>("input") ?? root?.querySelector<HTMLElement>("[data-current]") ?? root ?? undefined; };
   const label = options.find((o) => o.value === current)?.label ?? "";
 
   const pick = (v: string) => {
@@ -62,8 +66,8 @@ export function SelectMenu({ className, children, value, defaultValue, onChange,
           <span className={cx("min-w-0 flex-1 truncate", current === "" && "text-hint")}>{label}</span>
           <ChevronDown size={16} aria-hidden className="shrink-0 text-muted-foreground" />
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-[var(--anchor-width)] min-w-56 gap-0 p-1">
-          <Panel options={options} current={current} onPick={pick} />
+        <PopoverContent align="start" initialFocus={initialFocus} className="w-[var(--anchor-width)] min-w-56 gap-0 p-1">
+          <Panel id={panelId} options={options} current={current} onPick={pick} />
         </PopoverContent>
       </Popover>
     </span>
@@ -71,15 +75,14 @@ export function SelectMenu({ className, children, value, defaultValue, onChange,
 }
 
 /** Mounted only while open, so its effect is the "on open" moment: focus, and scroll the choice into view. */
-function Panel({ options, current, onPick }: { options: Opt[]; current: string; onPick: (v: string) => void }) {
+function Panel({ id, options, current, onPick }: { id: string; options: Opt[]; current: string; onPick: (v: string) => void }) {
   const searchable = options.length > 8;
   const [q, setQ] = useState("");
   const shown = q ? options.filter((o) => o.label.toLowerCase().includes(q.toLowerCase())) : options;
   const [hi, setHi] = useState(() => Math.max(0, options.findIndex((o) => o.value === current)));
   const h = Math.min(hi, shown.length - 1);
-  const search = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
-  useEffect(() => { (search.current ?? list.current)?.focus(); list.current?.querySelector("[data-current]")?.scrollIntoView({ block: "nearest" }); }, []);
+  useEffect(() => { list.current?.querySelector("[data-current]")?.scrollIntoView({ block: "nearest" }); }, []);
   useEffect(() => { list.current?.querySelector("[data-hi]")?.scrollIntoView({ block: "nearest" }); }, [h]);
 
   const onKey = (e: React.KeyboardEvent) => {
@@ -89,11 +92,11 @@ function Panel({ options, current, onPick }: { options: Opt[]; current: string; 
   };
 
   return (
-    <div onKeyDown={onKey}>
+    <div id={id} onKeyDown={onKey}>
       {searchable && (
         <div className="relative mb-1">
           <Search size={14} aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input ref={search} value={q} onChange={(e) => { setQ(e.target.value); setHi(0); }} placeholder="Search…" aria-label="Search the list" className="h-8 w-full rounded-md border border-line bg-page pl-8 pr-2 text-[14px] outline-none placeholder:text-hint focus:border-primary" />
+          <input value={q} onChange={(e) => { setQ(e.target.value); setHi(0); }} placeholder="Search…" aria-label="Search the list" className="h-8 w-full rounded-md border border-line bg-page pl-8 pr-2 text-[14px] outline-none placeholder:text-hint focus:border-primary" />
         </div>
       )}
       <div ref={list} tabIndex={searchable ? -1 : 0} className="max-h-72 overflow-y-auto outline-none">

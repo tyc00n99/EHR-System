@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select, Textarea } from "@/components/kit";
 import { PLACES_OF_SERVICE } from "@/lib/validation";
 import { createManualVisit } from "../actions";
+import { DateTimeInput } from "@/components/time-input";
 
 interface AgreementOption { id: string; personId: string; personName: string; label: string }
 
@@ -32,8 +33,8 @@ export function ManualVisitForm({ agreements, staff }: { agreements: AgreementOp
         </Field>
       </FormSection>
       <FormSection title="When and where" description="Times in Central time. Coordinates are required because the aggregator requires them.">
-        <Field label="Clock in" error={e.clockInAt} className="md:col-span-3"><Input name="clockInAt" type="datetime-local" required /></Field>
-        <Field label="Clock out" error={e.clockOutAt} className="md:col-span-3"><Input name="clockOutAt" type="datetime-local" required /></Field>
+        <Field label="Clock in" error={e.clockInAt} className="md:col-span-3"><DateTimeInput name="clockInAt" required /></Field>
+        <Field label="Clock out" error={e.clockOutAt} className="md:col-span-3"><DateTimeInput name="clockOutAt" required /></Field>
         <Field label="Clock-in latitude" error={e.clockInLat} className="md:col-span-3"><Input name="clockInLat" type="number" step="any" placeholder="44.97" required /></Field>
         <Field label="Clock-in longitude" error={e.clockInLng} className="md:col-span-3"><Input name="clockInLng" type="number" step="any" placeholder="-93.26" required /></Field>
         <Field label="Clock-out latitude" error={e.clockOutLat} className="md:col-span-3"><Input name="clockOutLat" type="number" step="any" required /></Field>

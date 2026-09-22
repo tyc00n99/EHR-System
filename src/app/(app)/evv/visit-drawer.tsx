@@ -12,6 +12,7 @@ import { CORRECTION_REASONS } from "@/evv/types";
 import { fmtDate, fmtDateTime, toLocalInput } from "@/lib/format";
 import type { ActionState } from "@/lib/validation";
 import { acknowledgeAction, commentAction, correctVisitAction, exceptionAction, resubmitAction, reviewVisitAction, voidVisitAction } from "./actions";
+import { DateTimeInput } from "@/components/time-input";
 
 type Detail = Awaited<ReturnType<typeof visitDetail>>;
 type Names = { person: Record<string, string>; staff: Record<string, string> };
@@ -167,8 +168,8 @@ function CorrectForm({ visitId, clockInAt, clockOutAt, locationType, serviceCode
       <p className="mb-3 text-[13px] text-muted-foreground">The original stays on record. The visit becomes a new version, is marked corrected (noncompliant under Minnesota policy unless exempt) and is resubmitted.</p>
       <FormError message={state.errors ? state.message : undefined} />
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Clock-in" error={e.clockInAt}><Input type="datetime-local" name="clockInAt" defaultValue={clockInAt ? toLocalInput(clockInAt) : ""} /></Field>
-        <Field label="Clock-out" error={e.clockOutAt}><Input type="datetime-local" name="clockOutAt" defaultValue={clockOutAt ? toLocalInput(clockOutAt) : ""} /></Field>
+        <Field label="Clock-in" error={e.clockInAt}><DateTimeInput name="clockInAt" defaultValue={clockInAt ? toLocalInput(clockInAt) : ""} /></Field>
+        <Field label="Clock-out" error={e.clockOutAt}><DateTimeInput name="clockOutAt" defaultValue={clockOutAt ? toLocalInput(clockOutAt) : ""} /></Field>
         <Field label="Location type"><Select name="locationType" defaultValue={locationType ?? ""}><option value="">Unchanged</option><option value="home">Home</option><option value="community">Community</option><option value="alternate">Alternate</option><option value="protected">Protected address</option></Select></Field>
         <Field label="Service code · modifiers"><div className="flex gap-2"><Input name="serviceCode" defaultValue={serviceCode} className="w-28" /><Input name="modifiers" defaultValue={modifiers.join(" ")} placeholder="UC U3" /></div></Field>
         <Field label="Reason" error={e.reasonCode}><Select name="reasonCode" defaultValue="SUPERVISOR_REVIEW">{CORRECTION_REASONS.map((r) => <option key={r} value={r}>{r.replaceAll("_", " ").toLowerCase()}</option>)}</Select></Field>

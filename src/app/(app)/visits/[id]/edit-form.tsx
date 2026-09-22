@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import { Button, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import { PLACES_OF_SERVICE } from "@/lib/validation";
 import { editVisit, voidVisit } from "../actions";
+import { DateTimeInput } from "@/components/time-input";
 
 export function VisitEditForm({ visitId, defaults }: { visitId: string; defaults: { clockInAt: string; clockOutAt: string; placeOfService: string; shiftNote: string } }) {
   const [state, submit, pending] = useActionState(editVisit, {});
@@ -13,8 +14,8 @@ export function VisitEditForm({ visitId, defaults }: { visitId: string; defaults
       <FormError message={state.message} />
       <input type="hidden" name="visitId" value={visitId} />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <Field label="Clock in" error={e.clockInAt}><Input name="clockInAt" type="datetime-local" defaultValue={defaults.clockInAt} required /></Field>
-        <Field label="Clock out" error={e.clockOutAt}><Input name="clockOutAt" type="datetime-local" defaultValue={defaults.clockOutAt} required /></Field>
+        <Field label="Clock in" error={e.clockInAt}><DateTimeInput name="clockInAt" defaultValue={defaults.clockInAt} required /></Field>
+        <Field label="Clock out" error={e.clockOutAt}><DateTimeInput name="clockOutAt" defaultValue={defaults.clockOutAt} required /></Field>
         <Field label="Place of service" error={e.placeOfService} className="col-span-2 md:col-span-1">
           <Select name="placeOfService" defaultValue={defaults.placeOfService}>{PLACES_OF_SERVICE.map((p) => <option key={p.code} value={p.code}>{p.code} · {p.label}</option>)}</Select>
         </Field>
