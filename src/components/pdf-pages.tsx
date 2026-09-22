@@ -155,16 +155,28 @@ export function PdfPages({ src, bytes, fit, zoom = 1, onFirstPage }: { src: stri
   }, [key, src, fit, zoom, boxW, boxH]);
 
   const shown = hit ?? (rendered && rendered.key === key ? rendered.list : null);
+
+  // Zoomed past the box, the page stays centred: the inner wrapper is as wide as its content, so
+  // auto margins centre it while it fits and it scrolls both ways once it does not. After a zoom
+  // change the scroll position is put at the middle, so the centre of the page stays in view.
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+  }, [zoom, fit, shown]);
+
   return (
     <div ref={box} className="size-full overflow-auto bg-panel" style={{ padding: pad }}>
       {error && <p className="p-4 text-[14px] text-danger">{error}</p>}
-      {shown?.map((r, i) => <Bitmap key={i} r={r} zoom={zoom} onDrawn={i === 0 ? () => onFirstPageRef.current?.() : undefined} />)}
+      <div className="mx-auto w-max">
+        {shown?.map((r, i) => <Bitmap key={i} r={r} onDrawn={i === 0 ? () => onFirstPageRef.current?.() : undefined} />)}
+      </div>
     </div>
   );
 }
 
 /** One page: a finished bitmap blitted onto a canvas. */
-function Bitmap({ r, zoom, onDrawn }: { r: Rendered; zoom: number; onDrawn?: () => void }) {
+function Bitmap({ r, onDrawn }: { r: Rendered; onDrawn?: () => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const c = canvas.current;
@@ -174,6 +186,5 @@ function Bitmap({ r, zoom, onDrawn }: { r: Rendered; zoom: number; onDrawn?: () 
     onDrawn?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onDrawn is a one-shot notification
   }, [r]);
-  // When zoomed past the box the page sits at the left rather than being centred off-screen.
-  return <canvas ref={canvas} className="mb-4 block bg-white shadow-[var(--shadow-md)] last:mb-0" style={{ width: r.width, height: r.height, marginLeft: zoom > 1 ? undefined : "auto", marginRight: zoom > 1 ? undefined : "auto" }} />;
+  return <canvas ref={canvas} className="mb-4 block bg-white shadow-[var(--shadow-md)] last:mb-0" style={{ width: r.width, height: r.height }} />;
 }
