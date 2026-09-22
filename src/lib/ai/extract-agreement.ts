@@ -61,7 +61,7 @@ export async function extractAgreementFromPdf(pdf: Buffer): Promise<ExtractedAgr
 
 /** Turns SDK errors into a sentence a supervisor can act on. */
 export function explainAiError(e: unknown): string {
-  if (e instanceof Anthropic.AuthenticationError) return "The Anthropic API key was rejected. Check ANTHROPIC_API_KEY in .env.local.";
+  if (e instanceof Anthropic.AuthenticationError) return "The Anthropic API key was rejected. An admin should check ANTHROPIC_API_KEY in the app's environment settings.";
   if (e instanceof Anthropic.BadRequestError && /workspace/i.test(e.message)) return "This API key is tied to a workspace. Add ANTHROPIC_WORKSPACE_ID to .env.local (Console → Settings → Workspaces).";
   if (e instanceof Anthropic.RateLimitError) return "The AI service is busy. Try again in a minute.";
   if (e instanceof Anthropic.APIError) return `The AI service returned an error (${e.status}). Fill the fields in by hand or try again.`;

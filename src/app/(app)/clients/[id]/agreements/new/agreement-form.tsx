@@ -66,7 +66,7 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
   return (
     <div className="max-w-4xl">
       <form action={runExtract} className="mb-2">
-        <FormSection title="Upload the service agreement" description={aiReady ? "Upload the DHS service agreement PDF and the details below fill in automatically. Review them before saving." : "Add ANTHROPIC_API_KEY to .env.local to enable automatic extraction. You can still attach the PDF."}>
+        <FormSection title="Upload the service agreement" description={aiReady ? "Upload the DHS service agreement PDF and the details below fill in automatically. Review them before saving." : "Automatic reading is not turned on for this site yet, so the details below are typed by hand. You can still attach the letter. An admin turns it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying."}>
           <div className="col-span-2 md:col-span-6">
             <FormError message={ex.message} />
             <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-line bg-sidebar px-4 py-4">
