@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
-import { cx } from "@/components/kit";
+import { cx, Select } from "@/components/kit";
 import { serviceColor } from "@/components/chart";
 import { deleteCancellationReason, saveCalendarSettings, saveCancellationReason } from "../actions";
 
@@ -165,13 +165,13 @@ export function CalendarSettings({ startHour, endHour, days }: { startHour: numb
           <p className="mb-3 text-[14px] text-muted-foreground">The window of the day the schedule draws, in Central time.</p>
           <div className="flex items-center gap-2">
             <label className="text-[14px] text-muted-foreground" htmlFor="from-hour">From</label>
-            <select id="from-hour" name="scheduleStartHour" defaultValue={startHour} className={field}>
+            <Select id="from-hour" name="scheduleStartHour" defaultValue={startHour}>
               {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h % 12 === 0 ? 12 : h % 12}:00 {h < 12 ? "AM" : "PM"}</option>)}
-            </select>
+            </Select>
             <label className="text-[14px] text-muted-foreground" htmlFor="to-hour">To</label>
-            <select id="to-hour" name="scheduleEndHour" defaultValue={endHour} className={field}>
+            <Select id="to-hour" name="scheduleEndHour" defaultValue={endHour}>
               {Array.from({ length: 25 }, (_, h) => <option key={h} value={h}>{h === 24 ? "Midnight" : `${h % 12 === 0 ? 12 : h % 12}:00 ${h < 12 ? "AM" : "PM"}`}</option>)}
-            </select>
+            </Select>
           </div>
           {state.errors?.scheduleEndHour && <p className="mt-1 text-[13px] text-danger">{state.errors.scheduleEndHour}</p>}
         </div>

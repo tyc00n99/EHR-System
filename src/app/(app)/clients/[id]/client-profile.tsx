@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Icon, type IconName } from "@/components/icons";
-import { Badge, cx } from "@/components/kit";
+import { Badge, cx, Select } from "@/components/kit";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { deleteProfileRow, saveProfileRow, type SectionKey } from "./profile-actions";
 import { AvailabilityEditor, type Schedule } from "./availability-editor";
@@ -341,9 +341,9 @@ function ProfileDrawer({ personId, section, row, onDone }: { personId: string; s
                       {f.label}{f.required && <span className="text-danger"> *</span>}
                     </label>
                     {f.type === "select" ? (
-                      <select id={`f-${f.name}`} name={f.name} defaultValue={value(f.name)} className="h-8 w-full rounded-md border border-line bg-card px-2 text-[13px] text-text">
+                      <Select id={`f-${f.name}`} name={f.name} defaultValue={value(f.name)}>
                         {(f.options ?? []).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                      </select>
+                      </Select>
                     ) : f.type === "textarea" ? (
                       <textarea id={`f-${f.name}`} name={f.name} rows={3} defaultValue={value(f.name)} placeholder={f.placeholder} className="w-full rounded-md border border-line bg-card px-2 py-1.5 text-[13px] text-text placeholder:text-hint" />
                     ) : (

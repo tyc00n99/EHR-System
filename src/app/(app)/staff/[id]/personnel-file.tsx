@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
-import { cx } from "@/components/kit";
+import { cx, Select } from "@/components/kit";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { credentialLabel } from "@/lib/credentials";
 import { fmtDate } from "@/lib/format";
@@ -302,10 +302,10 @@ function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: st
         {item.type === "evaluation" && (
           <div>
             <Label required>Frequency</Label>
-            <select name="renewMonths" defaultValue="12" className={field}>
+            <Select name="renewMonths" defaultValue="12">
               <option value="12">Annually</option>
               <option value="3">Quarterly</option>
-            </select>
+            </Select>
             <p className="mt-1 text-[13px] text-muted-foreground">Sets when the next one is due.</p>
           </div>
         )}

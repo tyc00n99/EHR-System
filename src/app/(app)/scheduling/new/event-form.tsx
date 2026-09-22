@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
-import { cx } from "@/components/kit";
+import { cx, Select } from "@/components/kit";
 import { createShifts } from "../actions";
 import { DateInput } from "@/components/date-input";
 
@@ -100,10 +100,10 @@ export function EventForm({
 
           <div className="mb-4">
             <Label required>Client</Label>
-            <select name="personId" value={personId} onChange={(e) => setPersonId(e.target.value)} className={field}>
+            <Select name="personId" value={personId} onChange={(e) => setPersonId(e.target.value)}>
               <option value="">Select client</option>
               {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            </Select>
             {err("personId") && <p className="mt-1 text-[13px] text-danger">{err("personId")}</p>}
           </div>
 
@@ -111,10 +111,10 @@ export function EventForm({
             <Label required after={personId && <Link href={`/clients/${personId}?tab=profile&section=authorizations`} className="text-[14px] font-medium text-primary hover:underline">Authorization utilization</Link>}>
               Event type
             </Label>
-            <select name="serviceAgreementId" disabled={!personId} className={cx(field, !personId && "bg-panel text-hint")}>
+            <Select name="serviceAgreementId" disabled={!personId}>
               <option value="">{personId ? "Select a session type" : "Select a client first"}</option>
               {forClient.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-            </select>
+            </Select>
             {personId && forClient.length === 0 && <p className="mt-1 text-[13px] text-warn">This client has no active authorization to schedule against.</p>}
             {err("serviceAgreementId") && <p className="mt-1 text-[13px] text-danger">{err("serviceAgreementId")}</p>}
           </div>
@@ -145,9 +145,9 @@ export function EventForm({
 
           <div className="mb-4">
             <Label>Recurrence</Label>
-            <select value={recurrence} onChange={(e) => setRecurrence(e.target.value)} className={field}>
+            <Select value={recurrence} onChange={(e) => setRecurrence(e.target.value)}>
               {RECURRENCE.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
+            </Select>
             {recurrence === "weekly" && (
               <div className="mt-3 rounded-lg border border-line p-3">
                 <p className="mb-2 text-[14px] text-muted-foreground">Repeat on</p>
@@ -179,10 +179,10 @@ export function EventForm({
 
           <div className="mb-4">
             <Label required>Team members</Label>
-            <select name="staffId" disabled={!timed} className={cx(field, !timed && "bg-panel text-hint")}>
+            <Select name="staffId" disabled={!timed}>
               <option value="">{timed ? "Select a caregiver" : "Select a date and time first"}</option>
               {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            </Select>
             {err("staffId") && <p className="mt-1 text-[13px] text-danger">{err("staffId")}</p>}
           </div>
 
@@ -194,10 +194,10 @@ export function EventForm({
           <h2 className="mb-3 text-[21px] leading-none">Location</h2>
           <div className="mb-4">
             <Label>Care location</Label>
-            <select disabled={!personId} className={cx(field, !personId && "bg-panel text-hint")}>
+            <Select disabled={!personId}>
               <option value="">{personId ? "Select a care location" : "Select a client first"}</option>
               {locations.filter(() => personId).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
+            </Select>
             <p className="mt-1 text-[13px] text-muted-foreground">Care locations are kept on the client&apos;s Profile tab; the note records where the visit actually happened.</p>
           </div>
         </div>

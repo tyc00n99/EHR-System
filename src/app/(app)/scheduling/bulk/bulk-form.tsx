@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Icon } from "@/components/icons";
-import { cx } from "@/components/kit";
+import { cx, Select } from "@/components/kit";
 import { bulkCancelShifts } from "../actions";
 import { DateInput } from "@/components/date-input";
 
@@ -89,9 +89,9 @@ export function BulkForm({
         <div>
           <div className="mb-4">
             <Label required>Action type</Label>
-            <select className={field} defaultValue="cancel">
+            <Select defaultValue="cancel">
               <option value="cancel">Cancel</option>
-            </select>
+            </Select>
           </div>
 
           <div className="mb-4">
@@ -107,27 +107,27 @@ export function BulkForm({
 
           <div className="mb-4">
             <Label required>Cancelled by</Label>
-            <select name="cancelledBy" value={by} onChange={(e) => { setBy(e.target.value); setWho(""); }} className={field}>
+            <Select name="cancelledBy" value={by} onChange={(e) => { setBy(e.target.value); setWho(""); }}>
               <option value="">Select</option>
               <option value="client">Client</option>
               <option value="team_member">Team member</option>
-            </select>
+            </Select>
           </div>
 
           <div className="mb-4">
             <Label required>{by === "team_member" ? "Which team member?" : "Which client?"}</Label>
-            <select value={who} onChange={(e) => setWho(e.target.value)} disabled={!by} className={cx(field, !by && "bg-panel text-hint")}>
+            <Select value={who} onChange={(e) => setWho(e.target.value)} disabled={!by}>
               <option value="">{by ? "Select" : "Choose who cancelled first"}</option>
               {(by === "team_member" ? staff : clients).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
+            </Select>
           </div>
 
           <div className="mb-4">
             <Label required>Cancellation reason</Label>
-            <select name="cancelReasonId" className={field} defaultValue="">
+            <Select name="cancelReasonId" defaultValue="">
               <option value="">Select a cancellation reason</option>
               {reasons.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-            </select>
+            </Select>
             <p className="mt-1 text-[13px] text-muted-foreground">
               Reasons are set in <Link href="/scheduling/settings?tab=reasons" className="font-medium text-primary hover:underline">Schedule settings</Link>.
             </p>
