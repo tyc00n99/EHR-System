@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { Rule } from "@/components/rule";
 import { Icon } from "@/components/icons";
-import { Button, Field, FormActions, FormError, FormSection, Input, LinkButton, Select, cx } from "@/components/kit";
+import { Button, Field, FormActions, FormError, Input, LinkButton, Select, cx } from "@/components/kit";
 import { MODIFIERS, SERVICE_CODES, serviceCodeKey } from "@/lib/hcpcs";
 import type { ActionState } from "@/lib/validation";
 import type { ExtractState } from "../../../actions";
@@ -65,52 +65,52 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
   const toggleMod = (m: string) => setModifiers((cur) => (cur.includes(m) ? cur.filter((x) => x !== m) : cur.length >= 4 ? cur : [...cur, m]));
   const set = (k: keyof typeof fields) => (ev: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setFields((f) => ({ ...f, [k]: ev.target.value }));
 
+  // One flat form (Sept 22, 2026, user's pick "C" of four mockups): no sections, no explanations,
+  // the fields in the order they appear on the DHS letter, four to a row where they are short.
   return (
-    <div className="max-w-4xl">
-      <form action={runExtract} className="mb-2">
-        <FormSection title="Upload the service agreement" description={aiReady ? "Upload the DHS service agreement PDF and the details below fill in automatically. Review them before saving." : "Automatic reading is not turned on for this site yet, so the details below are typed by hand. You can still attach the letter. An admin turns it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying."}>
-          <div className="col-span-2 md:col-span-6">
-            <FormError message={ex.message} />
-            <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-line bg-sidebar px-4 py-4">
-              <Icon.doc size={20} className="text-gray-500" />
-              <input type="file" name="document" accept="application/pdf,.pdf" className="text-[13px] file:mr-3 file:rounded-md file:border file:border-line file:bg-page file:px-3 file:py-1.5 file:text-[13px] file:font-medium hover:file:bg-hover" />
-              <Button type="submit" variant="secondary" disabled={extracting || !aiReady} className="ml-auto">{extracting ? "Reading the PDF…" : "Extract details"}</Button>
-            </div>
-            {ex.documentName && (
-              <div className={cx("mt-3 rounded-md px-3 py-2.5 text-[13px]", ex.extracted ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>
-                <div className="flex items-start gap-2">
-                  <Icon.check size={15} className="mt-0.5 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium">{ex.extracted ? `Read ${ex.documentName}. Check the fields below before saving.` : `Attached ${ex.documentName}.`}</div>
-                    {ex.pmiMismatch && <div className="mt-0.5 text-danger">The PMI on the letter ({ex.extracted?.pmi}) does not match this client. Make sure you picked the right client.</div>}
-                    {ex.extracted && (
-                      <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[13px] sm:grid-cols-2">
-                        {ex.extracted.recipientName && <span>Recipient: {ex.extracted.recipientName}</span>}
-                        {ex.extracted.effectiveDate && <span>Agreement dates: {ex.extracted.effectiveDate} to {ex.extracted.throughDate ?? "?"}</span>}
-                        {ex.extracted.caseManagerName && <span>Case manager: {ex.extracted.caseManagerName}{ex.extracted.caseManagerPhone ? ` · ${ex.extracted.caseManagerPhone}` : ""}</span>}
-                        {ex.extracted.icd10 && <span>Diagnosis: {ex.extracted.icd10}</span>}
-                        {ex.extracted.providerName && <span>Issued to: {ex.extracted.providerName}{ex.extracted.providerId ? ` (${ex.extracted.providerId})` : ""}</span>}
-                      </div>
-                    )}
-                    {ex.extracted?.notes && <div className="mt-1 text-[13px]">Reviewer note: {ex.extracted.notes}</div>}
-                  </div>
-                </div>
-                {ex.extracted && ex.extracted.lines.length > 1 && (
-                  <div className="mt-2 border-t border-ok/20 pt-2">
-                    <div className="mb-1 text-[13px] font-medium">This letter has {ex.extracted.lines.length} service lines. Choose the one to save as this agreement:</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {ex.extracted.lines.map((l, i) => (
-                        <button key={i} type="button" onClick={() => { setLineIdx(i); applyLine(ex.extracted!, i); }} className={cx("rounded-md border px-2 py-1 text-[13px]", i === lineIdx ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
-                          Line {l.lineNumber ?? i + 1} · {l.procedureCode} {l.modifiers.join(" ")} · {l.quantity ?? "?"} units{l.status && !/approved/i.test(l.status) ? ` · ${l.status}` : ""}
-                        </button>
-                      ))}
-                    </div>
+    <div>
+      <form action={runExtract} className="mb-5">
+        <FormError message={ex.message} />
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-line bg-sidebar px-4 py-3.5">
+          <Icon.doc size={20} className="text-gray-500" />
+          <input type="file" name="document" accept="application/pdf,.pdf" className="text-[13px] file:mr-3 file:rounded-md file:border file:border-line file:bg-page file:px-3 file:py-1.5 file:text-[13px] file:font-medium hover:file:bg-hover" />
+          <span className="text-[13px] text-muted-foreground">{aiReady ? "Upload the DHS letter and the fields fill in" : "Reading is not turned on for this site; type the details below"}</span>
+          <Button type="submit" variant="secondary" disabled={extracting || !aiReady} className="ml-auto">{extracting ? "Reading the PDF…" : "Extract details"}</Button>
+        </div>
+        {!aiReady && <p className="mt-2 text-[13px] text-muted-foreground">An admin turns reading on by adding ANTHROPIC_API_KEY to the app&apos;s environment settings and redeploying.</p>}
+        {ex.documentName && (
+          <div className={cx("mt-3 rounded-md px-3 py-2.5 text-[13px]", ex.extracted ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>
+            <div className="flex items-start gap-2">
+              <Icon.check size={15} className="mt-0.5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="font-medium">{ex.extracted ? `Read ${ex.documentName}. Check the fields below before saving.` : `Attached ${ex.documentName}.`}</div>
+                {ex.pmiMismatch && <div className="mt-0.5 text-danger">The PMI on the letter ({ex.extracted?.pmi}) does not match this client. Make sure you picked the right client.</div>}
+                {ex.extracted && (
+                  <div className="mt-1 grid gap-x-6 gap-y-0.5 text-[13px] sm:grid-cols-2">
+                    {ex.extracted.recipientName && <span>Recipient: {ex.extracted.recipientName}</span>}
+                    {ex.extracted.effectiveDate && <span>Agreement dates: {ex.extracted.effectiveDate} to {ex.extracted.throughDate ?? "?"}</span>}
+                    {ex.extracted.caseManagerName && <span>Case manager: {ex.extracted.caseManagerName}{ex.extracted.caseManagerPhone ? ` · ${ex.extracted.caseManagerPhone}` : ""}</span>}
+                    {ex.extracted.icd10 && <span>Diagnosis: {ex.extracted.icd10}</span>}
+                    {ex.extracted.providerName && <span>Issued to: {ex.extracted.providerName}{ex.extracted.providerId ? ` (${ex.extracted.providerId})` : ""}</span>}
                   </div>
                 )}
+                {ex.extracted?.notes && <div className="mt-1 text-[13px]">Reviewer note: {ex.extracted.notes}</div>}
+              </div>
+            </div>
+            {ex.extracted && ex.extracted.lines.length > 1 && (
+              <div className="mt-2 border-t border-ok/20 pt-2">
+                <div className="mb-1 text-[13px] font-medium">This letter has {ex.extracted.lines.length} service lines. Choose the one to save as this agreement:</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {ex.extracted.lines.map((l, i) => (
+                    <button key={i} type="button" onClick={() => { setLineIdx(i); applyLine(ex.extracted!, i); }} className={cx("rounded-md border px-2 py-1 text-[13px]", i === lineIdx ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-text hover:bg-hover")}>
+                      Line {l.lineNumber ?? i + 1} · {l.procedureCode} {l.modifiers.join(" ")} · {l.quantity ?? "?"} units{l.status && !/approved/i.test(l.status) ? ` · ${l.status}` : ""}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </FormSection>
+        )}
       </form>
 
       <form action={submit}>
@@ -121,24 +121,23 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
         {onSaved && <input type="hidden" name="stay" value="1" />}
         {modifiers.map((m) => <input key={m} type="hidden" name="modifiers[]" value={m} />)}
 
-        <FormSection title="Authorization" description="From the DHS service agreement letter.">
-          <Field label="Agreement number" error={e.agreementNumber} className="md:col-span-3"><Input name="agreementNumber" value={fields.agreementNumber} onChange={set("agreementNumber")} required /></Field>
-          <Field label="Authorizing county" error={e.authorizingCounty} className="md:col-span-3"><Select name="authorizingCounty" value={fields.authorizingCounty} onChange={set("authorizingCounty")} required><option value="">Choose a county…</option>{fields.authorizingCounty && !MN_COUNTIES.includes(fields.authorizingCounty as (typeof MN_COUNTIES)[number]) && <option value={fields.authorizingCounty}>{fields.authorizingCounty}</option>}{MN_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select></Field>
-          <Field label="Start date" error={e.startDate} className="md:col-span-3"><DateInput name="startDate" value={fields.startDate} onChange={set("startDate")} required /></Field>
-          <Field label="End date" error={e.endDate} className="md:col-span-3"><DateInput name="endDate" value={fields.endDate} onChange={set("endDate")} required /></Field>
-        </FormSection>
-
-        <FormSection title="Service" description="Procedure code and modifiers from DHS-3945 (April 2026). Picking a service fills in its standard modifiers; adjust if the letter differs.">
-          <Field label="Service" error={e.serviceCode} className="col-span-2 md:col-span-6">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
+          <Field label="Agreement number" error={e.agreementNumber} className="md:col-span-2"><Input name="agreementNumber" value={fields.agreementNumber} onChange={set("agreementNumber")} required /></Field>
+          <Field label="Authorizing county" error={e.authorizingCounty} className="md:col-span-2"><Select name="authorizingCounty" value={fields.authorizingCounty} onChange={set("authorizingCounty")} required><option value="">Choose a county…</option>{fields.authorizingCounty && !MN_COUNTIES.includes(fields.authorizingCounty as (typeof MN_COUNTIES)[number]) && <option value={fields.authorizingCounty}>{fields.authorizingCounty}</option>}{MN_COUNTIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select></Field>
+          <Field label="Start date" error={e.startDate}><DateInput name="startDate" value={fields.startDate} onChange={set("startDate")} required /></Field>
+          <Field label="End date" error={e.endDate}><DateInput name="endDate" value={fields.endDate} onChange={set("endDate")} required /></Field>
+          <Field label="Authorized units" error={e.authorizedUnits}><Input name="authorizedUnits" type="number" min={1} step={1} value={fields.authorizedUnits} onChange={set("authorizedUnits")} required /></Field>
+          <Field label="Rate per unit" error={e.unitRate}><Input name="unitRate" type="number" min={0.01} step={0.01} placeholder="0.00" value={fields.unitRate} onChange={set("unitRate")} required /></Field>
+          <Field label="Service" error={e.serviceCode} className="col-span-2 md:col-span-4">
             <Select value={codeKey} onChange={(ev) => pickCode(ev.target.value)}>
               {SERVICE_CODES.map((s) => <option key={serviceCodeKey(s)} value={serviceCodeKey(s)}>{s.label} · {serviceCodeKey(s)}</option>)}
               <option value={OTHER}>Other code…</option>
             </Select>
           </Field>
           {codeKey === OTHER && (
-            <Field label="HCPCS code" error={e.serviceCode} className="md:col-span-2"><Input value={otherCode} onChange={(ev) => setOtherCode(ev.target.value)} placeholder="T2016" className="uppercase" maxLength={5} /></Field>
+            <Field label="HCPCS code" error={e.serviceCode}><Input value={otherCode} onChange={(ev) => setOtherCode(ev.target.value)} placeholder="T2016" className="uppercase" maxLength={5} /></Field>
           )}
-          <div className="col-span-2 md:col-span-6">
+          <div className="col-span-2 md:col-span-2">
             <span className="mb-1.5 block text-[13px] font-medium text-text">Modifiers <span className="font-normal text-muted-foreground">· up to four</span></span>
             <details className="group relative">
               <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-line bg-page px-3 hover:border-gray-400 [&::-webkit-details-marker]:hidden">
@@ -156,14 +155,12 @@ export function AgreementForm({ action, extract, cancelHref, defaultCounty, aiRe
               </div>
             </details>
             {e.modifiers && <span className="mt-1.5 block text-[13px] text-danger">{e.modifiers}</span>}
-            <div className="mt-2 text-[13px] text-muted-foreground">Claim line: <span className="font-medium tabular-nums text-text-strong">{serviceCode || "—"}{modifiers.length ? ` ${modifiers.join(" ")}` : ""}</span></div>
           </div>
-        </FormSection>
-
-        <FormSection title="Units and rate" titleAfter={<Rule name="units" />} description="All units are 15 minutes. Units burn down as notes are completed.">
-          <Field label="Authorized units" error={e.authorizedUnits} hint="15-minute units" className="md:col-span-3"><Input name="authorizedUnits" type="number" min={1} step={1} value={fields.authorizedUnits} onChange={set("authorizedUnits")} required /></Field>
-          <Field label="Rate per unit" error={e.unitRate} className="md:col-span-3"><Input name="unitRate" type="number" min={0.01} step={0.01} placeholder="0.00" value={fields.unitRate} onChange={set("unitRate")} required /></Field>
-        </FormSection>
+          <div className="col-span-2 flex items-center gap-1.5 self-end pb-2.5 text-[13px] text-muted-foreground md:col-span-2">
+            <span>Claim line: <span className="font-medium tabular-nums text-text-strong">{serviceCode || "—"}{modifiers.length ? ` ${modifiers.join(" ")}` : ""}</span> · 15-minute units</span>
+            <Rule name="units" />
+          </div>
+        </div>
 
         <FormActions>
           <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save agreement"}</Button>
