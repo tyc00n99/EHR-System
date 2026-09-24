@@ -50,7 +50,7 @@ export function AssignmentPanel({ staffId, assignments, candidates }: { staffId:
             <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-text-strong">{a.name} <span className="text-[13px] font-normal text-muted-foreground tabular-nums">PMI {a.pmi}</span></div>
-                <div className="text-[13px] text-muted-foreground">{a.orientedOn ? `Oriented to this person ${a.orientedOn}` : "Not yet oriented to this person's plan and needs"}</div>
+                {!a.orientedOn && <div className="text-[13px] text-muted-foreground">Not yet oriented to this person&apos;s plan and needs</div>}
               </div>
               {a.orientedOn ? <Badge tone="ok">oriented</Badge> : (
                 <button disabled={pending} onClick={() => start(() => markOriented(a.id, staffId))} className="inline-flex h-7 items-center rounded-md bg-primary-soft px-2.5 text-[13px] font-medium text-primary hover:bg-primary-soft/70 disabled:opacity-50">Mark oriented today</button>

@@ -92,7 +92,7 @@ async function main() {
   // Overnight staff: night supervision cannot be worked by the same person who does the days.
   const amara = await w.insert(staff, {
     firstName: "Amara", lastName: "Okafor", dob: "1994-11-30", gender: "female", ...ssn("456789012"), payRate: "21.00",
-    address1: "77 Snelling Ave N", city: "St. Paul", zip: "55104", umpi: "A100000004", hireDate: "2025-09-01", title: "Direct support professional, overnight",
+    address1: "77 Snelling Ave N", city: "St. Paul", zip: "55104", umpi: "A100000004", hireDate: "2025-09-01", title: "Direct support professional",
     email: "night@example.com", phone: "651-555-0104",
   });
   const hash = await hashPassword(PASSWORD);
