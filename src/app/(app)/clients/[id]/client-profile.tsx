@@ -65,9 +65,9 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
   const rows = entities[openKey] ?? [];
 
   return (
-    <div className={cx("relative grid min-h-0 flex-1 gap-0", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
+    <div className={cx("relative grid min-h-0 flex-1 gap-0 lg:-mb-28", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
       {/* The section list scrolls on its own, so picking a section never moves the whole page. */}
-      <div className={cx("border-line py-4 lg:min-h-0 lg:overflow-y-auto lg:pr-4", wide && "hidden")}>
+      <div className={cx("border-line py-4 lg:min-h-0 lg:overflow-y-auto lg:pr-4 lg:pb-6", wide && "hidden")}>
         <div className="rounded-2xl bg-card-soft p-6">
           <div className="mb-4 flex items-center">
             <div className="text-[17px] font-semibold text-text-strong">General information</div>
@@ -132,7 +132,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
         </span>
       </button>
 
-      <div className={cx("min-w-0 py-5 lg:min-h-0 lg:overflow-y-auto", wide ? "lg:pl-5" : "lg:pl-8")}>
+      <div className={cx("min-w-0 py-5 lg:min-h-0 lg:overflow-y-auto lg:pb-28", wide ? "lg:pl-5" : "lg:pl-8")}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="text-[16.5px] font-semibold text-text-strong">{current?.label}</div>
           <div className="ml-auto flex items-center gap-2">
