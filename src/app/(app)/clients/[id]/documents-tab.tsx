@@ -92,12 +92,12 @@ export function DocumentsTab({ personId, items, others, archived, types, summary
         })}
       </MarginSection>
 
-      <MarginFold label="Other files" note="Medical orders, correspondence, anything staff should read before a shift." summary={others.length ? <><span className="font-medium text-text-strong">{others.length} file{others.length === 1 ? "" : "s"}</span> · {others.map((d) => d.title).join(", ")}</> : "None yet"}>
+      <MarginFold label="Other files" note="Medical orders, correspondence, anything staff should read before a shift." summary={others.length ? <span className="font-medium text-text-strong">{others.length} file{others.length === 1 ? "" : "s"}</span> : "None yet"}>
         <FileRows personId={personId} docs={others} manage={manage} groupBy={labelOf} />
       </MarginFold>
 
       {archived.length > 0 && (
-        <MarginFold label="Archived" note="Kept for the record, restorable any time." summary={<><span className="font-medium text-text-strong">{archived.length} document{archived.length === 1 ? "" : "s"}</span> · {archived.map((d) => d.title).join(", ")}</>}>
+        <MarginFold label="Archived" note="Kept for the record, restorable any time." summary={<span className="font-medium text-text-strong">{archived.length} document{archived.length === 1 ? "" : "s"}</span>}>
           <FileRows personId={personId} docs={archived} manage={manage} groupBy={(d) => (d.archivedAt ? `Archived ${fmtDate(d.archivedAt)}` : "Archived earlier")} />
         </MarginFold>
       )}

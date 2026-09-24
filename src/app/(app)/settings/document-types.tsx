@@ -54,7 +54,6 @@ export function DocumentTypesEditor({ types, onDone }: { types: DocumentType[]; 
             <span className="cursor-grab select-none text-center text-[15px] leading-none tracking-[-2px] text-hint" aria-hidden>⋮⋮</span>
           </div>
         ))}
-        <p className="pt-4 text-[13px] text-muted-foreground">The five Minnesota 245D items stay required. Removing a type keeps the files already filed under it.</p>
       </MarginSection>
       <div className="flex gap-2 border-t border-line pt-5"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button><Button type="button" variant="ghost" onClick={() => (onDone ? onDone() : router.refresh())}>Cancel</Button></div>
     </form>
