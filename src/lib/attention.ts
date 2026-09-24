@@ -41,7 +41,7 @@ export const attentionItems = cache(async function attentionItems(): Promise<Att
     if (c.overdue) items.push({ kind: "compliance", severity: "danger", title: `${s.firstName} ${s.lastName} · ${c.overdue} compliance item${c.overdue === 1 ? "" : "s"} overdue`, detail: "Licensing exposure until resolved", href: `/staff/${s.id}` });
     else if (c.dueSoon) items.push({ kind: "compliance", severity: "warn", title: `${s.firstName} ${s.lastName} · training due within 30 days`, detail: `${c.dueSoon} item${c.dueSoon === 1 ? "" : "s"}`, href: `/staff/${s.id}` });
     const unoriented = (await listAssignmentsForStaff(s.id)).filter((a) => a.assignment.active && !a.assignment.orientedOn);
-    for (const a of unoriented) items.push({ kind: "orientation", severity: "warn", title: `${s.firstName} ${s.lastName} not oriented to ${a.person.firstName} ${a.person.lastName}`, detail: "Required before unsupervised contact (245D.09, subd. 4a). Blocks clock-in.", href: `/staff/${s.id}` });
+    for (const a of unoriented) items.push({ kind: "orientation", severity: "warn", title: `${s.firstName} ${s.lastName} not oriented to ${a.person.firstName} ${a.person.lastName}`, detail: "Required before unsupervised contact. Blocks clock-in.", href: `/staff/${s.id}` });
   }
   for (const p of people) if (p.status === "active" && !p.signatureCodeHash) items.push({ kind: "code", severity: "danger", title: `${p.firstName} ${p.lastName} has no signing code`, detail: "Visits cannot be signed until one is generated", href: `/clients/${p.id}` });
   // A rotated code the client was not texted has to be read to them, so it surfaces here for a few

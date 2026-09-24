@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, PageHeader, PageIcon, Properties, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { getSite } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
-import { getServiceType } from "@/lib/services";
+import { getServiceType, planningLabel } from "@/lib/services";
 import { createProgram } from "../actions";
 import { ProgramForm, ProgramToggle } from "./program-form";
 
@@ -35,7 +35,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
                     <Tr key={p.id} muted={!p.active}>
                       <Td strong>{p.name}</Td>
                       <Td wrap>{t.name}</Td>
-                      <Td><Badge tone={t.planningTrack === "245D.071" ? "accent" : "ok"}>{t.planningTrack}</Badge></Td>
+                      <Td><Badge tone={t.planningTrack === "245D.071" ? "accent" : "ok"}>{planningLabel(t.planningTrack)}</Badge></Td>
                       <Td><Badge tone={p.active ? "ok" : "neutral"}>{p.active ? "active" : "inactive"}</Badge></Td>
                       <Td align="right"><ProgramToggle id={p.id} siteId={site.id} active={p.active} /></Td>
                     </Tr>

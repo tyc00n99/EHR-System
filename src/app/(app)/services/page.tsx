@@ -1,5 +1,5 @@
 import { Badge, Card, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
-import { GROUP_LABELS, SERVICE_TYPES, WAIVER_NAMES, type ServiceCategory, type ServiceGroup } from "@/lib/services";
+import { GROUP_LABELS, SERVICE_TYPES, WAIVER_NAMES, planningLabel, type ServiceCategory, type ServiceGroup } from "@/lib/services";
 
 export const metadata = { title: "245D service types" };
 
@@ -13,20 +13,20 @@ const GROUP_ORDER: ServiceGroup[] = ["respite", "in-home", "supervision", "commu
 export default function ServicesPage() {
   return (
     <div>
-      <PageHeader title="245D service types" meta={<span>Every service the license governs, grouped the way 245D.03 lists them. Planning shows which service-planning rules apply: 245D.07 for the basic track, 245D.071 for the outcome-based intensive track.</span>} />
+      <PageHeader title="245D service types" meta={<span>Every service the license governs. Planning shows which service-planning track applies: basic, or the outcome-based intensive track.</span>} />
       <div className="space-y-6">
         {CATEGORIES.map((cat) => {
           const items = SERVICE_TYPES.filter((s) => s.category === cat.key);
           return (
-            <Card key={cat.key} title={cat.title} description={cat.blurb} actions={<span className="text-[13px] text-muted-foreground">{cat.cite} · {items.length} services</span>}>
+            <Card key={cat.key} title={cat.title} description={cat.blurb} actions={<span className="text-[13px] text-muted-foreground">{items.length} services</span>}>
               <Table>
-                <Thead><Th>Service</Th><Th>Waivers</Th><Th>Planning</Th><Th>Cite</Th></Thead>
+                <Thead><Th>Service</Th><Th>Waivers</Th><Th>Planning</Th></Thead>
                 <tbody>
                   {GROUP_ORDER.map((g) => {
                     const rows = items.filter((s) => s.group === g);
                     if (rows.length === 0) return null;
                     return [
-                      <tr key={`${g}-h`} className="border-t border-line-soft bg-sidebar"><td colSpan={4} className="px-5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-gray-500">{GROUP_LABELS[g]}</td></tr>,
+                      <tr key={`${g}-h`} className="border-t border-line-soft bg-sidebar"><td colSpan={3} className="px-5 py-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-gray-500">{GROUP_LABELS[g]}</td></tr>,
                       ...rows.map((s) => (
                         <Tr key={s.id}>
                           <Td wrap>
@@ -38,8 +38,7 @@ export default function ServicesPage() {
                               <span className="flex flex-wrap gap-1">{s.waivers.map((w) => <span key={w} title={WAIVER_NAMES[w]} className="rounded bg-panel px-1.5 py-0.5 text-[13px] font-medium text-gray-700">{w}</span>)}</span>
                             )}
                           </Td>
-                          <Td><Badge tone={s.planningTrack === "245D.071" ? "accent" : "ok"}>{s.planningTrack}</Badge></Td>
-                          <Td className="whitespace-nowrap text-[13px] text-muted-foreground">{s.cite}</Td>
+                          <Td><Badge tone={s.planningTrack === "245D.071" ? "accent" : "ok"}>{planningLabel(s.planningTrack)}</Badge></Td>
                         </Tr>
                       )),
                     ];

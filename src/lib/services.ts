@@ -21,6 +21,8 @@ export type ServiceGroup =
 
 /** Planning rules that govern the service (see 245D.07 and 245D.071). */
 export type PlanningTrack = "245D.07" | "245D.071";
+/** What the two planning tracks are called on screen (Sept 24, 2026: statute numbers are not shown in the UI, they change). */
+export const planningLabel = (t: PlanningTrack) => (t === "245D.071" ? "Intensive · outcome-based" : "Basic");
 
 export type Waiver = "BI" | "CAC" | "CADI" | "DD" | "EW";
 
@@ -70,7 +72,7 @@ export const SERVICE_TYPES: ServiceType[] = [
     planningTrack: "245D.07",
     waivers: ["BI", "CAC", "CADI", "DD", "EW"],
     cite: "245D.03, subd. 1(b)(1)",
-    note: "Children served in a licensed family child foster care home are excluded when the foster license holder meets 245D.06 and 245D.061.",
+    note: "Children served in a licensed family child foster care home are excluded when the foster license holder meets the applicable licensing standards.",
   },
   {
     id: "adult-companion",
@@ -175,7 +177,7 @@ export const SERVICE_TYPES: ServiceType[] = [
     planningTrack: "245D.071",
     waivers: [],
     cite: "245D.03, subd. 1(c)(2)(i)",
-    note: "State-funded program under 252.275, not a waiver service.",
+    note: "State-funded program, not a waiver service.",
   },
   {
     id: "ihs-with-training",
@@ -186,7 +188,7 @@ export const SERVICE_TYPES: ServiceType[] = [
     planningTrack: "245D.07",
     waivers: ALL_HCBS,
     cite: "245D.03, subd. 1(c)(2)(ii)",
-    note: "Intensive service that follows the basic planning track per 245D.071, subd. 1.",
+    note: "Intensive service that follows the basic planning track.",
   },
   {
     id: "ihs-family-training",
@@ -229,7 +231,7 @@ export const SERVICE_TYPES: ServiceType[] = [
     planningTrack: "245D.071",
     waivers: [],
     cite: "245D.03, subd. 1(c)(3)(iii)",
-    note: "ICF/DD license holders are exempt from several sections; see 245D.03, subd. 2(e).",
+    note: "ICF/DD license holders are exempt from several of the usual requirements.",
   },
   {
     id: "life-sharing",

@@ -25,7 +25,7 @@ async function checkEligibility(staffId: string, personId: string): Promise<{ pr
   if (!s || !s.active) return { problem: "That staff member is inactive." };
   const a = (await listAssignmentsForStaff(staffId)).find((x) => x.assignment.active && x.person.id === personId);
   if (!a) return { problem: "That caregiver is not assigned to this client." };
-  if (!a.assignment.orientedOn) return { problem: "That caregiver has not been oriented to this client (245D.09, subd. 4a)." };
+  if (!a.assignment.orientedOn) return { problem: "That caregiver has not been oriented to this client." };
   const creds = (await listAllCredentials()).get(staffId) ?? [];
   const overdue = complianceSummary(evaluateCompliance(s.hireDate, creds)).overdue;
   return overdue > 0 ? { warning: `${s.firstName} ${s.lastName} has ${overdue} overdue compliance item${overdue === 1 ? "" : "s"} — see Compliance before the first shift.` } : {};

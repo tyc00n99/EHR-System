@@ -56,7 +56,7 @@ const addMonths = (iso: string, months: number) => { const d = new Date(iso + "T
 const addYear = (iso: string) => addMonths(iso, 12);
 const dueStatus = (due: string, today: string): PersonnelStatus => (due < today ? "overdue" : addDays(today, SOON_DAYS) >= due ? "due_soon" : "ok");
 
-const GROUPS = { employment: "Employment", training: "Qualifications, orientation, training", background: "Background study · chapter 245C", contact: "Direct contact · employees hired after Jan 1, 2014", extras: "Licences and other certificates" };
+const GROUPS = { employment: "Employment", training: "Qualifications, orientation, training", background: "Background study", contact: "Direct contact · employees hired after Jan 1, 2014", extras: "Licences and other certificates" };
 
 interface Spec { type: CredentialType; group: string; required: boolean; needsInstructor?: boolean; renews: "never" | "annual" | "expiry"; cite?: string; /** Satisfied by a written source when no document is attached. */ sourceOk?: boolean }
 

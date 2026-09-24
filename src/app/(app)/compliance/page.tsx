@@ -17,7 +17,7 @@ export default async function CompliancePage() {
   const totals = { late: rows.filter((r) => r.items.some((i) => i.status === "overdue" || (i.status === "missing" && i.type === "background_study"))).length, due: rows.filter((r) => r.items.some((i) => i.status === "due_soon")).length };
   return (
     <div>
-      <PageHeader title="Compliance" meta={<><Badge tone={totals.late ? "danger" : "ok"}>{totals.late} staff late</Badge><Badge tone={totals.due ? "warn" : "ok"}>{totals.due} due soon</Badge><span>245D.09 orientation and training, chapter 245C background studies, certifications. Click a cell to open the staff record.</span></>} />
+      <PageHeader title="Compliance" meta={<><Badge tone={totals.late ? "danger" : "ok"}>{totals.late} staff late</Badge><Badge tone={totals.due ? "warn" : "ok"}>{totals.due} due soon</Badge><span>Orientation and training, background studies, certifications. Click a cell to open the staff record.</span></>} />
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">

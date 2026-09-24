@@ -136,7 +136,7 @@ function Detail({ staffId, item, aiReady, staffName }: { staffId: string; item: 
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="text-[21px] leading-tight">{item.label}</h2>
-          <div className="mt-1 text-[13.5px] text-hint">{item.cite}{item.renews === "annual" ? " · renews annually" : item.renews === "expiry" ? " · tracked by expiry" : ""}</div>
+          {item.renews !== "never" && <div className="mt-1 text-[13.5px] text-hint">{item.renews === "annual" ? "Renews annually" : "Tracked by expiry"}</div>}
         </div>
         {item.type && !recording && (
           <button type="button" onClick={() => setRecording(true)} className="flex h-9 shrink-0 items-center rounded-lg bg-primary px-4 text-[14.5px] font-medium text-primary-foreground hover:bg-primary-hover">
