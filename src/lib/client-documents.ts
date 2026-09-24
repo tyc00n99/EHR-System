@@ -14,12 +14,17 @@ export const RENEW_OPTIONS: { months: number | null; label: string }[] = [
   { months: 3, label: "Every 3 months" },
   { months: 6, label: "Every 6 months" },
   { months: 12, label: "Every year" },
-  { months: 24, label: "Every 2 years" },
 ];
 
+/** "Every year", "Every 2 years", "Every 18 months": the preset's label, or a plain reading of any custom number. */
 export function cadenceLabel(renewMonths: number | null): string {
-  return RENEW_OPTIONS.find((o) => o.months === renewMonths)?.label ?? `Every ${renewMonths} months`;
+  const preset = RENEW_OPTIONS.find((o) => o.months === renewMonths);
+  if (preset) return preset.label;
+  const m = renewMonths ?? 0;
+  if (m > 0 && m % 12 === 0) return `Every ${m / 12} years`;
+  return `Every ${m} months`;
 }
+
 
 export interface ChecklistItem {
   type: DocumentType;
