@@ -7,7 +7,7 @@ import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ActionState } from "@/lib/validation";
-import { createMedication, deleteMedication, setMedicationActive } from "../goal-actions";
+import { createMedication, deleteMedication, setMedicationActive, updateMedication } from "../goal-actions";
 import { recordMedAdmin } from "../../visits/record-actions";
 import { DateInput } from "@/components/date-input";
 
@@ -33,6 +33,7 @@ export function Medical({ personId, meds, admins, week, weekLabel, month, monthL
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
   const [pick, setPick] = useState<{ med: MedView; date: string; time: string; current?: AdminView } | null>(null);
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<MedView | null>(null);
   const [pending, start] = useTransition();
   const active = meds.filter((m) => m.active);
   const retired = meds.filter((m) => !m.active);
@@ -119,6 +120,7 @@ export function Medical({ personId, meds, admins, week, weekLabel, month, monthL
                           <DropdownMenu>
                             <DropdownMenuTrigger render={<button type="button" aria-label={`Actions for ${m.name}`} className="rounded-md p-1 text-muted-foreground hover:bg-hover hover:text-text-strong" />}><MoreHorizontal className="size-4" /></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setEditing(m)}>Edit</DropdownMenuItem>
                               <DropdownMenuItem disabled={pending} onClick={() => { if (confirm(`Discontinue ${m.name}?`)) start(() => setMedicationActive(m.id, personId, false)); }}>Discontinue</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -159,11 +161,11 @@ export function Medical({ personId, meds, admins, week, weekLabel, month, monthL
 </span>}</li>)}</ul></details>
       )}
 
-      {manage && adding && (
-        <Dialog open onOpenChange={(o) => { if (!o) setAdding(false); }}>
+      {manage && (adding || editing) && (
+        <Dialog open onOpenChange={(o) => { if (!o) { setAdding(false); setEditing(null); } }}>
           <DialogContent showCloseButton className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
-            <DialogTitle className="sr-only">Add a medication</DialogTitle>
-            <NewMedication personId={personId} onDone={() => setAdding(false)} />
+            <DialogTitle className="sr-only">{editing ? `Edit ${editing.name}` : "Add a medication"}</DialogTitle>
+            <MedicationForm key={editing?.id ?? "new"} personId={personId} med={editing} onDone={() => { setAdding(false); setEditing(null); }} />
           </DialogContent>
         </Dialog>
       )}
@@ -187,25 +189,31 @@ function RecordSlot({ pending, onRecord, onCancel }: { pending: boolean; onRecor
   );
 }
 
-function NewMedication({ personId, onDone }: { personId: string; onDone: () => void }) {
-  const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => { const r = await createMedication(personId, p, fd); if (r.message && !r.errors) { toast.success(r.message); onDone(); } return r; }, {});
+/** One form for adding and editing (Sept 24, 2026): the fields are the same, the action differs. */
+function MedicationForm({ personId, med, onDone }: { personId: string; med: MedView | null; onDone: () => void }) {
+  const [state, submit, pending] = useActionState(async (p: ActionState, fd: FormData) => {
+    const r = med ? await updateMedication(med.id, personId, p, fd) : await createMedication(personId, p, fd);
+    if (r.message && !r.errors) { toast.success(r.message); onDone(); }
+    return r;
+  }, {});
   const e = state.errors ?? {};
   return (
     <form action={submit} className="p-6">
-      <div className="mb-4 text-[17px] font-semibold text-text-strong">Add a medication</div>
+      <div className="mb-4 text-[17px] font-semibold text-text-strong">{med ? `Edit ${med.name}` : "Add a medication"}</div>
+      {med && <p className="-mt-3 mb-4 text-[13px] text-muted-foreground">Doses already recorded on the MAR stay as they are. If the medication is being replaced rather than changed, discontinue it and add the new one so the history stays honest.</p>}
       <FormError message={state.errors ? state.message : undefined} />
       <div className="grid gap-3 md:grid-cols-6">
-        <Field label="Medication" error={e.name} className="md:col-span-2"><Input name="name" placeholder="Metformin" required /></Field>
-        <Field label="Dose" error={e.dose} className="md:col-span-1"><Input name="dose" placeholder="500 mg" required /></Field>
-        <Field label="Route" error={e.route} className="md:col-span-1"><Select name="route" defaultValue="oral"><option value="oral">Oral</option><option value="topical">Topical</option><option value="inhaled">Inhaled</option><option value="injection">Injection</option><option value="other">Other</option></Select></Field>
-        <Field label="Frequency" error={e.frequency} className="md:col-span-2"><Input name="frequency" placeholder="Twice daily with food" required /></Field>
-        <Field label="Scheduled times" error={e.times} hint="24-hour, comma-separated: 08:00, 20:00" className="md:col-span-2"><Input name="times" placeholder="08:00, 20:00" required /></Field>
-        <Field label="Prescriber" error={e.prescriber} className="md:col-span-2"><Input name="prescriber" /></Field>
-        <Field label="Start" error={e.startDate} className="md:col-span-1"><DateInput name="startDate" required /></Field>
-        <Field label="End" error={e.endDate} className="md:col-span-1"><DateInput name="endDate" /></Field>
-        <Field label="Instructions for staff" error={e.instructions} className="md:col-span-6"><Textarea name="instructions" className="min-h-12" placeholder="Give with breakfast. Hold if blood sugar under 70." /></Field>
+        <Field label="Medication" error={e.name} className="md:col-span-2"><Input name="name" defaultValue={med?.name ?? ""} placeholder="Metformin" required /></Field>
+        <Field label="Dose" error={e.dose} className="md:col-span-1"><Input name="dose" defaultValue={med?.dose ?? ""} placeholder="500 mg" required /></Field>
+        <Field label="Route" error={e.route} className="md:col-span-1"><Select name="route" defaultValue={med?.route ?? "oral"}><option value="oral">Oral</option><option value="topical">Topical</option><option value="inhaled">Inhaled</option><option value="injection">Injection</option><option value="other">Other</option></Select></Field>
+        <Field label="Frequency" error={e.frequency} className="md:col-span-2"><Input name="frequency" defaultValue={med?.frequency ?? ""} placeholder="Twice daily with food" required /></Field>
+        <Field label="Scheduled times" error={e.times} hint="24-hour, comma-separated: 08:00, 20:00" className="md:col-span-2"><Input name="times" defaultValue={med?.times.join(", ") ?? ""} placeholder="08:00, 20:00" required /></Field>
+        <Field label="Prescriber" error={e.prescriber} className="md:col-span-2"><Input name="prescriber" defaultValue={med?.prescriber ?? ""} /></Field>
+        <Field label="Start" error={e.startDate} className="md:col-span-1"><DateInput name="startDate" defaultValue={med?.startDate ?? ""} required /></Field>
+        <Field label="End" error={e.endDate} className="md:col-span-1"><DateInput name="endDate" defaultValue={med?.endDate ?? ""} /></Field>
+        <Field label="Instructions for staff" error={e.instructions} className="md:col-span-6"><Textarea name="instructions" defaultValue={med?.instructions ?? ""} className="min-h-12" placeholder="Give with breakfast. Hold if blood sugar under 70." /></Field>
       </div>
-      <div className="mt-5 flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Add medication"}</Button><Button type="button" variant="ghost" onClick={onDone}>Cancel</Button></div>
+      <div className="mt-5 flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : med ? "Save changes" : "Add medication"}</Button><Button type="button" variant="ghost" onClick={onDone}>Cancel</Button></div>
     </form>
   );
 }

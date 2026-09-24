@@ -107,6 +107,19 @@ export async function createMedication(personId: string, _prev: ActionState, fd:
   return { message: "Medication added." };
 }
 
+/** Edits a medication in place — dose, times, instructions, dates (Sept 24, 2026, user's request). The MAR keeps every dose already recorded. */
+export async function updateMedication(id: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser(["admin", "supervisor"]);
+  const parsed = medicationSchema.safeParse({ ...formToObject(fd), times: String(fd.get("times") ?? "").split(/[,\s]+/).filter(Boolean) });
+  if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
+  const db = await getDb();
+  const [med] = await db.select({ id: schema.medications.id }).from(schema.medications).where(and(eq(schema.medications.id, id), eq(schema.medications.personId, personId))).limit(1);
+  if (!med) return { message: "That medication is no longer on this record." };
+  await audited(db, { userId: user.id }).update(schema.medications, id, { ...parsed.data, instructions: parsed.data.instructions ?? null, prescriber: parsed.data.prescriber ?? null, endDate: parsed.data.endDate ?? null });
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true, message: "Medication updated." };
+}
+
 export async function setMedicationActive(id: string, personId: string, active: boolean): Promise<void> {
   const user = await requireUser(["admin", "supervisor"]);
   const db = await getDb();
