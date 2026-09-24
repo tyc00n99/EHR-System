@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { DocumentTextChip } from "@/components/document-text-chip";
 import { MarginSection } from "@/components/chart";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { DocumentTypesEditor } from "../../settings/document-types";
 import { MarginFold } from "@/components/margin-fold";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
@@ -22,6 +23,8 @@ export function DocumentsTab({ personId, items, others, archived, types, summary
   summary: { onFile: number; total: number; overdue: number; dueSoon: number; missing: number }; manage: boolean; canEditTypes: boolean; orgName: string; aiReady: boolean;
 }) {
   const [upload, setUpload] = useState<string | null>(null);
+  // The required list opens in a window here rather than sending the person to Settings (user, Sept 24, 2026).
+  const [editingList, setEditingList] = useState(false);
   const open = (typeId: string) => setUpload((v) => (v === typeId ? null : typeId));
   const labelOf = (d: ClientDocument) => types.find((t) => t.id === typeIdOf(d, types))?.label ?? "Other file";
   const fallbackType = types.find((t) => t.active && !t.required)?.id ?? types.find((t) => t.active)?.id ?? "";
@@ -35,23 +38,28 @@ export function DocumentsTab({ personId, items, others, archived, types, summary
         </div>
       )}
 
+      {canEditTypes && editingList && (
+        <Dialog open onOpenChange={(o) => { if (!o) setEditingList(false); }}>
+          <DialogContent showCloseButton className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-6 sm:max-w-[1040px]">
+            <DialogTitle className="mb-1 text-[17px] font-semibold text-text-strong">Required documents</DialogTitle>
+            <p className="mb-4 text-[13px] text-muted-foreground">The list every client&apos;s Documents tab checks against. Changes apply to all clients.</p>
+            <DocumentTypesEditor types={types} onDone={() => setEditingList(false)} />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* The count rides on the label (user's pick "B", Sept 24, 2026): the label says Required, the list says what,
+          and the record is the agency's by definition, so the margin carries nothing else unless a renewal is due. */}
       <MarginSection
         label="Required"
-        note={<>
-          <span className="block">{summary.total === 0 ? `${orgName} has not set a required list yet.` : `${summary.total} document${summary.total === 1 ? "" : "s"} ${orgName} requires for every client.`}</span>
-          {summary.total > 0 && (
-            <span className="mt-2 block">
-              <span className="font-medium text-text-strong">{summary.onFile} of {summary.total} on file</span>
-              {summary.missing > 0 && <> · {summary.missing} missing</>}
-              {summary.dueSoon > 0 && <> · <span className="font-medium text-warn">{summary.dueSoon} renew{summary.dueSoon === 1 ? "s" : ""} soon</span></>}
-              {summary.overdue > 0 && <> · <span className="font-medium text-warn">{summary.overdue} overdue</span></>}
-            </span>
-          )}
-        </>}
+        labelAfter={summary.total > 0 && <span className="font-medium normal-case tracking-normal">· {summary.onFile} of {summary.total}</span>}
+        note={summary.total === 0 ? `${orgName} has not set a required list yet.` : (summary.dueSoon > 0 || summary.overdue > 0) && (
+          <span className="block font-medium text-warn">{[summary.overdue > 0 && `${summary.overdue} overdue`, summary.dueSoon > 0 && `${summary.dueSoon} renew${summary.dueSoon === 1 ? "s" : ""} soon`].filter(Boolean).join(" · ")}</span>
+        )}
         action={(manage || canEditTypes) && (<>
           {manage && <button type="button" onClick={() => open(items[0]?.type.id ?? fallbackType)} className="block hover:underline">+ Upload</button>}
           {/* The required list is agency policy; editing it is a real action, not a phrase in a sentence (user, Sept 21). */}
-          {canEditTypes && <Link href="/settings?tab=documents" className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[13px] font-medium text-text hover:bg-tab-hover"><Icon.settings size={13} /> Edit required list</Link>}
+          {canEditTypes && <button type="button" onClick={() => setEditingList(true)} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-card px-2.5 text-[13px] font-medium text-text hover:bg-tab-hover"><Icon.settings size={13} /> Edit required list</button>}
         </>)}
       >
         {items.length === 0 ? (

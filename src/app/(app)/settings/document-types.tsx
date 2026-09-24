@@ -17,11 +17,11 @@ interface Row { id?: string; label: string; required: boolean; locked: boolean; 
  * The agency's list of client document types: which are required on every client's checklist and
  * how often each renews. Drag to set the order the checklist shows them in. One Save writes it all.
  */
-export function DocumentTypesEditor({ types }: { types: DocumentType[] }) {
+export function DocumentTypesEditor({ types, onDone }: { types: DocumentType[]; /** Set when the editor sits in a window over another screen (the client Documents tab, Sept 24, 2026): called after a save and on Cancel. */ onDone?: () => void }) {
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(() => types.filter((t) => t.active).map((t) => ({ id: t.id, label: t.label, required: t.required, locked: t.locked, renewMonths: t.renewMonths, tmp: t.id, custom: t.renewMonths != null && !RENEW_OPTIONS.some((o) => o.months === t.renewMonths) })));
   const [state, submit, pending] = useActionState(saveDocumentTypes, {});
-  useEffect(() => { if (state.ok) { toast.success("Document list saved."); router.refresh(); } else if (state.message && !state.errors) toast.error(state.message); }, [state, router]);
+  useEffect(() => { if (state.ok) { toast.success("Document list saved."); router.refresh(); onDone?.(); } else if (state.message && !state.errors) toast.error(state.message); }, [state, router, onDone]);
 
   const patch = (tmp: string, p: Partial<Row>) => setRows((rs) => rs.map((r) => (r.tmp === tmp ? { ...r, ...p } : r)));
   const add = () => setRows((rs) => [...rs, { label: "", required: true, locked: false, renewMonths: 12, tmp: `new-${Date.now()}` }]);
@@ -56,7 +56,7 @@ export function DocumentTypesEditor({ types }: { types: DocumentType[] }) {
         ))}
         <p className="pt-4 text-[13px] text-muted-foreground">The five Minnesota 245D items stay required. Removing a type keeps the files already filed under it.</p>
       </MarginSection>
-      <div className="flex gap-2 border-t border-line pt-5"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button><Button type="button" variant="ghost" onClick={() => router.refresh()}>Cancel</Button></div>
+      <div className="flex gap-2 border-t border-line pt-5"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save changes"}</Button><Button type="button" variant="ghost" onClick={() => (onDone ? onDone() : router.refresh())}>Cancel</Button></div>
     </form>
   );
 }
