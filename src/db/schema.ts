@@ -836,6 +836,23 @@ export const storedFiles = pgTable(
   (t) => [uniqueIndex("stored_files_path_idx").on(t.path)],
 );
 
+/**
+ * Rendered note PDFs, keyed by a hash of their content (Sept 28, 2026, user: "it takes forever to
+ * prepare the note"). Rendering costs seconds on a cold serverless instance and the in-memory
+ * cache dies with the instance, so a finished PDF is kept here and served by any instance. An edit
+ * changes the key, so nothing stale is ever served; old rows are pruned as new ones are written.
+ */
+export const renderedPdfs = pgTable(
+  "rendered_pdfs",
+  {
+    key: text("key").primaryKey(),
+    bytes: bytea("bytes").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
+
 export const auditLog = pgTable(
   "audit_log",
   {

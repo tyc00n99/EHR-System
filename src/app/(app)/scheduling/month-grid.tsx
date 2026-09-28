@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { cx } from "@/components/kit";
 import { serviceColor } from "@/components/chart";
-import type { GridEvent } from "./schedule-grid";
+import { useWarmNotes, type GridEvent } from "./schedule-grid";
+import { prefetchNoteBytes } from "@/components/note-bytes";
 
 /**
  * The monthly view is a plain month calendar, as in the reference — the participant rows only make
@@ -12,6 +15,7 @@ const addDays = (iso: string, n: number) => { const d = new Date(iso + "T12:00:0
 const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function MonthGrid({ from, today, events, baseHref }: { from: string; today: string; events: GridEvent[]; baseHref: string }) {
+  useWarmNotes(events);
   const first = new Date(from + "T12:00:00Z");
   const lead = first.getUTCDay();
   const month = from.slice(0, 7);
@@ -38,7 +42,7 @@ export function MonthGrid({ from, today, events, baseHref }: { from: string; tod
               </div>
               {day.slice(0, 3).map((e) => (
                 e.status === "completed" && e.visitId ? (
-                  <button key={e.id} type="button" title="Open the note" onClick={() => { const u = new URL(window.location.href); u.searchParams.set("note", e.visitId!); window.history.pushState(null, "", u.toString()); }} className="mb-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[13px] hover:bg-hover">
+                  <button key={e.id} type="button" title="Open the note" onMouseEnter={() => prefetchNoteBytes(e.visitId!)} onClick={() => { const u = new URL(window.location.href); u.searchParams.set("note", e.visitId!); window.history.pushState(null, "", u.toString()); }} className="mb-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[13px] hover:bg-hover">
                   <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: serviceColor(e.code) }} />
                   <span className="ident shrink-0 text-muted-foreground">{e.time.split(" – ")[0]}</span>
                   <span className="truncate text-text-strong">{e.title}</span>

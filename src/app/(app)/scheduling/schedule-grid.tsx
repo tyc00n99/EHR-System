@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { prefetchNoteBytes } from "@/components/note-bytes";
 import { useState } from "react";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
@@ -23,6 +25,23 @@ export interface GridEvent {
   status: "scheduled" | "in_progress" | "completed" | "cancelled" | "missed";
   /** The note a completed shift produced; clicking the chip opens it in place rather than the shift drawer. */
   visitId?: string | null;
+}
+
+/**
+ * Fetches the notes behind the completed events on screen once the page is idle, a few at a time,
+ * so opening one is instant (Sept 28, 2026). Hovering a chip fetches that one at once.
+ */
+export function useWarmNotes(events: { status: string; visitId?: string | null }[]) {
+  const ids = events.filter((e) => e.status === "completed" && e.visitId).map((e) => e.visitId!).join(",");
+  useEffect(() => {
+    if (!ids) return;
+    const list = ids.split(",");
+    let i = 0, stop = false;
+    const next = () => { if (stop || i >= list.length) return; prefetchNoteBytes(list[i++]); window.setTimeout(next, 400); };
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback;
+    const handle = idle ? idle(next) : window.setTimeout(next, 1500);
+    return () => { stop = true; if (!idle) window.clearTimeout(handle); };
+  }, [ids]);
 }
 
 /** Opens the printed note over the schedule (`?note=`; `NotePreview` is mounted in the shell), the way a notes table row does. */
@@ -65,6 +84,7 @@ export function ScheduleGrid({
   emptyLabel: string;
   canCreate: boolean;
 }) {
+  useWarmNotes(events);
   const [menu, setMenu] = useState<string | null>(null);
   const cols = `256px repeat(${days.length}, minmax(150px, 1fr))`;
 
@@ -150,7 +170,7 @@ export function ScheduleGrid({
                     </>);
                     // A completed shift opens its note right here (user, Sept 28, 2026); anything else opens the shift drawer.
                     return e.status === "completed" && e.visitId ? (
-                      <button key={e.id} type="button" onClick={() => openNote(e.visitId!)} title="Open the note" className={chipCls}>{body}</button>
+                      <button key={e.id} type="button" onClick={() => openNote(e.visitId!)} onMouseEnter={() => prefetchNoteBytes(e.visitId!)} title="Open the note" className={chipCls}>{body}</button>
                     ) : (
                       <Link key={e.id} href={`/scheduling?shift=${e.id}`} scroll={false} className={chipCls}>{body}</Link>
                     );
