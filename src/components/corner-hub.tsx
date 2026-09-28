@@ -86,7 +86,7 @@ export function HereChip({ role, names }: { role: Role; names: HubName[] }) {
           <Ic size={16} className="text-primary" /> {w.area}
         </Link>
       )}
-      {w.record && <span className="flex h-full min-w-0 items-center border-l border-line px-4 text-[15px] font-medium text-text-strong"><span className="truncate">{w.record}</span></span>}
+      {/* The record's name is not repeated here (user, Sept 28, 2026): the banner below already carries it, and the chip's job on a record is the way back. */}
     </div>
   );
 }
