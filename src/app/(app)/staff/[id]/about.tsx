@@ -7,6 +7,7 @@ import type { ActionState } from "@/lib/validation";
 import { updateStaff } from "../actions";
 import { Plain, Rows } from "./plain";
 import { DateInput } from "@/components/date-input";
+import { JobTitleField } from "@/components/job-title-field";
 
 export interface AboutValues {
   firstName: string; lastName: string; dob: string; gender: string; npi: string | null; umpi: string | null; active: boolean;
@@ -50,7 +51,7 @@ export function AboutSection({ staffId, v, canEdit, ssn }: { staffId: string; v:
         <input type="hidden" name="active" value={v.active ? "true" : "false"} />
         <FormError message={state.errors ? state.message : undefined} />
         <div className="grid grid-cols-[150px_1fr] items-center gap-x-3 gap-y-2.5 text-[15px]">
-          <span className={label}>Job</span><div><Input name="title" defaultValue={v.title} required className={field} />{e.title && <p className="mt-1 text-[13px] text-danger">{e.title}</p>}</div>
+          <span className={label}>Job</span><div><JobTitleField defaultValue={v.title} required />{e.title && <p className="mt-1 text-[13px] text-danger">{e.title}</p>}</div>
           <span className={label}>Started</span><div><DateInput name="hireDate" defaultValue={v.hireDate} required className="w-48" />{e.hireDate && <p className="mt-1 text-[13px] text-danger">{e.hireDate}</p>}</div>
           <span className={label}>Phone</span><div><Input name="phone" type="tel" defaultValue={v.phone ?? ""} placeholder="612-555-0100" className="h-9 w-64" />{e.phone && <p className="mt-1 text-[13px] text-danger">{e.phone}</p>}</div>
           <span className={label}>Email</span><div><Input name="email" type="email" defaultValue={v.email ?? ""} className={field} />{e.email && <p className="mt-1 text-[13px] text-danger">{e.email}</p>}</div>

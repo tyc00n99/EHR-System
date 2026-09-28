@@ -5,6 +5,7 @@ import { Button, Checkbox, Field, FormActions, FormError, FormSection, Input, Li
 import { GENDERS, type ActionState } from "@/lib/validation";
 import type { Staff } from "@/db/schema";
 import { DateInput } from "@/components/date-input";
+import { JobTitleField } from "@/components/job-title-field";
 
 export function StaffForm({ action, defaults, cancelHref }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; defaults?: Partial<Staff>; cancelHref: string }) {
   const [state, submit, pending] = useActionState(action, {});
@@ -38,7 +39,7 @@ export function StaffForm({ action, defaults, cancelHref }: { action: (p: Action
         <Field label="Phone" error={e.phone} className="md:col-span-3"><Input name="phone" type="tel" defaultValue={d.phone ?? ""} /></Field>
       </FormSection>
       <FormSection title="Employment" description="Title is the job, not the access level. Access is set on the login. Pay rate is visible to administrators only.">
-        <Field label="Title" error={e.title} className="col-span-2 md:col-span-3"><Input name="title" defaultValue={d.title} placeholder="Direct support professional" required /></Field>
+        <Field label="Title" error={e.title} className="col-span-2 md:col-span-3"><JobTitleField defaultValue={d.title} required /></Field>
         <Field label="Hire date" error={e.hireDate} className="md:col-span-2"><DateInput name="hireDate" defaultValue={d.hireDate ?? ""} required /></Field>
         <Field label="Hourly pay rate" error={e.payRate} className="md:col-span-1"><Input name="payRate" type="number" min={0.01} step={0.01} defaultValue={d.payRate ?? ""} required /></Field>
         <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="active" defaultChecked={d.active ?? true} label="Active. Inactive staff cannot clock in." /></div>
