@@ -93,7 +93,8 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
   // cannot be written without one. The licensor reads the paper, not the row.
   // "Meets position requirements" may be shown by a written source instead (a diploma on file,
   // years of experience per the application); everything else needs the paper.
-  if (!attached && parsed.data.type !== "position_requirements") return { errors: { file: "Attach the document that shows this" } };
+  // Position requirements can rest on a written source; the two first-contact items are dates (Sept 28, 2026). Everything else needs its paper.
+  if (!attached && parsed.data.type !== "position_requirements" && !parsed.data.type.startsWith("first_")) return { errors: { file: "Attach the document that shows this" } };
   if (!attached && parsed.data.type === "position_requirements" && !parsed.data.note?.trim()) return { errors: { note: "Say how they meet the requirements, or attach the document" } };
   const db = await getDb();
   const { hours, ...rest } = parsed.data;

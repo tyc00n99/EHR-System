@@ -58,7 +58,7 @@ const dueStatus = (due: string, today: string): PersonnelStatus => (due < today 
 
 const GROUPS = { employment: "Employment", training: "Qualifications, orientation, training", background: "Background study", contact: "Direct contact · employees hired after Jan 1, 2014", extras: "Licences and other certificates" };
 
-interface Spec { type: CredentialType; group: string; required: boolean; needsInstructor?: boolean; renews: "never" | "annual" | "expiry"; cite?: string; /** Satisfied by a written source when no document is attached. */ sourceOk?: boolean }
+interface Spec { type: CredentialType; group: string; required: boolean; needsInstructor?: boolean; renews: "never" | "annual" | "expiry"; cite?: string; /** Satisfied by the recorded date alone; no document needed. */ dateOnly?: boolean; /** Satisfied by a written source when no document is attached. */ sourceOk?: boolean }
 
 /** The licensor's order, then the licence-holder extras. */
 const SPECS: Spec[] = [
@@ -72,8 +72,9 @@ const SPECS: Spec[] = [
   { type: "evaluation", group: GROUPS.training, required: true, renews: "annual" },
   { type: "background_study", group: GROUPS.background, required: true, renews: "never" },
   { type: "background_study_results", group: GROUPS.background, required: true, renews: "never" },
-  { type: "first_supervised_contact", group: GROUPS.contact, required: true, renews: "never" },
-  { type: "first_unsupervised_contact", group: GROUPS.contact, required: true, renews: "never" },
+  // The two first-contact items are dates, not papers (user, Sept 28, 2026): recording the date satisfies them; an observation note can be attached but is not required.
+  { type: "first_supervised_contact", group: GROUPS.contact, required: true, renews: "never", dateOnly: true },
+  { type: "first_unsupervised_contact", group: GROUPS.contact, required: true, renews: "never", dateOnly: true },
   { type: "drivers_license", group: GROUPS.extras, required: false, renews: "expiry" },
   { type: "other", group: GROUPS.extras, required: false, renews: "expiry" },
 ];
@@ -101,7 +102,7 @@ export function buildPersonnelFile(hireDate: string, rows: StaffCredential[], do
   for (const spec of SPECS) {
     const recs = records(spec.type);
     const latest = recs[0];
-    const documented = Boolean(latest && (latest.documents.length > 0 || (spec.sourceOk && latest.note?.trim())));
+    const documented = Boolean(latest && (spec.dateOnly || latest.documents.length > 0 || (spec.sourceOk && latest.note?.trim())));
     let status: PersonnelStatus;
     let due: string | null = null;
     let detail: string;

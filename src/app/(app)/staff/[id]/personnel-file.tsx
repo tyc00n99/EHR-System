@@ -107,6 +107,7 @@ export function PersonnelFile({ staffId, items, aiReady, staffName }: { staffId:
             <button key={it.key} type="button" onClick={() => pick(it.key)} className="flex w-full items-center gap-3 border-b border-line-soft px-4 py-2.5 text-left text-[14.5px] last:border-b-0 hover:bg-tab-hover">
               <span className="min-w-0 flex-1 truncate">{it.label}</span>
               {it.key === "hire" ? <span className="text-muted-foreground">{it.detail.replace(/\..*$/, "")}</span>
+                : it.type?.startsWith("first_") && it.status === "ok" ? <span className="text-muted-foreground">{it.records[0]?.completedOn ? fmtDate(it.records[0].completedOn) : "Recorded"}</span>
                 : it.status === "ok" ? (doc(it) ? <span className="text-[13px] font-medium text-primary">{doc(it)!.fileName.toLowerCase().endsWith(".pdf") ? "PDF" : "File"}</span> : <span className="text-[13px] text-muted-foreground">On file</span>)
                 : it.status === "pending" ? <span className="text-[13px] text-muted-foreground">Pending</span>
                 : <span className="rounded bg-danger-soft px-1.5 text-[12.5px] font-medium text-danger">{it.status === "undocumented" ? "No document" : "Missing"}</span>}
@@ -220,6 +221,7 @@ function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: st
   }, [state, onDone]);
   const dated = item.renews === "expiry";
   const sourceOk = item.type === "position_requirements";
+  const dateOnly = Boolean(item.type?.startsWith("first_"));
   const dateLabel = item.type === "background_study" ? "Date submitted" : item.type === "background_study_results" ? "Date results received from DHS" : item.type?.startsWith("first_") ? "Date of first contact" : "Date completed";
 
   const r = rs.read;
@@ -237,13 +239,13 @@ function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: st
       <div className="mb-4 text-[15px] font-semibold text-text-strong">Record — {item.label}</div>
 
       <div className="mb-4">
-        <Label required={!sourceOk}>Document</Label>
+        <Label required={!sourceOk && !dateOnly}>Document</Label>
         <input
-          name="file" type="file" required={!sourceOk} accept=".pdf,image/*,.doc,.docx" className={fileField}
+          name="file" type="file" required={!sourceOk && !dateOnly} accept=".pdf,image/*,.doc,.docx" className={fileField}
           onChange={(ev) => { const f = ev.currentTarget.files?.[0]; if (f && aiReady) { const fd = new FormData(); fd.append("file", f); startTransition(() => runRead(fd)); } }}
         />
         <p className="mt-1 text-[13px] text-muted-foreground">
-          {sourceOk ? "Optional here: attach the diploma, licence or resume if there is one, or describe the source below." : "The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper."}
+          {dateOnly ? "Optional: the observation note from that contact, if one was written. The date is what counts." : sourceOk ? "Optional here: attach the diploma, licence or resume if there is one, or describe the source below." : "The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper."}
           {aiReady ? " Choose it first and the fields fill in from the page." : ""}
         </p>
         {e.file && <p className="mt-1 text-[13px] text-danger">{e.file}</p>}
