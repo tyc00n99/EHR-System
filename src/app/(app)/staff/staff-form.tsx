@@ -40,9 +40,9 @@ export function StaffForm({ action, defaults, cancelHref }: { action: (p: Action
         <Field label="Phone" error={e.phone} className="md:col-span-3"><Input name="phone" type="tel" defaultValue={d.phone ?? ""} /></Field>
       </FormSection>
       <FormSection title="Employment" description="Title is the job, not the access level. Access is set on the login. Pay rate is visible to administrators only.">
-        <Field label="Title" error={e.title} className="col-span-2 md:col-span-3"><JobTitleField defaultValue={d.title} required /></Field>
+        <Field label="Title" error={e.title} className="col-span-2 md:col-span-2"><JobTitleField defaultValue={d.title} required /></Field>
         <Field label="Hire date" error={e.hireDate} className="md:col-span-2"><DateInput name="hireDate" defaultValue={d.hireDate ?? ""} required /></Field>
-        <Field label="Hourly pay rate" error={e.payRate} className="md:col-span-1"><Input name="payRate" type="number" min={0.01} step={0.01} defaultValue={d.payRate ?? ""} required /></Field>
+        <Field label="Pay rate" error={e.payRate} hint="Per hour" className="md:col-span-2"><Input name="payRate" type="number" min={0.01} step={0.01} defaultValue={d.payRate ?? ""} required /></Field>
         <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="active" defaultChecked={d.active ?? true} label="Active. Inactive staff cannot clock in." /></div>
       </FormSection>
       <FormSection title="Rendering provider ID" description="Goes on every note and claim line this person renders.">
