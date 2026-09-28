@@ -43,7 +43,8 @@ export function StaffForm({ action, defaults, cancelHref }: { action: (p: Action
         <Field label="Title" error={e.title} className="col-span-2 md:col-span-2"><JobTitleField defaultValue={d.title} required /></Field>
         <Field label="Hire date" error={e.hireDate} className="md:col-span-2"><DateInput name="hireDate" defaultValue={d.hireDate ?? ""} required /></Field>
         <Field label="Pay rate" error={e.payRate} hint="Per hour" className="md:col-span-2"><Input name="payRate" type="number" min={0.01} step={0.01} defaultValue={d.payRate ?? ""} required /></Field>
-        <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="active" defaultChecked={d.active ?? true} label="Active. Inactive staff cannot clock in." /></div>
+        {/* A new staff member is active by definition (user, Sept 28, 2026); inactivating is an edit made later. */}
+        {d.id ? <div className="col-span-2 -mx-3 md:col-span-6"><Checkbox name="active" defaultChecked={d.active ?? true} label="Active. Inactive staff cannot clock in." /></div> : <input type="hidden" name="active" value="on" />}
       </FormSection>
       <FormSection title="Rendering provider ID" description="Goes on every note and claim line this person renders.">
         <RenderingIdField npi={d.npi} umpi={d.umpi} errors={{ npi: e.npi, umpi: e.umpi }} />

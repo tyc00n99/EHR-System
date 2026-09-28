@@ -13,7 +13,7 @@ import { ManageAssignments } from "./manage-assignments";
 import { AvailabilityList } from "@/components/availability-cards";
 import { isoDay } from "@/lib/format";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
-import { buildPersonnelFile, personnelSummary } from "@/lib/personnel-file";
+import { buildPersonnelFile } from "@/lib/personnel-file";
 import { STAFF_DOCUMENT_CATEGORIES } from "@/lib/staff-documents";
 import { SsnField } from "./ssn";
 import { AboutSection } from "./about";
@@ -37,10 +37,6 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   // The filter options come from everything this person has ever written, not from the filtered page.
   const vt = tab === "visits" ? await buildVisitTable({ sp, staffId: id }) : null;
   const personnel = buildPersonnelFile(s.hireDate, credentials, documents);
-  const paper = personnelSummary(personnel);
-  const today = isoDay(0);
-  const nextDue = personnel.filter((i) => i.required && i.due && i.due >= today).sort((a, b) => (a.due! < b.due! ? -1 : 1))[0];
-  const overdue = personnel.filter((i) => i.required && (i.status === "overdue" || i.status === "missing" || i.status === "undocumented"));
   const recentLogins = login ? await listRecentLogins(login.id) : [];
   const availability = await listStaffAvailability(id);
   const schedule = {
@@ -89,13 +85,6 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
           <div>
           <Plain title="Works" action={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
             {availability.length > 0 ? <AvailabilityList rows={availability} /> : <p className="text-[14.5px] text-muted-foreground">No days recorded yet, so scheduling does not know when {s.firstName} is free.</p>}
-          </Plain>
-          <Plain title="Paperwork" action={<Link href={`/staff/${id}?tab=compliance`} className="text-[13.5px] font-medium text-primary hover:underline">See all</Link>}>
-            <p className="text-[15px]">
-              <span className={`mr-2 inline-block size-2 rounded-full align-[1px] ${overdue.length ? "bg-danger" : "bg-ok"}`} aria-hidden />
-              {overdue.length ? <>{overdue.length} of {paper.total} items need attention: {overdue.slice(0, 3).map((i) => i.label.toLowerCase()).join(", ")}{overdue.length > 3 ? "…" : ""}.</> : <>Everything is on file.</>}
-              {nextDue && <> Next thing due: {nextDue.label.toLowerCase()}, <span className="font-medium text-text-strong">{fmtDate(nextDue.due)}</span>.</>}
-            </p>
           </Plain>
           </div>
         </div>
