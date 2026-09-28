@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, PageHeader, PageIcon, Properties, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { getSite } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { getServiceType, planningLabel } from "@/lib/services";
 import { createProgram } from "../actions";
 import { ProgramForm, ProgramToggle } from "./program-form";
@@ -9,7 +9,7 @@ import { ProgramForm, ProgramToggle } from "./program-form";
 const TYPE_LABEL = { office: "Office", community_residential: "Community residential setting", day_services: "Day services facility", in_home: "In-home services" } as const;
 
 export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("manage_sites");
   const { id } = await params;
   const site = await getSite(id);
   if (!site) notFound();

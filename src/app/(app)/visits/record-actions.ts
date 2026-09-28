@@ -7,7 +7,7 @@ import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { getVisitRecord } from "@/db/queries";
 import { aiConfigured, explainAiError } from "@/lib/ai/extract-agreement";
-import { requireUser } from "@/lib/auth";
+import { requireAbility, requireUser } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { documentationSchema, fieldErrors, formToObject, medAdminSchema, type ActionState } from "@/lib/validation";
 
@@ -29,7 +29,7 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
   const record = await getVisitRecord(d.visitId);
   if (!record) return { message: "Note not found." };
   const v = record.visit;
-  if (user.role === "dsp" && v.staffId !== user.staffId) return { message: "This is not your visit." };
+  if (!user.abilities.includes("edit_visits") && v.staffId !== user.staffId) return { message: "This is not your visit." };
   if (v.status === "void") return { message: "Voided notes cannot be documented." };
 
   const db = await getDb();
@@ -84,7 +84,7 @@ export async function signVisitWithCode(visitId: string, code: string): Promise<
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
   if (!v) return { message: "Note not found." };
-  if (user.role === "dsp" && v.staffId !== user.staffId) return { message: "This is not your visit." };
+  if (!user.abilities.includes("edit_visits") && v.staffId !== user.staffId) return { message: "This is not your visit." };
   if (v.clientSignedAt) return { message: "Already signed." };
   const [person] = await db.select().from(people).where(eq(people.id, v.personId)).limit(1);
   if (!person?.signatureCodeHash) return { message: "This client has no signing code yet." };
@@ -99,7 +99,7 @@ export async function signVisitWithCode(visitId: string, code: string): Promise<
  * the ones that need work; the caregiver fixes and resubmits, which accepts it again.
  */
 export async function returnNote(visitId: string, reason: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("edit_visits");
   const text = reason.trim();
   if (text.length < 3) return { message: "Say what needs fixing so the caregiver can correct it." };
   const db = await getDb();
@@ -112,7 +112,7 @@ export async function returnNote(visitId: string, reason: string): Promise<Actio
 
 /** Supervisor accepts a note they had returned. */
 export async function acceptNote(visitId: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("edit_visits");
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
   if (!v) return { message: "Note not found." };
@@ -128,7 +128,7 @@ export async function draftProgressReview(visitId: string, input: { interactionL
   if (!aiConfigured()) return { message: "AI drafting is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying." };
   const record = await getVisitRecord(visitId);
   if (!record) return { message: "Note not found." };
-  if (user.role === "dsp" && record.visit.staffId !== user.staffId) return { message: "This is not your visit." };
+  if (!user.abilities.includes("edit_visits") && record.visit.staffId !== user.staffId) return { message: "This is not your visit." };
   const minutes = record.visit.clockOutAt ? Math.round((record.visit.clockOutAt.getTime() - record.visit.clockInAt.getTime()) / 60000) : null;
   const facts = [
     `Service: ${record.visit.serviceCode} ${record.visit.modifiers.join(" ")} (${record.program?.name ?? "245D service"})`,

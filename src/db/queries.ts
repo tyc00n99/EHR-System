@@ -306,8 +306,8 @@ export async function listClientDocuments(personId: string) {
 }
 
 /** Office roles see everyone; caregivers see only people currently assigned to them. */
-export async function canViewPerson(user: { role: string; staffId: string | null }, personId: string): Promise<boolean> {
-  if (user.role !== "dsp") return true;
+export async function canViewPerson(user: { role: string; staffId: string | null; abilities?: readonly string[] }, personId: string): Promise<boolean> {
+  if (user.abilities ? user.abilities.includes("all_clients") : user.role !== "dsp") return true;
   if (!user.staffId) return false;
   const db = await getDb();
   const [row] = await db.select({ id: assignments.id }).from(assignments).where(and(eq(assignments.staffId, user.staffId), eq(assignments.personId, personId), eq(assignments.active, true))).limit(1);
@@ -524,6 +524,12 @@ export async function listMedAdmins(personId: string, fromDate: string, toDate: 
     .leftJoin(staff, eq(users.staffId, staff.id))
     .where(and(eq(medicationAdministrations.personId, personId), gte(medicationAdministrations.scheduledDate, fromDate), lte(medicationAdministrations.scheduledDate, toDate)));
   return rows.map((r) => ({ ...r.a, by: r.first ? `${r.first[0] ?? ""}${r.last?.[0] ?? ""}`.toUpperCase() : (r.email?.[0] ?? "?").toUpperCase(), byName: r.first ? `${r.first} ${r.last}` : (r.email ?? "") }));
+}
+
+/** The agency's role overrides (Settings → Roles). */
+export async function listRoleAbilities() {
+  const db = await getDb();
+  return db.select({ role: schema.roleAbilities.role, ability: schema.roleAbilities.ability, allowed: schema.roleAbilities.allowed }).from(schema.roleAbilities);
 }
 
 /* ---------- client feed ---------- */

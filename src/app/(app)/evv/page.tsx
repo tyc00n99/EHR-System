@@ -9,7 +9,7 @@ import { complianceSummary } from "@/evv/reporting";
 import { recentSubmissions, reviewQueue, visitDetail } from "@/evv/review";
 import { localDate } from "@/evv/time";
 import { EvvError } from "@/evv/visits";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fullName } from "@/lib/format";
 import { ComplianceTab } from "./compliance";
 import { IntegrationTab } from "./integration";
@@ -29,7 +29,7 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
  * from a phone.
  */
 export default async function EvvPage({ searchParams }: { searchParams: Promise<SP> }) {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("review");
   const sp = await searchParams;
   const admin = hasEvvPermission(user, "evv.configure");
   const tab = one(sp.tab) ?? "queue";

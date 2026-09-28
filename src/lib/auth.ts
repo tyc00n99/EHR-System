@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
+import { type Ability, resolveAbilities } from "./abilities";
 import { lockDurationMs } from "./lockout";
 import { verifyPassword } from "./password";
 
@@ -39,7 +40,17 @@ export interface CurrentUser {
   role: Role;
   staffId: string | null;
   staffName: string | null;
+  /** What this role may do, from `src/lib/abilities.ts` defaults plus the agency's overrides (Settings → Roles). */
+  abilities: Ability[];
 }
+
+/** The role's abilities for this request: the defaults, adjusted by any `role_abilities` rows. */
+export const abilitiesFor = cache(async (role: Role): Promise<Ability[]> => {
+  if (role === "admin") return resolveAbilities("admin", []);
+  const db = await getDb();
+  const rows = await db.select({ role: schema.roleAbilities.role, ability: schema.roleAbilities.ability, allowed: schema.roleAbilities.allowed }).from(schema.roleAbilities).where(eq(schema.roleAbilities.role, role));
+  return resolveAbilities(role, rows);
+});
 
 /** The user a real session cookie names, with no open-access fallback. */
 export const getSessionUser = cache(async (): Promise<CurrentUser | null> => {
@@ -69,6 +80,7 @@ export const getSessionUser = cache(async (): Promise<CurrentUser | null> => {
     role: r.role,
     staffId: r.staffId,
     staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null,
+    abilities: await abilitiesFor(r.role),
   };
 });
 
@@ -83,7 +95,7 @@ const firstAdmin = cache(async (): Promise<CurrentUser | null> => {
     .limit(1);
   const r = rows[0];
   if (!r) return null;
-  return { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null };
+  return { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null, abilities: await abilitiesFor(r.role) };
 });
 
 /** Who this request counts as. Falls back to the admin when the login is turned off. */
@@ -93,25 +105,24 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return loginRequired() ? null : await firstAdmin();
 });
 
-/** Redirects to /login when signed out, or to / when the role is not allowed. */
-export async function requireUser(roles?: Role[]): Promise<CurrentUser> {
+/** Redirects to /login when signed out. */
+export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (roles && !roles.includes(user.role)) redirect("/?denied=1");
   return user;
 }
 
-export function can(user: CurrentUser, action: "manage_people" | "manage_staff" | "manage_sites" | "edit_visits" | "clock"): boolean {
-  switch (action) {
-    case "manage_people":
-    case "manage_sites":
-    case "edit_visits":
-      return user.role === "admin" || user.role === "supervisor";
-    case "manage_staff":
-      return user.role === "admin";
-    case "clock":
-      return user.staffId !== null;
-  }
+/** Redirects to /login when signed out, or home when the role lacks the ability (Settings → Roles decides). */
+export async function requireAbility(ability: Ability): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (!user.abilities.includes(ability)) redirect("/?denied=1");
+  return user;
+}
+
+/** UI gating. Every ability comes from Settings → Roles; "clock" needs a caregiver record, whatever the role. */
+export function can(user: CurrentUser, action: Ability | "clock"): boolean {
+  if (action === "clock") return user.staffId !== null;
+  return user.abilities.includes(action);
 }
 
 export async function signIn(email: string, password: string): Promise<{ ok: true } | { ok: false; message: string }> {

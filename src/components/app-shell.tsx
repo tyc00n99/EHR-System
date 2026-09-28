@@ -30,7 +30,7 @@ const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" 
  * navigation. The page gets every pixel of width.
  */
 export function AppShell({ user, orgName, counts, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
-  const gear = gearGroups(user.role);
+  const gear = gearGroups(user.abilities);
   const names = palette.map((p) => ({ href: p.href, label: p.label }));
   return (
     <ModulePanelProvider>
@@ -44,7 +44,7 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
         <HomeLink orgName={orgName} />
         {/* Centred on desktop, where it is the first thing the eye lands on; inline beside the logo on phones. */}
         <div className="flex min-w-0 flex-1 items-center md:absolute md:left-1/2 md:top-1/2 md:max-w-[min(60vw,720px)] md:-translate-x-1/2 md:-translate-y-1/2">
-          <Suspense fallback={null}><HereChip role={user.role} names={names} /></Suspense>
+          <Suspense fallback={null}><HereChip abilities={user.abilities} names={names} /></Suspense>
         </div>
         <div className="hidden min-w-0 flex-1 md:block" />
 
@@ -89,16 +89,16 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
       </header>
 
       {/* ⌘K still works — the palette stays mounted, just not drawn. */}
-      <div className="sr-only"><CommandPalette entries={palette} role={user.role} /></div>
+      <div className="sr-only"><CommandPalette entries={palette} office={user.abilities.includes("all_clients")} /></div>
 
-      <Suspense fallback={null}><SectionNav role={user.role} /></Suspense>
+      <Suspense fallback={null}><SectionNav abilities={user.abilities} /></Suspense>
 
       <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-28 md:pt-6">
         {/* One gutter and one content width for every page: pages do not centre themselves. */}
         <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col">{children}</div>
       </main>
 
-      <CornerHub role={user.role} counts={counts} />
+      <CornerHub abilities={user.abilities} counts={counts} />
       <Suspense fallback={null}><NotePreview /></Suspense>
       <Toaster position="bottom-left" richColors closeButton />
     </div>

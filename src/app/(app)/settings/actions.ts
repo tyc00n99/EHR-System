@@ -5,8 +5,9 @@ import { z } from "zod";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { getOrganization } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fieldErrors, formToObject, type ActionState } from "@/lib/validation";
+import { ABILITY_KEYS, DEFAULTS, type Ability, type RoleKey } from "@/lib/abilities";
 import { eq } from "drizzle-orm";
 
 const orgSchema = z.object({
@@ -23,7 +24,7 @@ const orgSchema = z.object({
 });
 
 export async function updateOrganization(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("settings");
   const parsed = orgSchema.safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const org = await getOrganization();
@@ -46,7 +47,7 @@ const slug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, "_").
 
 /** Saves the agency's client document list: order, names, required ticks and renewal. Locked (245D) types stay required. */
 export async function saveDocumentTypes(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("settings");
   let raw: unknown;
   try { raw = JSON.parse(String(fd.get("types") ?? "[]")); } catch { return { message: "The list could not be read." }; }
   const parsed = typeRows.safeParse(raw);
@@ -75,4 +76,34 @@ export async function saveDocumentTypes(_prev: ActionState, fd: FormData): Promi
   revalidatePath("/settings");
   revalidatePath("/clients", "layout");
   return { ok: true };
+}
+
+/**
+ * Settings → Roles (Sept 28, 2026): one row per role and ability that differs from the shipped
+ * default; a choice that matches the default deletes its override. Administrator is never written.
+ */
+export async function saveRoleAbilities(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireAbility("settings");
+  let raw: unknown;
+  try { raw = JSON.parse(String(fd.get("grants") ?? "{}")); } catch { return { message: "The roles could not be read." }; }
+  const parsed = z.object({ supervisor: z.array(z.string()), dsp: z.array(z.string()) }).safeParse(raw);
+  if (!parsed.success) return { message: "The roles could not be read." };
+  const db = await getDb();
+  const existing = await db.select().from(schema.roleAbilities);
+  await db.transaction(async (tx) => {
+    const w = audited(tx, { userId: user.id });
+    for (const role of ["supervisor", "dsp"] as const satisfies readonly RoleKey[]) {
+      const wanted = new Set(parsed.data[role].filter((a): a is Ability => (ABILITY_KEYS as string[]).includes(a)));
+      for (const ability of ABILITY_KEYS) {
+        const allowed = wanted.has(ability);
+        const isDefault = DEFAULTS[role].includes(ability) === allowed;
+        const row = existing.find((r) => r.role === role && r.ability === ability);
+        if (isDefault) { if (row) await w.delete(schema.roleAbilities, row.id); }
+        else if (row) { if (row.allowed !== allowed) await w.update(schema.roleAbilities, row.id, { allowed, updatedBy: user.id, updatedAt: new Date() }); }
+        else await w.insert(schema.roleAbilities, { role, ability, allowed, updatedBy: user.id });
+      }
+    }
+  });
+  revalidatePath("/", "layout");
+  return { ok: true, message: "Roles saved." };
 }

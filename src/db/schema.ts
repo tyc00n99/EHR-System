@@ -687,6 +687,23 @@ export const goalResponses = pgTable(
  * addressed it (with the caregiver's one line, or none) and for entries a coordinator adds by hand.
  * Reviews stay in `goal_reviews`; the log on screen merges the two.
  */
+/**
+ * Per-role ability overrides (Sept 28, 2026): one row per role and ability the agency has changed
+ * from the default in `src/lib/abilities.ts`. No row means the default. Administrator has no rows.
+ */
+export const roleAbilities = pgTable(
+  "role_abilities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: text("role").notNull(),
+    ability: text("ability").notNull(),
+    allowed: boolean("allowed").notNull(),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("role_abilities_role_ability_idx").on(t.role, t.ability)],
+);
+
 export const goalEntries = pgTable(
   "goal_entries",
   {

@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useState, type CSSProperties, typ
 import { Icon, type IconName } from "@/components/icons";
 import { cx } from "@/components/kit";
 import { useModulePanel } from "@/components/module-panel";
-import { gearGroups, primaryNav, type Destination, type NavCounts, type Role } from "@/lib/nav";
+import { gearGroups, primaryNav, type Destination, type NavCounts } from "@/lib/nav";
 
 /**
  * The corner hub (Sept 20, 2026, the user's pick over a sidebar): one round button in the
@@ -53,11 +53,11 @@ export interface HubName { href: string; label: string }
 const isActive = (pathname: string, d: Destination) =>
   d.href === "/" ? pathname === "/" : [d.href, ...(d.also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
 
-export function whereAmI(pathname: string, role: Role, names: HubName[]): { icon: IconName; area: string; href: string; record?: string } {
+export function whereAmI(pathname: string, abilities: readonly string[], names: HubName[]): { icon: IconName; area: string; href: string; record?: string } {
   const record = names.find((n) => pathname === n.href || pathname.startsWith(n.href + "/"))?.label;
-  const area = primaryNav(role).find((d) => isActive(pathname, d));
+  const area = primaryNav(abilities).find((d) => isActive(pathname, d));
   if (area) return { icon: area.icon, area: area.label, href: area.href, record };
-  const gear = gearGroups(role).flatMap((g) => g.items).find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
+  const gear = gearGroups(abilities).flatMap((g) => g.items).find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
   if (gear) return { icon: gear.icon, area: gear.label, href: gear.href };
   if (pathname === "/") return { icon: "home", area: "Home", href: "/" };
   if (pathname.startsWith("/me")) return { icon: "user", area: "My profile", href: "/me" };
@@ -70,9 +70,9 @@ export function whereAmI(pathname: string, role: Role, names: HubName[]): { icon
  * corner button was too small to notice). Two halves: a filled "‹ Team" that goes back to the
  * area's list, and the open record's name. On a list page it is one quiet pill naming the area.
  */
-export function HereChip({ role, names }: { role: Role; names: HubName[] }) {
+export function HereChip({ abilities, names }: { abilities: readonly string[]; names: HubName[] }) {
   const pathname = usePathname();
-  const w = whereAmI(pathname, role, names);
+  const w = whereAmI(pathname, abilities, names);
   const Ic = Icon[w.icon];
   const back = Boolean(w.record) && pathname !== w.href;
   return (
@@ -91,12 +91,12 @@ export function HereChip({ role, names }: { role: Role; names: HubName[] }) {
   );
 }
 
-export function CornerHub({ role, counts }: { role: Role; counts: NavCounts }) {
+export function CornerHub({ abilities, counts }: { abilities: readonly string[]; counts: NavCounts }) {
   const { open, setOpen } = useHub();
   const pathname = usePathname();
   const router = useRouter();
   const panel = useModulePanel();
-  const items = primaryNav(role);
+  const items = primaryNav(abilities);
   const here = items.find((d) => isActive(pathname, d));
 
   // Spokes sit on a quarter circle from straight left (index 0) to straight up (last). The radius

@@ -1,7 +1,7 @@
 import { Card, Empty } from "@/components/kit";
 import { AttentionList } from "./attention-list";
 import { Icon } from "@/components/icons";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { attentionItems } from "@/lib/attention";
 
 export const metadata = { title: "Review queue" };
@@ -22,7 +22,7 @@ const KIND: Record<string, { label: string; icon: keyof typeof Icon }> = {
 export default async function AttentionPage({ searchParams }: PageProps<"/attention">) {
   const sp = await searchParams;
   const initialKind = typeof sp.kind === "string" && sp.kind in KIND ? sp.kind : "all";
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const items = await attentionItems();
   const groups = Object.keys(KIND).map((k) => ({ k, items: items.filter((i) => i.kind === k) })).filter((g) => g.items.length);
   return (

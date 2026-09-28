@@ -18,11 +18,11 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
   const user = await requireUser();
   const r = await getVisitRecord(id);
   if (!r) return <div className="p-6 text-muted-foreground">Note not found.</div>;
-  if (user.role === "dsp" && r.visit.staffId !== user.staffId) return <div className="p-6 text-muted-foreground">This visit belongs to another caregiver.</div>;
+  if (!user.abilities.includes("edit_visits") && r.visit.staffId !== user.staffId) return <div className="p-6 text-muted-foreground">This visit belongs to another caregiver.</div>;
   const { visit: v, person, staff: s, agreement, edits } = r;
   const minutes = v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null;
   const serviceTypeId = r.program?.serviceTypeId ?? null;
-  const office = user.role !== "dsp";
+  const office = user.abilities.includes("edit_visits");
   const locked = v.status === "void";
   const docState = v.returnedAt ? "returned" : v.approvedAt ? "accepted" : v.shiftNote ? "draft" : "empty";
 

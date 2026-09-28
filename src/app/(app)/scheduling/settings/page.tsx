@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getOrganization, listAgreementsWithUsage } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { labelForCode } from "@/lib/hcpcs";
 import { cx } from "@/components/kit";
 import { Icon } from "@/components/icons";
@@ -16,7 +16,7 @@ const TABS = [
 ] as const;
 
 export default async function ScheduleSettingsPage({ searchParams }: PageProps<"/scheduling/settings">) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("schedule");
   const sp = await searchParams;
   const tab = typeof sp.tab === "string" && TABS.some(([t]) => t === sp.tab) ? sp.tab : "types";
 

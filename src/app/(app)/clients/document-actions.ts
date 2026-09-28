@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { indexStoredDocument, textLayerFor } from "@/lib/document-text";
 import { deleteFile, putFile } from "@/lib/storage";
 import { clientDocumentSchema, fieldErrors, formToObject, type ActionState } from "@/lib/validation";
@@ -21,7 +21,7 @@ const ALLOWED: Record<string, string> = {
 };
 
 export async function uploadClientDocument(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = clientDocumentSchema.safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const file = fd.get("file");
@@ -58,7 +58,7 @@ export async function uploadClientDocument(personId: string, _prev: ActionState,
 }
 
 export async function deleteClientDocument(id: string, personId: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   const [doc] = await db.select().from(schema.clientDocuments).where(eq(schema.clientDocuments.id, id)).limit(1);
   if (!doc) return;
@@ -69,7 +69,7 @@ export async function deleteClientDocument(id: string, personId: string): Promis
 
 /** Reads a document filed before reading existed, so it becomes searchable. */
 export async function indexClientDocument(id: string, personId: string): Promise<{ ok?: true; error?: string }> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const r = await indexStoredDocument("client", id, user.id);
   if (r.ok) revalidatePath(`/clients/${personId}`);
   return r;
@@ -77,7 +77,7 @@ export async function indexClientDocument(id: string, personId: string): Promise
 
 /** Archives (or restores) a document. The file stays on the record; only the lists change. */
 export async function setClientDocumentArchived(id: string, personId: string, archived: boolean): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   const [doc] = await db.select({ id: schema.clientDocuments.id, personId: schema.clientDocuments.personId }).from(schema.clientDocuments).where(eq(schema.clientDocuments.id, id)).limit(1);
   if (!doc || doc.personId !== personId) return;

@@ -5,7 +5,7 @@ import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { ownsProfileRow } from "@/db/profile-queries";
 import { canViewPerson } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 import {
   availabilityScheduleSchema, availabilitySchema, contactSchema, diagnosisSchema, fieldErrors, formToObject, fundingSchema,
@@ -32,7 +32,7 @@ export type SectionKey = keyof typeof SECTIONS;
 const isSection = (v: unknown): v is SectionKey => typeof v === "string" && v in SECTIONS;
 
 async function authorize(personId: string) {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   if (!(await canViewPerson(user, personId))) throw new Error("Not your client.");
   return user;
 }

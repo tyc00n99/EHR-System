@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { canViewPerson } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { deleteFile, putFile } from "@/lib/storage";
 import type { ActionState } from "@/lib/validation";
 
@@ -28,7 +28,7 @@ export async function setClientPhoto(_prev: ActionState, fd: FormData): Promise<
   const file = fd.get("photo");
   if (!personId || !(file instanceof File) || file.size === 0) return { error: "Choose an image first." };
 
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   if (!(await canViewPerson(user, personId))) return { error: "That client is not yours to edit." };
 
   const ext = TYPES[file.type];
@@ -52,7 +52,7 @@ export async function setClientPhoto(_prev: ActionState, fd: FormData): Promise<
 export async function removeClientPhoto(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const personId = String(fd.get("personId") ?? "");
   if (!personId) return { error: "Missing which client to update." };
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   if (!(await canViewPerson(user, personId))) return { error: "That client is not yours to edit." };
 
   const db = await getDb();

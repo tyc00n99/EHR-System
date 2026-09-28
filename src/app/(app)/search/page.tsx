@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Badge, Card, Empty, PageHeader } from "@/components/kit";
 import { listAgreementsWithUsage, listPeople, listStaff, searchDocumentText } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fullName } from "@/lib/format";
 
 export const metadata = { title: "Search" };
 
 export default async function SearchPage({ searchParams }: PageProps<"/search">) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const sp = await searchParams;
   const q = (typeof sp.q === "string" ? sp.q : "").trim().toLowerCase();
   const [people, staff, agreements, docs] = q ? await Promise.all([listPeople(), listStaff(), listAgreementsWithUsage(), searchDocumentText(q)]) : [[], [], [], []];

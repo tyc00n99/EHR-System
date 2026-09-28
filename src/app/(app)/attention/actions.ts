@@ -4,7 +4,7 @@ import { inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import type { ActionState } from "@/lib/validation";
 
 export interface BulkResult extends ActionState { undo?: { kind: "unsigned" | "manual" | "missed_shift"; ids: string[]; prior?: { id: string; status: string }[] } }
@@ -22,7 +22,7 @@ function clean(ids: string[]) {
 
 /** Record the same "could not sign" reason on a batch of visits. */
 export async function bulkRecordUnableToSign(ids: string[], reason: string): Promise<BulkResult> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("review");
   const list = clean(ids);
   const text = reason.trim();
   if (!list.length) return { message: "Nothing selected." };
@@ -41,7 +41,7 @@ export async function bulkRecordUnableToSign(ids: string[], reason: string): Pro
 
 /** Confirm the evidence behind a batch of manual entries is on file. */
 export async function bulkConfirmManualEvidence(ids: string[]): Promise<BulkResult> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("review");
   const list = clean(ids);
   if (!list.length) return { message: "Nothing selected." };
   const db = await getDb();
@@ -57,7 +57,7 @@ export async function bulkConfirmManualEvidence(ids: string[]): Promise<BulkResu
 
 /** Cancel a batch of shifts nobody worked, so the calendar and this list stop counting them. */
 export async function bulkCancelShifts(ids: string[]): Promise<BulkResult> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("review");
   const list = clean(ids);
   if (!list.length) return { message: "Nothing selected." };
   const db = await getDb();
@@ -73,7 +73,7 @@ export async function bulkCancelShifts(ids: string[]): Promise<BulkResult> {
 
 /** Puts back exactly what the matching bulk action changed. Offered as Undo on the toast. */
 export async function undoBulk(undo: NonNullable<BulkResult["undo"]>): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("review");
   const list = clean(undo.ids);
   if (!list.length) return { message: "Nothing to undo." };
   const db = await getDb();

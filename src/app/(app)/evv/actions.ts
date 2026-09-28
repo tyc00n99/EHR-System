@@ -13,12 +13,12 @@ import { reconcile } from "@/evv/reconciliation";
 import { acknowledgeException, addComment, assignException, markAcknowledged, markReviewed } from "@/evv/review";
 import { processQueue, resubmitVisit } from "@/evv/submission";
 import { EvvError } from "@/evv/visits";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fromLocalInput } from "@/lib/format";
 import { formToObject, type ActionState } from "@/lib/validation";
 
 async function office(permission: EvvPermission): Promise<EvvCtx> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("review");
   if (!hasEvvPermission(user, permission)) throw new EvvError(403, "FORBIDDEN", `This needs ${permission}.`);
   const db = await getDb();
   return makeCtx(db, await defaultOrganizationId(db), user.id);

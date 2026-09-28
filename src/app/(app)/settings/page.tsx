@@ -1,21 +1,22 @@
 import { Card, PageHeader, Properties, Tabs } from "@/components/kit";
-import { getOrganization, listDocumentTypes } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { getOrganization, listDocumentTypes, listRoleAbilities } from "@/db/queries";
+import { requireAbility } from "@/lib/auth";
 import { PAY_PERIOD, currentPayPeriod } from "@/lib/pay-period";
 import { DocumentTypesEditor } from "./document-types";
 import { OrgForm } from "./org-form";
+import { RolesEditor } from "./roles-editor";
 
 export const metadata = { title: "Settings" };
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
-  await requireUser(["admin"]);
+  await requireAbility("settings");
   const sp = await searchParams;
-  const tab = sp.tab === "documents" ? "documents" : "organization";
-  const [org, types] = await Promise.all([getOrganization(), tab === "documents" ? listDocumentTypes() : Promise.resolve([])]);
+  const tab = sp.tab === "documents" ? "documents" : sp.tab === "roles" ? "roles" : "organization";
+  const [org, types, overrides] = await Promise.all([getOrganization(), tab === "documents" ? listDocumentTypes() : Promise.resolve([]), tab === "roles" ? listRoleAbilities() : Promise.resolve([])]);
   return (
     <div>
       <PageHeader title="Settings" meta={<span>{org.name}</span>} />
-      <Tabs tabs={[{ key: "organization", label: "Organization" }, { key: "documents", label: "Client documents" }]} current={tab} base="/settings" />
+      <Tabs tabs={[{ key: "organization", label: "Organization" }, { key: "documents", label: "Client documents" }, { key: "roles", label: "Roles" }]} current={tab} base="/settings" />
       {tab === "organization" && (
         <div className="grid max-w-4xl gap-4 lg:grid-cols-[1fr_320px]">
           <Card title="Organization" description="License holder details" padded><OrgForm org={org} /></Card>
@@ -31,6 +32,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
         </div>
       )}
       {tab === "documents" && <DocumentTypesEditor types={types} />}
+      {tab === "roles" && <RolesEditor overrides={overrides} />}
     </div>
   );
 }

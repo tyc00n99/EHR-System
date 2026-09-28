@@ -1,6 +1,6 @@
 import { Badge, Card, Empty, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { listAudit } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fmtDateTime } from "@/lib/format";
 
 export const metadata = { title: "Audit log" };
@@ -8,7 +8,7 @@ export const metadata = { title: "Audit log" };
 const actionTone = { insert: "ok", update: "accent", delete: "danger", login: "neutral", logout: "neutral", reveal: "warn" } as const;
 
 export default async function AuditPage() {
-  await requireUser(["admin"]);
+  await requireAbility("settings");
   const rows = await listAudit(300);
   return (
     <div>

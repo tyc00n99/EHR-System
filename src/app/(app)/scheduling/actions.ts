@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { getAgreement, listAllCredentials, listAssignmentsForStaff, getStaff } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
 import { fromLocalInput } from "@/lib/format";
 import { fieldErrors, formToObject, shiftSchema, type ActionState } from "@/lib/validation";
@@ -32,7 +32,7 @@ async function checkEligibility(staffId: string, personId: string): Promise<{ pr
 }
 
 export async function createShifts(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("schedule");
   const parsed = shiftSchema.safeParse({ ...formToObject(fd), weekdays: fd.getAll("weekdays[]").map(String) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const d = parsed.data;
@@ -75,7 +75,7 @@ export async function createShifts(_prev: ActionState, fd: FormData): Promise<Ac
 }
 
 export async function cancelShift(id: string, scope: "one" | "series"): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("schedule");
   const db = await getDb();
   const [s] = await db.select().from(shifts).where(eq(shifts.id, id)).limit(1);
   if (!s) return { message: "Shift not found." };
@@ -87,7 +87,7 @@ export async function cancelShift(id: string, scope: "one" | "series"): Promise<
 }
 
 export async function markMissed(id: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("schedule");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(shifts, id, { status: "missed" });
   revalidatePath("/scheduling");
@@ -106,7 +106,7 @@ export async function listCancellationReasons() {
  * exactly what a county reviewer asks about.
  */
 export async function bulkCancelShifts(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("schedule");
   const ids = fd.getAll("ids[]").map(String).filter(Boolean);
   const cancelledBy = String(fd.get("cancelledBy") ?? "");
   const reasonId = String(fd.get("cancelReasonId") ?? "");
@@ -130,7 +130,7 @@ export async function bulkCancelShifts(_prev: ActionState, fd: FormData): Promis
 
 /** Schedule settings: the cancellation reason list. */
 export async function saveCancellationReason(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("settings");
   const id = String(fd.get("id") ?? "");
   const label = String(fd.get("label") ?? "").trim().slice(0, 80);
   if (!label) return { errors: { label: "Give the reason a name" } };
@@ -143,7 +143,7 @@ export async function saveCancellationReason(_prev: ActionState, fd: FormData): 
 }
 
 export async function deleteCancellationReason(id: string): Promise<{ message?: string }> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("settings");
   const db = await getDb();
   // A reason already written onto a cancelled shift is retired rather than removed, so the history
   // still reads back. Only an unused one is actually deleted.
@@ -157,7 +157,7 @@ export async function deleteCancellationReason(id: string): Promise<{ message?: 
 
 /** Schedule settings: which days and hours the calendar draws. */
 export async function saveCalendarSettings(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("settings");
   const start = Number(fd.get("scheduleStartHour"));
   const end = Number(fd.get("scheduleEndHour"));
   const days = fd.getAll("days[]").map(Number).filter((n) => n >= 0 && n <= 6);

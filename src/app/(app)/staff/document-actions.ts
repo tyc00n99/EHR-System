@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { aiConfigured, explainAiError } from "@/lib/ai/extract-agreement";
 import { nameMatches, readCredentialDocument, readable, type CredentialRead } from "@/lib/ai/read-document";
 import { indexStoredDocument, textLayerFor, type TextLayer } from "@/lib/document-text";
@@ -62,7 +62,7 @@ export async function storeStaffFile(
 }
 
 export async function uploadStaffDocument(staffId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const category = String(fd.get("category") ?? "");
   const title = String(fd.get("title") ?? "").trim().slice(0, 200);
   const note = String(fd.get("note") ?? "").trim().slice(0, 1000);
@@ -77,7 +77,7 @@ export async function uploadStaffDocument(staffId: string, _prev: ActionState, f
 }
 
 export async function deleteStaffDocument(id: string, staffId: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const db = await getDb();
   const [doc] = await db.select().from(schema.staffDocuments).where(eq(schema.staffDocuments.id, id)).limit(1);
   if (!doc || doc.staffId !== staffId) return;
@@ -88,7 +88,7 @@ export async function deleteStaffDocument(id: string, staffId: string): Promise<
 
 /** Files a document against a credential that was recorded before documents were required. */
 export async function attachToCredential(staffId: string, credentialId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { errors: { file: "Choose a file" } };
   const db = await getDb();
@@ -103,7 +103,7 @@ export async function attachToCredential(staffId: string, credentialId: string, 
 
 /** Reads a stored document that was filed before reading existed, so it becomes searchable. */
 export async function indexStaffDocument(id: string, staffId: string): Promise<{ ok?: true; error?: string }> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const r = await indexStoredDocument("staff", id, user.id);
   if (r.ok) revalidatePath(`/staff/${staffId}`);
   return r;
@@ -127,7 +127,7 @@ export interface CredentialReadState {
  * read now rides along in hidden fields so the document is read once, not twice.
  */
 export async function readCredentialFile(staffId: string, expectedType: string, _prev: CredentialReadState, fd: FormData): Promise<CredentialReadState> {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("view_team");
   const readId = Date.now();
   if (!aiConfigured()) return { readId, message: "Document reading is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings. Fill the fields in by hand." };
   const file = fd.get("file");

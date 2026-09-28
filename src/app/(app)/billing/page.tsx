@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge, Card, cx, Empty, PageHeader, Table, Td, Th, Thead, Tr } from "@/components/kit";
 import { periodLines } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fmtMoney } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam } from "@/lib/pay-period";
@@ -9,7 +9,7 @@ import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam } from "@/lib/pa
 export const metadata = { title: "Billing" };
 
 export default async function BillingPage({ searchParams }: PageProps<"/billing">) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("billing");
   const sp = await searchParams;
   const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
   const isCurrent = period.index === currentPayPeriod().index;

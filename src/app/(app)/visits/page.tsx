@@ -16,8 +16,8 @@ export default async function VisitsPage({ searchParams }: PageProps<"/visits">)
   const sp = await searchParams;
   const personId = typeof sp.person === "string" ? sp.person : undefined;
   const person = personId ? await getPerson(personId) : null;
-  const vt = await buildVisitTable({ sp, personId, staffId: user.role === "dsp" ? (user.staffId ?? undefined) : undefined });
-  const title = person ? `Notes for ${fullName(person)}` : user.role === "dsp" ? "My notes" : "Notes";
+  const vt = await buildVisitTable({ sp, personId, staffId: user.abilities.includes("edit_visits") ? undefined : (user.staffId ?? undefined) });
+  const title = person ? `Notes for ${fullName(person)}` : user.abilities.includes("edit_visits") ? "Notes" : "My notes";
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
   const exportQ = `${vt.range.param}${vt.single.staff ? `&staff=${vt.single.staff}` : ""}`;
   return (

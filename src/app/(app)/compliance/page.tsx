@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge, Card, PageHeader, cx, type Tone } from "@/components/kit";
 import { listAllCredentials, listStaff } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { CREDENTIAL_TYPES, evaluateCompliance, type ComplianceStatus } from "@/lib/credentials";
 import { fmtDate } from "@/lib/format";
 
@@ -10,7 +10,7 @@ const TONE: Record<ComplianceStatus, Tone> = { ok: "ok", due_soon: "warn", overd
 const SHORT: Record<ComplianceStatus, string> = { ok: "OK", due_soon: "Due", overdue: "Late", missing: "None" };
 
 export default async function CompliancePage() {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const [staffRows, creds] = await Promise.all([listStaff(true), listAllCredentials()]);
   const rows = staffRows.map((s) => ({ s, items: evaluateCompliance(s.hireDate, creds.get(s.id) ?? []) }));
   const columns = CREDENTIAL_TYPES.filter((c) => c.type !== "other" && c.type !== "auto_insurance").map((c) => ({ type: c.type, label: c.label }));

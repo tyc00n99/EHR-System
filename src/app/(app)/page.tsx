@@ -21,7 +21,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireUser();
   const sp = await searchParams;
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
-  return (<>{openVisit && <VisitSheet id={openVisit} />}{user.role === "dsp" && user.staffId ? <CaregiverHome staffId={user.staffId} name={user.staffName} /> : <OfficeHome user={user} />}</>);
+  return (<>{openVisit && <VisitSheet id={openVisit} />}{!user.abilities.includes("all_clients") && user.staffId ? <CaregiverHome staffId={user.staffId} name={user.staffName} /> : <OfficeHome user={user} />}</>);
 }
 
 /* ---------- caregiver home ---------- */

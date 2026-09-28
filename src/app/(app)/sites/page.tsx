@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge, Card, Empty, LinkButton, PageHeader } from "@/components/kit";
 import { Icon } from "@/components/icons";
 import { listSitesWithPrograms } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { getServiceType } from "@/lib/services";
 
 export const metadata = { title: "Sites and programs" };
@@ -10,7 +10,7 @@ export const metadata = { title: "Sites and programs" };
 const TYPE_LABEL = { office: "Office", community_residential: "Community residential setting", day_services: "Day services facility", in_home: "In-home services" } as const;
 
 export default async function SitesPage() {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("manage_sites");
   const sites = await listSitesWithPrograms();
   return (
     <div>

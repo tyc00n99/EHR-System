@@ -28,7 +28,7 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
   const row = await getVisit(id);
   if (!row) notFound();
   const { visit: v, person, staff: s, agreement, edits } = row;
-  if (user.role === "dsp" && v.staffId !== user.staffId) notFound();
+  if (!user.abilities.includes("edit_visits") && v.staffId !== user.staffId) notFound();
   const pos = PLACES_OF_SERVICE.find((p) => p.code === v.placeOfService);
   const editable = can(user, "edit_visits") && v.status !== "void";
   const duration = v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null;
@@ -55,7 +55,7 @@ export default async function VisitPage({ params, searchParams }: PageProps<"/vi
       <div className="mb-4 overflow-hidden rounded-lg border border-line bg-card shadow-[var(--shadow-sm)]"><VisitRecord id={v.id} /></div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <EvvCard visitId={v.id} office={user.role !== "dsp"} />
+        <EvvCard visitId={v.id} office={user.abilities.includes("review")} />
         <Card title="Aggregator record" description="Exactly what the EVV aggregator and the 837P claim line receive" padded>
           <Properties items={[
             { icon: "hash", label: "Provider tax ID", value: <span className="tabular-nums">{v.providerTaxId}</span> },

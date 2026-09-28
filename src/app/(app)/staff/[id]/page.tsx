@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, Crumb, CrumbSep, Empty, LinkButton, RecordHeader, Table, Tabs, Td, Th, Thead, Tr } from "@/components/kit";
 import { getStaff, getUserForStaff, listAssignmentsForStaff, listCredentials, listPeople, listRecentLogins, listStaffAvailability, listStaffDocuments, listVisits } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fullName } from "@/lib/format";
 import { DeleteDocument, DocumentForm, LoginPanel } from "./panels";
@@ -23,7 +23,7 @@ import { Plain, Rows } from "./plain";
 
 
 export default async function StaffPage({ params, searchParams }: PageProps<"/staff/[id]">) {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const { id } = await params;
   const sp = await searchParams;
   // A tab that no longer exists (the old Clients tab, bookmarked) lands on Overview, not on nothing.
@@ -56,7 +56,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
     { key: "overview", label: "Overview" },
     { key: "compliance", label: "Compliance", count: summary.overdue + summary.dueSoon || undefined },
     { key: "visits", label: "Notes", count: visits.length },
-    ...(user.role === "admin" ? [{ key: "login", label: "Login" }] : []),
+    ...(user.abilities.includes("manage_staff") ? [{ key: "login", label: "Login" }] : []),
   ];
 
   return (
@@ -67,7 +67,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
         title={`${s.firstName} ${s.lastName}`}
         chips={<><Badge tone={s.active ? "ok" : "neutral"}>{s.active ? "active" : "inactive"}</Badge>{summary.overdue > 0 ? <Badge tone="danger">{summary.overdue} overdue</Badge> : summary.dueSoon > 0 ? <Badge tone="warn">{summary.dueSoon} due soon</Badge> : null}</>}
         subtitle={<><span>{s.title}</span><span className="text-hint">·</span><span>Hired {fmtDate(s.hireDate)}</span><span className="text-hint">·</span><span className="tabular-nums">{s.npi ? `NPI ${s.npi}` : `UMPI ${s.umpi}`}</span>{login && <><span className="text-hint">·</span><span>{login.email}</span></>}</>}
-        actions={user.role === "admin" && <LinkButton href={`/staff/${id}/edit`} variant="outline">Edit</LinkButton>}
+        actions={user.abilities.includes("manage_staff") && <LinkButton href={`/staff/${id}/edit`} variant="outline">Edit</LinkButton>}
       />
       <Tabs tabs={tabs} current={tab} base={`/staff/${id}`} />
 
@@ -75,7 +75,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
         <div className="grid gap-4 lg:grid-cols-2">
           {/* Two columns so the whole record fits one screen without scrolling (Sept 18, 2026, user's request). */}
           <div>
-          <AboutSection staffId={id} canEdit={user.role === "admin"} ssn={user.role === "admin" ? <SsnField staffId={id} last4={s.ssnLast4} canReveal /> : undefined} v={{ firstName: s.firstName, lastName: s.lastName, dob: s.dob, gender: s.gender, npi: s.npi, umpi: s.umpi, active: s.active, title: s.title, hireDate: s.hireDate, phone: s.phone, email: s.email, address1: s.address1, address2: s.address2, city: s.city, state: s.state, zip: s.zip, payRate: s.payRate }} />
+          <AboutSection staffId={id} canEdit={user.abilities.includes("manage_staff")} ssn={user.abilities.includes("view_pay") ? <SsnField staffId={id} last4={s.ssnLast4} canReveal /> : undefined} v={{ firstName: s.firstName, lastName: s.lastName, dob: s.dob, gender: s.gender, npi: s.npi, umpi: s.umpi, active: s.active, title: s.title, hireDate: s.hireDate, phone: s.phone, email: s.email, address1: s.address1, address2: s.address2, city: s.city, state: s.state, zip: s.zip, payRate: s.payRate }} />
           <Plain title="Clients" action={<ManageAssignments staffId={id} assignments={assignments.map((a) => ({ id: a.assignment.id, active: a.assignment.active, orientedOn: a.assignment.orientedOn, personId: a.person.id, name: fullName(a.person), pmi: a.person.pmi, status: a.person.status }))} candidates={unassigned.map((p) => ({ id: p.id, name: `${p.lastName}, ${p.firstName}` }))} />}>
             {activeAssignments.length === 0 ? <p className="text-[15px] text-muted-foreground">No clients yet.</p> : (
               <ul className="space-y-1.5 text-[15px]">{activeAssignments.map((a) => <li key={a.assignment.id}><Link href={`/clients/${a.person.id}`} className="font-medium text-text-strong hover:underline">{fullName(a.person)}</Link>{a.assignment.orientedOn ? <span className="text-muted-foreground"> · since {fmtDate(a.assignment.orientedOn)}</span> : <span className="text-warn"> · orientation pending</span>}</li>)}</ul>
@@ -83,7 +83,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
           </Plain>
           </div>
           <div>
-          <Plain title="Works" action={user.role !== "dsp" && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
+          <Plain title="Works" action={user.abilities.includes("view_team") && <StaffAvailabilityButton staffId={id} schedule={schedule} hasAny={availability.length > 0} />}>
             {availability.length > 0 ? <AvailabilityList rows={availability} /> : <p className="text-[14.5px] text-muted-foreground">No days recorded yet, so scheduling does not know when {s.firstName} is free.</p>}
           </Plain>
           </div>
@@ -104,11 +104,11 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
 
       {tab === "visits" && vt && (
         <div>
-          <VisitsTable search={false} rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/staff/${id}`, keep: { tab: "visits" } }} exportCsv={user.role !== "dsp" ? `/reports/visits.csv?${vt.range.param}&staff=${id}` : undefined} exportPdf={user.role !== "dsp" ? `/reports/visits.pdf?${vt.range.param}&staff=${id}` : undefined} />
+          <VisitsTable search={false} rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/staff/${id}`, keep: { tab: "visits" } }} exportCsv={user.abilities.includes("edit_visits") ? `/reports/visits.csv?${vt.range.param}&staff=${id}` : undefined} exportPdf={user.abilities.includes("edit_visits") ? `/reports/visits.pdf?${vt.range.param}&staff=${id}` : undefined} />
         </div>
       )}
 
-      {tab === "login" && user.role === "admin" && (
+      {tab === "login" && user.abilities.includes("manage_staff") && (
         <div className="max-w-3xl">
           {login ? (<>
             <Plain title="Login">

@@ -1,11 +1,11 @@
 import { listVisits } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { resolveVisitRange } from "@/lib/visit-range";
 
 const esc = (v: unknown) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 
 export async function GET(req: Request) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const sp = new URL(req.url).searchParams;
   const range = resolveVisitRange(sp);
   // ?ids= narrows the export to the rows ticked in the table.

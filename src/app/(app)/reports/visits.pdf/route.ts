@@ -1,6 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getOrganization, listVisits } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { resolveVisitRange } from "@/lib/visit-range";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { minutesBetween } from "@/lib/units";
@@ -18,7 +18,7 @@ const standing = (v: { returnedAt: Date | null; status: string; clientSignedAt: 
  * whose ids are passed (the table's selection). Same audience as the CSV.
  */
 export async function GET(req: Request) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const sp = new URL(req.url).searchParams;
   const range = resolveVisitRange(sp);
   const ids = new Set((sp.get("ids") ?? "").split(",").filter((s) => /^[0-9a-f-]{36}$/.test(s)));

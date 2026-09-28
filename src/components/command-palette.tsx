@@ -11,7 +11,7 @@ const NAV = [
   ["Home", "/", Home], ["Agency performance", "/owner", TrendingUp], ["Needs attention", "/attention", Bell], ["Clients", "/clients", Users], ["Clock in / out", "/clock", Clock], ["Notes & EVV", "/visits", ListChecks], ["Billing", "/billing", Wallet], ["Staff", "/staff", UserSquare2], ["Compliance", "/compliance", ShieldCheck], ["Reports", "/reports", LayoutDashboard], ["Sites & programs", "/sites", Building2], ["245D services", "/services", FileText], ["Settings", "/settings", Settings],
 ] as const;
 
-export function CommandPalette({ entries, role }: { entries: PaletteEntry[]; role: string }) {
+export function CommandPalette({ entries, office }: { entries: PaletteEntry[]; office: boolean }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   useEffect(() => {
@@ -20,7 +20,6 @@ export function CommandPalette({ entries, role }: { entries: PaletteEntry[]; rol
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   const go = (href: string) => { setOpen(false); router.push(href); };
-  const office = role !== "dsp";
   return (
     <>
       <button onClick={() => setOpen(true)} className="hidden h-9 w-full max-w-md items-center gap-2 rounded-md border border-line bg-gray-100 px-3 text-[13px] text-hint hover:bg-page md:flex">

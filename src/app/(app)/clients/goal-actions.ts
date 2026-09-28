@@ -4,11 +4,11 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fieldErrors, formToObject, goalEntrySchema, goalReviewSchema, goalSchema, medicationSchema, type ActionState } from "@/lib/validation";
 
 export async function createGoal(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = goalSchema.safeParse({ ...formToObject(fd), questions: fd.getAll("questions[]").map(String).map((q) => q.trim()).filter(Boolean) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const { questions, ...goal } = parsed.data;
@@ -24,7 +24,7 @@ export async function createGoal(personId: string, _prev: ActionState, fd: FormD
 
 /** Edits the goal's wording: title, outcome, description, category, target. Questions are managed separately. */
 export async function updateGoal(goalId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = goalSchema.omit({ questions: true }).safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const db = await getDb();
@@ -37,7 +37,7 @@ export async function updateGoal(goalId: string, personId: string, _prev: Action
 
 /** Records a review: where the goal stands, in the supervisor's words. Met and not-met also move the status. */
 export async function addGoalReview(goalId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = goalReviewSchema.safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const db = await getDb();
@@ -54,7 +54,7 @@ export async function addGoalReview(goalId: string, personId: string, _prev: Act
 
 /** A hand-written line in the outcome's progress log (Sept 22, 2026): a weight, a call with the family, anything a note did not carry. */
 export async function addGoalEntry(goalId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = goalEntrySchema.safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const db = await getDb();
@@ -66,14 +66,14 @@ export async function addGoalEntry(goalId: string, personId: string, _prev: Acti
 }
 
 export async function setGoalStatus(goalId: string, personId: string, status: "active" | "met" | "discontinued"): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.goals, goalId, { status });
   revalidatePath(`/clients/${personId}`);
 }
 
 export async function addGoalQuestion(goalId: string, personId: string, prompt: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const p = prompt.trim();
   if (p.length < 3) return { message: "Write the question first." };
   const db = await getDb();
@@ -84,21 +84,21 @@ export async function addGoalQuestion(goalId: string, personId: string, prompt: 
 
 /** Retiring hides a question from new notes. Its past responses stay, and it can be reinstated. */
 export async function retireGoalQuestion(questionId: string, personId: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.goalQuestions, questionId, { active: false });
   revalidatePath(`/clients/${personId}`);
 }
 
 export async function reinstateGoalQuestion(questionId: string, personId: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.goalQuestions, questionId, { active: true });
   revalidatePath(`/clients/${personId}`);
 }
 
 export async function createMedication(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = medicationSchema.safeParse({ ...formToObject(fd), times: String(fd.get("times") ?? "").split(/[,\s]+/).filter(Boolean) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const db = await getDb();
@@ -109,7 +109,7 @@ export async function createMedication(personId: string, _prev: ActionState, fd:
 
 /** Edits a medication in place — dose, times, instructions, dates (Sept 24, 2026, user's request). The MAR keeps every dose already recorded. */
 export async function updateMedication(id: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = medicationSchema.safeParse({ ...formToObject(fd), times: String(fd.get("times") ?? "").split(/[,\s]+/).filter(Boolean) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the fields." };
   const db = await getDb();
@@ -121,7 +121,7 @@ export async function updateMedication(id: string, personId: string, _prev: Acti
 }
 
 export async function setMedicationActive(id: string, personId: string, active: boolean): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.medications, id, { active, ...(active ? {} : { endDate: new Date().toISOString().slice(0, 10) }) });
   revalidatePath(`/clients/${personId}`);
@@ -135,7 +135,7 @@ export async function setMedicationActive(id: string, personId: string, active: 
  * which is why that stays.
  */
 export async function deleteMedication(id: string, personId: string): Promise<{ ok: boolean; error?: string }> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   const [med] = await db.select({ id: schema.medications.id, name: schema.medications.name })
     .from(schema.medications)

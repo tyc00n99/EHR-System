@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { getPerson } from "@/db/queries";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fullName } from "@/lib/format";
 import { createAgreement, extractAgreement } from "../../../actions";
 import { AgreementForm } from "./agreement-form";
 
 export default async function NewAgreementPage({ params }: PageProps<"/clients/[id]/agreements/new">) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("manage_people");
   const { id } = await params;
   const person = await getPerson(id);
   if (!person) notFound();

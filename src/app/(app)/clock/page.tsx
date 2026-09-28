@@ -16,7 +16,7 @@ export default async function ClockPage() {
       </div>
     );
   }
-  const [open, agreements] = await Promise.all([getOpenVisitForStaff(user.staffId), listClockableAgreements(user.role === "dsp" ? user.staffId : undefined)]);
+  const [open, agreements] = await Promise.all([getOpenVisitForStaff(user.staffId), listClockableAgreements(user.abilities.includes("edit_visits") ? undefined : user.staffId)]);
   return (
     <div className="mx-auto max-w-md">
       <ClockPanel
@@ -27,9 +27,9 @@ export default async function ClockPage() {
           personName: `${a.person.firstName} ${a.person.lastName}`,
           label: `${labelForCode(a.agreement.serviceCode, a.agreement.modifiers)} · ${a.agreement.serviceCode}${a.agreement.modifiers.length ? " " + a.agreement.modifiers.join(" ") : ""}`,
           unitsLeft: null,
-          oriented: user.role !== "dsp" || Boolean(a.orientedOn),
+          oriented: user.abilities.includes("edit_visits") || Boolean(a.orientedOn),
         }))}
-        isDsp={user.role === "dsp"}
+        isDsp={!user.abilities.includes("edit_visits")}
         tasks={DEFAULT_TASKS.map((t) => ({ code: t.code, label: t.label }))}
         places={PLACES_OF_SERVICE.map((p) => ({ code: p.code, label: p.label }))}
       />

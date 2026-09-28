@@ -1,14 +1,14 @@
 import { Crumb, CrumbSep, PageHeader } from "@/components/kit";
 import { Rule } from "@/components/rule";
 import { listClockableAgreements, listStaff } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { ManualVisitForm } from "./manual-form";
 import { labelForCode } from "@/lib/hcpcs";
 
 export const metadata = { title: "Manual note entry" };
 
 export default async function NewVisitPage() {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("edit_visits");
   const [agreements, staff] = await Promise.all([listClockableAgreements(), listStaff(true)]);
   return (
     <div>

@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { findShiftForClockIn, getAgreement, getOrganization, getPerson, getStaff, listAssignmentsForStaff } from "@/db/queries";
-import { requireUser, type CurrentUser } from "@/lib/auth";
+import { requireAbility, requireUser, type CurrentUser } from "@/lib/auth";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { computeUnits } from "@/lib/units";
 import { mirrorClockIn, mirrorClockOut, mirrorEdit, mirrorManualVisit, mirrorVoid } from "@/evv/bridge";
@@ -71,7 +71,7 @@ export async function clockIn(_prev: ActionState, fd: FormData): Promise<ActionS
   const [open] = await db.select({ id: visits.id }).from(visits).where(and(eq(visits.staffId, user.staffId), eq(visits.status, "in_progress"), isNull(visits.clockOutAt))).limit(1);
   if (open) return { message: "You are already clocked in. Clock out first." };
 
-  if (user.role === "dsp") {
+  if (!user.abilities.includes("edit_visits")) {
     const mine = (await listAssignmentsForStaff(user.staffId)).find((a) => a.assignment.active && a.person.id === d.personId);
     if (!mine) return { message: "This client is not assigned to you." };
     if (!mine.assignment.orientedOn) return { message: "Your orientation to this person has not been recorded. Ask your supervisor." };
@@ -119,7 +119,7 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
   const [v] = await db.select().from(visits).where(eq(visits.id, d.visitId)).limit(1);
   if (!v) return { message: "Note not found." };
   if (v.status !== "in_progress") return { message: "This note is already closed." };
-  if (v.staffId !== user.staffId && user.role === "dsp") return { message: "This is not your visit." };
+  if (v.staffId !== user.staffId && !user.abilities.includes("edit_visits")) return { message: "This is not your visit." };
   const [agreement, person] = await Promise.all([getAgreement(v.serviceAgreementId), getPerson(v.personId)]);
   let clientSignedAt: Date | null = null;
   let clientUnsignedReason: string | null = null;
@@ -155,7 +155,7 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
 }
 
 export async function createManualVisit(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("edit_visits");
   const parsed = manualVisitSchema.safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the highlighted fields." };
   const d = parsed.data;
@@ -210,7 +210,7 @@ async function recordEdit(user: CurrentUser, visitId: string, reason: string, ch
 }
 
 export async function editVisit(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("edit_visits");
   const parsed = visitEditSchema.safeParse(formToObject(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the highlighted fields." };
   const d = parsed.data;
@@ -249,7 +249,7 @@ export async function editVisit(_prev: ActionState, fd: FormData): Promise<Actio
 }
 
 export async function voidVisit(visitId: string, reason: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("edit_visits");
   if (reason.trim().length < 5) return { message: "Give a reason for voiding this visit." };
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);

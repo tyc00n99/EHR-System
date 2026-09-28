@@ -8,7 +8,7 @@ import { NO_COUNTS, type NavCounts } from "@/lib/nav";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const [user, org] = await Promise.all([requireUser(), getOrganization()]);
-  const office = user.role !== "dsp";
+  const office = user.abilities.includes("review");
   const [items, people, staff] = await Promise.all([office ? attentionItems() : [], office ? listPeople() : [], office ? listStaff() : []]);
 
   // Every number in the top bar and the section row comes from the list the bell already builds,

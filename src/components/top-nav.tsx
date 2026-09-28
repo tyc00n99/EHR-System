@@ -4,16 +4,16 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { cx } from "@/components/kit";
-import { primaryNav, sectionRow, type NavCounts, type Role } from "@/lib/nav";
+import { primaryNav, sectionRow, type NavCounts } from "@/lib/nav";
 
 /** The tabs across the top bar. Hidden on phones, where the bottom tab bar takes over. */
-export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
+export function TopNav({ abilities, counts }: { abilities: readonly string[]; counts: NavCounts }) {
   const pathname = usePathname();
   const isActive = (href: string, also?: string[]) =>
     href === "/" ? pathname === "/" : [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
   return (
     <nav aria-label="Main" className="hidden min-w-0 items-center gap-0.5 md:flex">
-      {primaryNav(role).map((d) => {
+      {primaryNav(abilities).map((d) => {
         const Ic = Icon[d.icon];
         const active = isActive(d.href, d.also);
         const badge = d.badge ? counts[d.badge] : 0;
@@ -44,10 +44,10 @@ export function TopNav({ role, counts }: { role: Role; counts: NavCounts }) {
  * sitting there empty — that absence is how you know Today has nothing hiding under it. Since the
  * sidebar went (Sept 20, 2026) this is where an area's pages live on every screen size.
  */
-export function SectionNav({ role }: { role: Role }) {
+export function SectionNav({ abilities }: { abilities: readonly string[] }) {
   const pathname = usePathname();
   const params = useSearchParams();
-  const entries = sectionRow(pathname, role);
+  const entries = sectionRow(pathname, abilities);
   if (!entries) return null;
   return (
     <nav aria-label="Section" className="z-10 flex h-10 shrink-0 items-center gap-2 overflow-x-auto border-b border-line bg-sidebar px-4 md:px-5">

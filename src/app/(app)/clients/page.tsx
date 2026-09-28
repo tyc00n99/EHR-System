@@ -13,7 +13,7 @@ export const metadata = { title: "Clients" };
  */
 export default async function ClientsPage() {
   const user = await requireUser();
-  const people = user.role === "dsp"
+  const people = !user.abilities.includes("all_clients")
     ? (user.staffId ? (await listAssignmentsForStaff(user.staffId)).filter((a) => a.assignment.active).map((a) => a.person) : [])
     : await listPeople();
   const rows: ClientRow[] = people.map((p) => ({
@@ -23,7 +23,7 @@ export default async function ClientsPage() {
     status: p.status,
     photo: p.photoPath ? `/clients/${p.id}/photo?v=${p.photoUpdatedAt?.getTime() ?? 0}` : null,
   }));
-  const title = user.role === "dsp" ? "My clients" : "Clients";
+  const title = user.abilities.includes("all_clients") ? "Clients" : "My clients";
   return (
     <div>
       <PageHeader title={title} meta={<span><span className="font-medium text-text-strong">{rows.length}</span> {rows.length === 1 ? "client" : "clients"}</span>} />

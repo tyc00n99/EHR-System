@@ -197,7 +197,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
       )}
 
       {tab === "files" && (
-        <DocumentsTab personId={id} items={checklist} types={docTypes} others={liveDocuments.filter((d) => !requiredTypeIds.has(typeIdOf(d, docTypes) ?? ""))} archived={documents.map((d) => d.doc).filter((d) => Boolean(d.archivedAt))} summary={checklistSummary(checklist)} manage={manage} canEditTypes={user.role === "admin"} orgName={org.name} aiReady={aiReady} />
+        <DocumentsTab personId={id} items={checklist} types={docTypes} others={liveDocuments.filter((d) => !requiredTypeIds.has(typeIdOf(d, docTypes) ?? ""))} archived={documents.map((d) => d.doc).filter((d) => Boolean(d.archivedAt))} summary={checklistSummary(checklist)} manage={manage} canEditTypes={user.abilities.includes("settings")} orgName={org.name} aiReady={aiReady} />
       )}
 
 

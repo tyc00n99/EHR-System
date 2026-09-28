@@ -211,6 +211,13 @@
       "when": 1790106571464,
       "tag": "0029_goal_paragraphs_log",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790573180206,
+      "tag": "0030_role_abilities",
+      "breakpoints": true
     }
   ]
 }

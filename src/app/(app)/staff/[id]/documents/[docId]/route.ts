@@ -11,7 +11,7 @@ import { getFile } from "@/lib/storage";
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; docId: string }> }) {
   const user = await requireUser();
   const { id, docId } = await params;
-  if (user.role === "dsp" && user.staffId !== id) notFound();
+  if (!user.abilities.includes("view_team") && user.staffId !== id) notFound();
   const db = await getDb();
   const [doc] = await db.select().from(schema.staffDocuments).where(and(eq(schema.staffDocuments.id, docId), eq(schema.staffDocuments.staffId, id))).limit(1);
   if (!doc) notFound();

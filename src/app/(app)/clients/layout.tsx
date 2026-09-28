@@ -11,7 +11,7 @@ import { ClientRail, type RailPerson } from "./client-rail";
  */
 export default async function ClientsLayout({ children }: { children: ReactNode }) {
   const user = await requireUser();
-  const people = user.role === "dsp"
+  const people = !can(user, "all_clients")
     ? (user.staffId ? (await listAssignmentsForStaff(user.staffId)).filter((a) => a.assignment.active).map((a) => a.person) : [])
     : await listPeople();
   const rail: RailPerson[] = people.map((p) => ({
@@ -25,7 +25,7 @@ export default async function ClientsLayout({ children }: { children: ReactNode 
   }));
   return (
     <div className="relative -mx-4 -my-5 flex min-h-0 flex-1 md:-mx-8 md:-my-6">
-      <ClientRail people={rail} label={user.role === "dsp" ? "My clients" : "Clients"} canAdd={can(user, "manage_people")} />
+      <ClientRail people={rail} label={can(user, "all_clients") ? "Clients" : "My clients"} canAdd={can(user, "manage_people")} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-5 md:px-8 md:py-6">{children}</div>
     </div>
   );

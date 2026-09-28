@@ -1,5 +1,5 @@
 import { listPeople, listShifts, listStaff } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fmtDateNum, fromLocalInput } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { chicagoDate } from "@/lib/pay-period";
@@ -11,7 +11,7 @@ export const metadata = { title: "Bulk action" };
 const addDays = (iso: string, n: number) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 
 export default async function BulkActionPage() {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("schedule");
   const today = chicagoDate(new Date());
   // A quarter either side is the window a bulk cancel realistically reaches over.
   const [rows, people, staff, reasons] = await Promise.all([

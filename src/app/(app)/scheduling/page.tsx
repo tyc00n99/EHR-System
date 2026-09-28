@@ -42,7 +42,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   const step = view === "daily" ? 1 : view === "weekly" ? 7 : 30;
 
   const [rows, people, staffRows, agreements, availability, staffAvail, org, openShift] = await Promise.all([
-    listShifts(fromLocalInput(`${from}T00:00`), fromLocalInput(`${addDays(to, 1)}T00:00`), user.role === "dsp" ? { staffId: user.staffId ?? undefined } : {}),
+    listShifts(fromLocalInput(`${from}T00:00`), fromLocalInput(`${addDays(to, 1)}T00:00`), !user.abilities.includes("schedule") ? { staffId: user.staffId ?? undefined } : {}),
     listPeople(),
     listStaff(true),
     listAgreementsWithUsage(),
@@ -52,7 +52,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     one("shift") ? getShift(one("shift")) : null,
   ]);
 
-  const manage = user.role !== "dsp";
+  const manage = user.abilities.includes("schedule");
 
   // Days along the top. Monthly hands its own grid the same range.
   const span = view === "daily" ? 1 : view === "weekly" ? 7 : 0;

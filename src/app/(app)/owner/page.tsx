@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge, Card, Empty, Kpi, PageHeader, Table, Td, Th, Thead, Tr, cx } from "@/components/kit";
 import { TrendChart } from "@/components/trend-chart";
 import { countOpenVisits, listAgreementsWithUsage, listAllCredentials, listPeople, listStaff, periodLines } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fmtMoney } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
@@ -35,7 +35,7 @@ function Delta({ now, prev, money }: { now: number; prev: number; money?: boolea
 }
 
 export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
-  await requireUser(["admin"]);
+  await requireAbility("billing");
   const sp = await searchParams;
   const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
   const prev = payPeriodByIndex(period.index - 1);

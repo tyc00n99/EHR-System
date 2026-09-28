@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, PageHeader } from "@/components/kit";
 import { listAgreementsWithUsage, listPeople } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
 import { Icon } from "@/components/icons";
@@ -18,7 +18,7 @@ function defaultNoteRange() {
 }
 
 export default async function ReportsPage() {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const periods = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(currentPayPeriod().index - i));
   const [people, agreements] = await Promise.all([listPeople(), listAgreementsWithUsage()]);
   const clients: NotesReportClient[] = people.filter((p) => p.status !== "discharged" || agreements.some((a) => a.agreement.personId === p.id)).map((p) => {

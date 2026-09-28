@@ -1,5 +1,5 @@
 import { listClockableAgreements, listPeople, listStaff } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fmtDate } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { chicagoDate } from "@/lib/pay-period";
@@ -8,7 +8,7 @@ import { EventForm, type FormAgreement } from "./event-form";
 export const metadata = { title: "Create event" };
 
 export default async function NewEventPage({ searchParams }: PageProps<"/scheduling/new">) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("schedule");
   const sp = await searchParams;
   const date = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : chicagoDate(new Date());
 

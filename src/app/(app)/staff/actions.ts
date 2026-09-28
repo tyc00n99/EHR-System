@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { decryptField, encryptField, formatSsn } from "@/lib/crypto";
 import { availabilityScheduleSchema, credentialSchema, fieldErrors, formToObject, loginSchema, staffSchema, type ActionState } from "@/lib/validation";
@@ -26,7 +26,7 @@ function withSsn<T extends { ssn?: string; payRate: number }>(data: T) {
 }
 
 export async function createStaff(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("manage_staff");
   const parsed = staffSchema.safeParse(normalize(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   if (!parsed.data.ssn) return { errors: { ssn: "Required" } };
@@ -37,7 +37,7 @@ export async function createStaff(_prev: ActionState, fd: FormData): Promise<Act
 }
 
 export async function updateStaff(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("manage_staff");
   const parsed = staffSchema.safeParse(normalize(fd));
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
@@ -51,7 +51,7 @@ export async function updateStaff(id: string, _prev: ActionState, fd: FormData):
 /* ---------- assignments ---------- */
 
 export async function addAssignment(staffId: string, personId: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const db = await getDb();
   const [existing] = await db.select().from(schema.assignments).where(and(eq(schema.assignments.staffId, staffId), eq(schema.assignments.personId, personId))).limit(1);
   const w = audited(db, { userId: user.id });
@@ -63,7 +63,7 @@ export async function addAssignment(staffId: string, personId: string): Promise<
 }
 
 export async function endAssignment(id: string, staffId: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.assignments, id, { active: false });
   revalidatePath(`/staff/${staffId}`);
@@ -72,7 +72,7 @@ export async function endAssignment(id: string, staffId: string): Promise<void> 
 
 /** Records 245D.09, subd. 4a orientation to this person's needs (today unless a date is given). */
 export async function markOriented(id: string, staffId: string, date?: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.assignments, id, { orientedOn: date ?? new Date().toISOString().slice(0, 10) });
   revalidatePath(`/staff/${staffId}`);
@@ -82,7 +82,7 @@ export async function markOriented(id: string, staffId: string, date?: string): 
 /* ---------- credentials ---------- */
 
 export async function addCredential(staffId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const parsed = credentialSchema.safeParse({ ...formToObject(fd), staffId });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   // The certificate itself, when one was attached. Checked before the row is written so a bad
@@ -118,7 +118,7 @@ export async function addCredential(staffId: string, _prev: ActionState, fd: For
 }
 
 export async function deleteCredential(id: string, staffId: string): Promise<void> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const db = await getDb();
   await audited(db, { userId: user.id }).delete(schema.staffCredentials, id);
   revalidatePath(`/staff/${staffId}`);
@@ -128,7 +128,7 @@ export async function deleteCredential(id: string, staffId: string): Promise<voi
 /* ---------- logins ---------- */
 
 export async function createLogin(staffId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("manage_staff");
   const parsed = loginSchema.safeParse({ ...formToObject(fd), staffId });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
@@ -143,7 +143,7 @@ export async function createLogin(staffId: string, _prev: ActionState, fd: FormD
 }
 
 export async function updateLogin(userId: string, staffId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("manage_staff");
   const role = String(fd.get("role") ?? "");
   const password = String(fd.get("password") ?? "");
   const active = fd.get("active") === "on";
@@ -158,7 +158,7 @@ export async function updateLogin(userId: string, staffId: string, _prev: Action
 
 /** Admin-only. Returns the full SSN and records the reveal in the audit log. */
 export async function revealSsn(staffId: string): Promise<{ ssn?: string; message?: string }> {
-  const user = await requireUser(["admin"]);
+  const user = await requireAbility("manage_staff");
   const db = await getDb();
   const [row] = await db.select({ ssnEncrypted: schema.staff.ssnEncrypted }).from(schema.staff).where(eq(schema.staff.id, staffId)).limit(1);
   if (!row) return { message: "Staff member not found." };
@@ -171,7 +171,7 @@ export async function revealSsn(staffId: string): Promise<{ ssn?: string; messag
  * partial write would leave the schedule describing a week nobody chose.
  */
 export async function saveStaffAvailability(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("view_team");
   const staffId = String(fd.get("staffId") ?? "");
   if (!staffId) return { error: "That form is missing which team member it belongs to." };
   let payload: unknown;

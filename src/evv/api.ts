@@ -7,7 +7,7 @@
 import { and, eq, gt } from "drizzle-orm";
 import { z } from "zod";
 import { getDb, schema } from "@/db";
-import { SESSION_COOKIE, loginRequired, type CurrentUser, type Role } from "@/lib/auth";
+import { SESSION_COOKIE, abilitiesFor, loginRequired, type CurrentUser, type Role } from "@/lib/auth";
 import { defaultOrganizationId, makeCtx, type EvvCtx } from "./context";
 import { hasEvvPermission, type EvvPermission } from "./permissions";
 import { EvvError } from "./visits";
@@ -27,7 +27,7 @@ async function userFromToken(token: string): Promise<CurrentUser | null> {
   const [r] = await db.select({ id: schema.users.id, email: schema.users.email, role: schema.users.role, staffId: schema.users.staffId, firstName: schema.staff.firstName, lastName: schema.staff.lastName })
     .from(schema.sessions).innerJoin(schema.users, eq(schema.sessions.userId, schema.users.id)).leftJoin(schema.staff, eq(schema.users.staffId, schema.staff.id))
     .where(and(eq(schema.sessions.id, token), gt(schema.sessions.expiresAt, new Date()), eq(schema.users.active, true))).limit(1);
-  return r ? { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null } : null;
+  return r ? { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null, abilities: await abilitiesFor(r.role) } : null;
 }
 
 /** Same open-access fallback the pages use when REQUIRE_LOGIN is off: the first active admin. */
@@ -36,7 +36,7 @@ async function openAccessUser(): Promise<CurrentUser | null> {
   const db = await getDb();
   const [r] = await db.select({ id: schema.users.id, email: schema.users.email, role: schema.users.role, staffId: schema.users.staffId, firstName: schema.staff.firstName, lastName: schema.staff.lastName })
     .from(schema.users).leftJoin(schema.staff, eq(schema.users.staffId, schema.staff.id)).where(and(eq(schema.users.role, "admin"), eq(schema.users.active, true))).limit(1);
-  return r ? { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null } : null;
+  return r ? { id: r.id, email: r.email, role: r.role, staffId: r.staffId, staffName: r.firstName ? `${r.firstName} ${r.lastName}` : null, abilities: await abilitiesFor(r.role) } : null;
 }
 
 /* ---------- rate limiting ---------- */

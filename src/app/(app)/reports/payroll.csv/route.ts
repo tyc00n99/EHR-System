@@ -1,9 +1,9 @@
 import { periodLines } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { payPeriodFromParam } from "@/lib/pay-period";
 
 export async function GET(req: Request) {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const period = payPeriodFromParam(new URL(req.url).searchParams.get("period") ?? undefined);
   const lines = await periodLines(period.start, period.end);
   const by = Object.values(lines.reduce<Record<string, { name: string; visits: number; minutes: number; units: number; rate: number; unsigned: number }>>((acc, l) => { const r = (acc[l.staffId] ??= { name: l.staffName, visits: 0, minutes: 0, units: 0, rate: l.payRate, unsigned: 0 }); r.visits++; r.minutes += l.minutes; r.units += l.units; if (!l.signed) r.unsigned++; return acc; }, {}));

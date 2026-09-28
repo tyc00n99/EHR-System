@@ -9,14 +9,14 @@ import { audited } from "@/db/audited";
 import { getPerson, getOrganization } from "@/db/queries";
 import { aiConfigured, explainAiError, extractAgreementFromPdf, type ExtractedAgreement } from "@/lib/ai/extract-agreement";
 import { readIntakeDocument, readable, type IntakeRead } from "@/lib/ai/read-document";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { issueClientCode } from "@/lib/client-code";
 import { decryptField } from "@/lib/crypto";
 import { putFile } from "@/lib/storage";
 import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState, activityLibrarySchema } from "@/lib/validation";
 
 export async function createPerson(_prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true", smsConsent: fd.get("smsConsent") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
@@ -35,7 +35,7 @@ export async function createPerson(_prev: ActionState, fd: FormData): Promise<Ac
 }
 
 export async function updatePerson(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = personSchema.safeParse({ ...formToObject(fd), medicationSupport: fd.get("medicationSupport") === "true", smsConsent: fd.get("smsConsent") === "true" });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
@@ -48,7 +48,7 @@ export async function updatePerson(id: string, _prev: ActionState, fd: FormData)
 
 /** Generates a new six-digit signing code for the person. The hash verifies it; an encrypted copy lets an admin read it back. */
 export async function setClientCode(personId: string): Promise<{ code?: string; texted?: boolean; message?: string; referenceError?: string }> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const person = await getPerson(personId);
   if (!person) return { message: "Client not found." };
   const db = await getDb();
@@ -66,7 +66,7 @@ export async function setClientCode(personId: string): Promise<{ code?: string; 
  * client's record. Same treatment as a staff SSN.
  */
 export async function revealClientCode(personId: string): Promise<{ code?: string; message?: string }> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   const [row] = await db
     .select({ enc: schema.people.signatureCodeEncrypted, hash: schema.people.signatureCodeHash })
@@ -85,7 +85,7 @@ export async function revealClientCode(personId: string): Promise<{ code?: strin
 }
 
 export async function createAgreement(personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = agreementSchema.safeParse({ ...formToObject(fd), personId, modifiers: fd.getAll("modifiers[]").map(String) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
@@ -97,7 +97,7 @@ export async function createAgreement(personId: string, _prev: ActionState, fd: 
 }
 
 export async function setAgreementStatus(id: string, personId: string, status: "active" | "cancelled" | "exhausted" | "expired") {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.serviceAgreements, id, { status });
   revalidatePath(`/clients/${personId}`);
@@ -105,7 +105,7 @@ export async function setAgreementStatus(id: string, personId: string, status: "
 
 /** Archives (or restores) an agreement. Only non-active ones can be archived; the row and its visits stay. */
 export async function setAgreementArchived(id: string, personId: string, archived: boolean): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   const [a] = await db.select().from(schema.serviceAgreements).where(eq(schema.serviceAgreements.id, id)).limit(1);
   if (!a || a.personId !== personId) return { message: "Agreement not found." };
@@ -125,7 +125,7 @@ export interface ExtractState extends ActionState {
 
 /** Stores the uploaded service agreement PDF and asks Claude to read the billing details out of it. */
 export async function extractAgreement(personId: string, _prev: ExtractState, fd: FormData): Promise<ExtractState> {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("manage_people");
   if (!aiConfigured()) return { message: "AI extraction is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying. You can still type the authorization in by hand." };
   const file = fd.get("document");
   if (!(file instanceof File) || file.size === 0) return { message: "Choose a PDF first." };
@@ -150,7 +150,7 @@ export async function extractAgreement(personId: string, _prev: ExtractState, fd
 
 /** One-click status change from the record header. Discharge records the date. */
 export async function setPersonStatus(personId: string, status: "intake" | "active" | "discharged"): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.people, personId, { status, dischargedOn: status === "discharged" ? new Date().toISOString().slice(0, 10) : null });
   revalidatePath(`/clients/${personId}`);
@@ -159,7 +159,7 @@ export async function setPersonStatus(personId: string, status: "intake" | "acti
 }
 
 export async function setMedicationSupport(personId: string, on: boolean): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const db = await getDb();
   await audited(db, { userId: user.id }).update(schema.people, personId, { medicationSupport: on });
   revalidatePath(`/clients/${personId}`);
@@ -168,7 +168,7 @@ export async function setMedicationSupport(personId: string, on: boolean): Promi
 
 /** Replace a person's daily-activity library (one statement per line; {name} is filled with the first name). */
 export async function setActivityLibrary(personId: string, text: string): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const activities = text.split("\n").map((l) => l.replace(/^[-•\s]+/, "").trim()).filter(Boolean);
   const parsed = activityLibrarySchema.safeParse({ personId, activities });
   if (!parsed.success) return { message: "Each activity needs 3 to 240 characters, at most 60 lines." };
@@ -182,7 +182,7 @@ const agreementEditSchema = agreementSchema;
 
 /** Edit an existing agreement. Units, dates, and rate change when the county amends the SA. */
 export async function updateAgreement(agreementId: string, personId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
-  const user = await requireUser(["admin", "supervisor"]);
+  const user = await requireAbility("manage_people");
   const parsed = agreementEditSchema.safeParse({ ...formToObject(fd), personId, modifiers: fd.getAll("modifiers[]").map(String) });
   if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the highlighted fields." };
   const status = String(fd.get("status") ?? "active");
@@ -204,7 +204,7 @@ export interface IntakeReadState { read?: IntakeRead; fileName?: string; message
  * filed under Documents once the record exists.
  */
 export async function readIntakeFile(_prev: IntakeReadState, fd: FormData): Promise<IntakeReadState> {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("manage_people");
   const readId = Date.now();
   if (!aiConfigured()) return { readId, message: "Document reading is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings and redeploying. You can still type the client in by hand." };
   const file = fd.get("file");

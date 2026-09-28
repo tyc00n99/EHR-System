@@ -3,7 +3,7 @@ import { Badge, Card, Empty, PageHeader } from "@/components/kit";
 import { Table, Thead, Th, Tr, Td } from "@/components/kit";
 import { Rule } from "@/components/rule";
 import { listAgreementsWithUsage } from "@/db/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAbility } from "@/lib/auth";
 import { fmtDate, isoDay } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 
@@ -14,7 +14,7 @@ export const metadata = { title: "Authorizations" };
  * client record cannot answer — it lives inside one person at a time.
  */
 export default async function AgreementsPage() {
-  await requireUser(["admin", "supervisor"]);
+  await requireAbility("review");
   const rows = await listAgreementsWithUsage();
   const today = isoDay();
   const in60 = isoDay(60);
