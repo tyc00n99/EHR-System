@@ -28,7 +28,8 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
   const done = () => { setOpen(null); router.refresh(); };
   const current = items.find((a) => a.id === open);
 
-  const cols = "grid grid-cols-[minmax(0,1fr)_100px_250px_100px] items-center gap-x-5";
+  // The service column is capped so Units left sits beside it; the date column takes what is left (user, Sept 27, 2026). Each row is its own grid, so the cap must be a fixed width, not fit-content, or rows would not line up.
+  const cols = "grid grid-cols-[minmax(0,340px)_110px_250px_minmax(0,1fr)] items-center gap-x-5";
   const row = (a: AuthorizationItem) => (
     <>
       <span className="truncate text-[14px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>

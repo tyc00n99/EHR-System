@@ -111,7 +111,6 @@ const s = StyleSheet.create({
   sigId: { fontSize: 8, color: HINT, marginTop: 3, letterSpacing: 0.2 },
   sigK: { fontSize: 6.8, letterSpacing: 1.2, textTransform: "uppercase", color: HINT, fontWeight: 700, marginTop: 4 },
   sigV: { fontSize: 8, color: MUTED, marginTop: 1, lineHeight: 1.3 },
-  footer: { position: "absolute", bottom: 24, left: 48, right: 48, fontSize: 7, color: GHOST, textAlign: "center" },
 });
 
 const dNum = new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "numeric", timeZone: "America/Chicago" });
@@ -143,7 +142,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
       {rows.length === 0 && (
         <Page size="LETTER" style={s.page}><Text style={s.eyebrow}>Daily Service Note</Text><Text style={{ marginTop: 10, color: MUTED }}>No notes match this filter for {personName}.</Text></Page>
       )}
-      {rows.map((v, i) => {
+      {rows.map((v) => {
         const minutes = v.clockOutAt ? Math.round((v.clockOutAt.getTime() - v.clockInAt.getTime()) / 60000) : 0;
         const level = INTERACTION_LEVELS.find((l) => l[0] === v.interactionLevel);
         const supports = [...v.tasks.filter((t) => t.completed).map((t) => t.label), ...v.skills].filter((x, j, a) => a.indexOf(x) === j);
@@ -238,7 +237,6 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
               </View>
             </View>
 
-            <Text style={s.footer} fixed>{personName} · PMI {person.pmi} · {dNum.format(v.clockInAt)} · Confidential · {org.name} · Note {i + 1} of {rows.length}</Text>
           </Page>
         );
       })}

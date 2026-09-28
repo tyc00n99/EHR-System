@@ -47,7 +47,6 @@ export async function buildVisitTable({ sp, personId, staffId, defaultParam }: {
   const cur = currentPayPeriod(), last = payPeriodByIndex(cur.index - 1);
   const today = isoDay(0);
   const at = (day: string) => ({ ...range, from: day, to: day });
-  const weekAgo = isoDay(-7);
   const lastMonthDay = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1, 0)).toISOString().slice(0, 10);
   const span = (r: VisitRange) => r.label;
   // The picker's rail (Sept 21, 2026, "A"): pay periods first, because that is how notes are
@@ -56,8 +55,6 @@ export async function buildVisitTable({ sp, personId, staffId, defaultParam }: {
   const presets = [
     { label: "This pay period", hint: cur.label, param: `period=${cur.startDate}` },
     { label: "Last pay period", hint: last.label, param: `period=${last.startDate}` },
-    { label: "This week", hint: span(resolveVisitRange({ week: today })), param: rangeParamFor("week", at(today)) },
-    { label: "Last week", hint: span(resolveVisitRange({ week: weekAgo })), param: rangeParamFor("week", at(weekAgo)) },
     { label: "This month", hint: span(resolveVisitRange({ month: today.slice(0, 7) })), param: rangeParamFor("month", at(today)) },
     { label: "Last month", hint: span(resolveVisitRange({ month: lastMonthDay.slice(0, 7) })), param: rangeParamFor("month", at(lastMonthDay)) },
   ];
