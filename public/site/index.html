@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVVora — the record for Minnesota 245D agencies</title>
+<meta name="description" content="Notes, schedules, medication, personnel files and electronic visit verification for 245D home and community-based providers, in one record.">
+<link rel="icon" href="icon-192.png">
+<style>
+@font-face { font-family: Geist; src: url(Geist-variable.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+:root {
+  --ink: #111214; --ink-2: #4b4f56; --line: #e3e5e8; --soft: #f5f6f7; --blue: #0098c0; --blue-dark: #0081a5; --blue-soft: #dff3fa;
+  --w: 1120px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: Geist, system-ui, sans-serif; font-size: 17px; line-height: 1.5; color: var(--ink); background: #fff; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; height: auto; }
+h1, h2, h3 { margin: 0; font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; }
+h1 { font-size: 56px; }
+h2 { font-size: 36px; }
+h3 { font-size: 19px; letter-spacing: -0.01em; }
+p { margin: 0; }
+.wrap { max-width: var(--w); margin: 0 auto; padding: 0 24px; }
+.muted { color: var(--ink-2); }
+.eyebrow { font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue-dark); margin-bottom: 14px; }
+.btn { display: inline-flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 8px; font-weight: 500; font-size: 15px; border: 1px solid var(--line); background: #fff; white-space: nowrap; }
+.btn:hover { background: var(--soft); }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+.shot { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+
+/* nav */
+nav { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; height: 64px; gap: 28px; }
+nav .logo img { height: 22px; }
+nav .links { display: flex; gap: 24px; margin-left: 12px; font-size: 15px; color: var(--ink-2); }
+nav .links a:hover { color: var(--ink); }
+nav .right { margin-left: auto; display: flex; gap: 10px; }
+nav .right .btn { height: 38px; padding: 0 14px; font-size: 14px; }
+
+/* hero */
+.hero { padding: 88px 0 0; }
+.hero .wrap { text-align: center; }
+.hero h1 { max-width: 780px; margin: 0 auto 20px; }
+.hero p { max-width: 560px; margin: 0 auto 32px; font-size: 19px; }
+.hero .cta { display: flex; justify-content: center; gap: 12px; margin-bottom: 64px; }
+.hero .shot { margin-bottom: 0; }
+
+/* strip */
+.strip { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 80px; }
+.strip .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
+.strip div { padding: 28px 20px 28px 0; border-left: 1px solid var(--line); padding-left: 20px; }
+.strip div:first-child { border-left: 0; padding-left: 0; }
+.strip b { display: block; font-weight: 500; margin-bottom: 4px; }
+.strip span { font-size: 15px; color: var(--ink-2); }
+
+/* sections */
+section { padding: 96px 0; }
+section + section { border-top: 1px solid var(--line); }
+.head { max-width: 640px; margin-bottom: 44px; }
+.head p { margin-top: 14px; font-size: 18px; color: var(--ink-2); }
+
+/* tabs */
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 28px; overflow-x: auto; }
+.tabs button { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 12px 14px; font: inherit; font-size: 15px; font-weight: 500; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); border-color: var(--ink); }
+.panel { display: none; grid-template-columns: 300px 1fr; gap: 40px; align-items: start; }
+.panel[data-on] { display: grid; }
+.panel h3 { margin-bottom: 10px; }
+.panel p { color: var(--ink-2); font-size: 16px; }
+.panel ul { margin: 18px 0 0; padding: 0; list-style: none; font-size: 15px; }
+.panel li { padding: 8px 0; border-top: 1px solid var(--line); }
+
+/* three-up */
+.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.three h3 { margin-bottom: 8px; }
+.three p { color: var(--ink-2); font-size: 16px; }
+.three .n { font-size: 13px; color: var(--ink-2); margin-bottom: 14px; letter-spacing: .04em; }
+
+/* two-col */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+.two .text ul { margin: 22px 0 0; padding: 0; list-style: none; }
+.two .text li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 16px; }
+.two .text li:last-child { border-bottom: 1px solid var(--line); }
+.two .text p { color: var(--ink-2); font-size: 17px; margin-top: 14px; }
+.two .shot.paper { max-width: 440px; margin: 0 auto; box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+
+/* list rows */
+.rows { border-top: 1px solid var(--line); }
+.rows div { display: grid; grid-template-columns: 280px 1fr; gap: 24px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.rows b { font-weight: 500; }
+.rows span { color: var(--ink-2); font-size: 16px; }
+
+/* cta */
+.cta-band { background: var(--soft); border-top: 1px solid var(--line); padding: 80px 0; text-align: center; }
+.cta-band h2 { margin-bottom: 12px; }
+.cta-band p { color: var(--ink-2); margin-bottom: 28px; }
+.cta-band .btns { display: flex; justify-content: center; gap: 12px; }
+
+footer { border-top: 1px solid var(--line); padding: 40px 0; font-size: 14px; color: var(--ink-2); }
+footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+footer .l { display: flex; gap: 20px; }
+
+@media (max-width: 900px) {
+  h1 { font-size: 38px; } h2 { font-size: 28px; }
+  nav .links { display: none; }
+  .hero { padding-top: 56px; }
+  .strip .wrap { grid-template-columns: 1fr 1fr; }
+  .strip div:nth-child(3) { border-left: 0; padding-left: 0; }
+  .panel { grid-template-columns: 1fr; gap: 20px; }
+  .three, .two { grid-template-columns: 1fr; }
+  .rows div { grid-template-columns: 1fr; gap: 4px; }
+  section { padding: 64px 0; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#"><img src="evvora-wordmark.svg" alt="EVVora"></a>
+    <div class="links">
+      <a href="#product">Product</a>
+      <a href="#caregivers">Caregivers</a>
+      <a href="#office">Office</a>
+      <a href="#security">Security</a>
+    </div>
+    <div class="right">
+      <a class="btn" href="https://ehr-system-eight.vercel.app">Sign in</a>
+      <a class="btn primary" href="#demo">Get a demo</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>The record for Minnesota 245D agencies.</h1>
+    <p class="muted">Notes, schedules, medication, personnel files and visit verification in one place, built the way DHS reads them.</p>
+    <div class="cta">
+      <a class="btn primary" href="#demo">Get a demo</a>
+      <a class="btn" href="#product">See the product</a>
+    </div>
+    <div class="shot"><img src="img/overview.jpg" alt="A client record in EVVora: authorizations with units left, care team and signing code" width="1600" height="800"></div>
+  </div>
+</header>
+
+<div class="strip">
+  <div class="wrap">
+    <div><b>Units are 15 minutes</b><span>Every note counts in the unit DHS bills.</span></div>
+    <div><b>Codes from DHS-3945</b><span>Service codes and modifiers, not free text.</span></div>
+    <div><b>The client co-signs</b><span>A signing code at clock-out, rotated weekly.</span></div>
+    <div><b>EVV built in</b><span>Clock-in, clock-out and location, ready for the aggregator.</span></div>
+  </div>
+</div>
+
+<section id="product">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">Product</div>
+      <h2>Everything about a person, on one record.</h2>
+      <p>Six tabs. No separate systems for the plan, the notes and the pills.</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="notes">Notes</button>
+      <button role="tab" data-tab="schedule">Schedule</button>
+      <button role="tab" data-tab="programming">Programming</button>
+      <button role="tab" data-tab="mar">Medication</button>
+      <button role="tab" data-tab="documents">Documents</button>
+      <button role="tab" data-tab="personnel">Personnel files</button>
+    </div>
+
+    <div class="panel" data-tab="notes" data-on>
+      <div>
+        <h3>Notes</h3>
+        <p>Every note the agency has written, filtered by client, caregiver, service or date. A row opens the finished note.</p>
+        <ul><li>Unsigned, returned and manual notes in one filter</li><li>Export the pay period as CSV or PDF</li><li>Supervisors return a note with a reason; the caregiver fixes it</li></ul>
+      </div>
+      <div class="shot"><img src="img/notes.jpg" alt="The notes list" loading="lazy"></div>
+    </div>
+
+    <div class="panel" data-tab="schedule">
+      <div>
+        <h3>Schedule</h3>
+        <p>Clients or team down the side, days across. Repeat by weekday, cancel with a reason, and see who has no one assigned.</p>
+        <ul><li>Booking checks assignment and orientation first</li><li>A completed event opens its note in place</li><li>Missed events surface in the review queue</li></ul>
+      </div>
+      <div class="shot"><img src="img/schedule.jpg" alt="The weekly schedule" loading="lazy"></div>
+    </div>
+
+    <div class="panel" data-tab="programming">
+      <div>
+        <h3>Programming</h3>
+        <p>Outcomes written as the support plan states them, with a dated progress log built from the notes that addressed them.</p>
+        <ul><li>Outcome, supports and how progress is measured</li><li>Periodic reviews: on track, needs attention, met</li><li>Optional daily questions when a goal wants them</li></ul>
+      </div>
+      <div class="shot"><img src="img/programming.jpg" alt="Support plan outcomes" loading="lazy"></div>
+    </div>
+
+    <div class="panel" data-tab="mar">
+      <div>
+        <h3>Medication</h3>
+        <p>A paper MAR, one week at a time. Each dose is a letter and the initials of whoever recorded it.</p>
+        <ul><li>Given, refused, held or missed, with a note</li><li>Dose or time changes keep the history intact</li><li>Monthly totals on every row</li></ul>
+      </div>
+      <div class="shot"><img src="img/mar.jpg" alt="The medication administration record" loading="lazy"></div>
+    </div>
+
+    <div class="panel" data-tab="documents">
+      <div>
+        <h3>Documents</h3>
+        <p>A checklist of what a 245D client file must hold, and a tick when it is there. Renewals turn amber before they lapse.</p>
+        <ul><li>The agency sets its own required list and cadence</li><li>Uploaded paper is read so it can be searched</li><li>Archive, never delete</li></ul>
+      </div>
+      <div class="shot"><img src="img/documents.jpg" alt="The client documents checklist" loading="lazy"></div>
+    </div>
+
+    <div class="panel" data-tab="personnel">
+      <div>
+        <h3>Personnel files</h3>
+        <p>The thirteen items a licensor asks for, with what is due in each of the next twelve months.</p>
+        <ul><li>Background study, orientation, training, evaluations</li><li>A certificate fills in its own dates when uploaded</li><li>Overdue items show on the roster, not in a report</li></ul>
+      </div>
+      <div class="shot"><img src="img/personnel.jpg" alt="A staff member's personnel file" loading="lazy"></div>
+    </div>
+  </div>
+</section>
+
+<section id="caregivers">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">For caregivers</div>
+      <h2>Clock in. Do the visit. Sign. Done.</h2>
+      <p>The phone is the time clock. The note is a few fields, not a form.</p>
+    </div>
+    <div class="three">
+      <div><div class="n">1</div><h3>Clock in</h3><p>Only for assigned, oriented clients. The nearest scheduled event links itself.</p></div>
+      <div><div class="n">2</div><h3>Write the note</h3><p>Level of assistance, supports, activities and the outcomes this visit addressed. A short review of progress.</p></div>
+      <div><div class="n">3</div><h3>Sign together</h3><p>The client enters their code, the caregiver signs, and the note is accepted. Location and time are recorded for EVV.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap two">
+    <div class="text">
+      <div class="eyebrow">The note</div>
+      <h2>Prints the way a reviewer reads it.</h2>
+      <p>Client, date, service code, hours and units up top. Narrative, supports and outcomes in the body. Both signatures at the foot. One page per visit, and a biweekly service summary for the pay period.</p>
+      <ul><li>Daily service note, one per visit</li><li>Biweekly summary with totals per caregiver and service</li><li>PDF for any client, date range or pay period</li></ul>
+    </div>
+    <div class="shot paper"><img src="img/note.jpg" alt="A printed daily service note" loading="lazy"></div>
+  </div>
+</section>
+
+<section id="office">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">For the office</div>
+      <h2>One queue for what needs a decision.</h2>
+      <p>Unsigned notes, missed events, manual entries, expiring authorizations and overdue paperwork, in one list, with the fix on each row.</p>
+    </div>
+    <div class="shot"><img src="img/review.jpg" alt="The review queue" loading="lazy"></div>
+    <div class="rows" style="margin-top:44px">
+      <div><b>Authorizations</b><span>Units used, percent consumed and the end date for every agreement, sorted by what runs out first.</span></div>
+      <div><b>Billing prep</b><span>Completed notes grouped into claim lines by service code and modifier, per pay period.</span></div>
+      <div><b>Visit verification</b><span>Every EVV visit checked against the policy, queued for the aggregator, and reconciled when it answers.</span></div>
+      <div><b>Agency performance</b><span>What you bill against what you pay, per period.</span></div>
+      <div><b>Reports</b><span>Notes, visits and payroll as CSV or PDF for any range.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="security">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow">Security</div>
+      <h2>Encrypted, audited, and yours.</h2>
+    </div>
+    <div class="three">
+      <div><h3>Encrypted at rest</h3><p>Social security numbers, signing codes and visit coordinates are encrypted with a key only the agency holds.</p></div>
+      <div><h3>Every write is logged</h3><p>Who changed what, when, and what it was before. Reading a code or an SSN is logged too.</p></div>
+      <div><h3>Roles you define</h3><p>Decide what a supervisor and a direct support professional can open. Administrators always keep the keys.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap two">
+    <div class="text">
+      <div class="eyebrow">Built with an agency</div>
+      <h2>Made alongside a licensed Minnesota provider.</h2>
+      <p>EVVora was built with Sonder Homecare, a 245D agency, screen by screen, against the paperwork a licensor actually asks for. Nothing on it exists because a vendor thought it would look good in a demo.</p>
+    </div>
+    <div class="shot"><img src="img/roles.jpg" alt="The roles settings page" loading="lazy"></div>
+  </div>
+</section>
+
+<div class="cta-band" id="demo">
+  <div class="wrap">
+    <h2>See it with your own caseload.</h2>
+    <p>A thirty-minute walk through the record, the note and the queue.</p>
+    <div class="btns">
+      <a class="btn primary" href="mailto:demo@evvora.com?subject=EVVora%20demo">Request a demo</a>
+      <a class="btn" href="https://ehr-system-eight.vercel.app">Sign in</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>EVVora · Minnesota</div>
+    <div class="l"><a href="#product">Product</a><a href="#security">Security</a><a href="#demo">Contact</a><a href="https://ehr-system-eight.vercel.app">Sign in</a></div>
+  </div>
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tabs [role=tab]');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.setAttribute('aria-selected', x === t));
+    panels.forEach(p => p.dataset.tab === t.dataset.tab ? p.setAttribute('data-on', '') : p.removeAttribute('data-on'));
+  }));
+</script>
+</body>
+</html>
