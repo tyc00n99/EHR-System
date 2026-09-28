@@ -75,6 +75,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     service: labelForCode(r.serviceCode, r.modifiers),
     code: r.serviceCode,
     status: r.shift.status,
+    visitId: r.visitId,
   }));
 
   // Days a client has no availability window at all, drawn as the reference's grey "Unavailable".

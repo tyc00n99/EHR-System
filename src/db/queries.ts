@@ -476,7 +476,12 @@ export async function listShifts(from: Date, to: Date, f: { staffId?: string; pe
   const db = await getDb();
   const where = [gte(shifts.startAt, from), lte(shifts.startAt, to), f.staffId ? eq(shifts.staffId, f.staffId) : undefined, f.personId ? eq(shifts.personId, f.personId) : undefined].filter(Boolean);
   return db
-    .select({ shift: shifts, personFirst: people.firstName, personLast: people.lastName, staffFirst: staff.firstName, staffLast: staff.lastName, serviceCode: serviceAgreements.serviceCode, modifiers: serviceAgreements.modifiers })
+    .select({
+      shift: shifts, personFirst: people.firstName, personLast: people.lastName, staffFirst: staff.firstName, staffLast: staff.lastName, serviceCode: serviceAgreements.serviceCode, modifiers: serviceAgreements.modifiers,
+      // The note a completed shift produced, so the schedule can open it in place (Sept 28, 2026).
+      // Matched by the shift link when clock-in recorded one, else by the same client, caregiver and a clock-in within two hours of the start (notes entered by hand, and older data, carry no link).
+      visitId: sql<string | null>`(select ${visits.id} from ${visits} where ${visits.status} <> 'void' and (${visits.shiftId} = ${shifts.id} or (${visits.personId} = ${shifts.personId} and ${visits.staffId} = ${shifts.staffId} and ${visits.clockInAt} between ${shifts.startAt} - interval '2 hours' and ${shifts.startAt} + interval '2 hours')) order by (${visits.shiftId} = ${shifts.id}) desc, ${visits.clockInAt} desc limit 1)`,
+    })
     .from(shifts)
     .innerJoin(people, eq(shifts.personId, people.id))
     .innerJoin(staff, eq(shifts.staffId, staff.id))

@@ -37,16 +37,19 @@ export function MonthGrid({ from, today, events, baseHref }: { from: string; tod
                 {Number(date.slice(8))}
               </div>
               {day.slice(0, 3).map((e) => (
-                <Link
-                  key={e.id}
-                  href={`/scheduling?shift=${e.id}`}
-                  scroll={false}
-                  className="mb-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[13px] hover:bg-hover"
-                >
+                e.status === "completed" && e.visitId ? (
+                  <button key={e.id} type="button" title="Open the note" onClick={() => { const u = new URL(window.location.href); u.searchParams.set("note", e.visitId!); window.history.pushState(null, "", u.toString()); }} className="mb-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[13px] hover:bg-hover">
+                  <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: serviceColor(e.code) }} />
+                  <span className="ident shrink-0 text-muted-foreground">{e.time.split(" – ")[0]}</span>
+                  <span className="truncate text-text-strong">{e.title}</span>
+                </button>
+                ) : (
+                  <Link key={e.id} href={`/scheduling?shift=${e.id}`} scroll={false} className="mb-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[13px] hover:bg-hover">
                   <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: serviceColor(e.code) }} />
                   <span className="ident shrink-0 text-muted-foreground">{e.time.split(" – ")[0]}</span>
                   <span className="truncate text-text-strong">{e.title}</span>
                 </Link>
+                )
               ))}
               {day.length > 3 && (
                 <Link href={`${baseHref}&view=daily&date=${date}`} className="px-1 text-[13px] font-medium text-primary hover:underline">

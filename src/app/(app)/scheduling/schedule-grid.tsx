@@ -21,6 +21,15 @@ export interface GridEvent {
   service: string;
   code: string;
   status: "scheduled" | "in_progress" | "completed" | "cancelled" | "missed";
+  /** The note a completed shift produced; clicking the chip opens it in place rather than the shift drawer. */
+  visitId?: string | null;
+}
+
+/** Opens the printed note over the schedule (`?note=`; `NotePreview` is mounted in the shell), the way a notes table row does. */
+function openNote(visitId: string) {
+  const u = new URL(window.location.href);
+  u.searchParams.set("note", visitId);
+  window.history.pushState(null, "", u.toString());
 }
 
 export interface GridRow {
@@ -128,22 +137,22 @@ export function ScheduleGrid({
                   )}
                   {cell.map((e) => {
                     const s = STATUS[e.status];
-                    return (
-                      <Link
-                        key={e.id}
-                        href={`/scheduling?shift=${e.id}`}
-                        scroll={false}
-                        className={cx("mb-1.5 block rounded-md border px-2 py-1.5 transition-colors hover:border-primary", s.chip)}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: serviceColor(e.code) }} />
-                          <span className="ident truncate text-[13px] text-muted-foreground">{e.time}</span>
-                        </span>
-                        <span className={cx("mt-0.5 block truncate text-[14px] font-medium text-text-strong", e.status === "cancelled" && "line-through")}>
-                          {e.title}
-                        </span>
-                        <span className="block truncate text-[13px] text-muted-foreground">{s.note ?? e.service}</span>
-                      </Link>
+                    const chipCls = cx("mb-1.5 block w-full rounded-md border px-2 py-1.5 text-left transition-colors hover:border-primary", s.chip);
+                    const body = (<>
+                      <span className="flex items-center gap-1.5">
+                        <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: serviceColor(e.code) }} />
+                        <span className="ident truncate text-[13px] text-muted-foreground">{e.time}</span>
+                      </span>
+                      <span className={cx("mt-0.5 block truncate text-[14px] font-medium text-text-strong", e.status === "cancelled" && "line-through")}>
+                        {e.title}
+                      </span>
+                      <span className="block truncate text-[13px] text-muted-foreground">{s.note ?? e.service}</span>
+                    </>);
+                    // A completed shift opens its note right here (user, Sept 28, 2026); anything else opens the shift drawer.
+                    return e.status === "completed" && e.visitId ? (
+                      <button key={e.id} type="button" onClick={() => openNote(e.visitId!)} title="Open the note" className={chipCls}>{body}</button>
+                    ) : (
+                      <Link key={e.id} href={`/scheduling?shift=${e.id}`} scroll={false} className={chipCls}>{body}</Link>
                     );
                   })}
                   {canCreate && (
