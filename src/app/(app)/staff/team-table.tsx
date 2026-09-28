@@ -40,7 +40,6 @@ export function TeamTable({ rows, canAdd }: { rows: TeamRow[]; canAdd: boolean }
   const FILTERS: { key: Filter; label: string; hot?: boolean }[] = [
     { key: "active", label: "Active" },
     { key: "inactive", label: "Inactive" },
-    { key: "overdue", label: "Out of compliance", hot: true },
     { key: "all", label: "All" },
   ];
 

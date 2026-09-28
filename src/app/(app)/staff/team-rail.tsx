@@ -86,7 +86,7 @@ export function TeamRail({ members, canAdd }: { members: RailMember[]; canAdd: b
         </div>
         {filtering && (
           <div className="mx-3 mb-2 flex shrink-0 flex-wrap gap-1">
-            {([["all", "All"], ["active", "Active"], ["inactive", "Inactive"], ["overdue", "Out of compliance"]] as const).map(([k, l]) => (
+            {([["all", "All"], ["active", "Active"], ["inactive", "Inactive"]] as const).map(([k, l]) => (
               <button
                 key={k}
                 type="button"
