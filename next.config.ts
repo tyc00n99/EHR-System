@@ -38,7 +38,17 @@ const nextConfig: NextConfig = {
     }];
   },
   async rewrites() {
-    return [{ source: "/notes", destination: "/visits" }, { source: "/notes/:path*", destination: "/visits/:path*" }];
+    // Wherever a login is required, a visitor with no session cookie gets the product website at "/"
+    // instead of being bounced to /login. Signed-in staff still land on the app's home. Open-access
+    // development keeps "/" as the app, since everyone there is signed in as the first admin.
+    const loginRequired = process.env.NODE_ENV === "production" || process.env.REQUIRE_LOGIN === "1";
+    return {
+      beforeFiles: loginRequired
+        ? [{ source: "/", missing: [{ type: "cookie" as const, key: "ehr_session" }], destination: "/site/index.html" }]
+        : [],
+      afterFiles: [{ source: "/notes", destination: "/visits" }, { source: "/notes/:path*", destination: "/visits/:path*" }],
+      fallback: [],
+    };
   },
 };
 
