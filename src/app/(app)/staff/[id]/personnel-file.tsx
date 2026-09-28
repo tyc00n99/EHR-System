@@ -208,6 +208,27 @@ function FromDoc({ on }: { on: boolean }) {
   return on ? <span className="ml-1.5 rounded bg-primary-soft px-1.5 py-px text-[13px] font-medium text-primary">from document</span> : null;
 }
 
+/** What paper each item wants, in the licensor's terms (Sept 28, 2026, user: one generic sentence fitted none of them). */
+const DOC_HINT: Record<string, string> = {
+  application: "The completed employment application, signed and dated.",
+  duties_acknowledgment: "The job description signed by the employee to show they received it.",
+  position_requirements: "Optional: the diploma, licence or resume if there is one, or describe the source below.",
+  qualifications: "Proof of the qualifications the position requires: transcript, licence, certificate or the verified resume.",
+  background_study: "The NETStudy 2.0 submission confirmation, showing the date the study was submitted.",
+  background_study_results: "The DHS determination letter: cleared, set aside, or the notice received.",
+  orientation: "The orientation record signed by the employee and the trainer, listing what was covered.",
+  maltreatment_reporting: "The training certificate or sign-in sheet, with the trainer named below.",
+  annual_training: "The certificate, agenda or sign-in sheet for the training, with hours and the trainer.",
+  evaluation: "The signed performance evaluation.",
+  first_supervised_contact: "Optional: the observation note from that contact, if one was written. The date is what counts.",
+  first_unsupervised_contact: "Optional: the observation note from that contact, if one was written. The date is what counts.",
+  drivers_license: "A copy of the licence, front side, showing the expiry date.",
+  auto_insurance: "The current insurance card or declaration page.",
+  first_aid: "The certificate, showing the expiry date.",
+  cpr: "The certificate, showing the expiry date.",
+  other: "The certificate or record that shows it.",
+};
+
 function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: string; item: PersonnelItem; aiReady: boolean; staffName: string; onDone: () => void }) {
   const [state, action, pending] = useActionState(addCredential.bind(null, staffId), {});
   // Reading the document is its own action: choosing a file sends it to the reader, and the
@@ -245,7 +266,7 @@ function RecordForm({ staffId, item, aiReady, staffName, onDone }: { staffId: st
           onChange={(ev) => { const f = ev.currentTarget.files?.[0]; if (f && aiReady) { const fd = new FormData(); fd.append("file", f); startTransition(() => runRead(fd)); } }}
         />
         <p className="mt-1 text-[13px] text-muted-foreground">
-          {dateOnly ? "Optional: the observation note from that contact, if one was written. The date is what counts." : sourceOk ? "Optional here: attach the diploma, licence or resume if there is one, or describe the source below." : "The signed form, certificate, DHS letter or observation note that shows it. Required — the licensor reads the paper."}
+          {DOC_HINT[item.type ?? "other"] ?? DOC_HINT.other}
           {aiReady ? " Choose it first and the fields fill in from the page." : ""}
         </p>
         {e.file && <p className="mt-1 text-[13px] text-danger">{e.file}</p>}
