@@ -12,6 +12,7 @@ import { fmtDate } from "@/lib/format";
 import type { ActionState } from "@/lib/validation";
 import { addGoalEntry, addGoalQuestion, addGoalReview, createGoal, reinstateGoalQuestion, retireGoalQuestion, setGoalStatus, updateGoal } from "../goal-actions";
 import { DateInput } from "@/components/date-input";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export interface GoalView {
   id: string; title: string; outcome: string | null; supports: string | null; measurement: string | null; description: string | null; category: string; status: "active" | "met" | "discontinued"; startDate: string | null; targetDate: string | null; createdAt: Date;
@@ -56,9 +57,6 @@ export function LifePlan({ personId, goals, manage, rangeLabel, days, library }:
   const current = goals.find((g) => g.id === selected) ?? null;
   const back = () => setSelected(null);
 
-  if (selected === "new" && manage) {
-    return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><NewGoal personId={personId} onDone={back} /></div>;
-  }
   if (current) {
     return <div className="rounded-xl border border-line bg-card p-5 lg:p-6"><BackLink onClick={back} /><GoalDetail key={current.id} personId={personId} g={current} manage={manage} days={days} /></div>;
   }
@@ -91,6 +89,15 @@ export function LifePlan({ personId, goals, manage, rangeLabel, days, library }:
         <MarginFold label="Met" summary={<><span className="font-medium text-text-strong">{done.length} outcome{done.length === 1 ? "" : "s"}</span> · {done.map((g) => g.title).join(", ")}</>}>
           <div className="mt-2">{done.map((g) => <GoalRow key={g.id} g={g} days={days} onOpen={() => setSelected(g.id)} muted />)}</div>
         </MarginFold>
+      )}
+      {/* New outcome opens centred over the list, the page blurred behind it (user, Sept 29, 2026). */}
+      {selected === "new" && manage && (
+        <Dialog open onOpenChange={(o) => { if (!o) back(); }}>
+          <DialogContent showCloseButton={false} overlayClassName="bg-black/20 supports-backdrop-filter:backdrop-blur-sm" className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-6 sm:max-w-[760px] lg:p-8">
+            <DialogTitle className="sr-only">New outcome</DialogTitle>
+            <NewGoal personId={personId} onDone={back} />
+          </DialogContent>
+        </Dialog>
       )}
       {library && (
         <MarginFold label="Daily activities" note="What caregivers pick from on every note." summary="The list caregivers choose from when they write a note">
