@@ -26,13 +26,18 @@ import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-statu
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DocumentsTab } from "./documents-tab";
-import { AddAuthorizationButton, AuthorizationsPanel } from "./authorizations-panel";
+import { AuthorizationOpener, AuthorizationsPanel, type AuthorizationItem } from "./authorizations-panel";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { VisitSheet } from "../../visits/record/visit-sheet";
 
 const SEX: Record<string, string> = { female: "Female", male: "Male", nonbinary: "Non-binary", other: "Other", undisclosed: "Undisclosed" };
 
 const statusTone = { active: "ok", intake: "accent", discharged: "neutral" } as const;
+
+/** The shape the authorization window reads, from an agreement row and its units used. */
+function authItem(a: { id: string; agreementNumber: string; serviceCode: string; modifiers: string[]; authorizedUnits: number; unitRate: string; startDate: string; endDate: string; authorizingCounty: string; status: string; documentPath: string | null; documentName: string | null }, unitsUsed: number): AuthorizationItem {
+  return { id: a.id, agreementNumber: a.agreementNumber, serviceCode: a.serviceCode, modifiers: a.modifiers, authorizedUnits: a.authorizedUnits, unitsUsed, unitRate: a.unitRate, startDate: a.startDate, endDate: a.endDate, authorizingCounty: a.authorizingCounty, status: a.status, documentPath: a.documentPath, documentName: a.documentName };
+}
 
 function daysAgo(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return d; }
 
@@ -151,7 +156,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
       {tab === "overview" && (
         <div>
-          <AuthorizationsPanel personId={id} manage={manage} defaultCounty={person.county} aiReady={aiReady} items={active.map(({ agreement: a, unitsUsed }) => ({ id: a.id, agreementNumber: a.agreementNumber, serviceCode: a.serviceCode, modifiers: a.modifiers, authorizedUnits: a.authorizedUnits, unitsUsed, unitRate: a.unitRate, startDate: a.startDate, endDate: a.endDate, authorizingCounty: a.authorizingCounty, status: a.status, documentPath: a.documentPath, documentName: a.documentName }))} />
+          <AuthorizationsPanel personId={id} manage={manage} defaultCounty={person.county} aiReady={aiReady} items={active.map(({ agreement: a, unitsUsed }) => authItem(a, unitsUsed))} />
           <MarginSection label="Care team" action={<Link href={`/clients/${id}?tab=profile&section=careteam`} className="hover:underline">All →</Link>}>
             {activeTeam.length === 0 ? <p className="py-2 text-[14px] text-muted-foreground">No caregivers assigned yet.</p> : (
               <div className="grid gap-x-10 md:grid-cols-2">
@@ -310,7 +315,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             authorizations: active.map(({ agreement: a, unitsUsed }) => ({
               id: a.id,
               fields: [
-                { icon: "doc", label: "Service", value: <Link href={`/clients/${id}/agreements/${a.id}`} className="text-primary hover:underline">{labelForCode(a.serviceCode, a.modifiers)}</Link> },
+                { icon: "doc", label: "Service", value: manage ? <AuthorizationOpener personId={id} item={authItem(a, unitsUsed)} defaultCounty={person.county} aiReady={aiReady}>{labelForCode(a.serviceCode, a.modifiers)}</AuthorizationOpener> : labelForCode(a.serviceCode, a.modifiers) },
                 { icon: "units", label: "Units", value: <><span className="ident">{(a.authorizedUnits - unitsUsed).toLocaleString()}</span> of <span className="ident">{a.authorizedUnits.toLocaleString()}</span> left<UnitBar used={unitsUsed} total={a.authorizedUnits} code={a.serviceCode} /></> },
                 { icon: "calendar", label: "Dates · rate", value: <><span>{fmtDate(a.startDate)} – {fmtDate(a.endDate)}</span><div className="ident text-[13px] text-muted-foreground">{fmtMoney(a.unitRate)} / unit</div></> },
               ],
@@ -320,7 +325,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           extras={{
             careteam: manage ? <Link href={`/staff`} className="text-[13px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
             diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[13px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
-            authorizations: manage ? <AddAuthorizationButton personId={id} defaultCounty={person.county} aiReady={aiReady} /> : null,
+            authorizations: manage ? <AuthorizationOpener personId={id} defaultCounty={person.county} aiReady={aiReady} className="text-[13px] font-medium">Add an authorization, or upload the DHS letter →</AuthorizationOpener> : null,
             availability: profile.availability.length > 0 ? (
               <div>
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px]">

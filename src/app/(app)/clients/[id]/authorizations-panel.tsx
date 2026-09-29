@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, cx } from "@/components/kit";
 import { MarginSection, UnitsLeft } from "@/components/chart";
@@ -56,78 +56,71 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
       </MarginSection>
 
       {/* A centred window (user, Sept 22, 2026), the service record's shape, rather than a right-hand sheet. */}
-      {open && (
-        <Dialog open onOpenChange={(o) => { if (!o) setOpen(null); }}>
-          <DialogContent showCloseButton={false} className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
-            <DialogTitle className="sr-only">{current ? `Agreement ${current.agreementNumber}` : "New service agreement"}</DialogTitle>
-            <div className="flex items-center gap-3 border-b border-line px-6 py-4">
-              <div className="min-w-0">
-                <div className="text-[19px] font-semibold text-text-strong">{current ? labelForCode(current.serviceCode, current.modifiers) : "New service agreement"}</div>
-                {current && (
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
-                    <span className="ident">{current.agreementNumber}</span><span>·</span>
-                    <span className="ident">{current.unitsUsed.toLocaleString()} of {current.authorizedUnits.toLocaleString()} units used</span><span>·</span>
-                    <span>{fmtDate(current.startDate)} – {fmtDate(current.endDate)}</span><span>·</span>
-                    <span>{fmtMoney(current.unitRate)} / unit</span>
-                    <Badge tone={current.status === "active" ? "ok" : current.status === "cancelled" ? "danger" : "neutral"}>{current.status}</Badge>
-                    {current.documentPath && <a href={`/agreements/${current.id}/document`} target="_blank" rel="noreferrer" className="text-primary hover:underline">{current.documentName ?? "Letter PDF"}</a>}
-                  </div>
-                )}
-              </div>
-              <button type="button" onClick={() => setOpen(null)} aria-label="Close" className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={17} className="rotate-45" /></button>
-            </div>
-            <div className="px-6 py-5">
-              {current ? (
-                <>
-                  <AgreementEditForm
-                    key={current.id}
-                    action={updateAgreement.bind(null, current.id, personId)}
-                    defaults={{ agreementNumber: current.agreementNumber, serviceCode: current.serviceCode, modifiers: current.modifiers, authorizedUnits: current.authorizedUnits, unitRate: current.unitRate, startDate: current.startDate, endDate: current.endDate, authorizingCounty: current.authorizingCounty, status: current.status }}
-                    cancelHref={`/clients/${personId}`}
-                    onSaved={done}
-                    onCancel={() => setOpen(null)}
-                  />
-                  <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-line-soft pt-4 text-[13px]">
-                    <span className="text-muted-foreground">Every change is kept in the history.</span>
-                    <span className="ml-auto flex gap-4"><AgreementStatusButton id={current.id} personId={personId} status={current.status} />{current.status !== "active" && <AgreementArchiveButton id={current.id} personId={personId} archived={false} />}</span>
-                  </div>
-                </>
-              ) : (
-                <AgreementForm action={createAgreement.bind(null, personId)} extract={extractAgreement.bind(null, personId)} cancelHref={`/clients/${personId}`} defaultCounty={defaultCounty} aiReady={aiReady} onSaved={done} onCancel={() => setOpen(null)} />
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {open && <AgreementDialog personId={personId} item={current} defaultCounty={defaultCounty} aiReady={aiReady} onClose={() => setOpen(null)} onSaved={done} />}
     </>
   );
 }
 
 /**
- * "Add an authorization" from the Profile's Authorizations section: the same new-agreement form the
- * Overview opens, in a centred window over a blurred page, so adding one never leaves the record
+ * The one authorization window: the new-agreement form when `item` is absent, otherwise the edit form
+ * with status and archive. Centred over a blurred page wherever it opens — Overview rows, the Profile's
+ * Authorizations cards and its Add link — so managing an authorization never leaves the record
  * (user, Sept 29, 2026).
  */
-export function AddAuthorizationButton({ personId, defaultCounty, aiReady }: { personId: string; defaultCounty: string; aiReady: boolean }) {
+function AgreementDialog({ personId, item: current, defaultCounty, aiReady, onClose, onSaved }: { personId: string; item?: AuthorizationItem; defaultCounty: string; aiReady: boolean; onClose: () => void; onSaved: () => void }) {
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent showCloseButton={false} overlayClassName="bg-black/20 supports-backdrop-filter:backdrop-blur-sm" className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
+        <DialogTitle className="sr-only">{current ? `Agreement ${current.agreementNumber}` : "New service agreement"}</DialogTitle>
+        <div className="flex items-center gap-3 border-b border-line px-6 py-4">
+          <div className="min-w-0">
+            <div className="text-[19px] font-semibold text-text-strong">{current ? labelForCode(current.serviceCode, current.modifiers) : "New service agreement"}</div>
+            {current && (
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+                <span className="ident">{current.agreementNumber}</span><span>·</span>
+                <span className="ident">{current.unitsUsed.toLocaleString()} of {current.authorizedUnits.toLocaleString()} units used</span><span>·</span>
+                <span>{fmtDate(current.startDate)} – {fmtDate(current.endDate)}</span><span>·</span>
+                <span>{fmtMoney(current.unitRate)} / unit</span>
+                <Badge tone={current.status === "active" ? "ok" : current.status === "cancelled" ? "danger" : "neutral"}>{current.status}</Badge>
+                {current.documentPath && <a href={`/agreements/${current.id}/document`} target="_blank" rel="noreferrer" className="text-primary hover:underline">{current.documentName ?? "Letter PDF"}</a>}
+              </div>
+            )}
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={17} className="rotate-45" /></button>
+        </div>
+        <div className="px-6 py-5">
+          {current ? (
+            <>
+              <AgreementEditForm
+                key={current.id}
+                action={updateAgreement.bind(null, current.id, personId)}
+                defaults={{ agreementNumber: current.agreementNumber, serviceCode: current.serviceCode, modifiers: current.modifiers, authorizedUnits: current.authorizedUnits, unitRate: current.unitRate, startDate: current.startDate, endDate: current.endDate, authorizingCounty: current.authorizingCounty, status: current.status }}
+                cancelHref={`/clients/${personId}`}
+                onSaved={onSaved}
+                onCancel={onClose}
+              />
+              <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-line-soft pt-4 text-[13px]">
+                <span className="text-muted-foreground">Every change is kept in the history.</span>
+                <span className="ml-auto flex gap-4"><AgreementStatusButton id={current.id} personId={personId} status={current.status} />{current.status !== "active" && <AgreementArchiveButton id={current.id} personId={personId} archived={false} />}</span>
+              </div>
+            </>
+          ) : (
+            <AgreementForm action={createAgreement.bind(null, personId)} extract={extractAgreement.bind(null, personId)} cancelHref={`/clients/${personId}`} defaultCounty={defaultCounty} aiReady={aiReady} onSaved={onSaved} onCancel={onClose} />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Opens the authorization window in place: `item` edits that agreement, no `item` adds a new one. */
+export function AuthorizationOpener({ personId, item, defaultCounty, aiReady, className, children }: { personId: string; item?: AuthorizationItem; defaultCounty: string; aiReady: boolean; className?: string; children: ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="text-[13px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</button>
-      {open && (
-        <Dialog open onOpenChange={(o) => { if (!o) setOpen(false); }}>
-          <DialogContent showCloseButton={false} overlayClassName="bg-black/20 supports-backdrop-filter:backdrop-blur-sm" className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
-            <DialogTitle className="sr-only">New service agreement</DialogTitle>
-            <div className="flex items-center gap-3 border-b border-line px-6 py-4">
-              <div className="text-[19px] font-semibold text-text-strong">New service agreement</div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={17} className="rotate-45" /></button>
-            </div>
-            <div className="px-6 py-5">
-              <AgreementForm action={createAgreement.bind(null, personId)} extract={extractAgreement.bind(null, personId)} cancelHref={`/clients/${personId}?tab=profile&section=authorizations`} defaultCounty={defaultCounty} aiReady={aiReady} onSaved={() => { setOpen(false); router.refresh(); }} onCancel={() => setOpen(false)} />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <button type="button" onClick={() => setOpen(true)} className={cx("text-left text-primary hover:underline", className)}>{children}</button>
+      {open && <AgreementDialog personId={personId} item={item} defaultCounty={defaultCounty} aiReady={aiReady} onClose={() => setOpen(false)} onSaved={() => { setOpen(false); router.refresh(); }} />}
     </>
   );
 }
