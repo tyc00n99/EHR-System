@@ -134,13 +134,13 @@ function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: 
   );
 }
 
-export function NotesPdf({ org, person, rows, range, summary }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string }; summary?: { groups: TimesheetGroup[]; from: Date; to: Date } }) {
+export function NotesPdf({ org, person, rows, range, summary, title }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string }; summary?: { groups: TimesheetGroup[]; from: Date; to: Date }; title?: string }) {
   const personName = `${person.firstName} ${person.lastName}`;
   const first = person.preferredName || person.firstName;
   const subject = `${rows.length} note${rows.length === 1 ? "" : "s"}${range.code ? ` · ${labelForCode(range.code, [])}` : ""}${range.from ? ` · from ${range.from}` : ""}${range.to ? ` to ${range.to}` : ""}`;
 
   return (
-    <Document title={new Set(rows.map((r) => (r.person ?? person).id)).size > 1 ? "Service notes" : `Service notes · ${personName}`} author={org.name} subject={subject}>
+    <Document title={title ?? (new Set(rows.map((r) => (r.person ?? person).id)).size > 1 ? "Service notes" : `Service notes · ${personName}`)} author={org.name} subject={subject}>
       {rows.length === 0 && (
         <Page size="LETTER" style={s.page}><Text style={s.eyebrow}>Daily Service Note</Text><Text style={{ marginTop: 10, color: MUTED }}>No notes match this filter for {personName}.</Text></Page>
       )}

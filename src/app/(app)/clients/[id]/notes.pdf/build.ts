@@ -4,6 +4,7 @@ import type { Person } from "@/db/schema";
 import { fromLocalInput } from "@/lib/format";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { NotesPdf, type PdfNote } from "./notes-pdf";
+import { notesDocName } from "@/lib/pdf-names";
 import type { TimesheetGroup } from "./timesheet-pdf";
 
 const chicagoDate = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -33,8 +34,10 @@ export async function buildNotesPdf(person: Person, filter: NotesPdfFilter) {
     }
     summary = { groups: [...byGroup.values()], from: rangeStart, to: rangeEnd };
   }
-  const buffer = await renderToBuffer(NotesPdf({ org, person, rows: notes, range: { from, to, code: code ?? "" }, summary }));
-  return { buffer, notes };
+  const dates = notes.map((n) => chicagoDate(n.clockInAt)).sort();
+  const name = notesDocName({ clients: [`${person.firstName} ${person.lastName}`], from: from ?? dates[0] ?? chicagoDate(new Date()), to: to ?? dates[dates.length - 1] ?? chicagoDate(new Date()), count: visitId ? 1 : notes.length });
+  const buffer = await renderToBuffer(NotesPdf({ org, person, rows: notes, range: { from, to, code: code ?? "" }, summary, title: name }));
+  return { buffer, notes, name };
 }
 
 type VisitRow = Awaited<ReturnType<typeof listVisits>>[number];
@@ -62,7 +65,7 @@ async function toPdfNotes(personId: string, rows: VisitRow[]): Promise<PdfNote[]
  * the Notes list's Export PDF was a table; the user wants the notes themselves). One page per note,
  * each naming its own client. No service summary: that is a per-client document.
  */
-export async function buildNotesPdfForVisits(rows: VisitRow[]) {
+export async function buildNotesPdfForVisits(rows: VisitRow[], span?: { from: string; to: string }) {
   const done = rows.filter((r) => r.visit.status === "completed");
   const byPerson = new Map<string, VisitRow[]>();
   for (const r of done) byPerson.set(r.visit.personId, [...(byPerson.get(r.visit.personId) ?? []), r]);
@@ -75,5 +78,8 @@ export async function buildNotesPdfForVisits(rows: VisitRow[]) {
   registerPdfFonts();
   const first = notes[0]?.person ?? people.find(Boolean);
   if (!first) return null;
-  return renderToBuffer(NotesPdf({ org, person: first, rows: notes, range: { from: null, to: null, code: "" } }));
+  const dates = notes.map((n) => chicagoDate(n.clockInAt));
+  const clients = [...new Set(notes.map((n) => `${n.person!.firstName} ${n.person!.lastName}`))];
+  const name = notesDocName({ clients, from: span?.from ?? dates[0], to: span?.to ?? dates[dates.length - 1], count: notes.length });
+  return { buffer: await renderToBuffer(NotesPdf({ org, person: first, rows: notes, range: { from: null, to: null, code: "" }, title: name })), name };
 }
