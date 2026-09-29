@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   // Bottom-left so the dev indicator never sits on the corner hub (Sept 20, 2026).
   devIndicators: { position: "bottom-left" },
   // PDF routes load font files from disk at render time; make sure they ship in the serverless bundle.
-  outputFileTracingIncludes: { "/clients/[id]/notes.pdf": ["./src/fonts/**/*"], "/reports/payroll.pdf": ["./src/fonts/**/*"] },
+  outputFileTracingIncludes: { "/clients/[id]/notes.pdf": ["./src/fonts/**/*"], "/reports/payroll.pdf": ["./src/fonts/**/*"], "/reports/visits.pdf": ["./src/fonts/**/*"], "/visits/[id]/note.pdf": ["./src/fonts/**/*"] },
   // Defence in depth for a PHI app: no framing by other sites, no MIME sniffing, no plugins, forms
   // and navigations only to ourselves, workers only from our own files (pdf.js), no referrers leaking
   // record URLs. Next's own inline scripts need 'unsafe-inline'; development needs 'unsafe-eval' for HMR.

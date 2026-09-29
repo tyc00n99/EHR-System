@@ -16,6 +16,8 @@ export interface NoteOutcome { goal: string; prompt: string; response: string }
 
 export interface PdfNote {
   id: string;
+  /** The client, when one document holds several clients' notes; otherwise the document's `person`. */
+  person?: Person;
   clockInAt: Date;
   clockOutAt: Date | null;
   serviceCode: string;
@@ -138,11 +140,15 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
   const subject = `${rows.length} note${rows.length === 1 ? "" : "s"}${range.code ? ` · ${labelForCode(range.code, [])}` : ""}${range.from ? ` · from ${range.from}` : ""}${range.to ? ` to ${range.to}` : ""}`;
 
   return (
-    <Document title={`Service notes · ${personName}`} author={org.name} subject={subject}>
+    <Document title={new Set(rows.map((r) => (r.person ?? person).id)).size > 1 ? "Service notes" : `Service notes · ${personName}`} author={org.name} subject={subject}>
       {rows.length === 0 && (
         <Page size="LETTER" style={s.page}><Text style={s.eyebrow}>Daily Service Note</Text><Text style={{ marginTop: 10, color: MUTED }}>No notes match this filter for {personName}.</Text></Page>
       )}
       {rows.map((v) => {
+        // One export can hold several clients' notes (the Notes list, Sept 29, 2026); each page names its own.
+        const pp = v.person ?? person;
+        const pName = `${pp.firstName} ${pp.lastName}`;
+        const pFirst = pp.preferredName || pp.firstName;
         const minutes = v.clockOutAt ? Math.round((v.clockOutAt.getTime() - v.clockInAt.getTime()) / 60000) : 0;
         const level = INTERACTION_LEVELS.find((l) => l[0] === v.interactionLevel);
         const supports = [...v.tasks.filter((t) => t.completed).map((t) => t.label), ...v.skills].filter((x, j, a) => a.indexOf(x) === j);
@@ -161,8 +167,8 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
                 they receive on the left, when and by whom on the right. Label left, value right. */}
             <View style={s.form}>
               <View style={s.formCol}>
-                <View style={s.fr}><Text style={s.fk}>Client</Text><Text style={s.fv}><Text style={s.fvName}>{personName}</Text><Text style={s.fvSub}> · PMI {person.pmi}</Text></Text></View>
-                <View style={s.fr}><Text style={s.fk}>Date of birth</Text><Text style={s.fv}>{person.dob ? dNum.format(new Date(person.dob + "T12:00:00-05:00")) : "—"}</Text></View>
+                <View style={s.fr}><Text style={s.fk}>Client</Text><Text style={s.fv}><Text style={s.fvName}>{pName}</Text><Text style={s.fvSub}> · PMI {pp.pmi}</Text></Text></View>
+                <View style={s.fr}><Text style={s.fk}>Date of birth</Text><Text style={s.fv}>{pp.dob ? dNum.format(new Date(pp.dob + "T12:00:00-05:00")) : "—"}</Text></View>
                 <View style={s.fr}><Text style={s.fk}>Setting</Text><Text style={s.fv}>{PLACE[v.placeOfService] ?? "On site"} · POS {v.placeOfService}</Text></View>
                 <View style={[s.fr, s.frLast]}><Text style={s.fk}>Service</Text><Text style={s.fv}>{shortService(labelForCode(v.serviceCode, v.modifiers))}, <Text style={s.fvName}>{code}</Text></Text></View>
               </View>
@@ -186,7 +192,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
                 )}
 
                 <Text style={s.label} minPresenceAhead={46}>Support plan outcomes{v.outcomes.length ? `  ·  ${yes} of ${v.outcomes.length} addressed` : ""}</Text>
-                {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {first} on this date.</Text> : v.outcomes.map((o, j) => (
+                {v.outcomes.length === 0 ? <Text style={s.support}>No outcome measures were active for {pFirst} on this date.</Text> : v.outcomes.map((o, j) => (
                   <View key={j} style={s.outcomeRow} wrap={false}>
                     <Text style={[s.mark, o.response === "yes" ? s.ok : o.response === "no" ? s.danger : { color: GHOST }]}>{o.response === "yes" ? "YES" : o.response === "no" ? "NO" : o.response === "na" ? "N/A" : "•"}</Text>
                     <Text style={{ flex: 1 }}><Text style={s.prompt}>{o.prompt}</Text>{"\n"}<Text style={s.goal}>{o.goal}</Text></Text>
@@ -220,7 +226,7 @@ export function NotesPdf({ org, person, rows, range, summary }: { org: Organizat
                 <View style={s.sig}>
                   <View style={v.clientSignedAt ? s.sigBox : s.sigBoxEmpty}>
                     <Text style={v.clientSignedAt ? s.sigBy : s.sigByEmpty}>{v.clientSignedAt ? "Electronically signed by:" : v.clientUnsignedReason ? `Not signed · ${v.clientUnsignedReason}` : "Awaiting signature"}</Text>
-                    <Text style={v.clientSignedAt ? s.sigName : s.sigNameEmpty}>{v.clientSignedAt ? personName : " "}</Text>
+                    <Text style={v.clientSignedAt ? s.sigName : s.sigNameEmpty}>{v.clientSignedAt ? pName : " "}</Text>
                     <Text style={s.sigId}>{v.clientSignedAt ? `${dt.format(v.clientSignedAt)} CT · verified with private client code` : " "}</Text>
                   </View>
                   <Text style={s.sigK}>Client signature</Text>
