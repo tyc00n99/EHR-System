@@ -211,9 +211,9 @@ async function resolvePlace(personId: string, choice: string, typed: string): Pr
 }
 
 /**
- * Saves a manual note in one go: the visit, the documentation, the day's medications and the client's
- * signature. The caregiver's signature is left for the caregiver — a supervisor cannot sign for them —
- * so the note waits in their notes (and their pay holds) until they do.
+ * Saves a manual note in one go: the visit, the documentation and the day's medications. Neither signature
+ * is taken here — the office cannot sign for the caregiver or enter the client's code (user, Sept 29, 2026) —
+ * so the note shows as unsigned, and its pay holds, until each of them signs.
  */
 export async function createManualNote(_prev: ActionState, fd: FormData): Promise<ActionState> {
   let user: CurrentUser;
@@ -239,8 +239,6 @@ export async function createManualNote(_prev: ActionState, fd: FormData): Promis
   const reasonDetails = g("reasonDetails");
   if (!reasonLabel) errors.reasonCategory = "Choose why EVV did not capture this visit";
   if (reasonDetails.length < 5) errors.reasonDetails = "Say what happened and how the times were confirmed";
-  const clientCode = g("clientCode"), clientReason = g("clientReason");
-  if (!clientCode && clientReason.length < 3) errors.clientCode = "Enter the client's signing code, or why they could not sign";
   const incidents = g("incidents") === "report" ? g("incidentNote") : "";
   if (g("incidents") === "report" && incidents.length < 5) errors.incidentNote = "Describe what happened";
   if (Object.keys(errors).length) return { errors, message: "Check the highlighted fields." };
@@ -248,7 +246,7 @@ export async function createManualNote(_prev: ActionState, fd: FormData): Promis
   const db = await getDb();
   let id: string;
   try {
-    const { person, agreement, snapshot } = await resolveSnapshot(personId, staffId, agreementId);
+    const { agreement, snapshot } = await resolveSnapshot(personId, staffId, agreementId);
     const { clockIn, clockOut } = shiftTimes(date, inTime, outTime);
     const clockInAt = fromLocalInput(clockIn), clockOutAt = fromLocalInput(clockOut);
     if (!withinSpan(agreement, date)) return { errors: { date: "Outside the authorization dates" }, message: "Check the highlighted fields." };
@@ -257,11 +255,6 @@ export async function createManualNote(_prev: ActionState, fd: FormData): Promis
     if (typeof inPlace === "string") return { errors: { inLocation: inPlace }, message: "Check the highlighted fields." };
     const outPlace = g("outSame") === "on" ? inPlace : await resolvePlace(personId, g("outLocation"), g("outAddress"));
     if (typeof outPlace === "string") return { errors: { outLocation: outPlace }, message: "Check the highlighted fields." };
-    let clientSigned = false;
-    if (clientCode) {
-      if (!person.signatureCodeHash || !/^\d{6}$/.test(clientCode) || !(await verifyPassword(clientCode, person.signatureCodeHash))) return { errors: { clientCode: "That code is not correct." }, message: "Check the highlighted fields." };
-      clientSigned = true;
-    }
     const levels = ["low", "medium", "high"];
     const level = levels.includes(g("interactionLevel")) ? g("interactionLevel") : null;
     const skills = fd.getAll("skills[]").map(String).filter(Boolean).slice(0, 40);
@@ -277,8 +270,9 @@ export async function createManualNote(_prev: ActionState, fd: FormData): Promis
         units: computeUnits(clockInAt, clockOutAt, agreement.unitMinutes),
         manualEntry: true,
         manualEntryReason: `${reasonLabel} — ${reasonDetails}`,
-        clientSignedAt: clientSigned ? new Date() : null,
-        clientUnsignedReason: clientSigned ? null : clientReason,
+        // Neither signature is given here: the client co-signs with their own code later, the caregiver from their notes.
+        clientSignedAt: null,
+        clientUnsignedReason: null,
         interactionLevel: level as "low" | "medium" | "high" | null,
         skills, activities, tasks: [],
         shiftNote: narrative,

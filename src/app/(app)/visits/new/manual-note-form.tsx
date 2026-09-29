@@ -173,14 +173,13 @@ export function ManualNoteForm({ agreements, staff, initial, today }: { agreemen
             {incidents === "report" && <><Textarea name="incidentNote" className="mt-3 min-h-20" placeholder="What happened, when, and what was done" />{e.incidentNote && <p className="mt-1 text-[13px] text-danger">{e.incidentNote}</p>}</>}
           </Card>
           <Card padded title="Signatures">
+            {/* Nobody signs for anyone here (user, Sept 29, 2026): the signing code proves the client was there,
+                so an office user never types it or explains it away. Both signatures wait for the people themselves. */}
             <div className="text-[13px] font-medium">Caregiver</div>
-            <p className="mt-1 text-[13.5px] text-muted-foreground">The caregiver signs this note themselves from their notes. It stays on hold for pay until they do.</p>
+            <p className="mt-1 text-[13.5px] text-muted-foreground">Signs this note themselves from their notes.</p>
             <div className="mt-4 text-[13px] font-medium">Client</div>
-            <div className="mt-1 grid gap-2">
-              <Input name="clientCode" inputMode="numeric" maxLength={6} placeholder="Signing code" autoComplete="off" />
-              <Input name="clientReason" placeholder="Or why they could not sign" />
-              {e.clientCode && <p className="text-[13px] text-danger">{e.clientCode}</p>}
-            </div>
+            <p className="mt-1 text-[13.5px] text-muted-foreground">Signs with their own code on the caregiver&apos;s phone at the next visit.</p>
+            <p className="mt-3 text-[13px] text-muted-foreground">Until both have signed, the note shows as unsigned and its pay is on hold.</p>
           </Card>
         </div>
       </div>
