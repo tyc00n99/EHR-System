@@ -12,7 +12,7 @@ export default async function EditClientPage({ params }: PageProps<"/clients/[id
   const person = await getPerson(id);
   if (!person) notFound();
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-6xl">
       <PageHeader eyebrow={<><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb href={`/clients/${id}`}>{fullName(person)}</Crumb><CrumbSep /><Crumb>Edit</Crumb></>} title={`Edit ${fullName(person)}`} />
       <PersonForm action={updatePerson.bind(null, id)} defaults={person} cancelHref={`/clients/${id}`} />
     </div>
