@@ -62,8 +62,8 @@ export async function PayTab({ staff, sp, canEditPay }: { staff: Staff; sp: Para
 
   return (
     <div className="grid gap-5">
-      {/* The notes on this tab, in date order: the viewer's ‹ › step through them, and their PDFs are fetched while idle. */}
-      <PayNotesWarmup notes={summary.lines.filter((l) => !l.note.open).map((l) => ({ id: l.note.id, day: fmtDay(l.date), time: timeFmt.format(l.note.clockInAt), staff: `${staff.firstName} ${staff.lastName}`, client: l.note.clientName, unsigned: l.held.some((h) => h === "client_unsigned" || h === "client_reason") }))} />
+      {/* Warms the PDFs so a note opens at once; no filmstrip here (user, Sept 29, 2026). */}
+      <PayNotesWarmup ids={summary.lines.filter((l) => !l.note.open).map((l) => l.note.id)} />
       <div className="flex flex-wrap items-center gap-3">
         <PayRangePicker base={base} label={period.label} prev={prevParam} next={nextParam} presets={presets} current={{ from: period.startDate, to: period.endDate, param: custom ? `from=${custom.from}&to=${custom.to}` : q(period) }} />
         <span className="text-[13.5px] text-muted-foreground">{status}</span>

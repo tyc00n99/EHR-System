@@ -12,7 +12,7 @@ import { fmtDate, fmtMoney } from "@/lib/format";
 import { addPayRate, deletePayRate, setOvertimeExempt } from "../pay-actions";
 import type { ActionState } from "@/lib/validation";
 import { prefetchNoteBytes } from "@/components/note-bytes";
-import { setNoteStrip, type StripNote } from "@/components/note-strip";
+import { setNoteStrip } from "@/components/note-strip";
 import { useWarmNotes } from "../../scheduling/schedule-grid";
 
 const BLUR = "bg-black/20 supports-backdrop-filter:backdrop-blur-sm";
@@ -130,16 +130,12 @@ export function NoteLink({ id, className, children }: { id: string; className?: 
 }
 
 /**
- * Publishes the tab's notes to the viewer's filmstrip (so ‹ › step through them) and fetches their PDFs
- * once the page is idle, a few at a time, so opening any of them is instant.
+ * Fetches the PDFs of the notes on this tab once the page is idle, so opening one is instant. It does not
+ * publish them to the viewer's filmstrip: from the Pay tab you open one note to fix it, not to browse
+ * (user, Sept 29, 2026), so the strip is emptied while this tab is showing.
  */
-export function PayNotesWarmup({ notes }: { notes: StripNote[] }) {
-  useWarmNotes(notes.map((n) => ({ status: "completed", visitId: n.id })));
-  const key = notes.map((n) => n.id).join(",");
-  useEffect(() => {
-    setNoteStrip(notes);
-    return () => setNoteStrip([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ids are the identity; the array is rebuilt every render
-  }, [key]);
+export function PayNotesWarmup({ ids }: { ids: string[] }) {
+  useWarmNotes(ids.map((id) => ({ status: "completed", visitId: id })));
+  useEffect(() => { setNoteStrip([]); }, []);
   return null;
 }
