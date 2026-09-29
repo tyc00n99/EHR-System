@@ -53,8 +53,8 @@ export function TeamRail({ members, canAdd }: { members: RailMember[]; canAdd: b
   return (<>
     {/* While the list sits over a record, the record blurs and dims so the eye stays on the list;
         clicking the dimmed record closes the list (Sept 18, 2026, user's request). */}
-    {over && <button type="button" aria-label="Close the list" onClick={close} className="absolute inset-0 z-20 hidden cursor-default bg-white/40 backdrop-blur-[2px] md:block" />}
-    <aside aria-label="Team" className={cx("hidden w-[248px] shrink-0 border-r border-line bg-sidebar md:block", over && "absolute inset-y-0 left-0 z-30 shadow-[8px_0_24px_rgba(0,0,0,0.08)]")}>
+    {over && <button type="button" aria-label="Close the list" onClick={close} className="fixed inset-x-0 bottom-0 top-[56px] z-30 hidden cursor-default bg-white/40 backdrop-blur-[2px] md:block" />}
+    <aside aria-label="Team" className={cx("hidden w-[248px] shrink-0 border-r border-line bg-sidebar md:block", over && "fixed bottom-0 left-0 top-[56px] z-40 shadow-[8px_0_24px_rgba(0,0,0,0.08)]")}>
       <div className="flex h-full flex-col">
         <div className="flex h-11 shrink-0 items-center gap-2 px-3">
           <Icon.team size={15} className="shrink-0 text-muted-foreground" />
