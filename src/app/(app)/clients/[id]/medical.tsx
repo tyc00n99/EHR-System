@@ -10,12 +10,20 @@ import type { ActionState } from "@/lib/validation";
 import { createMedication, deleteMedication, setMedicationActive, updateMedication } from "../goal-actions";
 import { recordMedAdmin } from "../../visits/record-actions";
 import { DateInput } from "@/components/date-input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface MedView { id: string; name: string; dose: string; route: string; frequency: string; times: string[]; instructions: string | null; prescriber: string | null; startDate: string; endDate: string | null; active: boolean }
 export interface AdminView { medicationId: string; date: string; time: string; status: "given" | "refused" | "held" | "missed"; note: string | null; by: string; byName: string }
 
 type Status = AdminView["status"];
 const LETTER: Record<Status, string> = { given: "G", refused: "R", held: "H", missed: "M" };
+/** What each mark means, shown from the legend on hover or tap (user, Sept 29, 2026). */
+const MEANING: Record<Status, { title: string; body: string }> = {
+  given: { title: "Given", body: "The dose was given as scheduled." },
+  refused: { title: "Refused", body: "The person said no. Offer again if the instructions allow, and note what they said." },
+  held: { title: "Held", body: "Staff did not give the dose on purpose, because the instructions say to skip it in this situation — for example \"hold if blood sugar under 70\" or a prescriber's order. Note the reason, such as the reading." },
+  missed: { title: "Missed", body: "The dose was due and was not given, and nobody decided to skip it. This is a medication error: tell the supervisor." },
+};
 const CELL: Record<Status, string> = { given: "bg-ok-soft text-ok", refused: "bg-warn-soft text-warn", held: "bg-warn-soft text-warn", missed: "bg-danger-soft text-danger" };
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -61,7 +69,17 @@ export function Medical({ personId, meds, admins, week, weekLabel, month, monthL
         <a href={nextHref} aria-label="Next week" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</a>
         {thisWeekHref && <a href={thisWeekHref} className="text-[13px] font-medium text-primary hover:underline">This week</a>}
         <span className="ml-auto flex flex-wrap items-center gap-4 text-[13px] text-muted-foreground">
-          {(["given", "refused", "held", "missed"] as const).map((s) => <span key={s} className="flex items-center gap-1.5"><Cell status={s} small />{s[0].toUpperCase() + s.slice(1)}</span>)}
+          {(["given", "refused", "held", "missed"] as const).map((s) => (
+            <Popover key={s}>
+              <PopoverTrigger openOnHover delay={120} render={<button type="button" aria-label={`What ${s} means`} className="flex cursor-help items-center gap-1.5 rounded-md hover:underline hover:decoration-dotted" />}>
+                <Cell status={s} small />{s[0].toUpperCase() + s.slice(1)}
+              </PopoverTrigger>
+              <PopoverContent align="center" className="w-72 p-4 text-left">
+                <div className="text-[13.5px] font-semibold text-text-strong">{MEANING[s].title}</div>
+                <p className="mt-1.5 text-[13px] leading-5 text-text">{MEANING[s].body}</p>
+              </PopoverContent>
+            </Popover>
+          ))}
         </span>
         {manage && <Button variant="secondary" className="h-8" onClick={() => setAdding(true)}>+ Add medication</Button>}
       </div>
