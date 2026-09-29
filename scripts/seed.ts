@@ -95,6 +95,8 @@ async function main() {
     address1: "77 Snelling Ave N", city: "St. Paul", zip: "55104", umpi: "A100000004", hireDate: "2025-09-01", title: "Direct support professional",
     email: "night@example.com", phone: "651-555-0104",
   });
+  // Pay history opens with each starting rate, from the hire date (Sept 29, 2026); the Pay tab prices each day from it.
+  for (const m of keptAdmin ? [sam, amara] : [admin, sam, amara]) await w.insert(schema.staffPayRates, { staffId: m.id, rate: m.payRate, effectiveFrom: m.hireDate, note: "Starting rate" });
   const hash = await hashPassword(PASSWORD);
   const adminUser = keptAdminUser ?? (await w.insert(users, { email: "admin@example.com", passwordHash: hash, role: "admin", staffId: admin.id }));
   const samUser = await w.insert(users, { email: "dsp@example.com", passwordHash: hash, role: "dsp", staffId: sam.id });

@@ -7,9 +7,8 @@ import { Button, Field, FormError, Input } from "@/components/kit";
 import { DateInput } from "@/components/date-input";
 import { Icon } from "@/components/icons";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DateRangePill, type DatePreset } from "@/components/filter-pill";
 import { fmtDate, fmtMoney } from "@/lib/format";
-import { PayScheduleEditor, type ScheduleRow } from "../../settings/pay-settings";
 import { addPayRate, deletePayRate, setOvertimeExempt } from "../pay-actions";
 import type { ActionState } from "@/lib/validation";
 
@@ -31,63 +30,20 @@ function Window({ title, onClose, width = "sm:max-w-[640px]", children }: { titl
 }
 
 /**
- * ‹ period ›, with a menu of recent periods and "Custom dates" (Sept 29, 2026: "allow someone to
- * choose their pay periods"). Custom dates estimate any range, not only a period the schedule cuts.
+ * ‹ dates › (Sept 29, 2026: "just do a calendar option where I can put the date I want to start and the
+ * date I want to end"). The middle is the same two-month calendar the Notes list uses: pick a start and
+ * an end, or a preset. The arrows step by the same number of days.
  */
-export function PeriodPicker({ base, label, prev, next, options, custom }: { base: string; label: string; prev?: string; next?: string; options: { param: string; label: string; current: boolean; selected: boolean }[]; custom: { from: string; to: string } | null }) {
+export function PayRangePicker({ base, label, prev, next, presets, current }: { base: string; label: string; prev: string; next: string; presets: DatePreset[]; current: { from: string; to: string; param: string } }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [from, setFrom] = useState(custom?.from ?? "");
-  const [to, setTo] = useState(custom?.to ?? "");
-  const go = (param: string) => router.push(`${base}&${param}`);
+  // The calendar hands back `from=…&to=…`; the Pay tab keeps its own names so it never clashes with the Notes filters.
+  const go = (param: string) => router.push(`${base}&${param.replace(/^from=/, "payFrom=").replace("&to=", "&payTo=")}`);
   return (
-    <>
-      <div className="flex items-center overflow-hidden rounded-lg border border-line">
-        <button type="button" disabled={!prev} onClick={() => prev && go(prev)} aria-label="Previous pay period" className="flex h-9 w-9 items-center justify-center border-r border-line hover:bg-hover disabled:opacity-40"><Icon.chevronLeft size={16} /></button>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<button type="button" className="flex h-9 items-center gap-2 px-3 text-[14px] font-medium text-text-strong hover:bg-hover" />}>
-            {label}<Icon.chevronDown size={14} className="text-muted-foreground" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-auto min-w-72">
-            {options.map((o) => (
-              <DropdownMenuItem key={o.param} onClick={() => go(o.param)} className={o.selected ? "font-semibold" : undefined}>
-                <span className="flex-1">{o.label}</span>{o.current && <span className="text-[12px] text-muted-foreground">Current</span>}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuItem onClick={() => setOpen(true)}><span className="flex-1 text-primary">Custom dates…</span></DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <button type="button" disabled={!next} onClick={() => next && go(next)} aria-label="Next pay period" className="flex h-9 w-9 items-center justify-center border-l border-line hover:bg-hover disabled:opacity-40"><Icon.chevronRight size={16} /></button>
-      </div>
-      {open && (
-        <Window title="Estimate custom dates" onClose={() => setOpen(false)} width="sm:max-w-[520px]">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="From"><DateInput value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
-            <Field label="To"><DateInput value={to} onChange={(e) => setTo(e.target.value)} /></Field>
-          </div>
-          <div className="mt-5 flex gap-2">
-            <Button disabled={!from || !to || from > to} onClick={() => { setOpen(false); go(`payFrom=${from}&payTo=${to}`); }}>Show estimate</Button>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          </div>
-        </Window>
-      )}
-    </>
-  );
-}
-
-/** The agency's schedule, changeable from here (Sept 29, 2026) without going to Settings. */
-export function ScheduleButton({ description, schedules, canEdit }: { description: string; schedules: ScheduleRow[]; canEdit: boolean }) {
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-  return (
-    <>
-      <span className="text-[13.5px] text-muted-foreground">Pay schedule: <span className="text-text-strong">{description}</span>{canEdit && <> · <button type="button" onClick={() => setOpen(true)} className="font-medium text-primary hover:underline">Change</button></>}</span>
-      {open && (
-        <Window title="Pay schedule" onClose={() => setOpen(false)} width="sm:max-w-[640px]">
-          <PayScheduleEditor schedules={schedules} onDone={() => { setOpen(false); router.refresh(); }} />
-        </Window>
-      )}
-    </>
+    <div className="flex items-center gap-1.5">
+      <button type="button" onClick={() => go(prev)} aria-label="Earlier dates" className="flex size-9 items-center justify-center rounded-lg border border-line hover:bg-hover"><Icon.chevronLeft size={16} /></button>
+      <DateRangePill label={label} presets={presets} current={current} onApply={go} />
+      <button type="button" onClick={() => go(next)} aria-label="Later dates" className="flex size-9 items-center justify-center rounded-lg border border-line hover:bg-hover"><Icon.chevronRight size={16} /></button>
+    </div>
   );
 }
 

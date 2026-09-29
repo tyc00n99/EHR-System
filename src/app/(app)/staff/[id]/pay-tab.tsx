@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Card } from "@/components/kit";
-import { getOvertimeRules, getPayRules, listPayNotes, listPayRates, listPaySchedules } from "@/db/pay-queries";
+import { getOvertimeRules, getPayRules, listPayNotes, listPayRates } from "@/db/pay-queries";
 import type { Staff } from "@/db/schema";
 import { fmtMoney, fromLocalInput } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { HOLD_DETAIL, HOLD_LABEL, computePay, workweekStart, type PaySummary } from "@/lib/pay";
-import { addDays, chicagoDate, currentPayPeriod, describePayRule, payPeriodFromParam, periodFromDates, recentPayPeriods, shiftPayPeriod } from "@/lib/pay-period";
-import { ExemptSwitch, PeriodPicker, RateHistory, ScheduleButton } from "./pay-controls";
+import { addDays, chicagoDate, currentPayPeriod, payPeriodFromParam, periodFromDates, shiftPayPeriod } from "@/lib/pay-period";
+import { ExemptSwitch, PayRangePicker, RateHistory } from "./pay-controls";
 
 /**
  * The Pay tab (Sept 29, 2026, the user's pick "3" of three mockups): what this person has earned in a
@@ -21,13 +21,15 @@ const dayLabel = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "sh
 const fmtDay = (iso: string) => dayLabel.format(new Date(`${iso}T00:00:00Z`));
 const timeFmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" });
 
-export async function PayTab({ staff, sp, canEditPay, canEditSchedule }: { staff: Staff; sp: Params; canEditPay: boolean; canEditSchedule: boolean }) {
-  const [rules, ot, rateRows, schedules] = await Promise.all([getPayRules(), getOvertimeRules(), listPayRates(staff.id), listPaySchedules()]);
+export async function PayTab({ staff, sp, canEditPay }: { staff: Staff; sp: Params; canEditPay: boolean }) {
+  const [rules, ot, rateRows] = await Promise.all([getPayRules(), getOvertimeRules(), listPayRates(staff.id)]);
   const payFrom = str(sp, "payFrom"), payTo = str(sp, "payTo");
   const custom = payFrom && payTo && ISO.test(payFrom) && ISO.test(payTo) && payFrom <= payTo ? { from: payFrom, to: payTo } : null;
   const period = custom ? periodFromDates(custom.from, custom.to) : payPeriodFromParam(str(sp, "period"), rules);
   const current = currentPayPeriod(rules);
-  const rates = rateRows.map((r) => ({ rate: Number(r.rate), effectiveFrom: r.effectiveFrom }));
+  const today = chicagoDate(new Date());
+  // No history yet (a record written straight to the database): price at the rate on the staff record.
+  const rates = rateRows.length ? rateRows.map((r) => ({ rate: Number(r.rate), effectiveFrom: r.effectiveFrom })) : [{ rate: Number(staff.payRate), effectiveFrom: staff.hireDate }];
 
   // Overtime counts whole workweeks, so notes are read from the start of the workweek holding the earliest day shown.
   const earlier = custom ? [] : [shiftPayPeriod(period, -1, rules), shiftPayPeriod(period, -2, rules), shiftPayPeriod(period, -3, rules)];
@@ -39,23 +41,43 @@ export async function PayTab({ staff, sp, canEditPay, canEditSchedule }: { staff
 
   const base = `/staff/${staff.id}?tab=pay`;
   const q = (p: typeof period) => `period=${p.startDate}`;
-  const options = [...recentPayPeriods(8, rules), shiftPayPeriod(current, 1, rules)].reverse().map((p) => ({ param: q(p), label: p.label, current: p.startDate === current.startDate, selected: !custom && p.startDate === period.startDate }));
-  const ruleNow = [...rules].sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom)).find((r) => r.effectiveFrom <= current.startDate) ?? rules[0];
+  // The calendar's rail: pay periods first, then calendar months. Any start and end can be picked instead.
+  const last = shiftPayPeriod(current, -1, rules);
+  const monthStart = today.slice(0, 8) + "01";
+  const prevMonthEnd = addDays(monthStart, -1);
+  const presets = [
+    { label: "This pay period", hint: current.label, param: q(current) },
+    { label: "Last pay period", hint: last.label, param: q(last) },
+    { label: "This month", hint: periodFromDates(monthStart, today).label, param: `from=${monthStart}&to=${today}` },
+    { label: "Last month", hint: periodFromDates(prevMonthEnd.slice(0, 8) + "01", prevMonthEnd).label, param: `from=${prevMonthEnd.slice(0, 8)}01&to=${prevMonthEnd}` },
+  ];
+  // The arrows step by the range itself: a whole pay period, or the same number of days for picked dates.
+  const span = custom ? Math.round((Date.parse(custom.to) - Date.parse(custom.from)) / 86_400_000) + 1 : 0;
+  const prevParam = custom ? `from=${addDays(custom.from, -span)}&to=${addDays(custom.from, -1)}` : q(shiftPayPeriod(period, -1, rules));
+  const nextParam = custom ? `from=${addDays(custom.to, 1)}&to=${addDays(custom.to, span)}` : q(shiftPayPeriod(period, 1, rules));
   const held = summary.lines.filter((l) => l.held.length);
   const noteHref = (id: string) => `${base}&${custom ? `payFrom=${custom.from}&payTo=${custom.to}` : q(period)}&note=${id}`;
-  const today = chicagoDate(new Date());
   const status = custom ? "Custom dates" : period.startDate === current.startDate ? "Current pay period" : period.startDate > current.startDate ? "Upcoming pay period" : "Earlier pay period";
   const otLine = staff.overtimeExempt ? "No overtime (exempt)" : `Overtime after ${ot.weeklyHours} h a week${ot.dailyHours != null ? ` or ${ot.dailyHours} h a day` : ""} at ${ot.multiplier}×`;
 
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center gap-3">
-        <PeriodPicker base={base} label={period.label} prev={custom ? undefined : q(shiftPayPeriod(period, -1, rules))} next={custom ? undefined : q(shiftPayPeriod(period, 1, rules))} options={options} custom={custom} />
+        <PayRangePicker base={base} label={period.label} prev={prevParam} next={nextParam} presets={presets} current={{ from: period.startDate, to: period.endDate, param: custom ? `from=${custom.from}&to=${custom.to}` : q(period) }} />
         <span className="text-[13.5px] text-muted-foreground">{status}</span>
-        <span className="ml-auto"><ScheduleButton description={describePayRule(ruleNow)} schedules={schedules.map((s) => ({ id: s.id, effectiveFrom: s.effectiveFrom, frequency: s.frequency, anchorDate: s.anchorDate }))} canEdit={canEditSchedule} /></span>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Hours first and loudest (user, Sept 29, 2026): they are what gets typed into Gusto, split the way Gusto asks. */}
+        <div className="rounded-xl border-2 border-primary bg-primary-soft/40 px-6 py-5">
+          <div className="text-[13.5px] font-medium text-primary">Total hours</div>
+          <div className="mt-1 text-[38px] font-medium leading-tight tracking-tight text-text-strong tabular-nums">{hrs(summary.total.hours)} h</div>
+          <div className="mt-1 grid grid-cols-2 gap-x-4 text-[13.5px]">
+            <span className="text-muted-foreground">Regular</span><span className="text-right font-medium tabular-nums text-text-strong">{hrs(summary.total.regularHours)} h</span>
+            <span className="text-muted-foreground">Overtime</span><span className="text-right font-medium tabular-nums text-text-strong">{hrs(summary.total.overtimeHours)} h</span>
+          </div>
+          {held.length > 0 && <div className="mt-2 border-t border-primary/20 pt-2 text-[13px] text-muted-foreground">Ready to pay: <span className="font-medium tabular-nums text-text-strong">{hrs(summary.ready.hours - summary.ready.overtimeHours)} h</span> regular, <span className="font-medium tabular-nums text-text-strong">{hrs(summary.ready.overtimeHours)} h</span> overtime</div>}
+        </div>
         <div className="rounded-xl border border-ok/30 bg-ok-soft/60 px-6 py-5">
           <div className="text-[13.5px] font-medium text-ok">Ready to pay</div>
           <div className="mt-1 text-[38px] font-medium leading-tight tracking-tight text-text-strong tabular-nums">{fmtMoney(summary.ready.pay)}</div>
@@ -140,8 +162,6 @@ export async function PayTab({ staff, sp, canEditPay, canEditSchedule }: { staff
           <RateHistory staffId={staff.id} canEdit={canEditPay} today={today} rates={rateRows.map((r) => ({ id: r.id, rate: r.rate, effectiveFrom: r.effectiveFrom, note: r.note }))} />
         </Card>
       </div>
-
-      <p className="text-[13px] text-muted-foreground">An estimate from clock-in and clock-out times × the rate in effect each day, before taxes and deductions. It is not a pay stub. A note counts on the day it was clocked in; {period.startDate !== workweekStart(period.startDate, ot.workweekStartDay) ? `overtime counts the whole workweek, including ${fmtDay(workweekStart(period.startDate, ot.workweekStartDay))} to ${fmtDay(addDays(period.startDate, -1))} from the period before.` : "overtime counts whole workweeks."}</p>
     </div>
   );
 }

@@ -111,7 +111,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "pay" && user.abilities.includes("view_pay") && (
-        <PayTab staff={s} sp={sp} canEditPay={user.abilities.includes("manage_staff")} canEditSchedule={user.abilities.includes("settings")} />
+        <PayTab staff={s} sp={sp} canEditPay={user.abilities.includes("manage_staff")} />
       )}
 
       {tab === "login" && user.abilities.includes("manage_staff") && (
