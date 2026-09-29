@@ -204,23 +204,6 @@ export const clockOutSchema = z
 
 const isoDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, "Use a date and time");
 
-export const manualVisitSchema = z
-  .object({
-    personId: z.uuid(),
-    staffId: z.uuid(),
-    serviceAgreementId: z.uuid(),
-    placeOfService: z.string().regex(/^\d{2}$/, "Two-digit place of service"),
-    clockInAt: isoDateTime,
-    clockOutAt: isoDateTime,
-    clockInLat: coord,
-    clockInLng: coord,
-    clockOutLat: coord,
-    clockOutLng: coord,
-    manualEntryReason: z.string().min(5, "Explain why this note is being entered manually").max(1000),
-    shiftNote: z.string().min(1, "A shift note is required").max(4000),
-  })
-  .refine((v) => v.clockOutAt > v.clockInAt, { message: "Clock-out must be after clock-in", path: ["clockOutAt"] });
-
 export const visitEditSchema = z
   .object({
     visitId: z.uuid(),

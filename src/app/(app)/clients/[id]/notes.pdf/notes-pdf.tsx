@@ -31,6 +31,7 @@ export interface PdfNote {
   tasks: VisitTask[];
   manualEntry: boolean;
   manualEntryReason: string | null;
+  incidentNote?: string | null;
   clockInLat: number | null;
   clockInLng: number | null;
   clockInAccuracyM: number | null;
@@ -136,7 +137,6 @@ function Fact({ k, v, sub, tone }: { k: string; v: string; sub?: string; tone?: 
 
 export function NotesPdf({ org, person, rows, range, summary, title }: { org: Organization; person: Person; rows: PdfNote[]; range: { from: string | null; to: string | null; code: string }; summary?: { groups: TimesheetGroup[]; from: Date; to: Date }; title?: string }) {
   const personName = `${person.firstName} ${person.lastName}`;
-  const first = person.preferredName || person.firstName;
   const subject = `${rows.length} note${rows.length === 1 ? "" : "s"}${range.code ? ` · ${labelForCode(range.code, [])}` : ""}${range.from ? ` · from ${range.from}` : ""}${range.to ? ` to ${range.to}` : ""}`;
 
   return (
@@ -207,7 +207,7 @@ export function NotesPdf({ org, person, rows, range, summary, title }: { org: Or
                   {v.activities.length === 0 ? <Text style={s.factS}>None selected</Text> : v.activities.map((a, j) => <Text key={j} style={s.activity}>•  {a}</Text>)}
                 </View>
                 <Fact k="Medication administration" v={v.meds.length === 0 ? "None scheduled" : medsIssues.length === 0 ? `${medsGiven.length} administered as scheduled` : `${medsIssues.length} not administered`} sub={v.meds.length ? v.meds.map((m) => `${m.name} ${m.dose}, ${m.time}${m.status !== "given" ? ` · ${MED_STATUS[m.status] ?? m.status}` : ""}`).join("\n") : undefined} tone={medsIssues.length ? "danger" : undefined} />
-                <Fact k="Incidents" v="None reported" />
+                <Fact k="Incidents" v={v.incidentNote?.trim() || "None reported"} tone={v.incidentNote?.trim() ? "danger" : undefined} />
                 {v.edits > 0 && <Fact k="Corrections" v={`${v.edits} after signing`} sub="Detail in the audit log" />}
               </View>
             </View>

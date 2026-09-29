@@ -11,13 +11,15 @@ import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { computeUnits } from "@/lib/units";
 import { mirrorClockIn, mirrorClockOut, mirrorEdit, mirrorManualVisit, mirrorVoid } from "@/evv/bridge";
 import { verifyPassword } from "@/lib/password";
+import { geocodeAddress } from "@/lib/geocode";
+import { activitiesFor, skillsFor } from "@/lib/templates";
+import { MANUAL_REASONS, shiftTimes, type ManualContext, type ManualReason } from "@/lib/manual-note";
 import {
   DEFAULT_TASKS,
   clockInSchema,
   clockOutSchema,
   fieldErrors,
   formToObject,
-  manualVisitSchema,
   visitEditSchema,
   type ActionState,
 } from "@/lib/validation";
@@ -154,48 +156,167 @@ export async function clockOut(_prev: ActionState, fd: FormData): Promise<Action
   redirect(`/visits/${v.id}?done=1`);
 }
 
-export async function createManualVisit(_prev: ActionState, fd: FormData): Promise<ActionState> {
+/* ---------- manual note (Sept 29, 2026) ---------- */
+
+/** Who may enter a manual note: an administrator or supervisor who is not the caregiver on it. */
+async function requireManualAuthor() {
   const user = await requireAbility("edit_visits");
-  const parsed = manualVisitSchema.safeParse(formToObject(fd));
-  if (!parsed.success) return { errors: fieldErrors(parsed.error), message: "Check the highlighted fields." };
-  const d = parsed.data;
+  if (user.role !== "admin" && user.role !== "supervisor") throw new Error("Only an administrator or a supervisor can enter a note manually.");
+  return user;
+}
+
+/** Everything the manual note needs once a client's authorization and a date are chosen. */
+export async function manualNoteContext(agreementId: string, date: string): Promise<ManualContext | { error: string }> {
+  await requireManualAuthor();
+  const agreement = await getAgreement(agreementId);
+  if (!agreement) return { error: "Authorization not found." };
+  const person = await getPerson(agreement.personId);
+  if (!person) return { error: "Client not found." };
+  const db = await getDb();
+  const { goals, goalQuestions, medications, clientLocations, programs } = schema;
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : today();
+  const [program, goalRows, questionRows, medRows, locationRows] = await Promise.all([
+    agreement.programId ? db.select().from(programs).where(eq(programs.id, agreement.programId)).limit(1).then((r) => r[0] ?? null) : Promise.resolve(null),
+    db.select({ id: goals.id, title: goals.title }).from(goals).where(and(eq(goals.personId, person.id), eq(goals.status, "active"))).orderBy(goals.createdAt),
+    db.select({ id: goalQuestions.id, goalId: goalQuestions.goalId, prompt: goalQuestions.prompt }).from(goalQuestions).innerJoin(goals, eq(goalQuestions.goalId, goals.id)).where(and(eq(goals.personId, person.id), eq(goals.status, "active"), eq(goalQuestions.active, true))).orderBy(goalQuestions.sortOrder),
+    db.select().from(medications).where(and(eq(medications.personId, person.id), eq(medications.active, true))).orderBy(medications.name),
+    db.select().from(clientLocations).where(eq(clientLocations.personId, person.id)),
+  ]);
+  const address = (l: typeof locationRows[number]) => [l.address1, l.address2, [l.city, l.state, l.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  return {
+    personName: `${person.firstName} ${person.lastName}`, first: person.preferredName || person.firstName, pmi: person.pmi, dob: person.dob,
+    unitMinutes: agreement.unitMinutes,
+    skills: skillsFor(program?.serviceTypeId),
+    activities: activitiesFor(person.preferredName || person.firstName, person.activityLibrary),
+    goals: goalRows.map((g) => ({ ...g, questions: questionRows.filter((q) => q.goalId === g.id).map(({ id, prompt }) => ({ id, prompt })) })),
+    meds: medRows.filter((m) => m.startDate <= day && (!m.endDate || m.endDate >= day)).flatMap((m) => m.times.map((time) => ({ id: m.id, name: m.name, dose: m.dose, time }))).sort((a, b) => a.time.localeCompare(b.time)),
+    locations: locationRows.filter((l) => address(l)).sort((a, b) => Number(b.isDefault) - Number(a.isDefault)).map((l) => ({ id: l.id, label: l.label || l.type, address: address(l), posCode: l.posCode, isDefault: l.isDefault })),
+  };
+}
+
+/** Where one end of the visit happened: an address on file (its stored point, or looked up), or a typed one. */
+async function resolvePlace(personId: string, choice: string, typed: string): Promise<{ lat: number; lng: number; address: string } | string> {
+  const db = await getDb();
+  if (choice && choice !== "typed") {
+    const [l] = await db.select().from(schema.clientLocations).where(and(eq(schema.clientLocations.id, choice), eq(schema.clientLocations.personId, personId))).limit(1);
+    if (!l) return "That address is not on this client's record.";
+    const address = [l.address1, l.address2, [l.city, l.state, l.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    if (l.lat != null && l.lng != null) return { lat: l.lat, lng: l.lng, address };
+    const found = await geocodeAddress(address);
+    return found ? { lat: found.lat, lng: found.lng, address } : "The address on file could not be found on the map. Type the address instead.";
+  }
+  if (typed.trim().length < 6) return "Type the street address, city and ZIP.";
+  const found = await geocodeAddress(typed);
+  return found ? { lat: found.lat, lng: found.lng, address: found.matched } : "That address could not be found. Check the street, city and ZIP.";
+}
+
+/**
+ * Saves a manual note in one go: the visit, the documentation, the day's medications and the client's
+ * signature. The caregiver's signature is left for the caregiver — a supervisor cannot sign for them —
+ * so the note waits in their notes (and their pay holds) until they do.
+ */
+export async function createManualNote(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  let user: CurrentUser;
+  try { user = await requireManualAuthor(); } catch (e) { return { message: e instanceof Error ? e.message : "Not allowed." }; }
+  const g = (k: string) => String(fd.get(k) ?? "").trim();
+  const errors: Record<string, string> = {};
+  const personId = g("personId"), staffId = g("staffId"), agreementId = g("serviceAgreementId");
+  const date = g("date"), inTime = g("inTime"), outTime = g("outTime");
+  if (!personId) errors.personId = "Choose the client";
+  if (!agreementId) errors.serviceAgreementId = "Choose the authorization";
+  if (!staffId) errors.staffId = "Choose the caregiver";
+  else if (staffId === user.staffId) errors.staffId = "You cannot enter a manual note for a visit you worked. Ask another supervisor or administrator.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.date = "Choose the date";
+  if (!/^\d{2}:\d{2}$/.test(inTime)) errors.inTime = "Clock-in time";
+  if (!/^\d{2}:\d{2}$/.test(outTime)) errors.outTime = "Clock-out time";
+  if (/^\d{2}:\d{2}$/.test(inTime) && inTime === outTime) errors.outTime = "Clock-out cannot equal clock-in";
+  const placeOfService = g("placeOfService");
+  if (!/^\d{2}$/.test(placeOfService)) errors.placeOfService = "Choose the setting";
+  const narrative = g("shiftNote");
+  if (narrative.length < 10) errors.shiftNote = "Write what happened during the visit";
+  const reasonKey = g("reasonCategory") as ManualReason;
+  const reasonLabel = MANUAL_REASONS.find(([k]) => k === reasonKey)?.[1];
+  const reasonDetails = g("reasonDetails");
+  if (!reasonLabel) errors.reasonCategory = "Choose why EVV did not capture this visit";
+  if (reasonDetails.length < 5) errors.reasonDetails = "Say what happened and how the times were confirmed";
+  const clientCode = g("clientCode"), clientReason = g("clientReason");
+  if (!clientCode && clientReason.length < 3) errors.clientCode = "Enter the client's signing code, or why they could not sign";
+  const incidents = g("incidents") === "report" ? g("incidentNote") : "";
+  if (g("incidents") === "report" && incidents.length < 5) errors.incidentNote = "Describe what happened";
+  if (Object.keys(errors).length) return { errors, message: "Check the highlighted fields." };
+
   const db = await getDb();
   let id: string;
   try {
-    const { agreement, snapshot } = await resolveSnapshot(d.personId, d.staffId, d.serviceAgreementId);
-    const clockInAt = fromLocalInput(d.clockInAt);
-    const clockOutAt = fromLocalInput(d.clockOutAt);
-    if (!withinSpan(agreement, clockInAt.toISOString().slice(0, 10))) return { errors: { clockInAt: "Outside the service agreement dates" } };
-    const row = await audited(db, { userId: user.id }).insert(visits, {
-      personId: d.personId,
-      staffId: d.staffId,
-      serviceAgreementId: d.serviceAgreementId,
-      programId: agreement.programId,
-      ...snapshot,
-      placeOfService: d.placeOfService,
-      clockInAt,
-      clockOutAt,
-      clockInLat: d.clockInLat,
-      clockInLng: d.clockInLng,
-      clockOutLat: d.clockOutLat,
-      clockOutLng: d.clockOutLng,
-      units: computeUnits(clockInAt, clockOutAt, agreement.unitMinutes),
-      manualEntry: true,
-      manualEntryReason: d.manualEntryReason,
-      clientUnsignedReason: "Entered manually by a supervisor",
-      tasks: [],
-      shiftNote: d.shiftNote,
-      status: "completed",
-      createdBy: user.id,
-      updatedBy: user.id,
+    const { person, agreement, snapshot } = await resolveSnapshot(personId, staffId, agreementId);
+    const { clockIn, clockOut } = shiftTimes(date, inTime, outTime);
+    const clockInAt = fromLocalInput(clockIn), clockOutAt = fromLocalInput(clockOut);
+    if (!withinSpan(agreement, date)) return { errors: { date: "Outside the authorization dates" }, message: "Check the highlighted fields." };
+    if (clockOutAt.getTime() > Date.now()) return { errors: { outTime: "That is in the future" }, message: "Check the highlighted fields." };
+    const inPlace = await resolvePlace(personId, g("inLocation"), g("inAddress"));
+    if (typeof inPlace === "string") return { errors: { inLocation: inPlace }, message: "Check the highlighted fields." };
+    const outPlace = g("outSame") === "on" ? inPlace : await resolvePlace(personId, g("outLocation"), g("outAddress"));
+    if (typeof outPlace === "string") return { errors: { outLocation: outPlace }, message: "Check the highlighted fields." };
+    let clientSigned = false;
+    if (clientCode) {
+      if (!person.signatureCodeHash || !/^\d{6}$/.test(clientCode) || !(await verifyPassword(clientCode, person.signatureCodeHash))) return { errors: { clientCode: "That code is not correct." }, message: "Check the highlighted fields." };
+      clientSigned = true;
+    }
+    const levels = ["low", "medium", "high"];
+    const level = levels.includes(g("interactionLevel")) ? g("interactionLevel") : null;
+    const skills = fd.getAll("skills[]").map(String).filter(Boolean).slice(0, 40);
+    const activities = fd.getAll("activities[]").map(String).filter(Boolean).slice(0, 40);
+
+    const row = await db.transaction(async (tx) => {
+      const w = audited(tx, { userId: user.id });
+      const v = await w.insert(visits, {
+        personId, staffId, serviceAgreementId: agreementId, programId: agreement.programId, ...snapshot,
+        placeOfService, clockInAt, clockOutAt,
+        clockInLat: inPlace.lat, clockInLng: inPlace.lng, clockOutLat: outPlace.lat, clockOutLng: outPlace.lng,
+        clockInAddress: inPlace.address, clockOutAddress: outPlace.address,
+        units: computeUnits(clockInAt, clockOutAt, agreement.unitMinutes),
+        manualEntry: true,
+        manualEntryReason: `${reasonLabel} — ${reasonDetails}`,
+        clientSignedAt: clientSigned ? new Date() : null,
+        clientUnsignedReason: clientSigned ? null : clientReason,
+        interactionLevel: level as "low" | "medium" | "high" | null,
+        skills, activities, tasks: [],
+        shiftNote: narrative,
+        incidentNote: incidents || null,
+        noteSavedAt: new Date(), noteSavedBy: user.id,
+        status: "completed", createdBy: user.id, updatedBy: user.id,
+      });
+      // Outcomes: yes/no answers to each question, and a log entry for every outcome answered or ticked as worked on.
+      const worked = new Set(fd.getAll("goal_worked[]").map(String));
+      const ctxGoals = await tx.select({ id: schema.goalQuestions.id, goalId: schema.goalQuestions.goalId }).from(schema.goalQuestions).innerJoin(schema.goals, eq(schema.goalQuestions.goalId, schema.goals.id)).where(and(eq(schema.goals.personId, personId), eq(schema.goals.status, "active"), eq(schema.goalQuestions.active, true)));
+      for (const q of ctxGoals) {
+        const r = String(fd.get(`goal_${q.id}`) ?? "");
+        if (r === "yes" || r === "no" || r === "na") { await w.insert(schema.goalResponses, { visitId: v.id, questionId: q.id, response: r, note: null }); worked.add(q.goalId); }
+      }
+      const ownGoals = await tx.select({ id: schema.goals.id }).from(schema.goals).where(and(eq(schema.goals.personId, personId), eq(schema.goals.status, "active")));
+      for (const goal of ownGoals) if (worked.has(goal.id)) await w.insert(schema.goalEntries, { goalId: goal.id, visitId: v.id, body: null, recordedBy: user.id });
+      // The day's medications, recorded as given by the caregiver on the visit.
+      for (const [k, val] of fd.entries()) {
+        const m = /^med_([0-9a-f-]{36})_(\d{2}:\d{2})$/.exec(k);
+        const status = String(val);
+        if (!m || !["given", "refused", "held", "missed"].includes(status)) continue;
+        const [med] = await tx.select().from(schema.medications).where(and(eq(schema.medications.id, m[1]), eq(schema.medications.personId, personId))).limit(1);
+        if (!med) continue;
+        const [existing] = await tx.select().from(schema.medicationAdministrations).where(and(eq(schema.medicationAdministrations.medicationId, med.id), eq(schema.medicationAdministrations.scheduledDate, date), eq(schema.medicationAdministrations.scheduledTime, m[2]))).limit(1);
+        const values = { status: status as "given" | "refused" | "held" | "missed", note: null, givenAt: null, recordedBy: user.id, staffId, visitId: v.id };
+        if (existing) await w.update(schema.medicationAdministrations, existing.id, values);
+        else await w.insert(schema.medicationAdministrations, { medicationId: med.id, personId, scheduledDate: date, scheduledTime: m[2], ...values });
+      }
+      return v;
     });
     id = row.id;
     await mirrorManualVisit(row, user);
   } catch (e) {
-    return { message: e instanceof Error ? e.message : "Could not save the visit." };
+    return { message: e instanceof Error ? e.message : "Could not save the note." };
   }
   revalidatePath("/visits");
-  redirect(`/visits/${id}`);
+  revalidatePath(`/clients/${personId}`);
+  redirect(`/visits?note=${id}`);
 }
 
 type Diff = Record<string, { from: unknown; to: unknown }>;

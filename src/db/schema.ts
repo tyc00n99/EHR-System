@@ -484,6 +484,11 @@ export const visits = pgTable(
     clientSignedAt: timestamp("client_signed_at", { withTimezone: true }),
     /** Why the visit was closed without a client signature, when it was. */
     clientUnsignedReason: text("client_unsigned_reason"),
+    /** What happened, when something did (Sept 29, 2026). Null prints "None reported". */
+    incidentNote: text("incident_note"),
+    /** For a manual note: the address a supervisor chose or typed for each end of the visit, beside the point it resolved to. */
+    clockInAddress: text("clock_in_address"),
+    clockOutAddress: text("clock_out_address"),
 
     status: visitStatus("status").notNull().default("in_progress"),
     evvStatus: evvStatus("evv_status").notNull().default("pending"),
