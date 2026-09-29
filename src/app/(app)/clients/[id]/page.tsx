@@ -26,7 +26,7 @@ import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-statu
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DocumentsTab } from "./documents-tab";
-import { AuthorizationsPanel } from "./authorizations-panel";
+import { AddAuthorizationButton, AuthorizationsPanel } from "./authorizations-panel";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { VisitSheet } from "../../visits/record/visit-sheet";
 
@@ -320,7 +320,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
           extras={{
             careteam: manage ? <Link href={`/staff`} className="text-[13px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
             diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[13px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
-            authorizations: manage ? <Link href={`/clients/${id}/agreements/new`} className="text-[13px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</Link> : null,
+            authorizations: manage ? <AddAuthorizationButton personId={id} defaultCounty={person.county} aiReady={aiReady} /> : null,
             availability: profile.availability.length > 0 ? (
               <div>
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px]">

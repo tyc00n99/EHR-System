@@ -102,3 +102,32 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
     </>
   );
 }
+
+/**
+ * "Add an authorization" from the Profile's Authorizations section: the same new-agreement form the
+ * Overview opens, in a centred window over a blurred page, so adding one never leaves the record
+ * (user, Sept 29, 2026).
+ */
+export function AddAuthorizationButton({ personId, defaultCounty, aiReady }: { personId: string; defaultCounty: string; aiReady: boolean }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="text-[13px] font-medium text-primary hover:underline">Add an authorization, or upload the DHS letter →</button>
+      {open && (
+        <Dialog open onOpenChange={(o) => { if (!o) setOpen(false); }}>
+          <DialogContent showCloseButton={false} overlayClassName="bg-black/20 supports-backdrop-filter:backdrop-blur-sm" className="block max-h-[calc(100vh-3rem)] w-[calc(100%-2rem)] overflow-y-auto p-0 sm:max-w-[880px]">
+            <DialogTitle className="sr-only">New service agreement</DialogTitle>
+            <div className="flex items-center gap-3 border-b border-line px-6 py-4">
+              <div className="text-[19px] font-semibold text-text-strong">New service agreement</div>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.plus size={17} className="rotate-45" /></button>
+            </div>
+            <div className="px-6 py-5">
+              <AgreementForm action={createAgreement.bind(null, personId)} extract={extractAgreement.bind(null, personId)} cancelHref={`/clients/${personId}?tab=profile&section=authorizations`} defaultCounty={defaultCounty} aiReady={aiReady} onSaved={() => { setOpen(false); router.refresh(); }} onCancel={() => setOpen(false)} />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+}
