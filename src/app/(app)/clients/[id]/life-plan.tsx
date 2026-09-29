@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, X } from "lucide-react";
 import { FilterMenu } from "@/components/filter-menu";
 import { useActionState, useEffect, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -331,7 +331,14 @@ function NewGoal({ personId, onDone }: { personId: string; onDone: () => void })
         <div className="sm:col-span-6">
           <span className="mb-1.5 block text-[13px] font-medium">Daily yes/no questions <span className="font-normal text-muted-foreground">(optional — most outcomes need none)</span></span>
           {e.questions && <span className="mb-1 block text-[13px] text-danger">{e.questions}</span>}
-          <div className="space-y-2">{questions.map((q, i) => <Input key={i} name="questions[]" value={q} onChange={(ev) => setQuestions((qs) => qs.map((x, j) => (j === i ? ev.target.value : x)))} placeholder="Did Harold drink at least two glasses of water?" />)}</div>
+          <div className="space-y-2">{questions.map((q, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input name="questions[]" value={q} onChange={(ev) => setQuestions((qs) => qs.map((x, j) => (j === i ? ev.target.value : x)))} placeholder="Did Harold drink at least two glasses of water?" />
+              <button type="button" onClick={() => setQuestions((qs) => qs.filter((_, j) => j !== i))} aria-label={`Remove question ${i + 1}`} title="Remove this question" className="grid size-9 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-danger-soft hover:text-danger">
+                <X size={16} />
+              </button>
+            </div>
+          ))}</div>
           <button type="button" onClick={() => setQuestions((qs) => [...qs, ""])} className="mt-2 text-[13px] font-medium text-primary hover:underline">+ {questions.length ? "Another question" : "Add a question"}</button>
         </div>
       </div>
