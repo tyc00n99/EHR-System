@@ -11,7 +11,7 @@ import { getClientProfile, listProfileHistory } from "@/db/profile-queries";
 import { ActivityLibrary } from "./activity-library";
 import { DEFAULT_ACTIVITIES } from "@/lib/templates";
 import { getOrganization } from "@/db/queries";
-import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listDocumentTypes, listGoalsWithStats, listMedAdmins, listMedications, countNotes } from "@/db/queries";
+import { canViewPerson, getPerson, listAgreementsForPerson, listAssignmentsForPerson, listClientDocuments, listDocumentTypes, listGoalsWithStats, listMedAdmins, listMedications, listStaff, countNotes } from "@/db/queries";
 import { LifePlan } from "./life-plan";
 import { VisitsTable } from "../../visits/visits-table";
 import { buildVisitTable } from "@/lib/visit-table";
@@ -26,6 +26,8 @@ import { AgreementArchiveButton, AgreementStatusButton } from "./agreement-statu
 import { ClientCodePanel } from "./client-code";
 import { CODE_ROTATION_DAYS } from "@/lib/client-code";
 import { DocumentsTab } from "./documents-tab";
+import { CareTeamManager } from "./care-team-manager";
+import { ArchiveDiagnosisButton, ArchivedDiagnoses } from "./diagnosis-archive";
 import { AuthorizationOpener, AuthorizationsPanel, type AuthorizationItem } from "./authorizations-panel";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { VisitSheet } from "../../visits/record/visit-sheet";
@@ -75,7 +77,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
   const vt = tab === "notes" ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
-  const [agreements, documents, team, goals, meds, admins, docTypes] = await Promise.all([
+  const [agreements, documents, team, goals, meds, admins, docTypes, staffList] = await Promise.all([
     listAgreementsForPerson(id),
     listClientDocuments(id),
     listAssignmentsForPerson(id),
@@ -83,6 +85,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
     listMedications(id),
     listMedAdmins(id, `${month}-01` < week ? `${month}-01` : week, monthEnd > weekEnd ? monthEnd : weekEnd),
     listDocumentTypes(),
+    tab === "profile" ? listStaff(true) : Promise.resolve([]),
   ]);
   const liveDocuments = documents.map((d) => d.doc).filter((d) => !d.archivedAt);
   const checklist = buildDocumentChecklist(liveDocuments, docTypes);
@@ -108,10 +111,13 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   // agree about what is still missing.
   const posLabel: Record<string, string> = { home: "Home", community: "Community", day_program: "Day program", residential: "Residential site", school: "School", telehealth: "Telehealth", other: "Other" };
   const hhmm = (t: string) => { const [h, m] = t.split(":").map(Number); const ap = h >= 12 ? "PM" : "AM"; return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${ap}`; };
+  // Archived diagnoses leave the list and the count; they fold beneath it with Restore (Sept 29, 2026).
+  const liveDx = profile.diagnoses.filter((d) => !d.archivedAt);
+  const archivedDx = profile.diagnoses.filter((d) => d.archivedAt);
   const profileSections: Section[] = [
     { key: "contacts", label: "Emergency contacts", count: profile.contacts.length, done: profile.contacts.length > 0, editable: "contacts", addLabel: "Add contact" },
     { key: "careteam", label: "Care team", count: activeTeam.length, done: activeTeam.length > 0 && activeTeam.every((t) => t.assignment.orientedOn), alert: activeTeam.some((t) => !t.assignment.orientedOn) },
-    { key: "diagnoses", label: "Medical information", count: profile.diagnoses.length, done: profile.diagnoses.length > 0, editable: "diagnoses", addLabel: "Add diagnosis" },
+    { key: "diagnoses", label: "Medical information", count: liveDx.length, done: liveDx.length > 0, editable: "diagnoses", addLabel: "Add diagnosis" },
     { key: "casemanager", label: "Referring Agency", count: person.caseManagerName ? 1 : 0, done: Boolean(person.caseManagerName) },
     { key: "funding", label: "Funding sources", count: profile.funding.length, done: profile.funding.length > 0, editable: "funding", addLabel: "Add funding source" },
     { key: "locations", label: "Care locations", count: profile.locations.length, done: profile.locations.length > 0, editable: "locations", addLabel: "Add care location" },
@@ -274,7 +280,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
               ],
               chips: t.assignment.orientedOn ? <Badge tone="ok">Cleared to work</Badge> : <Badge tone="danger">Blocks clock-in</Badge>,
             })),
-            diagnoses: profile.diagnoses.map((d) => ({
+            diagnoses: liveDx.map((d) => ({
               id: d.id,
               raw: { id: d.id, icdCode: d.icdCode, description: d.description, diagnosedOn: d.diagnosedOn, isPrimary: d.isPrimary },
               fields: [
@@ -283,6 +289,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
                 { icon: "calendar", label: "Diagnosed", value: d.diagnosedOn ? <span>{fmtDate(d.diagnosedOn)}</span> : <span className="italic text-hint">Not recorded</span> },
               ],
               chips: d.isPrimary ? <Badge tone="accent">Primary</Badge> : null,
+              actions: manage ? <ArchiveDiagnosisButton personId={id} id={d.id} /> : null,
             })),
             casemanager: person.caseManagerName ? [{
               id: "cm",
@@ -323,8 +330,13 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
             availability: [],
           } satisfies Record<string, Entity[]>}
           extras={{
-            careteam: manage ? <Link href={`/staff`} className="text-[13px] font-medium text-primary hover:underline">Assign a caregiver from the staff record →</Link> : null,
-            diagnoses: meds.filter((m) => m.active).length > 0 ? <Link href={`/clients/${id}?tab=medical`} className="text-[13px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link> : null,
+            careteam: manage && user.abilities.includes("view_team") ? <CareTeamManager personId={id} personName={`${person.preferredName || person.firstName} ${person.lastName}`} team={activeTeam.map((t) => ({ assignmentId: t.assignment.id, staffId: t.staff.id, name: `${t.staff.firstName} ${t.staff.lastName}`, title: t.staff.title, orientedOn: t.assignment.orientedOn }))} candidates={staffList.filter((s) => !activeTeam.some((t) => t.staff.id === s.id)).map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))} /> : null,
+            diagnoses: meds.some((m) => m.active) || archivedDx.length > 0 ? (
+              <div className="grid gap-3">
+                {meds.some((m) => m.active) && <Link href={`/clients/${id}?tab=medical`} className="text-[13px] font-medium text-primary hover:underline">{meds.filter((m) => m.active).length} active medication{meds.filter((m) => m.active).length === 1 ? "" : "s"} on the MAR →</Link>}
+                <ArchivedDiagnoses personId={id} manage={manage} items={archivedDx.map((d) => ({ id: d.id, icdCode: d.icdCode, description: d.description, archivedAt: d.archivedAt! }))} />
+              </div>
+            ) : null,
             authorizations: manage ? <AuthorizationOpener personId={id} defaultCounty={person.county} aiReady={aiReady} className="text-[13px] font-medium">Add an authorization, or upload the DHS letter →</AuthorizationOpener> : null,
             availability: profile.availability.length > 0 ? (
               <div>

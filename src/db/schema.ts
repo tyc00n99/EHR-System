@@ -1003,6 +1003,9 @@ export const clientDiagnoses = pgTable(
     diagnosedOn: date("diagnosed_on"),
     /** The one that justifies the service, printed first wherever diagnoses are listed. */
     isPrimary: boolean("is_primary").notNull().default(false),
+    /** Archived: resolved or no longer relevant. Leaves the list, stays on the record (Sept 29, 2026). */
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    archivedBy: uuid("archived_by").references(() => users.id),
     ...timestamps,
   },
   (t) => [index("client_diagnoses_person_idx").on(t.personId)],

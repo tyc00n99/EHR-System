@@ -137,3 +137,17 @@ export async function saveAvailability(_prev: ActionState, fd: FormData): Promis
   revalidatePath(`/clients/${personId}`);
   return { ok: true, message: windows.length ? "Availability saved." : "Availability cleared." };
 }
+
+/**
+ * Archives or restores a diagnosis (user, Sept 29, 2026). A resolved or outdated diagnosis leaves the
+ * Medical information list but stays on the record, so the history of what the person was treated for
+ * survives; Remove is still there for one entered by mistake.
+ */
+export async function setDiagnosisArchived(personId: string, id: string, archived: boolean): Promise<ActionState> {
+  const user = await authorize(personId);
+  if (!(await ownsProfileRow("diagnoses", id, personId))) return { error: "That diagnosis belongs to a different client." };
+  const db = await getDb();
+  await audited(db, { userId: user.id }).update(schema.clientDiagnoses, id, archived ? { archivedAt: new Date(), archivedBy: user.id, isPrimary: false } : { archivedAt: null, archivedBy: null });
+  revalidatePath(`/clients/${personId}`);
+  return { ok: true, message: archived ? "Diagnosis archived." : "Diagnosis restored." };
+}

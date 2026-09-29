@@ -9,7 +9,7 @@ export const metadata = { title: "New client" };
 export default async function NewClientPage() {
   await requireAbility("manage_people");
   return (
-    <div>
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader eyebrow={<><Crumb href="/clients">Clients</Crumb><CrumbSep /><Crumb>New</Crumb></>} title="New client" />
       <IntakeReader action={createPerson} aiReady={aiConfigured()} />
     </div>

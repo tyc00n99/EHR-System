@@ -2,6 +2,7 @@
 
 import { startTransition, useActionState } from "react";
 import { cx } from "@/components/kit";
+import { Icon } from "@/components/icons";
 import type { Person } from "@/db/schema";
 import type { ActionState } from "@/lib/validation";
 import { readIntakeFile, type IntakeReadState } from "../actions";
@@ -35,20 +36,31 @@ export function IntakeReader({ action, aiReady }: { action: Action; aiReady: boo
       if (v != null && v !== "") (defaults as Record<string, unknown>)[k] = k === "pmi" ? String(v).replace(/\D/g, "") : k === "state" ? String(v).toUpperCase().slice(0, 2) : v;
     }
   }
+  const read = (f: File) => { const fd = new FormData(); fd.append("file", f); startTransition(() => runRead(fd)); };
   const filled = (Object.keys(defaults) as (keyof typeof LABELS)[]).map((k) => LABELS[k]).filter(Boolean);
 
   return (
-    <div className="max-w-4xl">
-      <div className="mb-6 rounded-xl border border-line bg-card-soft p-5">
-        <div className="text-[17px] font-semibold text-text-strong">Start from a referral packet</div>
-        <p className="mt-1 text-[14px] text-muted-foreground">
-          {aiReady ? "Choose the county referral, the CSSP or a prior provider's record — a PDF or a photo — and the form below fills in from it. Review every field before saving; the reader drafts, you confirm." : "Document reading is off. An admin can turn it on by adding ANTHROPIC_API_KEY to the app's environment settings. Type the client in below."}
-        </p>
+    <div>
+      {/* The packet is a drop zone, not the browser's bare "Choose File" control (Sept 29, 2026). */}
+      <label
+        onDragOver={(ev) => { if (aiReady) ev.preventDefault(); }}
+        onDrop={(ev) => { ev.preventDefault(); const f = ev.dataTransfer.files?.[0]; if (f && aiReady && !reading) read(f); }}
+        className={cx("flex items-center gap-4 rounded-xl border-2 border-dashed border-line bg-card-soft px-5 py-4 transition-colors", aiReady && !reading ? "cursor-pointer hover:border-primary hover:bg-primary-soft" : "opacity-70")}
+      >
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-card text-primary shadow-[var(--shadow-sm)]"><Icon.doc size={20} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold text-text-strong">Start from a referral packet</span>
+          <span className="mt-0.5 block text-[13.5px] text-muted-foreground">
+            {aiReady ? "Drop the county referral, CSSP or a prior provider's record here, or click to choose. The form fills in; you check it." : "Document reading is off. An admin can turn it on with ANTHROPIC_API_KEY. Type the client in below."}
+          </span>
+        </span>
+        {aiReady && <span className="hidden shrink-0 rounded-lg border border-line bg-card px-3 py-1.5 text-[13.5px] font-medium text-text-strong sm:block">Choose file</span>}
         <input
-          type="file" accept=".pdf,image/*" aria-label="Referral packet" disabled={!aiReady || reading}
-          onChange={(ev) => { const f = ev.currentTarget.files?.[0]; if (f) { const fd = new FormData(); fd.append("file", f); startTransition(() => runRead(fd)); } }}
-          className="mt-3 block h-10 w-full max-w-md rounded-lg border border-line bg-card px-2 pt-1.5 text-[13px] file:mr-2 file:rounded file:border-0 file:bg-panel file:px-2 file:py-0.5 file:text-[13px] disabled:opacity-60"
+          type="file" accept=".pdf,image/*" aria-label="Referral packet" disabled={!aiReady || reading} className="sr-only"
+          onChange={(ev) => { const f = ev.currentTarget.files?.[0]; if (f) read(f); }}
         />
+      </label>
+      <div className="mb-5">
         {reading && <p className="mt-2 flex items-center gap-2 text-[13.5px] text-primary"><span className="inline-block size-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" /> Reading {rs.fileName ?? "the document"}…</p>}
         {!reading && rs.readId && (
           <div className={cx("mt-3 rounded-lg px-3 py-2.5 text-[13.5px]", r ? "bg-ok-soft text-ok" : "bg-warn-soft text-warn")}>

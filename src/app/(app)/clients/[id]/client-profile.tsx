@@ -32,7 +32,7 @@ export interface Section {
 }
 
 export interface Field { icon?: IconName; label: string; value: ReactNode; /** Render the person's avatar in place of the row icon, as the reference does on Full name. */ avatar?: boolean }
-export interface Entity { id: string; fields: Field[]; chips?: ReactNode; raw?: Record<string, unknown> }
+export interface Entity { id: string; fields: Field[]; chips?: ReactNode; raw?: Record<string, unknown>; /** Extra card controls before Edit (a diagnosis's Archive). */ actions?: ReactNode }
 
 export interface ProfileProps {
   personId: string;
@@ -176,6 +176,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
               {e.chips && <div className="flex shrink-0 flex-wrap gap-1.5">{e.chips}</div>}
               {manage && current?.editable && current.key !== "availability" && e.raw && (
                 <div className="flex shrink-0 gap-1.5">
+                  {e.actions}
                   <button type="button" onClick={() => setDrawer({ section: current.editable!, row: e.raw! })} aria-label="Edit" className="flex size-10 items-center justify-center rounded-lg border border-line text-muted-foreground hover:bg-hover hover:text-text-strong"><Icon.edit size={20} /></button>
                   <DeleteButton personId={personId} section={current.editable} id={e.id} />
                 </div>
