@@ -1,13 +1,14 @@
 import { listVisits } from "@/db/queries";
 import { requireAbility } from "@/lib/auth";
 import { resolveVisitRange } from "@/lib/visit-range";
+import { getPayRules } from "@/db/pay-queries";
 
 const esc = (v: unknown) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 
 export async function GET(req: Request) {
   await requireAbility("review");
   const sp = new URL(req.url).searchParams;
-  const range = resolveVisitRange(sp);
+  const range = resolveVisitRange(sp, await getPayRules());
   // ?ids= narrows the export to the rows ticked in the table.
   const ids = new Set((sp.get("ids") ?? "").split(",").filter((s) => /^[0-9a-f-]{36}$/.test(s)));
   const rows = (await listVisits({ from: range.start, to: range.end, limit: 5000 })).filter((r) => !ids.size || ids.has(r.visit.id));

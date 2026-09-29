@@ -117,6 +117,7 @@ export const staffSchema = z
     hireDate: isoDate,
     title: z.string().min(1, "Required"),
     active: z.coerce.boolean().default(true),
+    overtimeExempt: z.coerce.boolean().default(false),
   })
   .refine((s) => s.npi || s.umpi, { message: "Enter an NPI or a UMPI", path: ["npi"] });
 

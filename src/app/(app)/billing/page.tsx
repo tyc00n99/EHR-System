@@ -4,15 +4,17 @@ import { periodLines } from "@/db/queries";
 import { requireAbility } from "@/lib/auth";
 import { fmtMoney } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
-import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam } from "@/lib/pay-period";
+import { currentPayPeriod, payPeriodFromParam, shiftPayPeriod } from "@/lib/pay-period";
+import { getPayRules } from "@/db/pay-queries";
 
 export const metadata = { title: "Billing" };
 
 export default async function BillingPage({ searchParams }: PageProps<"/billing">) {
   await requireAbility("billing");
   const sp = await searchParams;
-  const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
-  const isCurrent = period.index === currentPayPeriod().index;
+  const rules = await getPayRules();
+  const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined, rules);
+  const isCurrent = period.startDate === currentPayPeriod(rules).startDate;
   const all = await periodLines(period.start, period.end);
   const code = typeof sp.code === "string" ? sp.code : "";
   const codes = [...new Set(all.map((l) => l.serviceCode))].sort();
@@ -28,9 +30,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
     <div>
       <PageHeader title="Billing" meta={<span>Claim lines for the pay period, priced from each agreement. Signed, live-captured visits are ready; the rest are held until the evidence is in.</span>} />
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-sidebar px-3 py-2">
-        <Link href={q(payPeriodByIndex(period.index - 1))} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</Link>
+        <Link href={q(shiftPayPeriod(period, -1, rules))} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</Link>
         <div className="text-[13px] font-medium text-text-strong">{isCurrent ? "Current pay period" : "Pay period"} <span className="font-normal text-muted-foreground">· {period.label}</span></div>
-        <Link href={q(payPeriodByIndex(period.index + 1))} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</Link>
+        <Link href={q(shiftPayPeriod(period, 1, rules))} className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</Link>
         <div className="ml-auto flex gap-5 text-[13px] tabular-nums text-muted-foreground"><span><span className="font-medium text-ok">{fmtMoney(total(ready))}</span> ready</span><span><span className="font-medium text-warn">{fmtMoney(total(hold))}</span> on hold</span><span><span className="font-medium text-text-strong">{fmtMoney(total(lines))}</span> total</span></div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-card px-3 py-2">

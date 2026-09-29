@@ -121,6 +121,33 @@ export const organizations = pgTable("organizations", {
   scheduleEndHour: integer("schedule_end_hour").notNull().default(21),
   /** 0 = Sunday. The weekdays the schedule shows at all. */
   scheduleDays: integer("schedule_days").array().notNull().default([0, 1, 2, 3, 4, 5, 6]),
+  /**
+   * Overtime rules (Sept 29, 2026: "allow an agency to determine the overtime rules"). Hours past
+   * `otWeeklyHours` in a workweek, and past `otDailyHours` in a day when that is set, pay at
+   * `otMultiplier`. The workweek is seven days from `workweekStartDay` (0 = Sunday). Defaults follow
+   * the Minnesota Fair Labor Standards Act (48 hours); the agency sets its own.
+   */
+  otWeeklyHours: numeric("ot_weekly_hours", { precision: 5, scale: 2 }).notNull().default("48"),
+  otDailyHours: numeric("ot_daily_hours", { precision: 5, scale: 2 }),
+  otMultiplier: numeric("ot_multiplier", { precision: 4, scale: 2 }).notNull().default("1.5"),
+  workweekStartDay: integer("workweek_start_day").notNull().default(0),
+  ...timestamps,
+});
+
+export const payFrequency = pgEnum("pay_frequency", ["weekly", "biweekly", "semimonthly", "monthly"]);
+
+/**
+ * The agency's pay schedule, with history (Sept 29, 2026: "pay periods can change anytime"). Each row
+ * rules from `effectiveFrom` until the next row begins; the last period of the old schedule ends the
+ * day before. Weekly and biweekly periods count from `anchorDate`; semimonthly is the 1st–15th and
+ * 16th–end of month; monthly is the calendar month.
+ */
+export const paySchedules = pgTable("pay_schedules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  effectiveFrom: date("effective_from").notNull(),
+  frequency: payFrequency("frequency").notNull(),
+  anchorDate: date("anchor_date").notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
   ...timestamps,
 });
 
@@ -152,6 +179,8 @@ export const staff = pgTable(
     ssnLast4: text("ssn_last4").notNull(),
     /** Hourly pay rate in dollars. Admin only. */
     payRate: numeric("pay_rate", { precision: 8, scale: 2 }).notNull(),
+    /** Exempt from overtime: every hour pays at the regular rate (Sept 29, 2026). */
+    overtimeExempt: boolean("overtime_exempt").notNull().default(false),
     address1: text("address1").notNull(),
     address2: text("address2"),
     city: text("city").notNull(),
@@ -172,6 +201,25 @@ export const staff = pgTable(
     check("staff_ssn_last4", sql`${t.ssnLast4} ~ '^[0-9]{4}$'`),
     index("staff_last_name_idx").on(t.lastName),
   ],
+);
+
+/**
+ * Pay rate history (Sept 29, 2026). A rate rules from `effectiveFrom` until the next one, so a raise in
+ * the middle of a pay period pays the old rate before it and the new rate after. `staff.payRate` stays
+ * the rate in effect today, for the screens that only need that.
+ */
+export const staffPayRates = pgTable(
+  "staff_pay_rates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    staffId: uuid("staff_id").notNull().references(() => staff.id, { onDelete: "cascade" }),
+    rate: numeric("rate", { precision: 8, scale: 2 }).notNull(),
+    effectiveFrom: date("effective_from").notNull(),
+    note: text("note"),
+    createdBy: uuid("created_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("staff_pay_rates_staff_idx").on(t.staffId, t.effectiveFrom)],
 );
 
 // ---------- auth ----------
@@ -1015,6 +1063,8 @@ export const clientDiagnoses = pgTable(
 
 export type Organization = typeof organizations.$inferSelect;
 export type Staff = typeof staff.$inferSelect;
+export type StaffPayRate = typeof staffPayRates.$inferSelect;
+export type PaySchedule = typeof paySchedules.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Person = typeof people.$inferSelect;
 export type Site = typeof sites.$inferSelect;

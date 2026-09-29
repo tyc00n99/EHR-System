@@ -15,6 +15,7 @@ import { ComplianceTab } from "./compliance";
 import { IntegrationTab } from "./integration";
 import { Queue } from "./queue";
 import { SettingsTab } from "./settings";
+import { getPayRules } from "@/db/pay-queries";
 import { VisitDrawer } from "./visit-drawer";
 
 export const metadata = { title: "EVV" };
@@ -68,5 +69,5 @@ export default async function EvvPage({ searchParams }: { searchParams: Promise<
 
   const filter = Object.fromEntries(Object.entries(sp).filter(([k, v]) => k !== "tab" && k !== "visit" && typeof v === "string" && v !== ""));
   const queue = await reviewQueue(ctx, filter);
-  return <>{drawer}<Queue queue={queue} filter={filter as Record<string, string>} names={names} people={people.map((p) => ({ id: p.id, name: fullName(p) }))} staff={staff.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))} /></>;
+  return <>{drawer}<Queue queue={queue} filter={filter as Record<string, string>} names={names} people={people.map((p) => ({ id: p.id, name: fullName(p) }))} staff={staff.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))} payRules={await getPayRules()} /></>;
 }

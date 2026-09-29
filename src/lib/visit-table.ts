@@ -4,7 +4,8 @@ import type { VisitFilters, VisitRow } from "@/app/(app)/visits/visits-table";
 import type { PillOption } from "@/components/filter-pill";
 import { fmtDate, fmtDateTime, isoDay } from "./format";
 import { labelForCode } from "./hcpcs";
-import { currentPayPeriod, payPeriodByIndex } from "./pay-period";
+import { currentPayPeriod, shiftPayPeriod } from "./pay-period";
+import { getPayRules } from "@/db/pay-queries";
 import { minutesBetween } from "./units";
 import { rangeParamFor, resolveVisitRange, type VisitRange } from "./visit-range";
 
@@ -21,7 +22,8 @@ const list = (sp: Params, k: string) => (typeof sp[k] === "string" ? String(sp[k
  */
 export async function buildVisitTable({ sp, personId, staffId, defaultParam }: { sp: Params; personId?: string; staffId?: string; defaultParam?: string }) {
   const hasRange = ["period", "week", "month", "from"].some((k) => typeof sp[k] === "string");
-  const range: VisitRange = resolveVisitRange(hasRange || !defaultParam ? sp : Object.fromEntries(new URLSearchParams(defaultParam)));
+  const rules = await getPayRules();
+  const range: VisitRange = resolveVisitRange(hasRange || !defaultParam ? sp : Object.fromEntries(new URLSearchParams(defaultParam)), rules);
   const fClient = personId ? [] : list(sp, "client"), fStaff = staffId ? [] : list(sp, "staff"), fService = list(sp, "service");
   const state = typeof sp.state === "string" && ["unsigned", "returned", "manual", "open"].includes(sp.state) ? sp.state : "";
   const inRange = await listVisits({ personId, staffId, from: range.start, to: range.end, limit: 1000 });
@@ -44,7 +46,7 @@ export async function buildVisitTable({ sp, personId, staffId, defaultParam }: {
     staff: staffId ? [] : count("staff", (r) => ({ k: r.visit.staffId, label: `${r.staffFirst} ${r.staffLast}` })),
     services: count("service", (r) => ({ k: serviceKey(r.visit), label: labelForCode(r.visit.serviceCode, r.visit.modifiers), hint: serviceKey(r.visit) })),
   };
-  const cur = currentPayPeriod(), last = payPeriodByIndex(cur.index - 1);
+  const cur = currentPayPeriod(rules), last = shiftPayPeriod(cur, -1, rules);
   const today = isoDay(0);
   const at = (day: string) => ({ ...range, from: day, to: day });
   const lastMonthDay = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1, 0)).toISOString().slice(0, 10);
@@ -55,8 +57,8 @@ export async function buildVisitTable({ sp, personId, staffId, defaultParam }: {
   const presets = [
     { label: "This pay period", hint: cur.label, param: `period=${cur.startDate}` },
     { label: "Last pay period", hint: last.label, param: `period=${last.startDate}` },
-    { label: "This month", hint: span(resolveVisitRange({ month: today.slice(0, 7) })), param: rangeParamFor("month", at(today)) },
-    { label: "Last month", hint: span(resolveVisitRange({ month: lastMonthDay.slice(0, 7) })), param: rangeParamFor("month", at(lastMonthDay)) },
+    { label: "This month", hint: span(resolveVisitRange({ month: today.slice(0, 7) }, rules)), param: rangeParamFor("month", at(today)) },
+    { label: "Last month", hint: span(resolveVisitRange({ month: lastMonthDay.slice(0, 7) }, rules)), param: rangeParamFor("month", at(lastMonthDay)) },
   ];
   const rows: VisitRow[] = all.map(({ visit: v, personFirst, personLast, staffFirst, staffLast, editCount }) => ({
     id: v.id, clockIn: fmtDateTime(v.clockInAt), day: fmtDate(v.clockInAt), time: `${fmtTime(v.clockInAt)}${v.clockOutAt ? ` – ${fmtTime(v.clockOutAt)}` : ""}`, clockInIso: v.clockInAt.toISOString(),

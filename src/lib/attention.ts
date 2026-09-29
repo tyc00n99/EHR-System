@@ -3,6 +3,7 @@ import { cache } from "react";
 import { countOpenVisits, listAgreementsWithUsage, listAllCredentials, listPeople, listShifts, listStaff, listVisits, listAssignmentsForStaff } from "@/db/queries";
 import { complianceSummary, evaluateCompliance } from "./credentials";
 import { currentPayPeriod } from "./pay-period";
+import { getPayRules } from "@/db/pay-queries";
 
 export interface AttentionItem {
   kind: "unsigned" | "returned" | "manual" | "compliance" | "code" | "code_rotated" | "authorization" | "orientation" | "open" | "missed_shift";
@@ -16,7 +17,7 @@ export interface AttentionItem {
 
 /** Everything an office user should act on, across the whole business. */
 export const attentionItems = cache(async function attentionItems(): Promise<AttentionItem[]> {
-  const period = currentPayPeriod();
+  const period = currentPayPeriod(await getPayRules());
   const today = new Date().toISOString().slice(0, 10);
   const in60 = new Date(Date.now() + 60 * 86_400_000).toISOString().slice(0, 10);
   const [visits, people, staffRows, creds, agreements, open, recentShifts] = await Promise.all([

@@ -6,7 +6,8 @@ import { requireAbility } from "@/lib/auth";
 import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fmtMoney } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
-import { currentPayPeriod, payPeriodByIndex, payPeriodFromParam, type PayPeriod } from "@/lib/pay-period";
+import { currentPayPeriod, payPeriodFromParam, recentPayPeriods, shiftPayPeriod, type PayPeriod } from "@/lib/pay-period";
+import { getPayRules } from "@/db/pay-queries";
 
 export const metadata = { title: "Agency performance" };
 
@@ -37,11 +38,12 @@ function Delta({ now, prev, money }: { now: number; prev: number; money?: boolea
 export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
   await requireAbility("billing");
   const sp = await searchParams;
-  const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined);
-  const prev = payPeriodByIndex(period.index - 1);
-  const isCurrent = period.index === currentPayPeriod().index;
+  const rules = await getPayRules();
+  const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined, rules);
+  const prev = shiftPayPeriod(period, -1, rules);
+  const isCurrent = period.startDate === currentPayPeriod(rules).startDate;
   const notStarted = period.start > new Date();
-  const trendPeriods: PayPeriod[] = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(period.index - 5 + i));
+  const trendPeriods: PayPeriod[] = recentPayPeriods(6, rules, period);
 
   const [lines, prevLines, trend, agreements, people, staffRows, creds, open] = await Promise.all([
     periodLines(period.start, period.end),
@@ -83,7 +85,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-sidebar px-3 py-2">
         <Link href={q(prev)} aria-label="Previous pay period" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">‹</Link>
         <div className="text-[13px] font-medium text-text-strong">{isCurrent ? "Current pay period" : "Pay period"} <span className="font-normal text-muted-foreground">· {period.label}</span></div>
-        <Link href={q(payPeriodByIndex(period.index + 1))} aria-label="Next pay period" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</Link>
+        <Link href={q(shiftPayPeriod(period, 1, rules))} aria-label="Next pay period" className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-hover">›</Link>
         {!isCurrent && <Link href="/owner" className="text-[13px] text-primary hover:underline">Jump to current</Link>}
         {open.length > 0 && <span className="ml-auto text-[13px] text-muted-foreground"><span className="font-medium text-primary">{open.length}</span> visit{open.length === 1 ? "" : "s"} in progress right now</span>}
       </div>
@@ -104,7 +106,7 @@ export default async function OwnerPage({ searchParams }: PageProps<"/owner">) {
 
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_1fr]">
         <Card title="What you bill against what you pay" description="Billable revenue and caregiver gross pay, last six pay periods. Hover for the numbers." padded>
-          <TrendChart points={trend.filter(({ p }) => p.start <= new Date()).map(({ p, s }) => ({ label: p.label.split(" – ")[0], revenue: s.revenue, labor: s.labor, current: p.index === period.index }))} />
+          <TrendChart points={trend.filter(({ p }) => p.start <= new Date()).map(({ p, s }) => ({ label: p.label.split(" – ")[0], revenue: s.revenue, labor: s.labor, current: p.startDate === period.startDate }))} />
         </Card>
 
         <Card title="Census" description="Who you serve and how much authorized work is on the books">

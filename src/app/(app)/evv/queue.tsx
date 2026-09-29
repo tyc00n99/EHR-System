@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/kit";
 import { COMPLIANCE, SUBMISSION } from "@/evv/labels";
 import { labelForCode } from "@/lib/hcpcs";
-import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
+import { currentPayPeriod, shiftPayPeriod, type PayRule } from "@/lib/pay-period";
 import { isoDay } from "@/lib/format";
 import { QueueTable, type QueueRow } from "./queue-table";
 import type { reviewQueue } from "@/evv/review";
@@ -12,7 +12,7 @@ type Names = { person: Record<string, string>; staff: Record<string, string> };
 
 const fmtTime = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/Chicago" }).format(d) : "—");
 
-export function Queue({ queue, filter, names, people, staff }: { queue: QueueData; filter: Record<string, string>; names: Names; people: { id: string; name: string }[]; staff: { id: string; name: string }[] }) {
+export function Queue({ queue, filter, names, people, staff, payRules }: { queue: QueueData; filter: Record<string, string>; names: Names; people: { id: string; name: string }[]; staff: { id: string; name: string }[]; payRules: PayRule[] }) {
   const rows: QueueRow[] = queue.items.map((v) => {
     const open = v.exceptions.filter((e) => e.status === "open");
     return {
@@ -29,7 +29,7 @@ export function Queue({ queue, filter, names, people, staff }: { queue: QueueDat
     staff: staff.map((p) => ({ value: p.id, label: p.name })),
     submission: Object.entries(SUBMISSION).map(([k, v]) => ({ value: k, label: v.label })),
   };
-  const cur = currentPayPeriod(), last = payPeriodByIndex(cur.index - 1);
+  const cur = currentPayPeriod(payRules), last = shiftPayPeriod(cur, -1, payRules);
   const presets = [
     { label: `Current pay period · ${cur.label}`, param: `from=${cur.startDate}&to=${cur.endDate}` },
     { label: `Last pay period · ${last.label}`, param: `from=${last.startDate}&to=${last.endDate}` },

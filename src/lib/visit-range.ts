@@ -4,7 +4,7 @@
  * name any two dates. Everything is a Chicago calendar range resolved to exact instants.
  */
 import { fromLocalInput } from "./format";
-import { chicagoDate, currentPayPeriod, payPeriodByIndex, payPeriodFromParam } from "./pay-period";
+import { DEFAULT_PAY_RULES, chicagoDate, currentPayPeriod, payPeriodFromParam, shiftPayPeriod, type PayRule } from "./pay-period";
 
 export type RangeKind = "period" | "week" | "month" | "custom";
 
@@ -48,7 +48,7 @@ const monthEnd = (ym: string) => new Date(Date.UTC(Number(ym.slice(0, 4)), Numbe
 type Params = Record<string, string | string[] | undefined> | URLSearchParams;
 const read = (sp: Params, k: string): string | undefined => { const v = sp instanceof URLSearchParams ? sp.get(k) ?? undefined : sp[k]; return typeof v === "string" ? v : undefined; };
 
-export function resolveVisitRange(sp: Params, today = chicagoDate(new Date())): VisitRange {
+export function resolveVisitRange(sp: Params, rules: PayRule[] = DEFAULT_PAY_RULES, today = chicagoDate(new Date())): VisitRange {
   const from = read(sp, "from"), to = read(sp, "to"), month = read(sp, "month"), week = read(sp, "week");
   if (from && to && ISO.test(from) && ISO.test(to) && from <= to) {
     return { kind: "custom", from, to, start: dayStart(from), end: dayEnd(to), label: spanLabel(from, to), param: `from=${from}&to=${to}`, current: `from=${from}&to=${to}`, isCurrent: from <= today && today <= to, slug: `${from}_${to}` };
@@ -61,9 +61,9 @@ export function resolveVisitRange(sp: Params, today = chicagoDate(new Date())): 
     const f = weekStart(week), t = addDays(f, 6);
     return { kind: "week", from: f, to: t, start: dayStart(f), end: dayEnd(t), label: spanLabel(f, t), param: `week=${f}`, prev: `week=${addDays(f, -7)}`, next: `week=${addDays(f, 7)}`, current: `week=${weekStart(today)}`, isCurrent: f === weekStart(today), slug: `week-${f}` };
   }
-  const p = payPeriodFromParam(read(sp, "period"));
-  const cur = currentPayPeriod();
-  return { kind: "period", from: p.startDate, to: p.endDate, start: p.start, end: p.end, label: p.label, param: `period=${p.startDate}`, prev: `period=${payPeriodByIndex(p.index - 1).startDate}`, next: `period=${payPeriodByIndex(p.index + 1).startDate}`, current: `period=${cur.startDate}`, isCurrent: p.index === cur.index, slug: p.startDate };
+  const p = payPeriodFromParam(read(sp, "period"), rules);
+  const cur = currentPayPeriod(rules);
+  return { kind: "period", from: p.startDate, to: p.endDate, start: p.start, end: p.end, label: p.label, param: `period=${p.startDate}`, prev: `period=${shiftPayPeriod(p, -1, rules).startDate}`, next: `period=${shiftPayPeriod(p, 1, rules).startDate}`, current: `period=${cur.startDate}`, isCurrent: p.startDate === cur.startDate, slug: p.startDate };
 }
 
 /** The parameter that switches to another kind while staying near the same dates. */

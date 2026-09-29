@@ -12,10 +12,12 @@ import { availabilityScheduleSchema, credentialSchema, fieldErrors, formToObject
 import { textLayerFrom } from "@/lib/document-text";
 import { categoryForCredential } from "@/lib/staff-documents";
 import { storeStaffFile } from "./document-actions";
+import { chicagoDate } from "@/lib/pay-period";
 
 function normalize(fd: FormData) {
   const o = formToObject(fd);
   o.active = fd.get("active") === "on" || fd.get("active") === "true";
+  o.overtimeExempt = fd.get("overtimeExempt") === "on" || fd.get("overtimeExempt") === "true";
   if (typeof o.umpi === "string") o.umpi = o.umpi.toUpperCase();
   return o;
 }
@@ -31,7 +33,10 @@ export async function createStaff(_prev: ActionState, fd: FormData): Promise<Act
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   if (!parsed.data.ssn) return { errors: { ssn: "Required" } };
   const db = await getDb();
-  const row = await audited(db, { userId: user.id }).insert(schema.staff, withSsn(parsed.data) as typeof schema.staff.$inferInsert);
+  const w = audited(db, { userId: user.id });
+  const row = await w.insert(schema.staff, withSsn(parsed.data) as typeof schema.staff.$inferInsert);
+  // The starting rate opens the pay history, effective from the hire date.
+  await w.insert(schema.staffPayRates, { staffId: row.id, rate: parsed.data.payRate.toFixed(2), effectiveFrom: parsed.data.hireDate, note: "Starting rate", createdBy: user.id });
   revalidatePath("/staff");
   redirect(`/staff/${row.id}`);
 }
@@ -42,7 +47,13 @@ export async function updateStaff(id: string, _prev: ActionState, fd: FormData):
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
   const db = await getDb();
   const values = Object.fromEntries(Object.keys(staffSchema.shape).filter((k) => k !== "ssn" && k !== "payRate").map((k) => [k, (parsed.data as Record<string, unknown>)[k] ?? null]));
-  await audited(db, { userId: user.id }).update(schema.staff, id, { ...values, ...withSsn(parsed.data) });
+  const [before] = await db.select({ payRate: schema.staff.payRate }).from(schema.staff).where(eq(schema.staff.id, id)).limit(1);
+  const w = audited(db, { userId: user.id });
+  await w.update(schema.staff, id, { ...values, ...withSsn(parsed.data) });
+  // A rate changed on this form takes effect today; the Pay tab is where a change is back-dated or scheduled.
+  if (before && Number(before.payRate) !== parsed.data.payRate) {
+    await w.insert(schema.staffPayRates, { staffId: id, rate: parsed.data.payRate.toFixed(2), effectiveFrom: chicagoDate(new Date()), note: "Changed on the staff record", createdBy: user.id });
+  }
   revalidatePath("/staff");
   revalidatePath(`/staff/${id}`);
   redirect(`/staff/${id}`);

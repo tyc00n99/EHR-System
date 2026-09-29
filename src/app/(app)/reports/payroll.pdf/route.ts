@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { getOrganization, periodLines } from "@/db/queries";
 import { requireAbility } from "@/lib/auth";
 import { payPeriodFromParam } from "@/lib/pay-period";
+import { getPayRules } from "@/db/pay-queries";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { ReportPdf } from "../report-pdf";
 
@@ -10,7 +11,7 @@ const money = (n: number) => n.toLocaleString("en-US", { style: "currency", curr
 /** Payroll hours by caregiver for one pay period. Pay rates are admin-only, so supervisors get hours and units without cost columns. */
 export async function GET(req: Request) {
   const user = await requireAbility("review");
-  const period = payPeriodFromParam(new URL(req.url).searchParams.get("period") ?? undefined);
+  const period = payPeriodFromParam(new URL(req.url).searchParams.get("period"), await getPayRules());
   const [lines, org] = await Promise.all([periodLines(period.start, period.end), getOrganization()]);
   const by = Object.values(lines.reduce<Record<string, { name: string; visits: number; minutes: number; units: number; rate: number; unsigned: number }>>((acc, l) => {
     const r = (acc[l.staffId] ??= { name: l.staffName, visits: 0, minutes: 0, units: 0, rate: l.payRate, unsigned: 0 });

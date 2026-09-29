@@ -2,6 +2,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { getOrganization, listVisits } from "@/db/queries";
 import { requireAbility } from "@/lib/auth";
 import { resolveVisitRange } from "@/lib/visit-range";
+import { getPayRules } from "@/db/pay-queries";
 import { registerPdfFonts } from "@/lib/pdf-fonts";
 import { minutesBetween } from "@/lib/units";
 import { ReportPdf } from "../report-pdf";
@@ -20,7 +21,7 @@ const standing = (v: { returnedAt: Date | null; status: string; clientSignedAt: 
 export async function GET(req: Request) {
   await requireAbility("review");
   const sp = new URL(req.url).searchParams;
-  const range = resolveVisitRange(sp);
+  const range = resolveVisitRange(sp, await getPayRules());
   const ids = new Set((sp.get("ids") ?? "").split(",").filter((s) => /^[0-9a-f-]{36}$/.test(s)));
   const [rows, org] = await Promise.all([listVisits({ from: range.start, to: range.end, limit: 5000 }), getOrganization()]);
   const picked = (ids.size ? rows.filter((r) => ids.has(r.visit.id)) : rows).slice().sort((a, b) => a.visit.clockInAt.getTime() - b.visit.clockInAt.getTime());

@@ -11,6 +11,7 @@ import { requireUser } from "@/lib/auth";
 import { evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fullName } from "@/lib/format";
 import { currentPayPeriod } from "@/lib/pay-period";
+import { getPayRules } from "@/db/pay-queries";
 import { VisitSheet } from "./visits/record/visit-sheet";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 
@@ -52,7 +53,7 @@ async function EvvMine({ staffId }: { staffId: string }) {
 }
 
 async function CaregiverHome({ staffId, name }: { staffId: string; name: string | null }) {
-  const period = currentPayPeriod();
+  const period = currentPayPeriod(await getPayRules());
   const dayStart = startOfToday();
   const [open, assignments, totals, visits, staff, credentials, todayShifts] = await Promise.all([
     getOpenVisitForStaff(staffId),

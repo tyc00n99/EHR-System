@@ -20,6 +20,7 @@ import { AboutSection } from "./about";
 import { VisitsTable } from "../../visits/visits-table";
 import { buildVisitTable } from "@/lib/visit-table";
 import { Plain, Rows } from "./plain";
+import { PayTab } from "./pay-tab";
 
 
 export default async function StaffPage({ params, searchParams }: PageProps<"/staff/[id]">) {
@@ -27,7 +28,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
   const { id } = await params;
   const sp = await searchParams;
   // A tab that no longer exists (the old Clients tab, bookmarked) lands on Overview, not on nothing.
-  const KNOWN_TABS = ["overview", "compliance", "visits", "login"];
+  const KNOWN_TABS = ["overview", "compliance", "visits", "pay", "login"];
   const tab = typeof sp.tab === "string" && KNOWN_TABS.includes(sp.tab) ? sp.tab : "overview";
   const clientFilter = typeof sp.client === "string" ? sp.client : "";
   const codeFilter = typeof sp.code === "string" ? sp.code : "";
@@ -56,6 +57,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
     { key: "overview", label: "Overview" },
     { key: "compliance", label: "Compliance", count: summary.overdue + summary.dueSoon || undefined },
     { key: "visits", label: "Notes", count: visits.length },
+    ...(user.abilities.includes("view_pay") ? [{ key: "pay", label: "Pay" }] : []),
     ...(user.abilities.includes("manage_staff") ? [{ key: "login", label: "Login" }] : []),
   ];
 
@@ -106,6 +108,10 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
         <div>
           <VisitsTable search={false} rows={vt.rows} filters={vt.filters} options={vt.options} presets={vt.presets} base={{ path: `/staff/${id}`, keep: { tab: "visits" } }} exportCsv={user.abilities.includes("edit_visits") ? `/reports/visits.csv?${vt.range.param}&staff=${id}` : undefined} exportPdf={user.abilities.includes("edit_visits") ? `/reports/visits.pdf?${vt.range.param}&staff=${id}` : undefined} />
         </div>
+      )}
+
+      {tab === "pay" && user.abilities.includes("view_pay") && (
+        <PayTab staff={s} sp={sp} canEditPay={user.abilities.includes("manage_staff")} canEditSchedule={user.abilities.includes("settings")} />
       )}
 
       {tab === "login" && user.abilities.includes("manage_staff") && (

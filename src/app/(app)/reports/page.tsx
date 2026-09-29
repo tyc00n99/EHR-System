@@ -3,7 +3,8 @@ import { Card, PageHeader } from "@/components/kit";
 import { listAgreementsWithUsage, listPeople } from "@/db/queries";
 import { requireAbility } from "@/lib/auth";
 import { labelForCode } from "@/lib/hcpcs";
-import { currentPayPeriod, payPeriodByIndex } from "@/lib/pay-period";
+import { recentPayPeriods } from "@/lib/pay-period";
+import { getPayRules } from "@/db/pay-queries";
 import { Icon } from "@/components/icons";
 import { DownloadButton } from "@/components/download-button";
 import { NotesReport, type NotesReportClient } from "./notes-report";
@@ -19,7 +20,7 @@ function defaultNoteRange() {
 
 export default async function ReportsPage() {
   await requireAbility("review");
-  const periods = Array.from({ length: 6 }, (_, i) => payPeriodByIndex(currentPayPeriod().index - i));
+  const periods = recentPayPeriods(6, await getPayRules()).reverse();
   const [people, agreements] = await Promise.all([listPeople(), listAgreementsWithUsage()]);
   const clients: NotesReportClient[] = people.filter((p) => p.status !== "discharged" || agreements.some((a) => a.agreement.personId === p.id)).map((p) => {
     const codes = new Map<string, string>();
@@ -41,7 +42,7 @@ export default async function ReportsPage() {
           <Card key={r.key} title={r.title} description={r.desc}>
             <ul className="divide-y divide-line-soft">
               {periods.map((p, i) => (
-                <li key={p.index} className="flex items-center justify-between gap-3 px-5 py-2.5">
+                <li key={p.startDate} className="flex items-center justify-between gap-3 px-5 py-2.5">
                   <span className="text-[13px]">{i === 0 ? "Current period" : "Pay period"} <span className="text-muted-foreground">· {p.label}</span></span>
                   <span className="flex items-center gap-1">
                     <DownloadButton href={`/reports/${r.file}.pdf?period=${p.startDate}`} icon="doc" className="h-7 px-2.5 text-[13px]">PDF</DownloadButton>

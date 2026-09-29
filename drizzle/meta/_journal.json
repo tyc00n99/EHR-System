@@ -232,6 +232,13 @@
       "when": 1790707152764,
       "tag": "0032_diagnosis_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790709817540,
+      "tag": "0033_pay_rules",
+      "breakpoints": true
     }
   ]
 }
