@@ -315,7 +315,7 @@ function ProfileDrawer({ personId, section, row, onDone }: { personId: string; s
 
   return (
     <Sheet open onOpenChange={(o) => { if (!o) onDone(); }}>
-      <SheetContent side="right" className="w-full overflow-y-auto p-0 sm:max-w-[380px]">
+      <SheetContent side="right" showCloseButton={false} className="w-full overflow-y-auto p-0 data-[side=right]:sm:max-w-[640px]">
         <SheetTitle className="sr-only">{editing ? `Edit ${spec.title}` : `Add ${spec.title}`}</SheetTitle>
         <form action={submit} className="flex min-h-full flex-col">
           <div className="flex items-center gap-3 border-b border-line px-5 py-3.5">
@@ -345,7 +345,7 @@ function ProfileDrawer({ personId, section, row, onDone }: { personId: string; s
                         {(f.options ?? []).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                       </Select>
                     ) : f.type === "textarea" ? (
-                      <textarea id={`f-${f.name}`} name={f.name} rows={3} defaultValue={value(f.name)} placeholder={f.placeholder} className="w-full rounded-md border border-line bg-card px-2 py-1.5 text-[13px] text-text placeholder:text-hint" />
+                      <textarea id={`f-${f.name}`} name={f.name} rows={4} defaultValue={value(f.name)} placeholder={f.placeholder} className="w-full [field-sizing:content] min-h-24 rounded-md border border-line bg-card px-2 py-1.5 text-[13px] text-text placeholder:text-hint" />
                     ) : (
                       <input id={`f-${f.name}`} name={f.name} type={f.type ?? "text"} defaultValue={value(f.name)} placeholder={f.placeholder} className="h-8 w-full rounded-md border border-line bg-card px-2 text-[13px] text-text placeholder:text-hint" />
                     )}
