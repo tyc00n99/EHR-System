@@ -6,7 +6,7 @@ import { fmtMoney, fromLocalInput } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { HOLD_DETAIL, HOLD_LABEL, computePay, workweekStart, type PaySummary } from "@/lib/pay";
 import { addDays, chicagoDate, currentPayPeriod, payPeriodFromParam, periodFromDates, shiftPayPeriod } from "@/lib/pay-period";
-import { ExemptSwitch, PayRangePicker, RateHistory } from "./pay-controls";
+import { ExemptSwitch, NoteLink, PayNotesWarmup, PayRangePicker, RateHistory } from "./pay-controls";
 
 /**
  * The Pay tab (Sept 29, 2026, the user's pick "3" of three mockups): what this person has earned in a
@@ -62,6 +62,8 @@ export async function PayTab({ staff, sp, canEditPay }: { staff: Staff; sp: Para
 
   return (
     <div className="grid gap-5">
+      {/* The notes on this tab, in date order: the viewer's ‹ › step through them, and their PDFs are fetched while idle. */}
+      <PayNotesWarmup notes={summary.lines.filter((l) => !l.note.open).map((l) => ({ id: l.note.id, day: fmtDay(l.date), time: timeFmt.format(l.note.clockInAt), staff: `${staff.firstName} ${staff.lastName}`, client: l.note.clientName, unsigned: l.held.some((h) => h === "client_unsigned" || h === "client_reason") }))} />
       <div className="flex flex-wrap items-center gap-3">
         <PayRangePicker base={base} label={period.label} prev={prevParam} next={nextParam} presets={presets} current={{ from: period.startDate, to: period.endDate, param: custom ? `from=${custom.from}&to=${custom.to}` : q(period) }} />
         <span className="text-[13.5px] text-muted-foreground">{status}</span>
@@ -108,7 +110,7 @@ export async function PayTab({ staff, sp, canEditPay }: { staff: Staff; sp: Para
                   <td className="px-3 py-2.5"><span className="flex flex-wrap gap-1.5">{l.held.map((h) => <span key={h} title={h === "client_reason" && l.note.clientReason ? `Reason recorded: ${l.note.clientReason}` : HOLD_DETAIL[h]} className={`rounded-md px-2 py-0.5 text-[12.5px] font-medium ${h === "open" ? "bg-danger-soft text-danger" : "bg-warn-soft text-warn"}`}>{HOLD_LABEL[h]}</span>)}</span></td>
                   <td className="px-3 py-2.5 text-right tabular-nums">{l.hours == null ? "—" : hrs(l.hours)}</td>
                   <td className="px-3 py-2.5 text-right tabular-nums">{l.pay == null ? "—" : fmtMoney(l.pay)}</td>
-                  <td className="whitespace-nowrap px-5 py-2.5 text-right"><Link href={l.held.includes("open") ? `${noteHref(l.note.id).replace("&note=", "&visit=")}` : noteHref(l.note.id)} className="font-medium text-primary hover:underline">{l.held.includes("open") ? "Fix times →" : "Open note →"}</Link></td>
+                  <td className="whitespace-nowrap px-5 py-2.5 text-right">{l.held.includes("open") ? <Link href={noteHref(l.note.id).replace("&note=", "&visit=")} className="font-medium text-primary hover:underline">Fix times →</Link> : <NoteLink id={l.note.id} className="font-medium text-primary hover:underline">Open note →</NoteLink>}</td>
                 </tr>
               ))}
             </tbody>
@@ -125,7 +127,7 @@ export async function PayTab({ staff, sp, canEditPay }: { staff: Staff; sp: Para
             <tbody>
               {summary.lines.map((l) => (
                 <tr key={l.note.id} className="border-t border-line-soft">
-                  <td className="whitespace-nowrap px-5 py-2"><Link href={noteHref(l.note.id)} className="hover:underline">{fmtDay(l.date)}</Link></td>
+                  <td className="whitespace-nowrap px-5 py-2"><NoteLink id={l.note.id} className="hover:underline">{fmtDay(l.date)}</NoteLink></td>
                   <td className="px-3 py-2">{l.note.clientName}</td>
                   <td className="px-3 py-2">{labelForCode(l.note.serviceCode, l.note.modifiers)}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{timeFmt.format(l.note.clockInAt)} – {l.note.clockOutAt ? timeFmt.format(l.note.clockOutAt) : "…"}</td>

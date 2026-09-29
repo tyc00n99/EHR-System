@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button, Field, FormError, Input } from "@/components/kit";
@@ -11,6 +11,9 @@ import { DateRangePill, type DatePreset } from "@/components/filter-pill";
 import { fmtDate, fmtMoney } from "@/lib/format";
 import { addPayRate, deletePayRate, setOvertimeExempt } from "../pay-actions";
 import type { ActionState } from "@/lib/validation";
+import { prefetchNoteBytes } from "@/components/note-bytes";
+import { setNoteStrip, type StripNote } from "@/components/note-strip";
+import { useWarmNotes } from "../../scheduling/schedule-grid";
 
 const BLUR = "bg-black/20 supports-backdrop-filter:backdrop-blur-sm";
 
@@ -105,4 +108,38 @@ export function RateHistory({ staffId, rates, canEdit, today }: { staffId: strin
       )}
     </div>
   );
+}
+
+/**
+ * Opens the printed note over the Pay tab without a server round trip (Sept 29, 2026, user: "very slow"):
+ * `?note=` is pushed with `history.pushState`, which `NotePreview` in the shell picks up, instead of a
+ * link that re-rendered the whole tab first. Hover fetches the PDF bytes so the preview has them.
+ */
+export function NoteLink({ id, className, children }: { id: string; className?: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onMouseEnter={() => prefetchNoteBytes(id)}
+      onFocus={() => prefetchNoteBytes(id)}
+      onClick={() => { const u = new URL(window.location.href); u.searchParams.set("note", id); window.history.pushState(null, "", u.toString()); }}
+      className={className}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Publishes the tab's notes to the viewer's filmstrip (so ‹ › step through them) and fetches their PDFs
+ * once the page is idle, a few at a time, so opening any of them is instant.
+ */
+export function PayNotesWarmup({ notes }: { notes: StripNote[] }) {
+  useWarmNotes(notes.map((n) => ({ status: "completed", visitId: n.id })));
+  const key = notes.map((n) => n.id).join(",");
+  useEffect(() => {
+    setNoteStrip(notes);
+    return () => setNoteStrip([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ids are the identity; the array is rebuilt every render
+  }, [key]);
+  return null;
 }
