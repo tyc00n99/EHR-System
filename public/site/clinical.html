@@ -18,6 +18,37 @@
   </div>
 </nav>
 
+<section class="demo" id="watch">
+  <div class="wrap">
+    <div class="section-head rv"><span class="kicker">Clinical · Watch it work</span><h2>The service record, doing its job.</h2><p class="lead">This is the note a caregiver writes during the visit — clock-in, narrative, outcomes, medications, and the client's own signature. Watch it happen.</p></div>
+    <div class="dframe rv"><div class="dfit" id="demo-fit">
+      <div class="dwin" id="demo-win">
+        <div class="dban"><span class="dav">KN</span><div><b>Kevin Nguyen</b><small>Individualized home supports · S5135</small></div><span class="dchip" id="d-status">DRAFT</span></div>
+        <div class="dcols">
+          <div class="dleft">
+            <div class="dlab">Clock-in</div>
+            <button class="dclock" id="d-clock">Clock in</button>
+            <div class="dgps" id="d-gps">Clocked in 8:02 AM · GPS matched the address on file</div>
+            <div class="dlab">Service narrative</div>
+            <div class="dnarr" id="d-narr"><span id="d-text"></span><span class="dcaret" id="d-caret"></span><span class="dph" id="d-ph">What happened during the visit…</span></div>
+            <div class="dlab">Outcomes this visit addressed</div>
+            <label class="dout" id="d-out1"><span class="dbox"></span>Ate a full breakfast</label>
+            <label class="dout" id="d-out2"><span class="dbox"></span>Walked the block</label>
+          </div>
+          <div class="dright">
+            <div class="dlab">Medications due</div>
+            <div class="dmed"><span>Lisinopril 10 mg · 8:00</span><i class="dg" id="d-g">G</i></div>
+            <div class="dlab">Client signature</div>
+            <div class="dsig" id="d-sig"><span class="ddots" id="d-dots"></span><span class="dname" id="d-name">Kevin Nguyen</span><small id="d-sighint">Kevin enters his own code</small></div>
+            <div class="ddone" id="d-done">Note complete. Nothing to type up later.</div>
+          </div>
+        </div>
+        <div class="dcursor" id="d-cursor"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9 19z" fill="#1b1818" stroke="#fff" stroke-width="1.6"/></svg></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
 <section class="handled" id="clinical">
   <div class="wrap">
     <div class="section-head rv"><span class="kicker">Clinical</span><h2>The clinical record, written during the visit.</h2></div>
@@ -149,6 +180,81 @@ if (location.protocol === "file:") {
   var box = fit.parentElement;
   function size() { var pad = parseFloat(getComputedStyle(box).paddingLeft) || 0; var k = Math.min(1, (box.clientWidth - pad) / 1120); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(640 * k + pad) + "px"; }
   addEventListener("resize", size); size();
+})();
+
+
+// Clinical live demo: a timed loop plays the service record — runs only while on screen.
+(function () {
+  var fit = document.getElementById("demo-fit"); if (!fit) return;
+  var box = fit.parentElement;
+  function size() { var k = Math.min(1, box.clientWidth / 1040); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(600 * k) + "px"; }
+  addEventListener("resize", size); size();
+
+  var win = document.getElementById("demo-win"), cur = document.getElementById("d-cursor");
+  var el = function (id) { return document.getElementById(id); };
+  var TEXT = "Kevin was up and dressed when I arrived. Cued him through the morning routine \u2014 one verbal prompt for tooth-brushing. Walked the block; he named both landmarks without help.";
+  var timers = [], playing = false;
+  function at(t, fn) { timers.push(setTimeout(fn, t)); }
+  function moveTo(target, dx, dy) {
+    var k = win.getBoundingClientRect().width / 1040;
+    var a = target.getBoundingClientRect(), w = win.getBoundingClientRect();
+    cur.style.left = ((a.left - w.left) / k + (dx == null ? a.width / k / 2 : dx)) + "px";
+    cur.style.top = ((a.top - w.top) / k + (dy == null ? a.height / k / 2 : dy)) + "px";
+  }
+  function click() { cur.classList.remove("click"); void cur.offsetWidth; cur.classList.add("click"); }
+  function reset() {
+    el("d-status").textContent = "DRAFT"; el("d-status").classList.remove("ok");
+    el("d-clock").classList.remove("gone"); el("d-gps").classList.remove("on");
+    el("d-text").textContent = ""; el("d-caret").classList.remove("on"); el("d-ph").classList.remove("gone");
+    el("d-out1").classList.remove("on"); el("d-out2").classList.remove("on");
+    el("d-g").classList.remove("on"); el("d-g").textContent = "G";
+    el("d-sig").classList.remove("signed"); el("d-dots").textContent = "";
+    el("d-done").classList.remove("on");
+    cur.style.left = "70px"; cur.style.top = "110px";
+  }
+  function typeInto(node, text, cps, done) {
+    var i = 0;
+    (function tick() { if (!playing) return; node.textContent = text.slice(0, ++i); if (i < text.length) timers.push(setTimeout(tick, cps)); else if (done) done(); })();
+  }
+  function run() {
+    reset();
+    at(500, function () { moveTo(el("d-clock")); });
+    at(1150, function () { click(); el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); });
+    at(1800, function () { moveTo(el("d-narr"), 40, 30); });
+    at(2450, function () { click(); el("d-ph").classList.add("gone"); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 26); });
+    at(8200, function () { el("d-caret").classList.remove("on"); moveTo(el("d-out1"), 10, null); });
+    at(8850, function () { click(); el("d-out1").classList.add("on"); });
+    at(9350, function () { moveTo(el("d-out2"), 10, null); });
+    at(9900, function () { click(); el("d-out2").classList.add("on"); });
+    at(10500, function () { moveTo(el("d-g")); });
+    at(11150, function () { click(); var g = el("d-g"); g.classList.add("on"); g.innerHTML = "G"; });
+    at(11900, function () { moveTo(el("d-sig"), 60, 34); });
+    at(12500, function () {
+      var dots = el("d-dots"), n = 0;
+      (function dot() { if (!playing) return; dots.textContent += "\u25cf"; if (++n < 4) timers.push(setTimeout(dot, 260)); })();
+    });
+    at(13900, function () { el("d-sig").classList.add("signed"); });
+    at(14500, function () { el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on"); });
+    at(18000, function () { if (playing) run(); });
+  }
+  function stop() { playing = false; timers.forEach(clearTimeout); timers = []; }
+  var still3 = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
+  if (still3) {
+    playing = true; reset();
+    el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); el("d-ph").classList.add("gone");
+    el("d-text").textContent = TEXT; el("d-out1").classList.add("on"); el("d-out2").classList.add("on");
+    el("d-g").classList.add("on"); el("d-sig").classList.add("signed");
+    el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on");
+    cur.style.display = "none"; playing = false;
+  } else if ("IntersectionObserver" in window) {
+    var io3 = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (e.isIntersecting && !playing) { playing = true; run(); }
+        else if (!e.isIntersecting && playing) { stop(); }
+      });
+    }, { threshold: 0.35 });
+    io3.observe(win);
+  } else { playing = true; run(); }
 })();
 
 // Nav border once scrolled; on the home page the pill marks the section in view.
