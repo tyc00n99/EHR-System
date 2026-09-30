@@ -415,3 +415,32 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
   .pipe { grid-template-columns: 1fr; }
   .pipe .parr { justify-self: center; transform: rotate(90deg); }
 }
+
+/* MAR section (Clinical page, Sept 30, 2026): copy beside a drawn week of the app's MAR grid. */
+.marsec .msplit { display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(32px, 4vw, 64px); align-items: center; }
+.marsec h2 { margin-top: 14px; }
+.marsec .lead { margin-top: 16px; }
+.mlist { list-style: none; margin: 24px 0 0; padding: 0; }
+.mlist li { position: relative; padding: 9px 0 9px 30px; font-size: 15px; color: var(--ink2); border-bottom: 1px solid var(--line); }
+.mlist li:last-child { border-bottom: 0; }
+.mlist li::before { content: "✓"; position: absolute; left: 2px; top: 9px; width: 19px; height: 19px; border-radius: 50%; background: #e3efe6; color: #1f7a55; font-size: 11px; display: grid; place-items: center; }
+.mlist b { color: var(--ink); }
+.mcard { background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--sh-lg); overflow: hidden; }
+.mchead { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 22px; border-bottom: 1px solid var(--line); background: #f4f2ec; }
+.mchead b { font-size: 15.5px; }
+.mchead span { font-family: var(--mono); font-size: 12px; color: var(--ink3); }
+.mbody { padding: 8px 22px 18px; }
+.mmed { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-weight: 600; margin-top: 16px; }
+.mtally { font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--ink3); }
+.mdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; font-family: var(--mono); font-size: 10px; color: var(--ink3); text-align: center; margin-top: 8px; }
+.mgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin-top: 7px; }
+.mgrid i { height: 42px; border-radius: 9px; display: grid; place-items: center; align-content: center; font-style: normal; font-size: 13.5px; font-weight: 700; background: #e3efe6; color: #1f7a55; line-height: 1; }
+.mgrid i em { font-style: normal; font-family: var(--mono); font-size: 8px; font-weight: 500; opacity: .75; margin-top: 2px; }
+.mgrid i.r { background: #f6e3dc; color: #b8412f; }
+.mgrid i.h { background: #f8e8d0; color: #8a5a10; }
+.mgrid i.e { background: #efece4; color: #b8b2a4; font-weight: 400; }
+.mlegend { display: flex; gap: 18px; margin-top: 18px; font-size: 12.5px; color: var(--ink2); }
+.mlegend i { display: inline-block; width: 11px; height: 11px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+.mlegend .lg { background: #b9dcc4; } .mlegend .lr { background: #edbdb2; } .mlegend .lh { background: #ecd2a8; } .mlegend .lm { background: #d8d3c8; }
+.mfoot { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11.5px; color: var(--ink3); }
+@media (max-width: 960px) { .marsec .msplit { grid-template-columns: 1fr; } }
