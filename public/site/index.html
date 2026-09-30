@@ -193,7 +193,7 @@ footer a:hover { color: var(--ink); }
    is tall and its stage sticks; a requestAnimationFrame loop eases a progress value toward the scroll position,
    and everything — the sliding column, each card's fade, the note's lines, the connector — is drawn from that
    one continuous number, so nothing snaps between steps. */
-.build { position: relative; height: 280vh; border-top: 1px solid var(--line); }
+.build { position: relative; height: 180vh; border-top: 1px solid var(--line); }
 .build .stage { position: sticky; top: 68px; height: calc(100vh - 68px); display: flex; align-items: center; overflow: hidden; }
 .build .inner { width: 100%; max-width: 1320px; }
 .build .head2 { display: flex; align-items: end; justify-content: space-between; gap: 40px; }
@@ -509,7 +509,7 @@ calc();
     var p = clamp(-r.top / Math.max(1, span), 0, 1);
     // Hold a beat at each step: the value dwells near whole numbers and moves between them.
     var x = p * (n - 1 + 0.6) - 0.3, i = Math.floor(x), frac = x - i;
-    return clamp(i + ease(clamp((frac - 0.25) / 0.5, 0, 1)), 0, n - 1);
+    return clamp(i + ease(clamp((frac - 0.1) / 0.8, 0, 1)), 0, n - 1);
   }
   function draw() {
     var lo = Math.floor(f), hi = Math.min(n - 1, lo + 1), t = f - lo;
@@ -535,7 +535,7 @@ calc();
     dot.setAttribute("cx", x2); dot.setAttribute("cy", y2);
   }
   function loop() {
-    f += (target - f) * 0.085;
+    f += (target - f) * 0.2;
     if (Math.abs(target - f) < 0.0005) f = target;
     draw();
     raf = f === target ? 0 : requestAnimationFrame(loop);
