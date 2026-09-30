@@ -6,336 +6,14 @@
 <title>EVVora — The record built for Minnesota 245D providers</title>
 <meta name="description" content="EVVora verifies every visit, writes the daily service note the way the county reads it, and tells you what to bill and what to pay. Built for Minnesota 245D home and community-based services.">
 <link rel="icon" href="/site/icon-192.png">
-<style>
-/* Structure after tryrote.com (user, Sept 30, 2026). Fonts are open-licence (Inter-LICENSE.txt) and served
-   from this folder, never a font CDN. */
-@font-face { font-family: Inter; src: url(/site/Inter-variable.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
-@font-face { font-family: "Inter Tight"; src: url(/site/InterTight-variable.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
-@font-face { font-family: "JetBrains Mono"; src: url(/site/JetBrainsMono-variable.woff2) format("woff2"); font-weight: 100 800; font-display: swap; }
-:root {
-  /* Hubble's palette (hubble.ai, --hubble-* variables, Sept 30, 2026): warm paper, near-black ink, signal navy,
-     lilac for hover, solar amber for warnings, and its lilac/amber gradients for glows. */
-  --bg: #f0efeb; --bg2: #e8e6e0; --card: #f8f7f3; --line: #e0dcd3; --line2: #d6d1c7;
-  --ink: #1b1818; --ink2: #4a4542; --ink3: #767068;
-  --accent: #0b2672; --accent-ink: #0b2672; --accent-soft: #e3e6f1; --accent-rim: #c7cde6; --lilac: #5656b9;
-  --good: #1f7a55; --good-soft: #e3efe6; --warn: #b36d0c; --warn-soft: #f8e8d0; --bad: #b8412f; --bad-soft: #f6e3dc;
-  --dark: #0d1b4c; --dark2: #1f2e63; --inv: #eceae4; --inv2: #b3b7cc;
-  --display: "Inter Tight", Inter, -apple-system, sans-serif; --body: Inter, -apple-system, sans-serif; --mono: "JetBrains Mono", Menlo, monospace;
-  --max: 1140px; --pad: clamp(20px, 5vw, 64px); --r: 14px;
-  --sh-sm: 0 1px 2px rgba(27,24,24,.05), 0 2px 8px rgba(27,24,24,.04);
-  --sh-md: 0 2px 4px rgba(27,24,24,.04), 0 12px 32px -8px rgba(27,24,24,.10);
-  --sh-lg: 0 4px 8px rgba(27,24,24,.04), 0 32px 80px -24px rgba(27,24,24,.18);
-  --ease: cubic-bezier(.2,.7,.2,1);
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-a { color: inherit; text-decoration: none; }
-img { display: block; max-width: 100%; }
-.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
-h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -0.035em; line-height: 1.02; font-weight: 700; text-wrap: balance; }
-h1 { font-size: clamp(42px, 5.6vw, 68px); }
-h2 { font-size: clamp(34px, 4.4vw, 52px); }
-h3 { font-size: 19px; letter-spacing: -0.02em; line-height: 1.25; font-weight: 600; }
-p { margin: 0; }
-.lead { font-size: 19px; color: var(--ink2); line-height: 1.55; }
-.muted { color: var(--ink3); }
-.kicker { font-family: var(--mono); font-size: 12.5px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
-.btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 999px; font-weight: 600; font-size: 15px; transition: transform .2s var(--ease), background .2s, box-shadow .2s; white-space: nowrap; }
-.btn.ink { background: var(--accent); color: #fff; box-shadow: var(--sh-sm); }
-.btn.ink:hover { background: var(--lilac); transform: translateY(-1px); }
-.btn.line { border: 1px solid var(--line2); background: var(--card); }
-.btn.line:hover { background: var(--bg2); }
-.btn.sm { height: 38px; padding: 0 16px; font-size: 14px; }
-section { padding: 108px 0; }
-.section-head { max-width: 720px; margin-bottom: 48px; }
-.section-head h2 { margin-top: 14px; }
-.section-head .lead { margin-top: 16px; }
-.center { text-align: center; margin-left: auto; margin-right: auto; }
-
-/* nav */
-nav.top { position: sticky; top: 0; z-index: 50; background: transparent; border-bottom: 1px solid transparent; transition: background .25s, border-color .25s; }
-nav.top.scrolled { background: rgba(240,239,235,.88); backdrop-filter: saturate(1.4) blur(12px); border-bottom-color: var(--line); }
-nav.top .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 74px; max-width: 1360px; }
-nav.top .logo img { height: 22px; }
-nav.top .links { display: flex; gap: 2px; padding: 5px; border-radius: 999px; background: rgba(248,247,243,.85); border: 1px solid var(--line); box-shadow: var(--sh-sm); font-size: 13.5px; font-weight: 500; color: var(--ink2); white-space: nowrap; }
-nav.top .links a { padding: 7px 11px; border-radius: 999px; transition: background .15s, color .15s; }
-nav.top .links a:hover, nav.top .links a.on { background: var(--ink); color: #fff; }
-nav.top .right { display: flex; gap: 20px; align-items: center; justify-content: end; }
-nav.top .login { font-size: 14.5px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
-nav.top .login:hover { color: var(--ink); }
-nav.top .navcta { display: inline-flex; white-space: nowrap; align-items: center; gap: 7px; height: 42px; padding: 0 19px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 14.5px; box-shadow: var(--sh-sm); transition: background .2s, transform .2s var(--ease); }
-nav.top .navcta:hover { background: var(--lilac); transform: translateY(-1px); }
-nav.top .navcta::after { content: "→"; font-size: 15px; }
-@media (max-width: 1180px) { nav.top .links { display: none; } nav.top .wrap { display: flex; justify-content: space-between; } }
-
-/* hero */
-.hero { padding: 72px 0 96px; }
-.hero .grid { display: grid; grid-template-columns: 1fr 1.02fr; gap: 56px; align-items: center; }
-.badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: 13px; color: var(--ink2); box-shadow: var(--sh-sm); }
-.badge b { background: var(--accent-soft); color: var(--accent-ink); font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
-.hero h1 { margin-top: 22px; }
-.hero h1 em { font-style: normal; color: var(--accent); }
-.hero .lead { margin-top: 22px; max-width: 520px; }
-.hero .ctas { display: flex; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
-.hero .fine { margin-top: 18px; font-size: 13.5px; color: var(--ink3); }
-
-
-.hero { position: relative; overflow: hidden; }
-.hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; z-index: 0; }
-.hero::before { width: 560px; height: 560px; right: -120px; top: -140px; background: conic-gradient(from 220deg, #3C518E, #7878C7, #BBBBE3, #3C518E); opacity: .28; }
-.hero::after { width: 520px; height: 520px; left: -200px; bottom: -220px; background: conic-gradient(from 40deg, #F0D0A1, #F8E8D0, #F5DFBC, #F0D0A1); opacity: .7; }
-.hero .wrap { position: relative; z-index: 1; }
-
-/* the visit card */
-.visit { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--sh-lg); overflow: hidden; }
-.visit .head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--card); }
-.visit .dot { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-size: 12px; font-weight: 700; }
-.visit .who { font-weight: 600; font-size: 14.5px; }
-.visit .who span { display: block; font-weight: 400; font-size: 12.5px; color: var(--ink3); }
-.chip { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .03em; padding: 3px 8px; border-radius: 6px; }
-.chip.good { background: var(--good-soft); color: var(--good); }
-.chip.warn { background: var(--warn-soft); color: var(--warn); }
-.chip.blue { background: var(--accent-soft); color: var(--accent-ink); }
-.visit .head .chip { margin-left: auto; }
-.visit .body { display: grid; grid-template-columns: 1fr 1fr; }
-.track { padding: 18px 20px; border-right: 1px solid var(--line); }
-.track .t { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 12px; }
-.step { display: grid; grid-template-columns: 22px 1fr; gap: 10px; position: relative; padding-bottom: 16px; }
-.step:not(:last-child)::before { content: ""; position: absolute; left: 10px; top: 22px; bottom: 0; width: 2px; background: var(--line); }
-.step.done:not(:last-child)::before { background: var(--good); }
-.step i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line2); background: var(--card); display: grid; place-items: center; font-style: normal; font-size: 11px; color: #fff; }
-.step.done i { background: var(--good); border-color: var(--good); }
-.step.now i { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
-.step b { display: block; font-size: 13.5px; font-weight: 600; }
-.step small { display: block; font-size: 12px; line-height: 1.4; color: var(--ink3); margin-top: 2px; }
-.packet { padding: 18px 20px; background: #f3f1ec; }
-.packet .t { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); margin-bottom: 12px; }
-.doc { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--sh-sm); }
-.doc .n { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.doc .n .chip { margin-left: auto; }
-.doc p { font-size: 12.5px; color: var(--ink2); margin-top: 6px; line-height: 1.5; }
-.doc .row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; color: var(--ink2); }
-.doc .row b { font-family: var(--mono); font-weight: 600; color: var(--ink); }
-.visit .foot { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink2); }
-.visit .foot .btn { margin-left: auto; height: 34px; padding: 0 14px; font-size: 13px; }
-
-/* strip: one line that flows sideways forever (user, Sept 30, 2026). Two copies of the list slide left by one
-   copy's width, so the loop has no seam; the edges fade out. Hover pauses it; reduced motion stops it. */
-.strip { padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg2); overflow: hidden; }
-.marquee { display: flex; width: max-content; animation: flow 38s linear infinite; -webkit-mask-image: none; }
-.strip { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
-.strip:hover .marquee { animation-play-state: paused; }
-.run { display: flex; gap: 56px; padding-right: 56px; font-family: var(--mono); font-size: 13.5px; color: var(--ink2); white-space: nowrap; }
-.run span { display: inline-flex; align-items: center; gap: 10px; }
-.run span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-@keyframes flow { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .marquee { animation: none; } .run[aria-hidden] { display: none; } .run { flex-wrap: wrap; white-space: normal; justify-content: center; padding: 0 var(--pad); gap: 12px 28px; } .marquee { width: auto; } }
-
-/* your job */
-.jobs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.job { border: 1px solid var(--line); background: var(--card); border-radius: var(--r); padding: 26px; box-shadow: var(--sh-sm); }
-.job .num { font-family: var(--mono); font-size: 12px; color: var(--accent-ink); font-weight: 600; }
-.job h3 { margin-top: 14px; }
-.job p { margin-top: 8px; color: var(--ink2); font-size: 15px; }
-.job .who { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink3); }
-.job .who b { color: var(--ink); font-weight: 600; }
-
-/* fully handled */
-.handled { background: var(--bg2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-.cell { background: var(--card); padding: 26px; }
-.cell .ic { width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; }
-.cell h3 { margin-top: 16px; font-size: 17px; }
-.cell p { margin-top: 6px; color: var(--ink2); font-size: 14.5px; }
-/* why EVVora (Hubble's "Why teams build" shape: open columns, no cards) */
-.why .section-head.center { max-width: 760px; margin-left: auto; margin-right: auto; text-align: center; }
-.whygrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(32px, 4.5vw, 64px); margin-top: 16px; }
-.whycol .ic2 { width: 52px; height: 52px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
-.whycol .k2 { margin-top: 24px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-.whycol h3 { margin-top: 10px; font-size: 22px; letter-spacing: -0.022em; }
-.whycol p { margin-top: 10px; color: var(--ink2); font-size: 15px; }
-/* showcase: a drawn product shot, after Passage Health's (user, Sept 30, 2026) — a desktop window on a colored
-   backdrop with a phone overlapping its corner. Built in HTML at a fixed 1120px design width and scaled to fit
-   by a few lines of script, so it stays sharp and never stretches. */
-.show { margin-top: 56px; border-radius: 26px; background: linear-gradient(135deg, #0b2672 0%, #3C518E 45%, #7878C7 100%); padding: 44px 0 0 44px; overflow: hidden; position: relative; }
-.show::after { content: ""; position: absolute; width: 520px; height: 520px; right: -140px; top: -180px; border-radius: 50%; background: radial-gradient(closest-side, rgba(240,208,161,.45), transparent); pointer-events: none; }
-.show .fit { width: 1120px; height: 640px; transform-origin: top left; position: relative; z-index: 1; }
-.win { position: absolute; left: 0; top: 0; width: 1010px; height: 640px; background: #fbfaf7; border-radius: 18px 0 0 0; box-shadow: 0 30px 80px -20px rgba(8,16,48,.55); display: grid; grid-template-columns: 58px 1fr; overflow: hidden; font-size: 13px; color: var(--ink); }
-.win .rail { background: #f1efe9; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 16px; color: #8a8378; }
-.win .rail .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px; margin-bottom: 6px; }
-.win .rail i { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-style: normal; font-size: 16px; opacity: .75; }
-.win .rail i.on { color: var(--accent); opacity: 1; background: var(--accent-soft); }
-.win .main { padding: 14px 18px 0; display: flex; flex-direction: column; min-width: 0; }
-.win .ban { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 9px 14px; background: #fff; }
-.win .av { width: 30px; height: 30px; border-radius: 50%; background: #e3e6f1; color: var(--accent); font-weight: 700; font-size: 11.5px; display: grid; place-items: center; }
-.win .ban b { font-size: 16px; font-family: var(--display); letter-spacing: -.02em; }
-.win .ban .meta { color: var(--ink3); font-size: 12px; }
-.pillx { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
-.pillx.ok { background: var(--good-soft); color: var(--good); } .pillx.ok::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.pillx.nav { background: var(--accent-soft); color: var(--accent); }
-.pillx.amber { background: #f8e8d0; color: #9a5b08; }
-.pillx.grey { background: #eceae4; color: var(--ink2); }
-.win .ban .org { margin-left: auto; border: 1px solid var(--line); border-radius: 8px; padding: 3px 9px; font-size: 11.5px; color: var(--ink2); }
-.win .tabs { display: flex; gap: 6px; margin: 12px 0 10px; }
-.win .tabs span { padding: 6px 12px; border-radius: 8px; color: var(--ink2); font-weight: 500; }
-.win .tabs span.on { background: var(--accent-soft); color: var(--accent); }
-.win .body { flex: 1; display: grid; grid-template-columns: 300px 1fr; border: 1px solid var(--line); border-bottom: 0; border-radius: 12px 12px 0 0; background: #fff; min-height: 0; overflow: hidden; }
-.win .list { border-right: 1px solid var(--line); padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
-.win .search { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: #a39c91; font-size: 12px; }
-.win .seg { display: flex; background: #f1efe9; border-radius: 8px; padding: 3px; font-size: 12px; color: var(--ink2); }
-.win .seg span { flex: 1; text-align: center; padding: 4px 0; border-radius: 6px; } .win .seg span.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: var(--sh-sm); }
-.win .item { padding: 9px 10px; border-radius: 10px; border: 1px solid transparent; }
-.win .item.on { background: #eef0f8; border-color: #c7cde6; box-shadow: inset 3px 0 0 var(--accent); }
-.win .item b { display: block; font-size: 13px; } .win .item small { display: block; color: var(--ink3); font-size: 11.5px; margin-top: 3px; }
-.win .item .row { display: flex; gap: 5px; margin-top: 5px; }
-.win .detail { padding: 14px 18px; min-width: 0; }
-.win .dh { display: flex; align-items: center; gap: 8px; }
-.win .dh b { font-family: var(--display); font-size: 17px; letter-spacing: -.02em; }
-.win .dh .btns { margin-left: auto; display: flex; gap: 6px; }
-.win .dh .btns span { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 11.5px; color: var(--ink2); } .win .dh .btns span.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
-.win .outcome { margin-top: 8px; color: var(--ink2); font-size: 12.5px; line-height: 1.5; max-width: 560px; }
-.win .chart { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 8px; }
-.win .chart .ct { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink2); } .win .chart .ct b { color: var(--ink); }
-.win .chart svg { display: block; width: 100%; height: 250px; }
-.win .legend { display: flex; gap: 16px; font-size: 11px; color: var(--ink3); justify-content: center; }
-.win .legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
-.win .ranges { display: flex; gap: 6px; margin-top: 10px; } .win .ranges span { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 11.5px; color: var(--ink2); } .win .ranges span.on { background: var(--accent-soft); color: var(--accent); border-color: #c7cde6; }
-.phone { position: absolute; right: -6px; top: 60px; width: 262px; height: 548px; border-radius: 42px; background: #111; padding: 9px; box-shadow: 0 40px 80px -20px rgba(8,16,48,.6); }
-.phone .scr { width: 100%; height: 100%; border-radius: 34px; background: #fbfaf7; overflow: hidden; display: flex; flex-direction: column; font-size: 12.5px; }
-.phone .sb { display: flex; justify-content: space-between; padding: 12px 22px 4px; font-weight: 600; font-size: 12px; }
-.phone .notch { width: 90px; height: 24px; border-radius: 14px; background: #111; margin: -24px auto 6px; }
-.phone .ph { display: flex; align-items: center; gap: 8px; padding: 6px 14px 10px; border-bottom: 1px solid var(--line); }
-.phone .ph b { font-size: 14px; } .phone .ph .rec { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #b8412f; display: grid; place-items: center; } .phone .ph .rec::after { content: ""; width: 9px; height: 9px; border-radius: 2px; background: #b8412f; }
-.phone .sec { padding: 10px 14px; border-bottom: 1px solid var(--line); }
-.phone .sec .k { font-size: 11px; color: var(--ink3); font-family: var(--mono); letter-spacing: .04em; }
-.phone .timer { display: flex; gap: 8px; margin-top: 8px; } .phone .timer .t { flex: 1; background: #eceae4; border-radius: 10px; text-align: center; padding: 10px 0; font-family: var(--mono); font-size: 20px; font-weight: 600; }
-.phone .timer .stop { flex: 1; background: #b8412f; color: #fff; border-radius: 10px; display: grid; place-items: center; font-weight: 600; }
-.phone .med { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; } .phone .med span { flex: 1; }
-.phone .med i { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--line2); display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--ink3); } .phone .med i.g { background: var(--good-soft); color: var(--good); border-color: #a9d3bb; }
-.phone .cta2 { margin: auto 14px 16px; background: var(--accent); color: #fff; border-radius: 12px; text-align: center; padding: 11px 0; font-weight: 600; }
-.phone .ok2 { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--ink2); } .phone .ok2::before { content: "✓"; width: 16px; height: 16px; border-radius: 50%; background: var(--good); color: #fff; font-size: 10px; display: grid; place-items: center; }
-@media (max-width: 560px) { .show { padding: 22px 0 0 22px; border-radius: 18px; } }
-
-/* try it */
-.try { display: grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: start; }
-.picks { display: grid; gap: 10px; }
-.pick { text-align: left; border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 16px 18px; font: inherit; cursor: pointer; transition: border-color .2s, box-shadow .2s, background .2s; }
-.pick b { display: block; font-size: 15px; font-weight: 600; }
-.pick span { font-size: 13.5px; color: var(--ink3); }
-.pick:hover { border-color: var(--line2); }
-.pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-rim); }
-.answer { border: 1px solid var(--line); background: var(--card); border-radius: 18px; box-shadow: var(--sh-md); overflow: hidden; }
-.answer .top { padding: 14px 18px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--ink3); display: flex; gap: 10px; align-items: center; }
-.answer .top .chip { margin-left: auto; }
-.answer .in { padding: 22px 22px 8px; }
-.answer h3 { font-size: 20px; }
-.answer .say { margin-top: 10px; color: var(--ink2); font-size: 15px; }
-.answer ul { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-.answer li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-size: 14.5px; }
-.answer li::before { content: "→"; color: var(--accent); font-weight: 700; }
-.answer .fix { margin: 18px 22px 22px; padding: 12px 14px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--line); font-size: 13.5px; color: var(--ink2); }
-.answer .fix b { color: var(--ink); }
-
-
-/* faq */
-.faq { max-width: 820px; margin: 0 auto; }
-.faq details { border-bottom: 1px solid var(--line); padding: 20px 0; }
-.faq summary { cursor: pointer; list-style: none; font-family: var(--display); font-size: 19px; font-weight: 600; letter-spacing: -0.02em; display: flex; justify-content: space-between; gap: 20px; }
-.faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; color: var(--ink3); font-weight: 400; font-size: 24px; line-height: 1; transition: transform .2s; }
-.faq details[open] summary::after { transform: rotate(45deg); }
-.faq details p { margin-top: 10px; color: var(--ink2); font-size: 15.5px; max-width: 700px; }
-
-/* cta */
-.cta { padding: 0 0 108px; }
-.cta .box { background: var(--dark); color: var(--inv); border-radius: 24px; padding: 72px var(--pad); text-align: center; position: relative; overflow: hidden; }
-.cta .box::before { content: ""; position: absolute; inset: -40% -10% auto; height: 120%; background: radial-gradient(closest-side, rgba(120,120,199,.55), transparent 70%); pointer-events: none; }
-.cta h2 { color: #fff; position: relative; }
-.cta p { position: relative; margin: 16px auto 0; max-width: 560px; color: var(--inv2); font-size: 17px; }
-.cta .btn { position: relative; margin-top: 30px; background: var(--card); color: var(--accent); }
-.cta .fine { position: relative; margin-top: 16px; font-family: var(--mono); font-size: 12px; color: var(--inv2); letter-spacing: .04em; }
-
-footer { border-top: 1px solid var(--line); padding: 44px 0 56px; font-size: 14px; color: var(--ink3); }
-footer .wrap { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
-footer img { height: 18px; }
-footer .links { display: flex; gap: 22px; margin-left: auto; }
-footer a:hover { color: var(--ink); }
-
-
-/* build: scroll-driven, after usealmanac.com (user, Sept 30, 2026: then "much larger and more smooth"). The section
-   is tall and its stage sticks; a requestAnimationFrame loop eases a progress value toward the scroll position,
-   and everything — the sliding column, each card's fade, the note's lines, the connector — is drawn from that
-   one continuous number, so nothing snaps between steps. */
-.build { position: relative; height: 180vh; border-top: 1px solid var(--line); }
-.build .stage { position: sticky; top: 68px; height: calc(100vh - 68px); display: flex; align-items: center; overflow: hidden; }
-.build .inner { width: 100%; max-width: 1320px; }
-.build .head2 { display: flex; align-items: end; justify-content: space-between; gap: 40px; }
-.build h2 { font-size: clamp(38px, 4.6vw, 64px); max-width: 780px; }
-.build .head2 .lead { max-width: 420px; font-size: 17.5px; }
-.build .cols { position: relative; display: grid; grid-template-columns: 1fr 1.12fr; gap: 96px; align-items: center; margin-top: clamp(24px, 4vh, 48px); }
-.build .srcs { position: relative; height: min(56vh, 560px); overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
-.build .track { position: absolute; left: 0; right: 0; top: 50%; }
-.src { display: flex; gap: 16px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px; margin-bottom: 22px; box-shadow: var(--sh-md); transform-origin: left center; }
-.src .ic { width: 46px; height: 46px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 21px; }
-.src b { display: block; font-size: 18px; letter-spacing: -0.01em; }
-.src span { display: block; font-size: 15.5px; color: var(--ink2); margin-top: 3px; line-height: 1.45; }
-.src small { display: block; margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--ink3); }
-.src time { margin-left: auto; font-family: var(--mono); font-size: 12.5px; color: var(--ink3); white-space: nowrap; }
-.build .doc2 { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--sh-lg); padding: 30px 34px; min-height: min(58vh, 540px); }
-.doc2 .dh { font-family: var(--mono); font-size: 12.5px; color: var(--ink3); letter-spacing: .05em; }
-.doc2 .who { display: flex; align-items: center; gap: 10px; margin: 16px 0 14px; font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
-.doc2 .who i { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 700; }
-.ln { font-size: 17.5px; line-height: 1.55; padding: 8px 12px; margin: 0 -12px 2px; border-radius: 10px; overflow: hidden; }
-.tag { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; padding: 2px 9px; border-radius: 7px; background: var(--bg2); border: 1px solid var(--line); font-family: var(--mono); font-size: 11.5px; color: var(--ink2); vertical-align: 2px; white-space: nowrap; }
-.doc2 .done { margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--good-soft); color: var(--good); font-size: 16px; font-weight: 600; opacity: 0; }
-.build svg.wire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.build svg.wire path { fill: none; stroke: #9aa3ad; stroke-width: 1.75; stroke-dasharray: 3 6; }
-.build svg.wire circle { fill: var(--accent); }
-@media (max-width: 960px), (prefers-reduced-motion: reduce) {
-  .build { height: auto; padding: 76px 0; }
-  .build .stage { position: static; height: auto; display: block; overflow: visible; }
-  .build .head2 { display: block; } .build .head2 .lead { margin-top: 14px; }
-  .build .cols { grid-template-columns: 1fr; gap: 28px; }
-  .build .srcs { height: auto; -webkit-mask-image: none; mask-image: none; }
-  .build .track { position: static; transform: none !important; }
-  .src { opacity: 1 !important; transform: none !important; }
-  .ln { opacity: 1 !important; max-height: none !important; background: none !important; }
-  .build .doc2 { min-height: 0; }
-  .doc2 .done { opacity: 1 !important; }
-  .build svg.wire { display: none; }
-}
-
-/* reveal */
-.rv { opacity: 0; transform: translateY(14px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
-.rv.in { opacity: 1; transform: none; }
-.static .rv { transition: none; }
-.rv.d1 { transition-delay: .08s; } .rv.d2 { transition-delay: .16s; } .rv.d3 { transition-delay: .24s; }
-@media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
-
-.hero .grid > *, .try > * { min-width: 0; }
-.badge { max-width: 100%; }
-@media (max-width: 960px) {
-  .hero .grid, .try { grid-template-columns: 1fr; }
-  .jobs, .grid3, .whygrid { grid-template-columns: 1fr; }
-  nav.top .links { display: none; }
-  section { padding: 76px 0; }
-}
-@media (max-width: 560px) {
-  .visit .body { grid-template-columns: 1fr; }
-  .track { border-right: 0; border-bottom: 1px solid var(--line); }
-  nav.top .login { display: none; }
-  .badge { font-size: 12px; white-space: normal; }
-  .hero .ctas .btn { flex: 1 1 auto; justify-content: center; }
-}
-</style>
+<link rel="stylesheet" href="/site/site.css">
 </head>
 <body>
 
 <nav class="top" id="top">
   <div class="wrap">
-    <a class="logo" href="#"><img src="/site/evvora-wordmark.svg" alt="EVVora"></a>
-    <div class="links"><a href="#how">How it works</a><a href="#build">Watch a note</a><a href="#clinical">Clinical</a><a href="#practice">Practice management</a><a href="#try">Try it</a><a href="#pricing">Pricing</a><a href="#faq">Questions</a></div>
+    <a class="logo" href="/"><img src="/site/evvora-wordmark.svg" alt="EVVora"></a>
+    <div class="links"><a href="#how">How it works</a><a href="#build">Watch a note</a><a href="/clinical">Clinical</a><a href="/practice">Practice management</a><a href="/try">Try it</a><a href="/pricing">Pricing</a><a href="/questions">Questions</a></div>
     <div class="right"><a class="login" href="/login">Log in</a><a class="navcta" href="#demo">Book a demo</a></div>
   </div>
 </nav>
@@ -346,7 +24,7 @@ footer a:hover { color: var(--ink); }
       <span class="badge rv"><b>245D</b>Built for Minnesota home and community-based services</span>
       <h1 class="rv d1">Every visit verified. Every note <em>audit&#8209;ready.</em></h1>
       <p class="lead rv d2">EVVora checks each visit as it happens, writes the daily service note the way the county reads it, and tells you what to bill and what to pay. Your caregivers clock in and write. You review.</p>
-      <div class="ctas rv d3"><a class="btn ink" href="#demo">Book a demo</a><a class="btn line" href="#try">See what it catches</a></div>
+      <div class="ctas rv d3"><a class="btn ink" href="#demo">Book a demo</a><a class="btn line" href="/try">See what it catches</a></div>
     </div>
 
     <div class="visit rv d2" aria-label="Example of one visit in EVVora">
@@ -371,7 +49,7 @@ footer a:hover { color: var(--ink); }
           <div class="doc"><div class="n">Pay period · Emma J.</div><div class="row"><span>Regular</span><b>38.5 h</b></div><div class="row"><span>Overtime</span><b>0.0 h</b></div></div>
         </div>
       </div>
-      <div class="foot">Nothing goes out until you review it.<a class="btn ink" href="#try">Review</a></div>
+      <div class="foot">Nothing goes out until you review it.<a class="btn ink" href="/try">Review</a></div>
     </div>
   </div>
 </header>
@@ -388,7 +66,6 @@ footer a:hover { color: var(--ink); }
     </div>
   </div>
 </section>
-
 
 <section class="build" id="build" aria-label="How a note builds itself during a visit">
   <div class="stage">
@@ -419,76 +96,6 @@ footer a:hover { color: var(--ink); }
   </div>
 </section>
 
-<section class="handled" id="clinical">
-  <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Clinical</span><h2>The clinical record, written during the visit.</h2></div>
-    <div class="grid3 rv">
-      <div class="cell"><div class="ic">✎</div><h3>The printed note</h3><p>One page per visit in the format a licensor expects, with both signatures and the visit verification on it.</p></div>
-      <div class="cell"><div class="ic">℞</div><h3>Medication record</h3><p>A weekly MAR: given, refused, held or missed, with who recorded it.</p></div>
-      <div class="cell"><div class="ic">⌂</div><h3>Visit verification</h3><p>Clock-in and clock-out location for every visit, and a written reason on any note entered by hand.</p></div>
-    </div>
-    <div class="show rv" aria-label="EVVora on a desktop and a caregiver's phone">
-      <div class="fit" id="show-fit">
-        <div class="win">
-          <div class="rail"><span class="logo">E</span><i>⌂</i><i class="on">☺</i><i>☷</i><i>◷</i><i>✎</i><i>▤</i></div>
-          <div class="main">
-            <div class="ban"><span class="av">KN</span><b>Kevin Nguyen</b><span class="pillx ok">Active</span><span class="meta">PMI 12345678 · Client since Jul 1, 2026</span><span class="org">Northstar Home Supports</span></div>
-            <div class="tabs"><span>Overview</span><span class="on">Programming</span><span>Sessions</span><span>Documents</span><span>Medication</span><span>Profile</span></div>
-            <div class="body">
-              <div class="list">
-                <div class="search">Search outcomes</div>
-                <div class="seg"><span class="on">Active</span><span>Met</span><span>All</span></div>
-                <div class="item on"><b>Eat three meals a day</b><div class="row"><span class="pillx ok">On track</span><span class="pillx grey">Daily questions</span></div><small>90% yes over the last 30 days</small></div>
-                <div class="item"><b>Take every medication as prescribed</b><div class="row"><span class="pillx nav">Working on</span></div><small>84% yes · 4 notes this week</small></div>
-                <div class="item"><b>Stay safe through the night</b><div class="row"><span class="pillx amber">Needs attention</span></div><small>2 wake-ups flagged this week</small></div>
-                <div class="item"><b>Walk to the mailbox</b><div class="row"><span class="pillx nav">Working on</span><span class="pillx grey">Judged at review</span></div><small>Last review Sep 15</small></div>
-                <div class="item"><b>Give Ingrid a break every week</b><div class="row"><span class="pillx ok">Met</span></div><small>Closed Sep 1</small></div>
-              </div>
-              <div class="detail">
-                <div class="dh"><b>Eat three meals a day</b><span class="pillx ok">On track</span><div class="btns"><span>Add an entry</span><span class="pri">Review</span></div></div>
-                <p class="outcome">Kevin will eat three meals a day and drink at least six glasses of water, with staff preparing meals at set times and sitting with him while he eats.</p>
-                <div class="chart"><div class="ct"><b>Answered yes, by week</b><span>From daily notes · 16 weeks</span></div><svg viewBox="0 0 640 210" preserveAspectRatio="none" font-family="Inter" font-size="10" fill="#767068">
-<line x1="34" x2="630" y1="186.0" y2="186.0" stroke="#eceae4"/><text x="26" y="190.0" text-anchor="end">0</text><line x1="34" x2="630" y1="151.2" y2="151.2" stroke="#eceae4"/><text x="26" y="155.2" text-anchor="end">20</text><line x1="34" x2="630" y1="116.4" y2="116.4" stroke="#eceae4"/><text x="26" y="120.4" text-anchor="end">40</text><line x1="34" x2="630" y1="81.6" y2="81.6" stroke="#eceae4"/><text x="26" y="85.6" text-anchor="end">60</text><line x1="34" x2="630" y1="46.8" y2="46.8" stroke="#eceae4"/><text x="26" y="50.8" text-anchor="end">80</text><line x1="34" x2="630" y1="12.0" y2="12.0" stroke="#eceae4"/><text x="26" y="16.0" text-anchor="end">100</text>
-<line x1="34" x2="630" y1="46.8" y2="46.8" stroke="#da8a14" stroke-dasharray="5 4"/>
-<text x="40" y="41.8" fill="#b36d0c">Mastery 80%</text>
-<line x1="192.9" x2="192.9" y1="12" y2="186" stroke="#7878C7" stroke-dasharray="4 4"/><text x="197.9" y="22" fill="#5656b9">Plan started</text>
-<line x1="34.0" y1="161.6" x2="630.0" y2="25.9" stroke="#b8412f" stroke-width="1.5" opacity=".7"/>
-<polyline points="34.0,154.7 73.7,147.7 113.5,159.9 153.2,133.8 192.9,126.8 232.7,137.3 272.4,112.9 312.1,102.5 351.9,90.3 391.6,95.5 431.3,76.4 471.1,64.2 510.8,57.2 550.5,43.3 590.3,36.4 630.0,29.4" fill="none" stroke="#0b2672" stroke-width="2.2" stroke-linejoin="round"/>
-<g fill="#0b2672"><circle cx="34.0" cy="154.7" r="3.2"/><circle cx="73.7" cy="147.7" r="3.2"/><circle cx="113.5" cy="159.9" r="3.2"/><circle cx="153.2" cy="133.8" r="3.2"/><circle cx="192.9" cy="126.8" r="3.2"/><circle cx="232.7" cy="137.3" r="3.2"/><circle cx="272.4" cy="112.9" r="3.2"/><circle cx="312.1" cy="102.5" r="3.2"/><circle cx="351.9" cy="90.3" r="3.2"/><circle cx="391.6" cy="95.5" r="3.2"/><circle cx="431.3" cy="76.4" r="3.2"/><circle cx="471.1" cy="64.2" r="3.2"/><circle cx="510.8" cy="57.2" r="3.2"/><circle cx="550.5" cy="43.3" r="3.2"/><circle cx="590.3" cy="36.4" r="3.2"/><circle cx="630.0" cy="29.4" r="3.2"/></g>
-<text x="34.0" y="204" text-anchor="middle">Jul 6</text><text x="153.2" y="204" text-anchor="middle">Jul 27</text><text x="272.4" y="204" text-anchor="middle">Aug 17</text><text x="391.6" y="204" text-anchor="middle">Sep 7</text><text x="510.8" y="204" text-anchor="middle">Sep 28</text>
-</svg>
-                  <div class="legend"><span><i style="background:#0b2672"></i>Yes %</span><span><i style="background:#b8412f"></i>Trend</span><span><i style="background:#da8a14"></i>Mastery</span></div></div>
-                <div class="ranges"><span>30 days</span><span>90 days</span><span class="on">6 months</span><span>1 year</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="phone"><div class="scr">
-          <div class="sb"><span>9:41</span><span>●●● ◔</span></div><div class="notch"></div>
-          <div class="ph"><span class="av" style="width:26px;height:26px;border-radius:50%;background:#e3e6f1;color:#0b2672;display:grid;place-items:center;font-size:10px;font-weight:700">EJ</span><b>On shift with Kevin</b><span class="rec"></span></div>
-          <div class="sec"><div class="k">CLOCKED IN 8:02 AM · GPS OK</div><div class="timer"><span class="t">02:14:36</span><span class="stop">Clock out</span></div></div>
-          <div class="sec"><div class="k">MEDICATIONS DUE</div>
-            <div class="med"><span>Donepezil 10 mg · 8:30</span><i class="g">G</i><i>R</i><i>H</i><i>M</i></div>
-            <div class="med"><span>Metformin 500 mg · 12:00</span><i>G</i><i>R</i><i>H</i><i>M</i></div></div>
-          <div class="sec"><div class="k">OUTCOMES TODAY</div><div class="ok2">Ate a full breakfast</div><div class="ok2">Walked the block</div></div>
-          <div class="cta2">Write the note</div>
-        </div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="practice">
-  <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Practice management</span><h2>Everything the paperwork used to take a weekend for.</h2></div>
-    <div class="grid3 rv">
-      <div class="cell"><div class="ic">◷</div><h3>Units against the authorization</h3><p>Every note counted in 15-minute units and checked against what the county authorized, with a warning before it runs out.</p></div>
-      <div class="cell"><div class="ic">☰</div><h3>The personnel file</h3><p>Background study, orientation, training hours and evaluations, tracked against their deadlines with the paper attached.</p></div>
-      <div class="cell"><div class="ic">$</div><h3>Hours for payroll</h3><p>Regular and overtime hours per caregiver for the pay period, ready to enter in your payroll. Unsigned notes are held back.</p></div>
-    </div>
-  </div>
-</section>
-
 <section class="why" id="why">
   <div class="wrap">
     <div class="section-head center rv"><span class="kicker">Why EVVora</span><h2>Why agencies switch to EVVora.</h2><p class="lead" style="margin-left:auto;margin-right:auto">Generic home-care platforms were built for other states and other programs. EVVora was built for Minnesota 245D — and it shows in three places.</p></div>
@@ -515,47 +122,6 @@ footer a:hover { color: var(--ink); }
   </div>
 </section>
 
-<section id="try">
-  <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Try it</span><h2>Pick something that went wrong last week.</h2><p class="lead">See what EVVora does about it. These are the checks it runs on every visit.</p></div>
-    <div class="try">
-      <div class="picks rv" role="group" aria-label="Examples">
-        <button class="pick" type="button" data-k="unsigned" aria-pressed="true"><b>The client never signed</b><span>The caregiver clocked out and left.</span></button>
-        <button class="pick" type="button" data-k="units" aria-pressed="false"><b>The authorization is almost used up</b><span>Nobody noticed until billing.</span></button>
-        <button class="pick" type="button" data-k="orient" aria-pressed="false"><b>A new caregiver went to a client</b><span>They had not been oriented to them yet.</span></button>
-        <button class="pick" type="button" data-k="manual" aria-pressed="false"><b>The phone died mid-shift</b><span>No clock-out was recorded.</span></button>
-      </div>
-      <div class="answer rv d1" aria-live="polite">
-        <div class="top"><span id="a-where">Review queue · this pay period</span><span class="chip warn" id="a-chip">NEEDS YOU</span></div>
-        <div class="in"><h3 id="a-title"></h3><p class="say" id="a-say"></p><ul id="a-list"></ul></div>
-        <div class="fix" id="a-fix"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<section id="pricing">
-  <div class="wrap">
-    <div class="section-head center rv" style="text-align:center"><span class="kicker">Pricing</span><h2>One subscription. Everything in it.</h2><p class="lead" style="margin-left:auto;margin-right:auto">Clinical records, visit verification, scheduling, the personnel file, payroll hours and billing prep are all included — nothing is a separate module. Pricing follows the size of your agency; you get an exact number in a 20-minute demo.</p></div>
-    <div class="rv" style="text-align:center;margin-top:28px"><a class="btn ink" href="#demo">Book a demo</a></div>
-  </div>
-</section>
-
-<section id="faq">
-  <div class="wrap">
-    <div class="section-head center rv" style="text-align:center"><span class="kicker">Questions</span><h2>Questions agencies actually ask</h2></div>
-    <div class="faq rv">
-      <details><summary>Is it built for 245D, or adapted from something else?</summary><p>Built for it. Service codes and modifiers come from the DHS list, units are 15 minutes, planning deadlines and the personnel file follow what a 245D licensor looks for, and the client identifier is the PMI.</p></details>
-      <details><summary>Does it send visits to the state's EVV aggregator?</summary><p>Every visit is recorded and shaped for the HHAeXchange aggregator, with location at clock-in and clock-out and a reason on any manual entry. Submission turns on once your agency's aggregator connection is set up; until then nothing is sent.</p></details>
-      <details><summary>Can office staff sign a note for a client or caregiver?</summary><p>No. The client signs with their own code and the caregiver signs their own note. A supervisor can enter a missed visit by hand, but both signatures still wait for the people themselves, and the note stays on hold until they sign.</p></details>
-      <details><summary>Does EVVora run payroll?</summary><p>No. It adds up each caregiver's regular and overtime hours for the pay period, using your overtime rules and each person's pay rate history, so you can enter them in your payroll provider. Notes that are not signed yet are held back.</p></details>
-      <details><summary>What do caregivers need?</summary><p>A phone with a browser. They sign in, clock in at the visit, write the note, and hand the phone to the client to sign.</p></details>
-      <details><summary>How is our data protected?</summary><p>Staff Social Security numbers are encrypted, every change to a client, staff or visit record is logged with who made it, and files are only shown to people allowed to see that client.</p></details>
-    </div>
-  </div>
-</section>
-
 <section class="cta" id="demo">
   <div class="wrap">
     <div class="box rv">
@@ -571,7 +137,7 @@ footer a:hover { color: var(--ink); }
   <div class="wrap">
     <img src="/site/evvora-wordmark.svg" alt="EVVora">
     <span>The record built for Minnesota 245D providers.</span>
-    <div class="links"><a href="#how">How it works</a><a href="mailto:demo@evvora.com">Contact</a><a href="/login">Log in</a></div>
+    <div class="links"><a href="/#how">How it works</a><a href="mailto:demo@evvora.com">Contact</a><a href="/login">Log in</a></div>
   </div>
 </footer>
 
@@ -580,38 +146,13 @@ footer a:hover { color: var(--ink); }
 if (location.protocol === "file:") {
   document.querySelectorAll('img[src^="/site/"]').forEach(function (el) { el.src = "./" + el.getAttribute("src").slice(6); });
   document.querySelectorAll('link[href^="/site/"]').forEach(function (el) { el.href = "./" + el.getAttribute("href").slice(6); });
-  document.querySelectorAll("style").forEach(function (el) { el.textContent = el.textContent.split("url(/site/").join("url(./"); });
+  document.querySelectorAll("a[href]").forEach(function (el) {
+    var h = el.getAttribute("href");
+    if (h === "/") el.href = "./index.html";
+    else if (h.indexOf("/#") === 0) el.href = "./index.html" + h.slice(1);
+    else if (/^\/(clinical|practice|try|pricing|questions)(#.*)?$/.test(h)) el.href = "." + h.replace(/^\/(\w+)/, "/$1.html");
+  });
 }
-
-// Try it: four sample problems and what EVVora does about each.
-var ANSWERS = {
-  unsigned: { where: "Review queue · Unsigned notes", chip: ["NEEDS YOU", "warn"], title: "The note is marked unsigned, and its pay is held.", say: "EVVora will not let an unsigned visit slip through to billing or payroll unnoticed.",
-    list: ["The note shows Unsigned in the notes list and the review queue.", "The caregiver's pay for that visit is held on their Pay tab.", "At the next visit, the client signs with their own code on the caregiver's phone."],
-    fix: "<b>What nobody can do:</b> type the client's code for them. The code proves the client was there." },
-  units: { where: "Client record · Authorizations", chip: ["75% USED", "warn"], title: "You hear about it at 75%, not at billing.", say: "Every note counts its 15-minute units against the authorization it was written under.",
-    list: ["Units left shows on the client's record as a ring and a percentage.", "At 75% used, or 60 days before it ends, it raises an alert.", "Upload the county's new letter and the form fills itself in."],
-    fix: "<b>Why it matters:</b> units over the authorization are units you cannot bill." },
-  orient: { where: "Clock in · blocked", chip: ["STOPPED", "warn"], title: "They cannot clock in with that client yet.", say: "A caregiver has to be assigned to the person and oriented to their plan before the visit counts.",
-    list: ["The clock-in screen only lists clients they are assigned and oriented to.", "A supervisor records the orientation date on the care team.", "Then the caregiver can clock in, and the date is on file for the licensor."],
-    fix: "<b>Where it lives:</b> Client profile, Care team: assign, mark oriented, done." },
-  manual: { where: "Notes · Manual entry", chip: ["MANUAL", "blue"], title: "A supervisor enters the visit, with the reason.", say: "Only an administrator or supervisor, never the caregiver who worked it, and the whole note is on one page.",
-    list: ["The address on file, or a typed one, sets the visit's location.", "A reason is required: what happened and how the times were confirmed.", "It is marked as a manual entry and sent with that reason."],
-    fix: "<b>Still true:</b> the caregiver and the client each sign it themselves afterwards." }
-};
-function show(k) {
-  var a = ANSWERS[k];
-  document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === k)); });
-  document.getElementById("a-where").textContent = a.where;
-  var chip = document.getElementById("a-chip"); chip.textContent = a.chip[0]; chip.className = "chip " + a.chip[1];
-  document.getElementById("a-title").textContent = a.title;
-  document.getElementById("a-say").textContent = a.say;
-  document.getElementById("a-list").innerHTML = a.list.map(function (x) { return "<li>" + x + "</li>"; }).join("");
-  document.getElementById("a-fix").innerHTML = a.fix;
-}
-document.querySelectorAll(".pick").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.k); }); });
-show("unsigned");
-
-
 
 // Build section (smooth): a rAF loop eases `f` (0 … n-1, fractional) toward the scroll position and draws
 // everything from it — no step snaps, no CSS transitions to wait on. Idle when the section is off screen.
@@ -676,25 +217,19 @@ show("unsigned");
   reset();
 })();
 
-// Showcase: drawn at 1120px wide, scaled to its box so it never stretches or blurs.
-(function () {
-  var fit = document.getElementById("show-fit"); if (!fit) return;
-  var box = fit.parentElement;
-  function size() { var pad = parseFloat(getComputedStyle(box).paddingLeft) || 0; var k = Math.min(1, (box.clientWidth - pad) / 1120); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(640 * k + pad) + "px"; }
-  addEventListener("resize", size); size();
-})();
-
-// Nav border once scrolled; reveal on entry (all at once with ?static, and `?y=` scrolls, for captures).
+// Nav border once scrolled; on the home page the pill marks the section in view.
 var q = new URLSearchParams(location.search);
 addEventListener("scroll", function () { document.getElementById("top").classList.toggle("scrolled", scrollY > 8); }, { passive: true });
-// The centred pill marks the section in view.
 (function () {
-  var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.top .links a"));
-  var pairs = tabs.map(function (a) { return [a, document.querySelector(a.getAttribute("href"))]; }).filter(function (p) { return p[1]; });
+  var pairs = Array.prototype.slice.call(document.querySelectorAll("nav.top .links a"))
+    .filter(function (a) { return a.getAttribute("href").charAt(0) === "#"; })
+    .map(function (a) { return [a, document.querySelector(a.getAttribute("href"))]; })
+    .filter(function (p) { return p[1]; });
+  if (!pairs.length) return;
   function spy() {
     var y = scrollY + innerHeight * 0.3, cur = null;
     pairs.forEach(function (p) { if (p[1].offsetTop <= y) cur = p[0]; });
-    tabs.forEach(function (a) { a.classList.toggle("on", a === cur); });
+    pairs.forEach(function (p) { p[0].classList.toggle("on", p[0] === cur); });
   }
   addEventListener("scroll", spy, { passive: true }); addEventListener("resize", spy, { passive: true }); spy();
 })();
