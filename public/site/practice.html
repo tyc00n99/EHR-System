@@ -283,7 +283,8 @@ if (location.protocol === "file:") {
       drawStep();
       raf = f === target ? 0 : requestAnimationFrame(loop);
     }
-    function onScroll2() { target = targetFromScroll(); if (!raf) raf = requestAnimationFrame(loop); }
+    // One-way ratchet (user, Sept 30, 2026): scrolling up never unlights what was already lit.
+    function onScroll2() { target = Math.max(target, targetFromScroll()); if (!raf) raf = requestAnimationFrame(loop); }
     addEventListener("scroll", onScroll2, { passive: true });
     addEventListener("resize", onScroll2);
     target = f = targetFromScroll(); drawStep();
