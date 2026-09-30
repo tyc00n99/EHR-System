@@ -390,18 +390,33 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .noir .calg .due .it { color: #8a5a10; }
 .noir .nsrc { margin-top: 18px; font-size: 12px; color: var(--ink3); text-align: center; }
 
-/* Reinspection: wider lane and entry choreography (Sept 30, 2026). */
+/* Reinspection: wider lane; entry animation comes in four flavours (Sept 30, 2026, after "a little too
+   much"): a2 two soft fades (the default), a1 marker sweep only, a3 wire trace only, afull the original
+   full choreography. ?anim=1|2|3|full previews each; .anow (reduced motion / ?static) skips to the end. */
 .noir .nwide { max-width: 1560px; margin: 0 auto; padding: 0 24px; }
-.noir .sheet { opacity: 0; translate: 0 26px; transition: opacity .6s var(--ease), translate .6s var(--ease); }
-.noir.go .sheet { opacity: 1; translate: 0 0; }
-.noir.go .sheet:nth-child(2) { transition-delay: .1s; }
-.noir.go .sheet:nth-child(3) { transition-delay: .2s; }
-.noir.go .sheet:nth-child(4) { transition-delay: .3s; }
-.noir .stamp { opacity: 0; transform: rotate(7deg) scale(2); }
-.noir.go .stamp { opacity: 1; transform: rotate(7deg) scale(1); transition: transform .3s cubic-bezier(.2, 1.9, .4, 1), opacity .15s; transition-delay: .5s; }
-.noir .hl { transform: scaleX(0); transform-origin: left center; transition: transform .45s var(--ease); }
-.noir.go .hl { transform: scaleX(1); }
-.noir .mini, .noir .cap { opacity: 0; translate: 0 16px; transition: opacity .5s var(--ease), translate .5s var(--ease); }
-.noir.go .mini, .noir.go .cap { opacity: 1; translate: 0 0; }
-.noir svg.wires { opacity: 0; transition: opacity .7s ease 1.15s; }
-.noir.go svg.wires { opacity: 1; }
+.noir.anow * { transition: none !important; }
+/* afull — the original everything-moves sequence */
+.noir.afull .sheet { opacity: 0; translate: 0 26px; transition: opacity .6s var(--ease), translate .6s var(--ease); }
+.noir.afull.go .sheet { opacity: 1; translate: 0 0; }
+.noir.afull.go .sheet:nth-child(2) { transition-delay: .1s; }
+.noir.afull.go .sheet:nth-child(3) { transition-delay: .2s; }
+.noir.afull.go .sheet:nth-child(4) { transition-delay: .3s; }
+.noir.afull .stamp { opacity: 0; transform: rotate(7deg) scale(2); }
+.noir.afull.go .stamp { opacity: 1; transform: rotate(7deg) scale(1); transition: transform .3s cubic-bezier(.2, 1.9, .4, 1), opacity .15s; transition-delay: .5s; }
+.noir.afull .hl { transform: scaleX(0); transform-origin: left center; transition: transform .45s var(--ease); }
+.noir.afull.go .hl { transform: scaleX(1); }
+.noir.afull .mini, .noir.afull .cap { opacity: 0; translate: 0 16px; transition: opacity .5s var(--ease), translate .5s var(--ease); }
+.noir.afull.go .mini, .noir.afull.go .cap { opacity: 1; translate: 0 0; }
+.noir.afull svg.wires { opacity: 0; transition: opacity .7s ease 1.15s; }
+.noir.afull.go svg.wires { opacity: 1; }
+/* a1 — only the marker moves: highlights sweep once, everything else is simply there */
+.noir.a1 .hl { transform: scaleX(0); transform-origin: left center; transition: transform .4s var(--ease); }
+.noir.a1.go .hl { transform: scaleX(1); }
+/* a2 — two soft beats: the notice fades up, then the cards and wires join */
+.noir.a2 .stack { opacity: 0; translate: 0 14px; transition: opacity .7s var(--ease), translate .7s var(--ease); }
+.noir.a2.go .stack { opacity: 1; translate: 0 0; }
+.noir.a2 .mini, .noir.a2 .cap, .noir.a2 svg.wires { opacity: 0; transition: opacity .7s var(--ease) .4s; }
+.noir.a2.go .mini, .noir.a2.go .cap, .noir.a2.go svg.wires { opacity: 1; }
+/* a3 — wire trace: the page is still; only the connections appear, one at a time */
+.noir.a3 svg.wires path, .noir.a3 svg.wires circle { opacity: 0; transition: opacity .45s var(--ease); }
+.noir.a3.go svg.wires path, .noir.a3.go svg.wires circle { opacity: 1; }

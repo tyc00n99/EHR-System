@@ -237,16 +237,25 @@ if (location.protocol === "file:") {
   addEventListener("resize", size);
   // Wires need the images' real heights, and unscaled coordinates: draw once everything loaded, then scale.
   addEventListener("load", function () { stage = fit.getBoundingClientRect(); draw(); size(); });
-  // Entry choreography: sheets rise, the stamp slams, highlights sweep like a marker, cards pop, wires fade on.
+  // Entry animation: a2 (two soft fades) is the default; ?anim=1 sweeps the marker, ?anim=3 traces the
+  // wires, ?anim=full plays the original everything-moves sequence.
   var sec = document.getElementById("reinspection");
-  fit.querySelectorAll(".hl").forEach(function (el, i) { el.style.transitionDelay = (0.55 + i * 0.14).toFixed(2) + "s"; });
-  fit.querySelectorAll(".mini, .cap").forEach(function (el, i) { el.style.transitionDelay = (0.8 + i * 0.07).toFixed(2) + "s"; });
-  var still2 = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
-  if (still2 || !("IntersectionObserver" in window)) { sec.classList.add("go"); }
-  else {
+  var params2 = new URLSearchParams(location.search);
+  var variant = { "1": "a1", "2": "a2", "3": "a3", full: "afull" }[params2.get("anim")] || "a2";
+  sec.classList.add(variant);
+  if (variant === "afull") {
+    fit.querySelectorAll(".hl").forEach(function (el, i) { el.style.transitionDelay = (0.55 + i * 0.14).toFixed(2) + "s"; });
+    fit.querySelectorAll(".mini, .cap").forEach(function (el, i) { el.style.transitionDelay = (0.8 + i * 0.07).toFixed(2) + "s"; });
+  }
+  if (variant === "a1") fit.querySelectorAll(".hl").forEach(function (el, i) { el.style.transitionDelay = (0.15 + i * 0.08).toFixed(2) + "s"; });
+  var still2 = matchMedia("(prefers-reduced-motion: reduce)").matches || params2.has("static");
+  function arm() {
+    if (variant === "a3") { var k = 0; svg.querySelectorAll("path, circle").forEach(function (el) { el.style.transitionDelay = (0.25 + Math.floor(k / 2) * 0.13).toFixed(2) + "s"; k++; }); }
+    if (still2 || !("IntersectionObserver" in window)) { sec.classList.add("go", "anow"); return; }
     var io2 = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { sec.classList.add("go"); io2.disconnect(); } }); }, { rootMargin: "0px 0px -20% 0px" });
     io2.observe(sec);
   }
+  addEventListener("load", arm);
 })();
 
 // Nav border once scrolled; on the home page the pill marks the section in view.
