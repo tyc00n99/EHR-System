@@ -13,7 +13,7 @@
 <nav class="top" id="top">
   <div class="wrap">
     <a class="logo" href="/"><img src="/site/evvora-wordmark.svg" alt="EVVora"></a>
-    <div class="links"><a href="/#how">How it works</a><a href="/#build">Watch a note</a><a href="/clinical">Clinical</a><a class="on" href="/practice">Practice management</a><a href="/try">Try it</a><a href="/pricing">Pricing</a><a href="/questions">Questions</a></div>
+    <div class="links"><a href="/#how">How it works</a><a href="/#build">Watch a note</a><a href="/clinical">Clinical</a><a class="on" href="/practice">Practice management</a><a href="/pricing">Pricing</a><a href="/questions">Questions</a></div>
     <div class="right"><a class="login" href="/login">Log in</a><a class="navcta" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo</a></div>
   </div>
 </nav>
@@ -29,6 +29,25 @@
   </div>
 </section>
 
+<section id="try">
+  <div class="wrap">
+    <div class="section-head rv"><span class="kicker">Try it</span><h2>Pick something that went wrong last week.</h2><p class="lead">See what EVVora does about it. These are the checks it runs on every visit.</p></div>
+    <div class="try">
+      <div class="picks rv" role="group" aria-label="Examples">
+        <button class="pick" type="button" data-k="unsigned" aria-pressed="true"><b>The client never signed</b><span>The caregiver clocked out and left.</span></button>
+        <button class="pick" type="button" data-k="units" aria-pressed="false"><b>The authorization is almost used up</b><span>Nobody noticed until billing.</span></button>
+        <button class="pick" type="button" data-k="orient" aria-pressed="false"><b>A new caregiver went to a client</b><span>They had not been oriented to them yet.</span></button>
+        <button class="pick" type="button" data-k="manual" aria-pressed="false"><b>The phone died mid-shift</b><span>No clock-out was recorded.</span></button>
+      </div>
+      <div class="answer rv d1" aria-live="polite">
+        <div class="top"><span id="a-where">Review queue · this pay period</span><span class="chip warn" id="a-chip">NEEDS YOU</span></div>
+        <div class="in"><h3 id="a-title"></h3><p class="say" id="a-say"></p><ul id="a-list"></ul></div>
+        <div class="fix" id="a-fix"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="wrap">
     <img src="/site/evvora-wordmark.svg" alt="EVVora">
@@ -38,6 +57,34 @@
 </footer>
 
 <script>
+// Try it: four sample problems and what EVVora does about each.
+var ANSWERS = {
+  unsigned: { where: "Review queue · Unsigned notes", chip: ["NEEDS YOU", "warn"], title: "The note is marked unsigned, and its pay is held.", say: "EVVora will not let an unsigned visit slip through to billing or payroll unnoticed.",
+    list: ["The note shows Unsigned in the notes list and the review queue.", "The caregiver's pay for that visit is held on their Pay tab.", "At the next visit, the client signs with their own code on the caregiver's phone."],
+    fix: "<b>What nobody can do:</b> type the client's code for them. The code proves the client was there." },
+  units: { where: "Client record · Authorizations", chip: ["75% USED", "warn"], title: "You hear about it at 75%, not at billing.", say: "Every note counts its 15-minute units against the authorization it was written under.",
+    list: ["Units left shows on the client's record as a ring and a percentage.", "At 75% used, or 60 days before it ends, it raises an alert.", "Upload the county's new letter and the form fills itself in."],
+    fix: "<b>Why it matters:</b> units over the authorization are units you cannot bill." },
+  orient: { where: "Clock in · blocked", chip: ["STOPPED", "warn"], title: "They cannot clock in with that client yet.", say: "A caregiver has to be assigned to the person and oriented to their plan before the visit counts.",
+    list: ["The clock-in screen only lists clients they are assigned and oriented to.", "A supervisor records the orientation date on the care team.", "Then the caregiver can clock in, and the date is on file for the licensor."],
+    fix: "<b>Where it lives:</b> Client profile, Care team: assign, mark oriented, done." },
+  manual: { where: "Notes · Manual entry", chip: ["MANUAL", "blue"], title: "A supervisor enters the visit, with the reason.", say: "Only an administrator or supervisor, never the caregiver who worked it, and the whole note is on one page.",
+    list: ["The address on file, or a typed one, sets the visit's location.", "A reason is required: what happened and how the times were confirmed.", "It is marked as a manual entry and sent with that reason."],
+    fix: "<b>Still true:</b> the caregiver and the client each sign it themselves afterwards." }
+};
+function show(k) {
+  var a = ANSWERS[k];
+  document.querySelectorAll(".pick").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === k)); });
+  document.getElementById("a-where").textContent = a.where;
+  var chip = document.getElementById("a-chip"); chip.textContent = a.chip[0]; chip.className = "chip " + a.chip[1];
+  document.getElementById("a-title").textContent = a.title;
+  document.getElementById("a-say").textContent = a.say;
+  document.getElementById("a-list").innerHTML = a.list.map(function (x) { return "<li>" + x + "</li>"; }).join("");
+  document.getElementById("a-fix").innerHTML = a.fix;
+}
+document.querySelectorAll(".pick").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.k); }); });
+show("unsigned");
+
 // Opened straight from disk (file://) the /site/ paths point at the root of the drive; rewrite them only then.
 if (location.protocol === "file:") {
   document.querySelectorAll('img[src^="/site/"]').forEach(function (el) { el.src = "./" + el.getAttribute("src").slice(6); });
@@ -46,7 +93,7 @@ if (location.protocol === "file:") {
     var h = el.getAttribute("href");
     if (h === "/") el.href = "./index.html";
     else if (h.indexOf("/#") === 0) el.href = "./index.html" + h.slice(1);
-    else if (/^\/(clinical|practice|try|pricing|questions)(#.*)?$/.test(h)) el.href = "." + h.replace(/^\/(\w+)/, "/$1.html");
+    else if (/^\/(clinical|practice|pricing|questions)(#.*)?$/.test(h)) el.href = "." + h.replace(/^\/(\w+)/, "/$1.html");
   });
 }
 

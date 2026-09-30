@@ -52,7 +52,6 @@ const nextConfig: NextConfig = {
         // Marketing pages: each nav tab is its own static page under public/site/.
         { source: "/clinical", destination: "/site/clinical.html" },
         { source: "/practice", destination: "/site/practice.html" },
-        { source: "/try", destination: "/site/try.html" },
         { source: "/pricing", destination: "/site/pricing.html" },
         { source: "/questions", destination: "/site/questions.html" },
       ],

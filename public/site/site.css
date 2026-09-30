@@ -63,8 +63,11 @@ nav.top .navcta::after { content: "→"; font-size: 15px; }
 /* hero */
 .hero { padding: 72px 0 96px; }
 .hero .grid { display: grid; grid-template-columns: 1fr 1.02fr; gap: 56px; align-items: center; }
-.badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px 5px 6px; font-size: 13px; color: var(--ink2); box-shadow: var(--sh-sm); }
-.badge b { background: var(--accent-soft); color: var(--accent-ink); font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; letter-spacing: .04em; }
+/* hero badge: shield tile + "100% compatible with Minnesota Chapter 245D" (user's pick V1, Sept 30, 2026) */
+.badge { display: flex; align-items: center; gap: 15px; text-align: left; }
+.badge .shield { flex: none; width: 54px; height: 54px; border-radius: 15px; background: var(--accent); display: grid; place-items: center; box-shadow: 0 10px 24px -8px rgba(11,38,114,.5); }
+.badge .bt b { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; color: var(--ink); }
+.badge .bt span { font-size: 14px; color: var(--ink3); font-weight: 500; }
 .hero h1 { margin-top: 22px; }
 .hero h1 em { font-style: normal; color: var(--accent); }
 .hero .lead { margin-top: 22px; max-width: 520px; }
@@ -317,6 +320,9 @@ footer a:hover { color: var(--ink); }
   .visit .body { grid-template-columns: 1fr; }
   .track { border-right: 0; border-bottom: 1px solid var(--line); }
   nav.top .login { display: none; }
-  .badge { font-size: 12px; white-space: normal; }
+  .badge { gap: 12px; }
+  .badge .shield { width: 46px; height: 46px; border-radius: 13px; }
+  .badge .bt b { font-size: 16.5px; }
+  .badge .bt span { font-size: 13px; }
   .hero .ctas .btn { flex: 1 1 auto; justify-content: center; }
 }
