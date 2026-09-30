@@ -38,7 +38,7 @@ p { margin: 0; }
 .btn.line { border: 1px solid var(--line2); background: var(--card); }
 .btn.line:hover { background: var(--bg2); }
 .btn.sm { height: 38px; padding: 0 16px; font-size: 14px; }
-section { padding: 108px 0; }
+section { padding: 72px 0; }
 .section-head { max-width: 720px; margin-bottom: 48px; }
 .section-head h2 { margin-top: 14px; }
 .section-head .lead { margin-top: 16px; }
@@ -263,7 +263,7 @@ footer a:hover { color: var(--ink); }
    and everything — the sliding column, each card's fade, the note's lines, the connector — is drawn from that
    one continuous number, so nothing snaps between steps. */
 .build { position: relative; height: 160vh; border-top: 1px solid var(--line); }
-.build .stage { position: sticky; top: 68px; height: calc(100vh - 68px); display: flex; align-items: center; overflow: hidden; }
+.build .stage { position: sticky; top: max(76px, calc(50vh - 360px)); }
 .build .inner { width: 100%; max-width: 1320px; }
 .build .head2 { display: flex; align-items: end; justify-content: space-between; gap: 40px; }
 .build h2 { font-size: clamp(38px, 4.6vw, 64px); max-width: 780px; }
@@ -314,7 +314,7 @@ footer a:hover { color: var(--ink); }
   .hero .grid, .try { grid-template-columns: 1fr; }
   .jobs, .grid3, .whygrid { grid-template-columns: 1fr; }
   nav.top .links { display: none; }
-  section { padding: 76px 0; }
+  section { padding: 56px 0; }
 }
 @media (max-width: 560px) {
   .visit .body { grid-template-columns: 1fr; }
