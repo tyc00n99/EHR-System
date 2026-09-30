@@ -59,7 +59,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </div>
       <div aria-hidden className="absolute inset-0" style={{ background: `linear-gradient(${PAPER}59, ${PAPER}c0)` }} />
 
-      <div className="relative w-[404px] max-w-full rounded-[22px] border border-[#e0dcd3] bg-[#f8f7f3] p-9 shadow-[0_40px_100px_-24px_rgba(13,27,76,0.35)]">
+      <div className="relative w-[404px] max-w-full">
+      <div className="rounded-[22px] border border-[#e0dcd3] bg-[#f8f7f3] p-9 shadow-[0_40px_100px_-24px_rgba(13,27,76,0.35)]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
         <img src="/evvora-wordmark.svg" alt="EVVora" width={84} height={22} className="h-[22px] w-auto" />
         <div className="mt-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0b2672]">Welcome back</div>
@@ -91,6 +92,35 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             </div>
           </>
         )}
+      </div>
+
+      {/* The trust row under the door: the claims a buyer checks before the password goes in. */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[13px] font-medium text-[#5d6b70]">
+        <span className="flex items-center gap-1.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z" />
+          </svg>
+          HIPAA Compliant
+        </span>
+        <span aria-hidden className="text-[#b9c0c3]">·</span>
+        <span className="flex items-center gap-1.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" />
+            <path d="M14 3v5h5" />
+            <path d="M9.3 14.2l1.9 1.9 3.5-4" />
+          </svg>
+          Audit Ready
+        </span>
+        <span aria-hidden className="text-[#b9c0c3]">·</span>
+        <span className="flex items-center gap-1.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M3 11.5L12 4l9 7.5" />
+            <path d="M5.5 9.8V20h13V9.8" />
+            <path d="M9.5 20v-6h5v6" />
+          </svg>
+          Built for 245D Home &amp; Community-Based Services
+        </span>
+      </div>
       </div>
     </div>
   );
