@@ -398,3 +398,20 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .noir.scrub .hl { transform: scaleX(0); transform-origin: left center; }
 .noir.scrub svg.wires path, .noir.scrub svg.wires circle { opacity: 0; }
 .noir.scrub .mini, .noir.scrub .cap { opacity: 0.3; }
+
+/* Billing pipeline (Practice page, Sept 30, 2026): EVVora -> Waystar -> MNITS, with the EVV line under it. */
+.pipe { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 14px; align-items: stretch; }
+.pipe .pnode { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px 26px; box-shadow: var(--sh-sm); }
+.pipe .pname { font-family: var(--display); font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
+.pipe .ptag { display: inline-block; margin-top: 6px; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent-rim); border-radius: 999px; padding: 3px 10px; }
+.pipe .pnode h3 { margin-top: 14px; font-size: 16.5px; }
+.pipe .pnode p { margin-top: 6px; font-size: 14px; color: var(--ink2); }
+.pipe .parr { align-self: center; color: var(--accent); }
+.evvline { margin-top: 24px; display: flex; gap: 14px; align-items: flex-start; background: var(--accent-soft); border: 1px solid var(--accent-rim); border-radius: 16px; padding: 18px 22px; }
+.evvline .esh { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent); }
+.evvline p { font-size: 14.5px; color: var(--ink2); }
+.evvline b { color: var(--ink); }
+@media (max-width: 960px) {
+  .pipe { grid-template-columns: 1fr; }
+  .pipe .parr { justify-self: center; transform: rotate(90deg); }
+}
