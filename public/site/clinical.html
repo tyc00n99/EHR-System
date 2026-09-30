@@ -51,18 +51,21 @@
           <div class="dselwrap">
             <div class="dsel" id="d-actsel"><span class="dph2">Add an activity…</span><i>▾</i></div>
             <div class="dmenu" id="d-actmenu">
-              <div class="dmi" id="d-aopt1">Morning routine with the picture schedule</div>
-              <div class="dmi" id="d-aopt2">Weekly pill organizer, checked against the MAR</div>
-              <div class="dmi">Walk and community outing</div>
+              <div class="dmi" id="d-aopt1">Cued Kevin through the morning routine with the picture schedule: toileting, wash, dress, breakfast</div>
+              <div class="dmi" id="d-aopt2">Sorted and set up the weekly pill organizer with Kevin, checking each dose against the MAR</div>
+              <div class="dmi" id="d-aopt3">Checked the door alarm and the stove knob covers before leaving</div>
             </div>
           </div>
           <div class="racts" id="d-acts"></div>
           <div class="rlab">Outcomes this visit addressed <em>Optional · tick any you worked on</em></div>
           <div class="routs">
             <span class="rout" id="r-out1">Take every medication as prescribed</span>
-            <span class="rout" id="r-out2">Eat three meals and drink enough water</span>
-            <span class="rout">Complete the morning routine with cueing</span>
+            <span class="rout" id="r-out2">Complete the morning routine with cueing</span>
+            <span class="rout" id="r-out3">Eat three meals and drink enough water</span>
             <span class="rout">Keep the home safe and clean</span>
+            <span class="rout">Stay oriented and engaged</span>
+            <span class="rout">Reduce sundowning episodes</span>
+            <span class="rout">Give Mai a break every week</span>
           </div>
           <div class="rlab rpr">Progress review <i class="rdraft" id="r-draft">✦ Draft from what I marked</i></div>
           <div class="rta" id="r-ta"><span id="d-text"></span><span class="dcaret" id="d-caret"></span><span class="dph" id="d-ph"></span></div>
@@ -220,13 +223,15 @@ if (location.protocol === "file:") {
 (function () {
   var fit = document.getElementById("demo-fit"); if (!fit) return;
   var box = fit.parentElement;
-  function size() { var k = Math.min(1, box.clientWidth / 1000); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(1280 * k) + "px"; }
+  function size() { var k = Math.min(1, box.clientWidth / 1000); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(1350 * k) + "px"; }
   addEventListener("resize", size); size();
 
   var win = document.getElementById("demo-win"), cur = document.getElementById("d-cursor");
   var el = function (id) { return document.getElementById(id); };
-  var TEXT = "Kevin was up and dressed on arrival. Cued through the morning routine with the picture schedule \u2014 one verbal prompt for tooth-brushing. Ate a full breakfast, drank two glasses of water. Walked the block; named both landmarks without help. 8:00 Lisinopril given as prescribed.";
-  var ACT1 = "Morning routine with the picture schedule", ACT2 = "Weekly pill organizer, checked against the MAR";
+  var TEXT = "Kevin was dressed but agitated on arrival, insisting he had to get to work. Sat with him on the porch for ten minutes, then redirected with the photo album and a warm drink until he settled. Cued through the morning routine with the picture schedule \u2014 toileting, wash, dress, breakfast \u2014 one verbal prompt for tooth-brushing. Ate a full breakfast and drank two glasses of water. Sorted the weekly pill organizer together, checking each dose against the MAR; 8:00 Lisinopril given as prescribed. Walked the block \u2014 Kevin named both landmarks and led the route home. Checked the door alarm and the stove knob covers before leaving, and reported the morning agitation to Mai for the afternoon handoff.";
+  var ACT1 = "Cued Kevin through the morning routine with the picture schedule: toileting, wash, dress, breakfast";
+  var ACT2 = "Sorted and set up the weekly pill organizer with Kevin, checking each dose against the MAR";
+  var ACT3 = "Checked the door alarm and the stove knob covers before leaving";
   var timers = [], playing = false;
   function at(t, fn) { timers.push(setTimeout(fn, t)); }
   function moveTo(target, dx, dy) {
@@ -244,7 +249,7 @@ if (location.protocol === "file:") {
     el("r-high").classList.remove("on");
     el("r-sk1").classList.remove("on"); el("r-sk2").classList.remove("on");
     el("d-actmenu").classList.remove("open"); el("d-acts").innerHTML = "";
-    el("r-out1").classList.remove("on"); el("r-out2").classList.remove("on");
+    el("r-out1").classList.remove("on"); el("r-out2").classList.remove("on"); el("r-out3").classList.remove("on");
     el("d-text").textContent = ""; el("d-caret").classList.remove("on");
     el("r-signedby").classList.remove("on");
     el("r-cgdot").classList.remove("ok"); el("r-cgdot").textContent = ""; el("r-cgwhen").textContent = "\u2014";
@@ -271,24 +276,28 @@ if (location.protocol === "file:") {
     at(6400, function () { moveTo(el("d-aopt1")); });
     at(6950, function () { click(); chip(ACT1); });
     at(7500, function () { moveTo(el("d-aopt2")); });
-    at(8050, function () { click(); chip(ACT2); el("d-actmenu").classList.remove("open"); });
-    at(8700, function () { moveTo(el("r-out1")); });
-    at(9250, function () { click(); el("r-out1").classList.add("on"); });
-    at(9700, function () { moveTo(el("r-out2")); });
-    at(10250, function () { click(); el("r-out2").classList.add("on"); });
-    at(10900, function () { moveTo(el("r-draft")); });
-    at(11500, function () { click(); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 18); });
-    at(17400, function () { el("d-caret").classList.remove("on"); moveTo(el("r-sign")); });
-    at(18100, function () { click(); el("r-signedby").classList.add("on"); var d = el("r-cgdot"); d.classList.add("ok"); d.textContent = "\u2713"; el("r-cgwhen").textContent = "signed Sep 30, 2026, 12:16 PM"; });
-    at(19000, function () { moveTo(el("r-code")); });
-    at(19600, function () {
+    at(8050, function () { click(); chip(ACT2); });
+    at(8600, function () { moveTo(el("d-aopt3")); });
+    at(9150, function () { click(); chip(ACT3); el("d-actmenu").classList.remove("open"); });
+    at(9800, function () { moveTo(el("r-out1")); });
+    at(10350, function () { click(); el("r-out1").classList.add("on"); });
+    at(10800, function () { moveTo(el("r-out2")); });
+    at(11350, function () { click(); el("r-out2").classList.add("on"); });
+    at(11800, function () { moveTo(el("r-out3")); });
+    at(12350, function () { click(); el("r-out3").classList.add("on"); });
+    at(13000, function () { moveTo(el("r-draft")); });
+    at(13600, function () { click(); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 10); });
+    at(20600, function () { el("d-caret").classList.remove("on"); moveTo(el("r-sign")); });
+    at(21300, function () { click(); el("r-signedby").classList.add("on"); var d = el("r-cgdot"); d.classList.add("ok"); d.textContent = "\u2713"; el("r-cgwhen").textContent = "signed Sep 30, 2026, 12:16 PM"; });
+    at(22200, function () { moveTo(el("r-code")); });
+    at(22800, function () {
       el("r-codeph").style.display = "none";
       var dots = el("d-dots"), n = 0;
       (function dot() { if (!playing) return; dots.textContent += "\u25cf"; if (++n < 6) timers.push(setTimeout(dot, 220)); })();
     });
-    at(21300, function () { var d = el("r-cldot"); d.classList.add("ok"); d.textContent = "\u2713"; el("d-dots").textContent = ""; el("r-codeph").style.display = ""; el("r-codeph").textContent = "signed by Kevin"; });
-    at(21900, function () { el("r-accepted").textContent = "accepted"; el("r-accepted").className = "rc b"; var sc = el("r-signedchip"); sc.textContent = "signed"; sc.className = "rc g"; });
-    at(25800, function () { if (playing) { el("r-codeph").textContent = "6-digit code"; run(); } });
+    at(24500, function () { var d = el("r-cldot"); d.classList.add("ok"); d.textContent = "\u2713"; el("d-dots").textContent = ""; el("r-codeph").style.display = ""; el("r-codeph").textContent = "signed by Kevin"; });
+    at(25100, function () { el("r-accepted").textContent = "accepted"; el("r-accepted").className = "rc b"; var sc = el("r-signedchip"); sc.textContent = "signed"; sc.className = "rc g"; });
+    at(29200, function () { if (playing) { el("r-codeph").textContent = "6-digit code"; run(); } });
   }
   function stop() { playing = false; timers.forEach(clearTimeout); timers = []; }
   var still3 = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
@@ -296,8 +305,8 @@ if (location.protocol === "file:") {
     reset();
     el("r-given").classList.add("on"); el("r-medstate").classList.add("on");
     el("r-high").classList.add("on"); el("r-sk1").classList.add("on"); el("r-sk2").classList.add("on");
-    chip(ACT1); chip(ACT2);
-    el("r-out1").classList.add("on"); el("r-out2").classList.add("on");
+    chip(ACT1); chip(ACT2); chip(ACT3);
+    el("r-out1").classList.add("on"); el("r-out2").classList.add("on"); el("r-out3").classList.add("on");
     el("d-text").textContent = TEXT;
     el("r-signedby").classList.add("on");
     var d1 = el("r-cgdot"); d1.classList.add("ok"); d1.textContent = "\u2713"; el("r-cgwhen").textContent = "signed Sep 30, 2026, 12:16 PM";

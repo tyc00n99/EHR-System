@@ -450,7 +450,7 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
    then VERIFIED — on a loop while in view. Fixed 1040x600 stage scaled by #demo-fit. */
 .demo .dframe { position: relative; overflow: hidden; margin-top: 8px; }
 .demo .dfit { width: 1000px; transform-origin: top left; }
-.dwin.rec { position: relative; width: 1000px; height: 1280px; background: #fff; border: 1px solid #e4e7ea; border-radius: 16px; box-shadow: var(--sh-lg); overflow: hidden; font-family: Inter, -apple-system, sans-serif; color: #1d2b33; }
+.dwin.rec { position: relative; width: 1000px; height: 1350px; background: #fff; border: 1px solid #e4e7ea; border-radius: 16px; box-shadow: var(--sh-lg); overflow: hidden; font-family: Inter, -apple-system, sans-serif; color: #1d2b33; }
 .dban { display: flex; align-items: center; gap: 13px; padding: 14px 24px 10px; }
 .dban .dav { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .dban b { font-size: 16.5px; display: block; }
