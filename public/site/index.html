@@ -54,13 +54,20 @@ section { padding: 108px 0; }
 .center { text-align: center; margin-left: auto; margin-right: auto; }
 
 /* nav */
-nav.top { position: sticky; top: 0; z-index: 50; background: rgba(240,239,235,.82); backdrop-filter: saturate(1.4) blur(12px); border-bottom: 1px solid transparent; transition: border-color .2s; }
-nav.top.scrolled { border-bottom-color: var(--line); }
-nav.top .wrap { display: flex; align-items: center; gap: 28px; height: 68px; }
+nav.top { position: sticky; top: 0; z-index: 50; background: transparent; border-bottom: 1px solid transparent; transition: background .25s, border-color .25s; }
+nav.top.scrolled { background: rgba(240,239,235,.88); backdrop-filter: saturate(1.4) blur(12px); border-bottom-color: var(--line); }
+nav.top .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 74px; max-width: 1360px; }
 nav.top .logo img { height: 22px; }
-nav.top .links { display: flex; gap: 26px; font-size: 14.5px; color: var(--ink2); font-weight: 500; }
-nav.top .links a:hover { color: var(--ink); }
-nav.top .right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+nav.top .links { display: flex; gap: 2px; padding: 5px; border-radius: 999px; background: rgba(248,247,243,.85); border: 1px solid var(--line); box-shadow: var(--sh-sm); font-size: 13.5px; font-weight: 500; color: var(--ink2); white-space: nowrap; }
+nav.top .links a { padding: 7px 11px; border-radius: 999px; transition: background .15s, color .15s; }
+nav.top .links a:hover, nav.top .links a.on { background: var(--ink); color: #fff; }
+nav.top .right { display: flex; gap: 20px; align-items: center; justify-content: end; }
+nav.top .login { font-size: 14.5px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+nav.top .login:hover { color: var(--ink); }
+nav.top .navcta { display: inline-flex; white-space: nowrap; align-items: center; gap: 7px; height: 42px; padding: 0 19px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 14.5px; box-shadow: var(--sh-sm); transition: background .2s, transform .2s var(--ease); }
+nav.top .navcta:hover { background: var(--lilac); transform: translateY(-1px); }
+nav.top .navcta::after { content: "→"; font-size: 15px; }
+@media (max-width: 1180px) { nav.top .links { display: none; } nav.top .wrap { display: flex; justify-content: space-between; } }
 
 /* hero */
 .hero { padding: 72px 0 96px; }
@@ -310,7 +317,7 @@ footer a:hover { color: var(--ink); }
 @media (max-width: 560px) {
   .visit .body { grid-template-columns: 1fr; }
   .track { border-right: 0; border-bottom: 1px solid var(--line); }
-  nav.top .right .line { display: none; }
+  nav.top .login { display: none; }
   .badge { font-size: 12px; white-space: normal; }
   .hero .ctas .btn { flex: 1 1 auto; justify-content: center; }
 }
@@ -321,8 +328,8 @@ footer a:hover { color: var(--ink); }
 <nav class="top" id="top">
   <div class="wrap">
     <a class="logo" href="#"><img src="/site/evvora-wordmark.svg" alt="EVVora"></a>
-    <div class="links"><a href="#how">How it works</a><a href="#build">Watch a note</a><a href="#try">Try it</a><a href="#faq">Questions</a></div>
-    <div class="right"><a class="btn line sm" href="/login">Log in</a><a class="btn ink sm" href="#demo">Book a demo</a></div>
+    <div class="links"><a href="#how">How it works</a><a href="#build">Watch a note</a><a href="#clinical">Clinical</a><a href="#practice">Practice management</a><a href="#try">Try it</a><a href="#pricing">Pricing</a><a href="#faq">Questions</a></div>
+    <div class="right"><a class="login" href="/login">Log in</a><a class="navcta" href="#demo">Book a demo</a></div>
   </div>
 </nav>
 
@@ -405,16 +412,13 @@ footer a:hover { color: var(--ink); }
   </div>
 </section>
 
-<section class="handled">
+<section class="handled" id="clinical">
   <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Fully handled</span><h2>Everything the paperwork used to take a weekend for.</h2></div>
+    <div class="section-head rv"><span class="kicker">Clinical</span><h2>The clinical record, written during the visit.</h2></div>
     <div class="grid3 rv">
-      <div class="cell"><div class="ic">◷</div><h3>Units against the authorization</h3><p>Every note counted in 15-minute units and checked against what the county authorized, with a warning before it runs out.</p></div>
       <div class="cell"><div class="ic">✎</div><h3>The printed note</h3><p>One page per visit in the format a licensor expects, with both signatures and the visit verification on it.</p></div>
-      <div class="cell"><div class="ic">⌂</div><h3>Visit verification</h3><p>Clock-in and clock-out location for every visit, and a written reason on any note entered by hand.</p></div>
-      <div class="cell"><div class="ic">☰</div><h3>The personnel file</h3><p>Background study, orientation, training hours and evaluations, tracked against their deadlines with the paper attached.</p></div>
       <div class="cell"><div class="ic">℞</div><h3>Medication record</h3><p>A weekly MAR: given, refused, held or missed, with who recorded it.</p></div>
-      <div class="cell"><div class="ic">$</div><h3>Hours for payroll</h3><p>Regular and overtime hours per caregiver for the pay period, ready to enter in your payroll. Unsigned notes are held back.</p></div>
+      <div class="cell"><div class="ic">⌂</div><h3>Visit verification</h3><p>Clock-in and clock-out location for every visit, and a written reason on any note entered by hand.</p></div>
     </div>
     <div class="show rv" aria-label="EVVora on a desktop and a caregiver's phone">
       <div class="fit" id="show-fit">
@@ -467,6 +471,17 @@ footer a:hover { color: var(--ink); }
   </div>
 </section>
 
+<section id="practice">
+  <div class="wrap">
+    <div class="section-head rv"><span class="kicker">Practice management</span><h2>Everything the paperwork used to take a weekend for.</h2></div>
+    <div class="grid3 rv">
+      <div class="cell"><div class="ic">◷</div><h3>Units against the authorization</h3><p>Every note counted in 15-minute units and checked against what the county authorized, with a warning before it runs out.</p></div>
+      <div class="cell"><div class="ic">☰</div><h3>The personnel file</h3><p>Background study, orientation, training hours and evaluations, tracked against their deadlines with the paper attached.</p></div>
+      <div class="cell"><div class="ic">$</div><h3>Hours for payroll</h3><p>Regular and overtime hours per caregiver for the pay period, ready to enter in your payroll. Unsigned notes are held back.</p></div>
+    </div>
+  </div>
+</section>
+
 <section id="try">
   <div class="wrap">
     <div class="section-head rv"><span class="kicker">Try it</span><h2>Pick something that went wrong last week.</h2><p class="lead">See what EVVora does about it. These are the checks it runs on every visit.</p></div>
@@ -486,6 +501,13 @@ footer a:hover { color: var(--ink); }
   </div>
 </section>
 
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="section-head center rv" style="text-align:center"><span class="kicker">Pricing</span><h2>One subscription. Everything in it.</h2><p class="lead" style="margin-left:auto;margin-right:auto">Clinical records, visit verification, scheduling, the personnel file, payroll hours and billing prep are all included — nothing is a separate module. Pricing follows the size of your agency; you get an exact number in a 20-minute demo.</p></div>
+    <div class="rv" style="text-align:center;margin-top:28px"><a class="btn ink" href="#demo">Book a demo</a></div>
+  </div>
+</section>
 
 <section id="faq">
   <div class="wrap">
@@ -632,6 +654,17 @@ show("unsigned");
 // Nav border once scrolled; reveal on entry (all at once with ?static, and `?y=` scrolls, for captures).
 var q = new URLSearchParams(location.search);
 addEventListener("scroll", function () { document.getElementById("top").classList.toggle("scrolled", scrollY > 8); }, { passive: true });
+// The centred pill marks the section in view.
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.top .links a"));
+  var pairs = tabs.map(function (a) { return [a, document.querySelector(a.getAttribute("href"))]; }).filter(function (p) { return p[1]; });
+  function spy() {
+    var y = scrollY + innerHeight * 0.3, cur = null;
+    pairs.forEach(function (p) { if (p[1].offsetTop <= y) cur = p[0]; });
+    tabs.forEach(function (a) { a.classList.toggle("on", a === cur); });
+  }
+  addEventListener("scroll", spy, { passive: true }); addEventListener("resize", spy, { passive: true }); spy();
+})();
 if (q.has("static")) document.documentElement.classList.add("static");
 if (q.has("static") || !("IntersectionObserver" in window)) document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
 else { var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { rootMargin: "0px 0px -8% 0px" }); document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); }); }
