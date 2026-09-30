@@ -46,7 +46,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div aria-hidden className="absolute -inset-10 opacity-55 blur-[3px]">
         <div className="absolute inset-x-[4%] top-[6%] -bottom-[8%] rounded-3xl border border-[#e0dcd3] bg-[#fbfaf7] px-8 py-7 shadow-2xl">
           <div className="flex items-center gap-3 border-b border-[#e0dcd3] pb-4">
-            <span className="grid size-10 place-items-center rounded-full bg-[#e3e6f1] text-[13px] font-bold text-[#0b2672]">KN</span>
+            <span className="grid size-10 place-items-center rounded-full bg-[#dff3fa] text-[13px] font-bold text-[#0098c0]">KN</span>
             <div>
               <div className="text-[16px] font-bold text-[#1b1818]">Kevin Nguyen</div>
               <div className="text-[12.5px] font-medium text-[#767068]">PMI 12345678 · Client since Jul 1, 2026</div>
@@ -60,10 +60,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div aria-hidden className="absolute inset-0" style={{ background: `linear-gradient(${PAPER}59, ${PAPER}c0)` }} />
 
       <div className="relative w-[404px] max-w-full">
-      <div className="rounded-[22px] border border-[#e0dcd3] bg-[#f8f7f3] p-9 shadow-[0_40px_100px_-24px_rgba(13,27,76,0.35)]">
+      <div className="rounded-[22px] border border-[#e0dcd3] bg-[#f8f7f3] p-9 shadow-[0_40px_100px_-24px_rgba(6,56,74,0.35)]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
         <img src="/evvora-wordmark.svg" alt="EVVora" width={84} height={22} className="h-[22px] w-auto" />
-        <div className="mt-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0b2672]">Welcome back</div>
+        <div className="mt-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0098c0]">Welcome back</div>
         <div className="mb-6 mt-1 text-[26px] font-bold leading-tight tracking-tight text-[#1b1818]">Your agency is waiting.</div>
 
         {sp.reset === "1" && <p className="mb-4 rounded-lg bg-[#e3efe6] px-3 py-2 text-[13.5px] font-medium text-[#1f7a55]">Your password is updated. Log in with it here.</p>}

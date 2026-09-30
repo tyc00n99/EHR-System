@@ -17,7 +17,7 @@ export function LoginForm() {
           <Input name="password" type="password" autoComplete="current-password" required />
         </Field>
         <div className="mt-1.5 text-right">
-          <a href="/forgot" className="text-[13px] font-semibold text-[#0b2672] hover:underline">
+          <a href="/forgot" className="text-[13px] font-semibold text-[#0098c0] hover:underline">
             Forgot password?
           </a>
         </div>
@@ -25,7 +25,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="h-12 w-full rounded-full bg-[#0b2672] text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#5656b9] disabled:opacity-60"
+        className="h-12 w-full rounded-full bg-[#0098c0] text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0081a5] disabled:opacity-60"
       >
         {pending ? "Logging in…" : "Log in"}
       </button>

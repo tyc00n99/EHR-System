@@ -19,7 +19,7 @@ export function ResetForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="h-12 w-full rounded-full bg-[#0b2672] text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#5656b9] disabled:opacity-60"
+        className="h-12 w-full rounded-full bg-[#0098c0] text-[15px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0081a5] disabled:opacity-60"
       >
         {pending ? "Saving…" : "Set password and log in"}
       </button>
