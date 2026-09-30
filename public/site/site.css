@@ -340,3 +340,52 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
   .badge .bt span { font-size: 13px; }
   .hero .ctas .btn { flex: 1 1 auto; justify-content: center; }
 }
+
+/* Reinspection section (Practice page, Sept 30, 2026): the real DHS notice, highlighted and wired to the product.
+   Drawn on a fixed 1600x1150 stage and scaled to its box by #noir-fit, like the showcase. */
+.noir .stage2 { position: relative; width: 1600px; height: 1150px; transform-origin: top left; }
+.noir .nbox { position: relative; overflow: hidden; margin-top: 12px; }
+.noir svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+.noir svg.wires path { fill: none; stroke: #8f99a4; stroke-width: 1.75; stroke-dasharray: 3 6; }
+.noir svg.wires circle { fill: var(--accent); }
+.noir .stack { position: absolute; left: 520px; top: 0; width: 560px; }
+.noir .sheet { position: relative; z-index: 1; background: #fff; border: 1px solid #d9d4c9; box-shadow: 0 2px 6px rgba(27,24,24,.08), 0 24px 54px -26px rgba(13,27,76,.35); border-radius: 3px; margin-bottom: 22px; }
+.noir .sheet img { display: block; width: 100%; border-radius: 3px; }
+.noir .sheet .tab { position: absolute; top: -12px; left: 14px; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; background: var(--dark); color: #fff; border-radius: 5px; padding: 4px 10px; z-index: 8; box-shadow: 0 2px 6px rgba(13,27,76,.3); }
+.noir .hl { position: absolute; left: 1.2%; right: 1.2%; background: rgba(240,208,161,.5); border-radius: 3px; mix-blend-mode: multiply; }
+.noir .stamp { position: absolute; right: -14px; top: 24px; border: 3px solid rgba(184,65,47,.5); color: rgba(184,65,47,.62); font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .14em; padding: 7px 12px; transform: rotate(7deg); border-radius: 4px; background: rgba(255,255,255,.6); z-index: 3; }
+.noir .mini { position: absolute; width: 400px; background: #fbfaf7; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--sh-lg); overflow: hidden; z-index: 4; }
+.noir .mini .mh { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); background: #f4f2ec; }
+.noir .mini .mh b { font-size: 13.5px; }
+.noir .mini .mh .chip { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; }
+.noir .mini .mh .ok { background: #e3efe6; color: #1f7a55; }
+.noir .mini .mh .warn2 { background: #f8e8d0; color: #8a5a10; }
+.noir .mini .bd { padding: 10px 16px 14px; }
+.noir .mrow { display: flex; align-items: center; gap: 9px; padding: 6.5px 0; border-bottom: 1px solid #efece4; font-size: 12.5px; }
+.noir .mrow:last-child { border-bottom: 0; }
+.noir .mrow .tick { width: 17px; height: 17px; border-radius: 50%; background: #e3efe6; color: #1f7a55; display: grid; place-items: center; font-size: 10px; flex: none; }
+.noir .mrow .bad { background: #f6e3dc; color: #b8412f; }
+.noir .mrow .amb { background: #f8e8d0; color: #8a5a10; }
+.noir .mrow small { margin-left: auto; color: var(--ink3); font-family: var(--mono); font-size: 10.5px; white-space: nowrap; }
+.noir .cap { position: absolute; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); z-index: 4; }
+.noir .notepg .bd { font-family: Georgia, serif; }
+.noir .notepg .nt { font-size: 15px; font-weight: 700; border-bottom: 1.5px solid #000; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: baseline; }
+.noir .notepg .nt i { font-style: normal; font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; color: var(--ink3); }
+.noir .notepg p { font-size: 11.5px; line-height: 1.5; color: #222; margin: 8px 0 0; }
+.noir .notepg .sig { display: flex; gap: 20px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #ddd; }
+.noir .notepg .sig div { flex: 1; }
+.noir .notepg .sig .nm { font-family: Georgia, serif; font-style: italic; font-size: 16px; }
+.noir .notepg .sig .lb { font-family: var(--mono); font-size: 7.5px; letter-spacing: .1em; color: #999; text-transform: uppercase; }
+.noir .marg { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 8px; }
+.noir .marg i { height: 24px; border-radius: 6px; display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 700; background: #e3efe6; color: #1f7a55; }
+.noir .marg i.r { background: #f6e3dc; color: #b8412f; }
+.noir .marg i.e { background: #efece4; color: #b8b2a4; font-weight: 400; }
+.noir .marlb { font-size: 12px; font-weight: 600; margin-top: 10px; }
+.noir .mardays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; font-family: var(--mono); font-size: 9px; color: var(--ink3); text-align: center; margin-top: 8px; }
+.noir .calg { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 4px; }
+.noir .calg > div { border: 1px solid var(--line); border-radius: 8px; padding: 6px 7px; min-height: 42px; }
+.noir .calg .mo { display: block; font-family: var(--mono); font-size: 9px; color: var(--ink3); text-transform: uppercase; }
+.noir .calg .it { display: block; font-size: 9.5px; font-weight: 600; margin-top: 3px; color: var(--ink2); white-space: nowrap; }
+.noir .calg .due { background: #f8e8d0; border-color: #ecd2a8; }
+.noir .calg .due .it { color: #8a5a10; }
+.noir .nsrc { margin-top: 18px; font-size: 12px; color: var(--ink3); text-align: center; }
