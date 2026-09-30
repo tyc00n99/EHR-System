@@ -189,49 +189,47 @@ footer .links { display: flex; gap: 22px; margin-left: auto; }
 footer a:hover { color: var(--ink); }
 
 
-/* build: scroll-driven, after usealmanac.com (user, Sept 30, 2026). The section is tall; its inner stage sticks
-   while the visitor scrolls, and scroll progress picks the active source. The note on the right gains one line
-   per step, the newest lit, and a dotted line joins the active source to it. */
-.build { position: relative; height: 420vh; border-top: 1px solid var(--line); }
+/* build: scroll-driven, after usealmanac.com (user, Sept 30, 2026: then "much larger and more smooth"). The section
+   is tall and its stage sticks; a requestAnimationFrame loop eases a progress value toward the scroll position,
+   and everything — the sliding column, each card's fade, the note's lines, the connector — is drawn from that
+   one continuous number, so nothing snaps between steps. */
+.build { position: relative; height: 640vh; border-top: 1px solid var(--line); }
 .build .stage { position: sticky; top: 68px; height: calc(100vh - 68px); display: flex; align-items: center; overflow: hidden; }
-.build .inner { width: 100%; }
-.build .cols { position: relative; display: grid; grid-template-columns: 1fr 1.05fr; gap: 72px; align-items: center; margin-top: 34px; }
-.build .srcs { position: relative; height: 380px; overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent); }
-.build .track { position: absolute; left: 0; right: 0; top: 50%; transition: transform .6s var(--ease); }
-.src { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; box-shadow: var(--sh-sm); opacity: .32; filter: saturate(.3); transform: scale(.97); transition: opacity .45s, filter .45s, transform .45s var(--ease), box-shadow .45s; }
-.src.on { opacity: 1; filter: none; transform: none; box-shadow: var(--sh-md); }
-.src .ic { width: 34px; height: 34px; flex: none; border-radius: 9px; display: grid; place-items: center; font-size: 16px; }
-.src b { display: block; font-size: 14.5px; }
-.src span { display: block; font-size: 13.5px; color: var(--ink2); margin-top: 2px; }
-.src small { display: block; margin-top: 6px; font-family: var(--mono); font-size: 11px; color: var(--ink3); }
-.src time { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink3); white-space: nowrap; }
-.build .doc2 { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--sh-lg); padding: 20px 22px; min-height: 360px; }
-.doc2 .dh { font-family: var(--mono); font-size: 11.5px; color: var(--ink3); letter-spacing: .04em; }
-.doc2 .who { display: flex; align-items: center; gap: 8px; margin: 12px 0 10px; font-weight: 600; font-size: 14.5px; }
-.doc2 .who i { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 700; }
-.ln { font-size: 14px; line-height: 1.55; padding: 5px 8px; margin: 0 -8px; border-radius: 7px; max-height: 0; opacity: 0; overflow: hidden; transition: max-height .5s var(--ease), opacity .4s, background .6s; }
-.ln.shown { max-height: 120px; opacity: 1; }
-.ln.new { background: #fff6cc; }
-.tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 1px 7px; border-radius: 6px; background: var(--bg2); border: 1px solid var(--line); font-family: var(--mono); font-size: 10.5px; color: var(--ink2); vertical-align: 1px; white-space: nowrap; }
-.doc2 .done { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--good-soft); color: var(--good); font-size: 13.5px; font-weight: 600; opacity: 0; transition: opacity .5s; }
-.doc2 .done.shown { opacity: 1; }
+.build .inner { width: 100%; max-width: 1320px; }
+.build .head2 { display: flex; align-items: end; justify-content: space-between; gap: 40px; }
+.build h2 { font-size: clamp(38px, 4.6vw, 64px); max-width: 780px; }
+.build .head2 .lead { max-width: 420px; font-size: 17.5px; }
+.build .cols { position: relative; display: grid; grid-template-columns: 1fr 1.12fr; gap: 96px; align-items: center; margin-top: clamp(24px, 4vh, 48px); }
+.build .srcs { position: relative; height: min(56vh, 560px); overflow: hidden; -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(transparent, #000 22%, #000 78%, transparent); }
+.build .track { position: absolute; left: 0; right: 0; top: 50%; }
+.src { display: flex; gap: 16px; align-items: flex-start; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px; margin-bottom: 22px; box-shadow: var(--sh-md); transform-origin: left center; }
+.src .ic { width: 46px; height: 46px; flex: none; border-radius: 12px; display: grid; place-items: center; font-size: 21px; }
+.src b { display: block; font-size: 18px; letter-spacing: -0.01em; }
+.src span { display: block; font-size: 15.5px; color: var(--ink2); margin-top: 3px; line-height: 1.45; }
+.src small { display: block; margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--ink3); }
+.src time { margin-left: auto; font-family: var(--mono); font-size: 12.5px; color: var(--ink3); white-space: nowrap; }
+.build .doc2 { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--sh-lg); padding: 30px 34px; min-height: min(58vh, 540px); }
+.doc2 .dh { font-family: var(--mono); font-size: 12.5px; color: var(--ink3); letter-spacing: .05em; }
+.doc2 .who { display: flex; align-items: center; gap: 10px; margin: 16px 0 14px; font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+.doc2 .who i { width: 34px; height: 34px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 700; }
+.ln { font-size: 17.5px; line-height: 1.55; padding: 8px 12px; margin: 0 -12px 2px; border-radius: 10px; overflow: hidden; }
+.tag { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; padding: 2px 9px; border-radius: 7px; background: var(--bg2); border: 1px solid var(--line); font-family: var(--mono); font-size: 11.5px; color: var(--ink2); vertical-align: 2px; white-space: nowrap; }
+.doc2 .done { margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--good-soft); color: var(--good); font-size: 16px; font-weight: 600; opacity: 0; }
 .build svg.wire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.build svg.wire path { fill: none; stroke: #9aa3ad; stroke-width: 1.5; stroke-dasharray: 3 5; }
+.build svg.wire path { fill: none; stroke: #9aa3ad; stroke-width: 1.75; stroke-dasharray: 3 6; }
 .build svg.wire circle { fill: var(--accent); }
-.build .prog { display: flex; gap: 6px; margin-top: 26px; }
-.build .prog i { height: 3px; flex: 1; border-radius: 3px; background: var(--line); transition: background .4s; }
-.build .prog i.on { background: var(--accent); }
 @media (max-width: 960px), (prefers-reduced-motion: reduce) {
   .build { height: auto; padding: 76px 0; }
   .build .stage { position: static; height: auto; display: block; overflow: visible; }
+  .build .head2 { display: block; } .build .head2 .lead { margin-top: 14px; }
   .build .cols { grid-template-columns: 1fr; gap: 28px; }
   .build .srcs { height: auto; -webkit-mask-image: none; mask-image: none; }
   .build .track { position: static; transform: none !important; }
-  .src { opacity: 1; filter: none; transform: none; }
-  .ln { max-height: none; opacity: 1; }
-  .ln.new { background: none; }
-  .doc2 .done { opacity: 1; }
-  .build svg.wire, .build .prog { display: none; }
+  .src { opacity: 1 !important; transform: none !important; }
+  .ln { opacity: 1 !important; max-height: none !important; background: none !important; }
+  .build .doc2 { min-height: 0; }
+  .doc2 .done { opacity: 1 !important; }
+  .build svg.wire { display: none; }
 }
 
 /* reveal */
@@ -323,8 +321,7 @@ footer a:hover { color: var(--ink); }
   <div class="stage">
     <div class="wrap inner">
       <span class="kicker">As the visit happens</span>
-      <h2 style="margin-top:14px;max-width:720px">A note that writes itself while the caregiver works.</h2>
-      <p class="lead" style="margin-top:14px;max-width:620px">Each moment of the visit lands in the note the county reads, with where it came from beside it. By clock-out there is nothing left to type up.</p>
+      <div class="head2"><h2 style="margin-top:14px">A note that writes itself while the caregiver works.</h2><p class="lead">Each moment of the visit lands in the note the county reads, with where it came from beside it. By clock-out there is nothing left to type up.</p></div>
       <div class="cols">
         <div class="srcs"><div class="track" id="b-track">
           <div class="src" data-i="0"><span class="ic" style="background:#e6f3fa">📍</span><div><b>Clock-in</b><span>Sam N. at 1420 Girard Ave N</span><small>GPS matched the address on file</small></div><time>8:02 AM</time></div>
@@ -345,7 +342,6 @@ footer a:hover { color: var(--ink); }
         </div>
         <svg class="wire" id="b-wire" aria-hidden="true"><path id="b-path" d=""/><circle id="b-dot" r="3.5" cx="-10" cy="-10"/></svg>
       </div>
-      <div class="prog" id="b-prog"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
   </div>
 </section>
@@ -496,41 +492,67 @@ function calc() {
 calc();
 
 
-// Build section: scroll progress through the tall section picks the step; the stage is sticky, so the
-// visitor watches one card at a time light up and the note gain its line. Off on phones and reduced motion.
+// Build section (smooth): a rAF loop eases `f` (0 … n-1, fractional) toward the scroll position and draws
+// everything from it — no step snaps, no CSS transitions to wait on. Idle when the section is off screen.
 (function () {
   var sec = document.getElementById("build"); if (!sec) return;
-  var track = document.getElementById("b-track"), srcs = sec.querySelectorAll(".src"), lns = sec.querySelectorAll(".ln");
-  var done = document.getElementById("b-done"), bars = sec.querySelectorAll(".prog i"), path = document.getElementById("b-path"), dot = document.getElementById("b-dot"), wire = document.getElementById("b-wire");
+  var track = document.getElementById("b-track"), srcs = [].slice.call(sec.querySelectorAll(".src")), lns = [].slice.call(sec.querySelectorAll(".ln"));
+  var done = document.getElementById("b-done"), path = document.getElementById("b-path"), dot = document.getElementById("b-dot"), wire = document.getElementById("b-wire");
   var still = matchMedia("(max-width: 960px), (prefers-reduced-motion: reduce)");
-  var cur = -1;
-  function wireTo(i) {
-    if (still.matches) return;
-    var box = wire.getBoundingClientRect(), a = srcs[i].getBoundingClientRect(), b = lns[i].getBoundingClientRect();
-    var x1 = a.right - box.left, y1 = a.top + a.height / 2 - box.top, x2 = b.left - box.left - 6, y2 = b.top + Math.min(b.height, 28) / 2 - box.top;
-    var mx = (x1 + x2) / 2;
+  var n = srcs.length, f = 0, target = 0, raf = 0, heights = [];
+  var ease = function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+  function measure() { heights = lns.map(function (el) { el.style.maxHeight = "none"; var h = el.scrollHeight; el.style.maxHeight = ""; return h; }); }
+  function centre(k) { var el = srcs[k]; return el.offsetTop + el.offsetHeight / 2; }
+  function targetFromScroll() {
+    var r = sec.getBoundingClientRect(), span = sec.offsetHeight - innerHeight;
+    var p = clamp(-r.top / Math.max(1, span), 0, 1);
+    // Hold a beat at each step: the value dwells near whole numbers and moves between them.
+    var x = p * (n - 1 + 0.6) - 0.3, i = Math.floor(x), frac = x - i;
+    return clamp(i + ease(clamp((frac - 0.25) / 0.5, 0, 1)), 0, n - 1);
+  }
+  function draw() {
+    var lo = Math.floor(f), hi = Math.min(n - 1, lo + 1), t = f - lo;
+    track.style.transform = "translateY(" + -(centre(lo) + (centre(hi) - centre(lo)) * t) + "px)";
+    srcs.forEach(function (el, k) {
+      var d = Math.abs(k - f), on = clamp(1 - d, 0, 1);
+      el.style.opacity = String(0.28 + 0.72 * on);
+      el.style.transform = "scale(" + (0.955 + 0.045 * on) + ")";
+    });
+    lns.forEach(function (el, k) {
+      var show = clamp(f - k + 1, 0, 1), s2 = ease(show);
+      el.style.maxHeight = (heights[k] * s2) + "px";
+      el.style.opacity = String(s2);
+      var glow = clamp(1 - Math.abs(f - k) * 1.4, 0, 1);
+      el.style.background = "rgba(255, 238, 153, " + (0.55 * glow) + ")";
+    });
+    done.style.opacity = String(clamp((f - (n - 1.35)) / 0.35, 0, 1));
+    // Connector from the nearest source to its line.
+    var k = Math.round(f), box = wire.getBoundingClientRect(), a = srcs[k].getBoundingClientRect(), b = lns[k].getBoundingClientRect();
+    var x1 = a.right - box.left, y1 = a.top + a.height / 2 - box.top, x2 = b.left - box.left - 10, y2 = b.top + Math.min(b.height, 34) / 2 - box.top, mx = (x1 + x2) / 2;
     path.setAttribute("d", "M" + x1 + "," + y1 + " C" + mx + "," + y1 + " " + mx + "," + y2 + " " + x2 + "," + y2);
+    path.style.opacity = String(clamp(1 - Math.abs(f - k) * 2.2, 0, 1));
     dot.setAttribute("cx", x2); dot.setAttribute("cy", y2);
   }
-  function set(i) {
-    if (i === cur) return; cur = i;
-    srcs.forEach(function (el, k) { el.classList.toggle("on", k === i); });
-    lns.forEach(function (el, k) { el.classList.toggle("shown", k <= i); el.classList.toggle("new", k === i); });
-    bars.forEach(function (el, k) { el.classList.toggle("on", k <= i); });
-    done.classList.toggle("shown", i === srcs.length - 1);
-    // Centre the active source in its window.
-    var el = srcs[i]; track.style.transform = "translateY(" + -(el.offsetTop + el.offsetHeight / 2) + "px)";
-    setTimeout(function () { wireTo(i); }, 620);
+  function loop() {
+    f += (target - f) * 0.085;
+    if (Math.abs(target - f) < 0.0005) f = target;
+    draw();
+    raf = f === target ? 0 : requestAnimationFrame(loop);
   }
-  function tick() {
-    if (still.matches) { srcs.forEach(function (el) { el.classList.add("on"); }); lns.forEach(function (el) { el.classList.add("shown"); }); return; }
-    var r = sec.getBoundingClientRect(), span = sec.offsetHeight - innerHeight;
-    var p = Math.min(1, Math.max(0, -r.top / Math.max(1, span)));
-    set(Math.min(srcs.length - 1, Math.floor(p * srcs.length)));
-    wireTo(cur);
+  function onScroll() {
+    if (still.matches) return;
+    target = targetFromScroll();
+    if (!raf) raf = requestAnimationFrame(loop);
   }
-  addEventListener("scroll", tick, { passive: true }); addEventListener("resize", tick); still.addEventListener("change", tick);
-  set(0); tick();
+  function reset() {
+    if (still.matches) { srcs.concat(lns).forEach(function (el) { el.style.cssText = ""; }); return; }
+    measure(); target = f = targetFromScroll(); draw();
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", reset); still.addEventListener("change", reset);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reset);
+  reset();
 })();
 
 // Nav border once scrolled; reveal on entry (all at once with ?static, and `?y=` scrolls, for captures).
