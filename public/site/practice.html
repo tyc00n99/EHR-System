@@ -237,25 +237,57 @@ if (location.protocol === "file:") {
   addEventListener("resize", size);
   // Wires need the images' real heights, and unscaled coordinates: draw once everything loaded, then scale.
   addEventListener("load", function () { stage = fit.getBoundingClientRect(); draw(); size(); });
-  // Entry animation: a2 (two soft fades) is the default; ?anim=1 sweeps the marker, ?anim=3 traces the
-  // wires, ?anim=full plays the original everything-moves sequence.
+  // Scroll-driven: progress through the section lights each highlight, draws its wire, and brightens
+  // its card, in order — and rewinds when you scroll back up. Same eased-rAF pattern as the home
+  // page's note-building section.
   var sec = document.getElementById("reinspection");
-  var params2 = new URLSearchParams(location.search);
-  var variant = { "1": "a1", "2": "a2", "3": "a3", full: "afull" }[params2.get("anim")] || "a2";
-  sec.classList.add(variant);
-  if (variant === "afull") {
-    fit.querySelectorAll(".hl").forEach(function (el, i) { el.style.transitionDelay = (0.55 + i * 0.14).toFixed(2) + "s"; });
-    fit.querySelectorAll(".mini, .cap").forEach(function (el, i) { el.style.transitionDelay = (0.8 + i * 0.07).toFixed(2) + "s"; });
-  }
-  if (variant === "a1") fit.querySelectorAll(".hl").forEach(function (el, i) { el.style.transitionDelay = (0.15 + i * 0.08).toFixed(2) + "s"; });
-  var still2 = matchMedia("(prefers-reduced-motion: reduce)").matches || params2.has("static");
-  function arm() {
-    if (variant === "a3") { var k = 0; svg.querySelectorAll("path, circle").forEach(function (el) { el.style.transitionDelay = (0.25 + Math.floor(k / 2) * 0.13).toFixed(2) + "s"; k++; }); }
-    if (still2 || !("IntersectionObserver" in window)) { sec.classList.add("go", "anow"); return; }
-    var io2 = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { sec.classList.add("go"); io2.disconnect(); } }); }, { rootMargin: "0px 0px -20% 0px" });
-    io2.observe(sec);
-  }
-  addEventListener("load", arm);
+  var still2 = matchMedia("(max-width: 960px), (prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
+  addEventListener("load", function () {
+    if (still2) return; // everything stays visible
+    sec.classList.add("scrub");
+    var hls = [].slice.call(fit.querySelectorAll(".hl"));
+    var paths = [].slice.call(svg.querySelectorAll("path"));
+    var dots = [].slice.call(svg.querySelectorAll("circle"));
+    var alias2 = { note2: "note", pf2: "pf" };
+    var cardsOf = hls.map(function (hl) {
+      var key = alias2[hl.dataset.w] || hl.dataset.w;
+      var card = minis[key];
+      var cap = card ? card.previousElementSibling : null;
+      return [card, cap && cap.classList.contains("cap") ? cap : null];
+    });
+    var n = hls.length, f = 0, target = 0, raf = 0;
+    var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+    function drawStep() {
+      var lit = {};
+      hls.forEach(function (hl, k) {
+        var sVal = clamp(f - k, 0, 1);
+        hl.style.transform = "scaleX(" + sVal + ")";
+        if (paths[k]) paths[k].style.opacity = sVal;
+        if (dots[k]) dots[k].style.opacity = sVal;
+        var key = alias2[hl.dataset.w] || hl.dataset.w;
+        lit[key] = Math.max(lit[key] || 0, sVal);
+        cardsOf[k].forEach(function (el) { if (el) el.style.opacity = 0.3 + 0.7 * (lit[key] || 0); });
+      });
+    }
+    var nbox = document.getElementById("noir-box");
+    function targetFromScroll() {
+      // Progress follows the graphic itself: the first pair starts as its box reaches mid-viewport,
+      // the last completes as the box's bottom comes into view.
+      var b = nbox.getBoundingClientRect();
+      var p = clamp((innerHeight * 0.6 - b.top) / Math.max(1, b.height * 0.95), 0, 1);
+      return p * n;
+    }
+    function loop() {
+      f += (target - f) * 0.16;
+      if (Math.abs(target - f) < 0.002) f = target;
+      drawStep();
+      raf = f === target ? 0 : requestAnimationFrame(loop);
+    }
+    function onScroll2() { target = targetFromScroll(); if (!raf) raf = requestAnimationFrame(loop); }
+    addEventListener("scroll", onScroll2, { passive: true });
+    addEventListener("resize", onScroll2);
+    target = f = targetFromScroll(); drawStep();
+  });
 })();
 
 // Nav border once scrolled; on the home page the pill marks the section in view.
