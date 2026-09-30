@@ -7,25 +7,26 @@
 <meta name="description" content="The EHR for Minnesota 245D home and community-based providers: notes, scheduling, medication and visit verification in one record.">
 <link rel="icon" href="/site/icon-192.png">
 <style>
-@font-face { font-family: Fraunces; src: url(/site/Fraunces.ttf) format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: PublicSans; src: url(/site/PublicSans-400.ttf) format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: PublicSans; src: url(/site/PublicSans-500.ttf) format("truetype"); font-weight: 500; font-display: swap; }
+/* Instrument Serif (SIL Open Font License, InstrumentSerif-LICENSE.txt) for statements, Geist (OFL) for everything else. Both served from this folder. */
+@font-face { font-family: "Instrument Serif"; src: url(/site/InstrumentSerif-400.woff2) format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Instrument Serif"; src: url(/site/InstrumentSerif-400-italic.woff2) format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: Geist; src: url(/site/Geist-variable.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: Inconsolata; src: url(/site/Inconsolata.ttf) format("truetype"); font-weight: 400; font-display: swap; }
 :root {
   --paper: #f2f2ee; --white: #ffffff; --ink: #1b1818; --ink-2: #5d5a58; --line: #d9d6cf;
   --navy: #0f4c6e; --navy-2: #0b3a55; --navy-soft: #e3edf3; --blue: #0098c0;
   --tint: 0,152,192; --warm: 245,223,188;
   --w: 1200px; --ease: cubic-bezier(.2,.7,.2,1);
-  --serif: Fraunces, Georgia, serif; --sans: PublicSans, system-ui, sans-serif; --mono: Inconsolata, ui-monospace, monospace;
+  --serif: "Instrument Serif", Georgia, serif; --sans: Geist, system-ui, sans-serif; --mono: Inconsolata, ui-monospace, monospace;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; overflow-x: clip; }
 body { margin: 0; font-family: var(--sans); font-size: 16px; line-height: 1.55; letter-spacing: -0.01em; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 a { color: inherit; text-decoration: none; }
 img { display: block; max-width: 100%; height: auto; }
-h1, h2, h3 { margin: 0; font-family: var(--serif); font-weight: 400; line-height: 1; letter-spacing: -0.02em; text-wrap: balance; }
-h1 { font-size: 72px; }
-h2 { font-size: 48px; line-height: 1.05; }
+h1, h2, h3 { margin: 0; font-family: var(--serif); font-weight: 400; line-height: 0.98; letter-spacing: -0.015em; text-wrap: balance; }
+h1 { font-size: 92px; }
+h2 { font-size: 58px; line-height: 1; }
 h3 { font-size: 24px; line-height: 1.2; }
 p { margin: 0; }
 .wrap { max-width: var(--w); margin: 0 auto; padding: 0 32px; }
@@ -84,7 +85,7 @@ section.white { background: var(--white); border-top: 1px solid var(--line); bor
 
 /* see it work */
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
-.split h2 { font-size: 40px; }
+.split h2 { font-size: 50px; }
 .split .arrow { display: inline-block; margin-top: 26px; }
 .rec { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 22px 26px 10px; box-shadow: 0 20px 25px -5px rgba(0,0,0,.08), 0 8px 10px -6px rgba(0,0,0,.06); position: relative; }
 .rec::after { content: ""; position: absolute; inset: 14px -12px -12px 14px; border: 1px solid var(--line); border-radius: 22px; z-index: -1; background: rgba(255,255,255,.5); }
@@ -128,7 +129,7 @@ section.white { background: var(--white); border-top: 1px solid var(--line); bor
 .stats { display: flex; justify-content: center; margin-top: 52px; }
 .stats > div { padding: 8px 48px; border-left: 1px solid var(--line); text-align: center; }
 .stats > div:first-child { border-left: 0; }
-.stats .big { font-family: var(--serif); font-size: 52px; line-height: 1; color: var(--navy); letter-spacing: -0.02em; }
+.stats .big { font-family: var(--serif); font-size: 66px; line-height: 1; color: var(--navy); letter-spacing: -0.02em; }
 .stats .lab { font-family: var(--mono); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: rgba(27,24,24,.7); margin-top: 12px; }
 
 /* two ways */
@@ -141,7 +142,7 @@ section.white { background: var(--white); border-top: 1px solid var(--line); bor
 
 /* CTA panel */
 .panel { margin: 20px auto 0; max-width: 900px; border-radius: 28px; background: linear-gradient(135deg, #0f4c6e 0%, #19638a 60%, #2a7aa3 100%); color: #fff; padding: 64px 64px; position: relative; overflow: hidden; }
-.panel h2 { font-size: 42px; max-width: 560px; margin-bottom: 18px; }
+.panel h2 { font-size: 52px; max-width: 560px; margin-bottom: 18px; }
 .panel p { max-width: 520px; color: rgba(255,255,255,.8); margin-bottom: 30px; font-size: 16px; }
 .panel svg { position: absolute; right: -60px; top: -80px; width: 520px; height: 520px; opacity: .35; }
 
@@ -155,7 +156,7 @@ footer .cols a:hover { color: var(--navy); }
 footer .bottom { border-top: 1px solid var(--line); margin-top: 44px; padding-top: 24px; text-align: center; font-size: 14px; color: var(--ink-2); }
 
 @media (max-width: 900px) {
-  h1 { font-size: 44px; } h2 { font-size: 34px; } .split h2 { font-size: 30px; } .panel h2 { font-size: 30px; }
+  h1 { font-size: 56px; } h2 { font-size: 40px; } .split h2 { font-size: 36px; } .panel h2 { font-size: 36px; }
   header .wrap { height: 68px; } header nav { display: none; } header .right .pill.ghost { display: none; }
   .hero { padding: 56px 0 24px; } .hero::before, .hero::after { width: 260px; height: 260px; }
   .trust { flex-wrap: wrap; gap: 10px; } .trust span { border-left: 0; padding: 0 8px; }
