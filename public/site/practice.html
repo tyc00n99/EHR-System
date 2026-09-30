@@ -18,20 +18,11 @@
   </div>
 </nav>
 
-<section id="practice">
-  <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Practice management</span><h2>Everything the paperwork used to take a weekend for.</h2></div>
-    <div class="grid3 rv">
-      <div class="cell"><div class="ic">◷</div><h3>Units against the authorization</h3><p>Every note counted in 15-minute units and checked against what the county authorized, with a warning before it runs out.</p></div>
-      <div class="cell"><div class="ic">☰</div><h3>The personnel file</h3><p>Background study, orientation, training hours and evaluations, tracked against their deadlines with the paper attached.</p></div>
-      <div class="cell"><div class="ic">$</div><h3>Hours for payroll</h3><p>Regular and overtime hours per caregiver for the pay period, ready to enter in your payroll. Unsigned notes are held back.</p></div>
-    </div>
-  </div>
-</section>
-
 <section class="noir" id="reinspection">
   <div class="wrap">
     <div class="section-head rv"><span class="kicker">The state's own checklist</span><h2>When the licensor knocks, the record is already open.</h2><p class="lead">This is the actual DHS Notice of Reinspection — the records a 245D licensor pulls. The highlighted lines are just a preview: much more of this notice is already built into EVVora. <a href="mailto:demo@evvora.com?subject=EVVora%20demo" style="color:var(--accent);font-weight:600">Book a demo</a> and we'll walk the whole checklist in the product, requirement by requirement.</p></div>
+  </div>
+  <div class="nwide">
     <div class="nbox rv" id="noir-box"><div class="stage2" id="noir-fit">
     <svg class="wires" id="noir-wires"></svg>
     <div class="stack">
@@ -125,6 +116,17 @@
     </div>
     </div></div>
     <p class="nsrc">Pages from the MN DHS 245D Notice of Reinspection (blank state form). EVVora is not affiliated with or endorsed by DHS. Sample data shown.</p>
+  </div>
+</section>
+
+<section id="practice">
+  <div class="wrap">
+    <div class="section-head rv"><span class="kicker">Practice management</span><h2>Everything the paperwork used to take a weekend for.</h2></div>
+    <div class="grid3 rv">
+      <div class="cell"><div class="ic">◷</div><h3>Units against the authorization</h3><p>Every note counted in 15-minute units and checked against what the county authorized, with a warning before it runs out.</p></div>
+      <div class="cell"><div class="ic">☰</div><h3>The personnel file</h3><p>Background study, orientation, training hours and evaluations, tracked against their deadlines with the paper attached.</p></div>
+      <div class="cell"><div class="ic">$</div><h3>Hours for payroll</h3><p>Regular and overtime hours per caregiver for the pay period, ready to enter in your payroll. Unsigned notes are held back.</p></div>
+    </div>
   </div>
 </section>
 
@@ -235,6 +237,16 @@ if (location.protocol === "file:") {
   addEventListener("resize", size);
   // Wires need the images' real heights, and unscaled coordinates: draw once everything loaded, then scale.
   addEventListener("load", function () { stage = fit.getBoundingClientRect(); draw(); size(); });
+  // Entry choreography: sheets rise, the stamp slams, highlights sweep like a marker, cards pop, wires fade on.
+  var sec = document.getElementById("reinspection");
+  fit.querySelectorAll(".hl").forEach(function (el, i) { el.style.transitionDelay = (0.55 + i * 0.14).toFixed(2) + "s"; });
+  fit.querySelectorAll(".mini, .cap").forEach(function (el, i) { el.style.transitionDelay = (0.8 + i * 0.07).toFixed(2) + "s"; });
+  var still2 = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
+  if (still2 || !("IntersectionObserver" in window)) { sec.classList.add("go"); }
+  else {
+    var io2 = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { sec.classList.add("go"); io2.disconnect(); } }); }, { rootMargin: "0px 0px -20% 0px" });
+    io2.observe(sec);
+  }
 })();
 
 // Nav border once scrolled; on the home page the pill marks the section in view.
