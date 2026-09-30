@@ -23,9 +23,18 @@
     <div class="section-head rv"><span class="kicker">Clinical · Watch it work</span><h2>The service record, doing its job.</h2><p class="lead">This is the note a caregiver writes during the visit — clock-in, narrative, outcomes, medications, and the client's own signature. Watch it happen.</p></div>
     <div class="dframe rv"><div class="dfit" id="demo-fit">
       <div class="dwin" id="demo-win">
-        <div class="dban"><span class="dav">KN</span><div><b>Kevin Nguyen</b><small>Individualized home supports · S5135</small></div><span class="dchip" id="d-status">DRAFT</span></div>
+        <div class="dban"><span class="dav">KN</span><div><b>Kevin Nguyen</b><small>Daily service note · today</small></div><span class="dchip" id="d-status">DRAFT</span></div>
         <div class="dcols">
           <div class="dleft">
+            <div class="dlab">Service</div>
+            <div class="dselwrap">
+              <div class="dsel" id="d-sel"><span id="d-seltext" class="dph2">Choose the service…</span><i>▾</i></div>
+              <div class="dmenu" id="d-menu">
+                <div class="dmi">Individualized home supports</div>
+                <div class="dmi" id="d-opt">Individualized home supports (with training)</div>
+                <div class="dmi">Respite care · in home</div>
+              </div>
+            </div>
             <div class="dlab">Clock-in</div>
             <button class="dclock" id="d-clock">Clock in</button>
             <div class="dgps" id="d-gps">Clocked in 8:02 AM · GPS matched the address on file</div>
@@ -36,6 +45,16 @@
             <label class="dout" id="d-out2"><span class="dbox"></span>Walked the block</label>
           </div>
           <div class="dright">
+            <div class="dlab">Daily activities</div>
+            <div class="dselwrap">
+              <div class="dsel dsm" id="d-actsel"><span class="dph2">Add an activity…</span><i>▾</i></div>
+              <div class="dmenu" id="d-actmenu">
+                <div class="dmi" id="d-aopt1">Morning routine with the picture schedule</div>
+                <div class="dmi" id="d-aopt2">Weekly pill organizer, checked against the MAR</div>
+                <div class="dmi">Walk and community outing</div>
+              </div>
+            </div>
+            <div class="dacts" id="d-acts"></div>
             <div class="dlab">Medications due</div>
             <div class="dmed"><span>Lisinopril 10 mg · 8:00</span><i class="dg" id="d-g">G</i></div>
             <div class="dlab">Client signature</div>
@@ -187,12 +206,14 @@ if (location.protocol === "file:") {
 (function () {
   var fit = document.getElementById("demo-fit"); if (!fit) return;
   var box = fit.parentElement;
-  function size() { var k = Math.min(1, box.clientWidth / 1040); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(600 * k) + "px"; }
+  function size() { var k = Math.min(1, box.clientWidth / 1040); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(680 * k) + "px"; }
   addEventListener("resize", size); size();
 
   var win = document.getElementById("demo-win"), cur = document.getElementById("d-cursor");
   var el = function (id) { return document.getElementById(id); };
   var TEXT = "Kevin was up and dressed when I arrived. Cued him through the morning routine \u2014 one verbal prompt for tooth-brushing. Walked the block; he named both landmarks without help.";
+  var SERVICE = "Individualized home supports (with training)";
+  var ACT1 = "Morning routine with the picture schedule", ACT2 = "Weekly pill organizer, checked against the MAR";
   var timers = [], playing = false;
   function at(t, fn) { timers.push(setTimeout(fn, t)); }
   function moveTo(target, dx, dy) {
@@ -202,50 +223,66 @@ if (location.protocol === "file:") {
     cur.style.top = ((a.top - w.top) / k + (dy == null ? a.height / k / 2 : dy)) + "px";
   }
   function click() { cur.classList.remove("click"); void cur.offsetWidth; cur.classList.add("click"); }
+  function chip(text) { var c = document.createElement("span"); c.className = "dact"; c.textContent = text; c.insertAdjacentHTML("beforeend", "<i>\u00d7</i>"); el("d-acts").appendChild(c); }
   function reset() {
     el("d-status").textContent = "DRAFT"; el("d-status").classList.remove("ok");
+    el("d-seltext").textContent = "Choose the service\u2026"; el("d-seltext").classList.add("dph2");
+    el("d-menu").classList.remove("open"); el("d-actmenu").classList.remove("open");
+    el("d-acts").innerHTML = "";
     el("d-clock").classList.remove("gone"); el("d-gps").classList.remove("on");
     el("d-text").textContent = ""; el("d-caret").classList.remove("on"); el("d-ph").classList.remove("gone");
     el("d-out1").classList.remove("on"); el("d-out2").classList.remove("on");
-    el("d-g").classList.remove("on"); el("d-g").textContent = "G";
+    el("d-g").classList.remove("on");
     el("d-sig").classList.remove("signed"); el("d-dots").textContent = "";
     el("d-done").classList.remove("on");
     cur.style.left = "70px"; cur.style.top = "110px";
   }
-  function typeInto(node, text, cps, done) {
+  function typeInto(node, text, cps) {
     var i = 0;
-    (function tick() { if (!playing) return; node.textContent = text.slice(0, ++i); if (i < text.length) timers.push(setTimeout(tick, cps)); else if (done) done(); })();
+    (function tick() { if (!playing) return; node.textContent = text.slice(0, ++i); if (i < text.length) timers.push(setTimeout(tick, cps)); })();
   }
   function run() {
     reset();
-    at(500, function () { moveTo(el("d-clock")); });
-    at(1150, function () { click(); el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); });
-    at(1800, function () { moveTo(el("d-narr"), 40, 30); });
-    at(2450, function () { click(); el("d-ph").classList.add("gone"); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 26); });
-    at(8200, function () { el("d-caret").classList.remove("on"); moveTo(el("d-out1"), 10, null); });
-    at(8850, function () { click(); el("d-out1").classList.add("on"); });
-    at(9350, function () { moveTo(el("d-out2"), 10, null); });
-    at(9900, function () { click(); el("d-out2").classList.add("on"); });
-    at(10500, function () { moveTo(el("d-g")); });
-    at(11150, function () { click(); var g = el("d-g"); g.classList.add("on"); g.innerHTML = "G"; });
-    at(11900, function () { moveTo(el("d-sig"), 60, 34); });
-    at(12500, function () {
+    at(500, function () { moveTo(el("d-sel")); });
+    at(1100, function () { click(); el("d-menu").classList.add("open"); });
+    at(1750, function () { moveTo(el("d-opt")); });
+    at(2350, function () { click(); el("d-menu").classList.remove("open"); var t = el("d-seltext"); t.textContent = SERVICE; t.classList.remove("dph2"); });
+    at(3100, function () { moveTo(el("d-clock")); });
+    at(3700, function () { click(); el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); });
+    at(4350, function () { moveTo(el("d-narr"), 40, 30); });
+    at(4950, function () { click(); el("d-ph").classList.add("gone"); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 24); });
+    at(9600, function () { el("d-caret").classList.remove("on"); moveTo(el("d-out1"), 10, null); });
+    at(10200, function () { click(); el("d-out1").classList.add("on"); });
+    at(10700, function () { moveTo(el("d-out2"), 10, null); });
+    at(11250, function () { click(); el("d-out2").classList.add("on"); });
+    at(11900, function () { moveTo(el("d-actsel")); });
+    at(12500, function () { click(); el("d-actmenu").classList.add("open"); });
+    at(13100, function () { moveTo(el("d-aopt1")); });
+    at(13650, function () { click(); chip(ACT1); });
+    at(14250, function () { moveTo(el("d-aopt2")); });
+    at(14800, function () { click(); chip(ACT2); el("d-actmenu").classList.remove("open"); });
+    at(15500, function () { moveTo(el("d-g")); });
+    at(16100, function () { click(); el("d-g").classList.add("on"); });
+    at(16800, function () { moveTo(el("d-sig"), 60, 34); });
+    at(17400, function () {
       var dots = el("d-dots"), n = 0;
       (function dot() { if (!playing) return; dots.textContent += "\u25cf"; if (++n < 4) timers.push(setTimeout(dot, 260)); })();
     });
-    at(13900, function () { el("d-sig").classList.add("signed"); });
-    at(14500, function () { el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on"); });
-    at(18000, function () { if (playing) run(); });
+    at(18800, function () { el("d-sig").classList.add("signed"); });
+    at(19400, function () { el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on"); });
+    at(23200, function () { if (playing) run(); });
   }
   function stop() { playing = false; timers.forEach(clearTimeout); timers = []; }
   var still3 = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
   if (still3) {
-    playing = true; reset();
+    reset();
+    var t = el("d-seltext"); t.textContent = SERVICE; t.classList.remove("dph2");
     el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); el("d-ph").classList.add("gone");
     el("d-text").textContent = TEXT; el("d-out1").classList.add("on"); el("d-out2").classList.add("on");
+    chip(ACT1); chip(ACT2);
     el("d-g").classList.add("on"); el("d-sig").classList.add("signed");
     el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on");
-    cur.style.display = "none"; playing = false;
+    cur.style.display = "none";
   } else if ("IntersectionObserver" in window) {
     var io3 = new IntersectionObserver(function (es) {
       es.forEach(function (e) {

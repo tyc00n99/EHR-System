@@ -450,7 +450,7 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
    then VERIFIED — on a loop while in view. Fixed 1040x600 stage scaled by #demo-fit. */
 .demo .dframe { position: relative; overflow: hidden; margin-top: 8px; }
 .demo .dfit { width: 1040px; transform-origin: top left; }
-.dwin { position: relative; width: 1040px; height: 600px; background: #fbfaf7; border: 1px solid var(--line2); border-radius: 22px; box-shadow: var(--sh-lg); overflow: hidden; }
+.dwin { position: relative; width: 1040px; height: 680px; background: #fbfaf7; border: 1px solid var(--line2); border-radius: 22px; box-shadow: var(--sh-lg); overflow: hidden; }
 .dban { display: flex; align-items: center; gap: 14px; padding: 18px 28px; border-bottom: 1px solid var(--line); background: #f4f2ec; }
 .dban .dav { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .dban b { font-size: 17px; display: block; }
@@ -488,3 +488,18 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .dcursor.click { animation: dclick .28s ease; }
 @keyframes dclick { 40% { transform: scale(.82); } }
 @media (max-width: 960px) { .demo .dframe { border-radius: 16px; } }
+
+/* demo dropdowns and activity chips (Sept 30, 2026) */
+.dselwrap { position: relative; }
+.dsel { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--line2); border-radius: 10px; background: #fff; padding: 10px 14px; font-size: 14px; font-weight: 500; }
+.dsel i { font-style: normal; color: var(--ink3); font-size: 12px; }
+.dsel.dsm { font-size: 13px; padding: 9px 12px; }
+.dph2 { color: #b8b2a4; }
+.dmenu { display: none; position: absolute; left: 0; right: 0; top: calc(100% + 5px); z-index: 8; background: #fff; border: 1px solid var(--line2); border-radius: 12px; box-shadow: var(--sh-md); overflow: hidden; }
+.dmenu.open { display: block; }
+.dmi { padding: 10px 14px; font-size: 13.5px; border-bottom: 1px solid var(--line); }
+.dmi:last-child { border-bottom: 0; }
+.dmi:nth-child(2) { background: var(--accent-soft); }
+.dacts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 30px; }
+.dact { display: inline-flex; align-items: center; gap: 7px; background: var(--bg2); border: 1px solid var(--line2); border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 500; }
+.dact i { font-style: normal; color: var(--ink3); }
