@@ -254,6 +254,23 @@ export const sessions = pgTable(
   (t) => [index("sessions_user_idx").on(t.userId)],
 );
 
+// One-time password-reset tokens (Sept 30, 2026). Only the SHA-256 of the token is stored; the
+// plain token lives in the emailed link and nowhere else. Rows are single-use and short-lived.
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("password_resets_user_idx").on(t.userId), index("password_resets_hash_idx").on(t.tokenHash)],
+);
+
 // ---------- people served ----------
 
 export const people = pgTable(

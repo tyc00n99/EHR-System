@@ -148,10 +148,17 @@ export async function signIn(email: string, password: string): Promise<{ ok: tru
   }
   if (user.failedLogins > 0 || user.lockedUntil) await db.update(schema.users).set({ failedLogins: 0, lockedUntil: null }).where(eq(schema.users.id, user.id));
 
+  await establishSession(user.id);
+  return { ok: true };
+}
+
+/** Create a session row and set the cookie — the one place a login becomes a session. */
+async function establishSession(userId: string, extra?: Record<string, unknown>): Promise<void> {
+  const db = await getDb();
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_HOURS * 60 * 60 * 1000);
-  await db.insert(schema.sessions).values({ id: token, userId: user.id, expiresAt });
-  await audited(db, { userId: user.id }).event("login", user.id);
+  await db.insert(schema.sessions).values({ id: token, userId, expiresAt });
+  await audited(db, { userId }).event("login", userId, undefined, extra);
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
@@ -161,6 +168,26 @@ export async function signIn(email: string, password: string): Promise<{ ok: tru
     path: "/",
     expires: expiresAt,
   });
+}
+
+/**
+ * Sign in on a verified email from an identity provider (Google / Microsoft). The provider proved
+ * who they are; the email still has to belong to an existing **active** login, so accounts are
+ * granted and revoked only on the staff record's Login tab. Password lockout does not apply here —
+ * there is no password to guess.
+ */
+export async function signInWithProvider(email: string, provider: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  const db = await getDb();
+  const [user] = await db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.email, email.trim().toLowerCase()))
+    .limit(1);
+  if (!user || !user.active) {
+    return { ok: false, message: "No active login uses that email. Ask your administrator to put it on your staff record first." };
+  }
+  if (user.failedLogins > 0 || user.lockedUntil) await db.update(schema.users).set({ failedLogins: 0, lockedUntil: null }).where(eq(schema.users.id, user.id));
+  await establishSession(user.id, { method: provider });
   return { ok: true };
 }
 
