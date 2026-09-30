@@ -141,7 +141,67 @@ nav.top .right { margin-left: auto; display: flex; gap: 10px; align-items: cente
 .cell .ic { width: 36px; height: 36px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; }
 .cell h3 { margin-top: 16px; font-size: 17px; }
 .cell p { margin-top: 6px; color: var(--ink2); font-size: 14.5px; }
-.shot { margin-top: 56px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--sh-lg); background: var(--card); }
+/* showcase: a drawn product shot, after Passage Health's (user, Sept 30, 2026) — a desktop window on a colored
+   backdrop with a phone overlapping its corner. Built in HTML at a fixed 1120px design width and scaled to fit
+   by a few lines of script, so it stays sharp and never stretches. */
+.show { margin-top: 56px; border-radius: 26px; background: linear-gradient(135deg, #0b2672 0%, #3C518E 45%, #7878C7 100%); padding: 44px 0 0 44px; overflow: hidden; position: relative; }
+.show::after { content: ""; position: absolute; width: 520px; height: 520px; right: -140px; top: -180px; border-radius: 50%; background: radial-gradient(closest-side, rgba(240,208,161,.45), transparent); pointer-events: none; }
+.show .fit { width: 1120px; height: 640px; transform-origin: top left; position: relative; z-index: 1; }
+.win { position: absolute; left: 0; top: 0; width: 1010px; height: 640px; background: #fbfaf7; border-radius: 18px 0 0 0; box-shadow: 0 30px 80px -20px rgba(8,16,48,.55); display: grid; grid-template-columns: 58px 1fr; overflow: hidden; font-size: 13px; color: var(--ink); }
+.win .rail { background: #f1efe9; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 16px; color: #8a8378; }
+.win .rail .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px; margin-bottom: 6px; }
+.win .rail i { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-style: normal; font-size: 16px; opacity: .75; }
+.win .rail i.on { color: var(--accent); opacity: 1; background: var(--accent-soft); }
+.win .main { padding: 14px 18px 0; display: flex; flex-direction: column; min-width: 0; }
+.win .ban { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 9px 14px; background: #fff; }
+.win .av { width: 30px; height: 30px; border-radius: 50%; background: #e3e6f1; color: var(--accent); font-weight: 700; font-size: 11.5px; display: grid; place-items: center; }
+.win .ban b { font-size: 16px; font-family: var(--display); letter-spacing: -.02em; }
+.win .ban .meta { color: var(--ink3); font-size: 12px; }
+.pillx { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.pillx.ok { background: var(--good-soft); color: var(--good); } .pillx.ok::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pillx.nav { background: var(--accent-soft); color: var(--accent); }
+.pillx.amber { background: #f8e8d0; color: #9a5b08; }
+.pillx.grey { background: #eceae4; color: var(--ink2); }
+.win .ban .org { margin-left: auto; border: 1px solid var(--line); border-radius: 8px; padding: 3px 9px; font-size: 11.5px; color: var(--ink2); }
+.win .tabs { display: flex; gap: 6px; margin: 12px 0 10px; }
+.win .tabs span { padding: 6px 12px; border-radius: 8px; color: var(--ink2); font-weight: 500; }
+.win .tabs span.on { background: var(--accent-soft); color: var(--accent); }
+.win .body { flex: 1; display: grid; grid-template-columns: 300px 1fr; border: 1px solid var(--line); border-bottom: 0; border-radius: 12px 12px 0 0; background: #fff; min-height: 0; overflow: hidden; }
+.win .list { border-right: 1px solid var(--line); padding: 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+.win .search { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; color: #a39c91; font-size: 12px; }
+.win .seg { display: flex; background: #f1efe9; border-radius: 8px; padding: 3px; font-size: 12px; color: var(--ink2); }
+.win .seg span { flex: 1; text-align: center; padding: 4px 0; border-radius: 6px; } .win .seg span.on { background: #fff; color: var(--ink); font-weight: 600; box-shadow: var(--sh-sm); }
+.win .item { padding: 9px 10px; border-radius: 10px; border: 1px solid transparent; }
+.win .item.on { background: #eef0f8; border-color: #c7cde6; box-shadow: inset 3px 0 0 var(--accent); }
+.win .item b { display: block; font-size: 13px; } .win .item small { display: block; color: var(--ink3); font-size: 11.5px; margin-top: 3px; }
+.win .item .row { display: flex; gap: 5px; margin-top: 5px; }
+.win .detail { padding: 14px 18px; min-width: 0; }
+.win .dh { display: flex; align-items: center; gap: 8px; }
+.win .dh b { font-family: var(--display); font-size: 17px; letter-spacing: -.02em; }
+.win .dh .btns { margin-left: auto; display: flex; gap: 6px; }
+.win .dh .btns span { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 11.5px; color: var(--ink2); } .win .dh .btns span.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+.win .outcome { margin-top: 8px; color: var(--ink2); font-size: 12.5px; line-height: 1.5; max-width: 560px; }
+.win .chart { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 8px; }
+.win .chart .ct { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink2); } .win .chart .ct b { color: var(--ink); }
+.win .chart svg { display: block; width: 100%; height: 250px; }
+.win .legend { display: flex; gap: 16px; font-size: 11px; color: var(--ink3); justify-content: center; }
+.win .legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
+.win .ranges { display: flex; gap: 6px; margin-top: 10px; } .win .ranges span { border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; font-size: 11.5px; color: var(--ink2); } .win .ranges span.on { background: var(--accent-soft); color: var(--accent); border-color: #c7cde6; }
+.phone { position: absolute; right: -6px; top: 60px; width: 262px; height: 548px; border-radius: 42px; background: #111; padding: 9px; box-shadow: 0 40px 80px -20px rgba(8,16,48,.6); }
+.phone .scr { width: 100%; height: 100%; border-radius: 34px; background: #fbfaf7; overflow: hidden; display: flex; flex-direction: column; font-size: 12.5px; }
+.phone .sb { display: flex; justify-content: space-between; padding: 12px 22px 4px; font-weight: 600; font-size: 12px; }
+.phone .notch { width: 90px; height: 24px; border-radius: 14px; background: #111; margin: -24px auto 6px; }
+.phone .ph { display: flex; align-items: center; gap: 8px; padding: 6px 14px 10px; border-bottom: 1px solid var(--line); }
+.phone .ph b { font-size: 14px; } .phone .ph .rec { margin-left: auto; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #b8412f; display: grid; place-items: center; } .phone .ph .rec::after { content: ""; width: 9px; height: 9px; border-radius: 2px; background: #b8412f; }
+.phone .sec { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.phone .sec .k { font-size: 11px; color: var(--ink3); font-family: var(--mono); letter-spacing: .04em; }
+.phone .timer { display: flex; gap: 8px; margin-top: 8px; } .phone .timer .t { flex: 1; background: #eceae4; border-radius: 10px; text-align: center; padding: 10px 0; font-family: var(--mono); font-size: 20px; font-weight: 600; }
+.phone .timer .stop { flex: 1; background: #b8412f; color: #fff; border-radius: 10px; display: grid; place-items: center; font-weight: 600; }
+.phone .med { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; } .phone .med span { flex: 1; }
+.phone .med i { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--line2); display: grid; place-items: center; font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--ink3); } .phone .med i.g { background: var(--good-soft); color: var(--good); border-color: #a9d3bb; }
+.phone .cta2 { margin: auto 14px 16px; background: var(--accent); color: #fff; border-radius: 12px; text-align: center; padding: 11px 0; font-weight: 600; }
+.phone .ok2 { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--ink2); } .phone .ok2::before { content: "✓"; width: 16px; height: 16px; border-radius: 50%; background: var(--good); color: #fff; font-size: 10px; display: grid; place-items: center; }
+@media (max-width: 560px) { .show { padding: 22px 0 0 22px; border-radius: 18px; } }
 
 /* try it */
 .try { display: grid; grid-template-columns: .9fr 1.1fr; gap: 40px; align-items: start; }
@@ -356,7 +416,54 @@ footer a:hover { color: var(--ink); }
       <div class="cell"><div class="ic">℞</div><h3>Medication record</h3><p>A weekly MAR: given, refused, held or missed, with who recorded it.</p></div>
       <div class="cell"><div class="ic">$</div><h3>Hours for payroll</h3><p>Regular and overtime hours per caregiver for the pay period, ready to enter in your payroll. Unsigned notes are held back.</p></div>
     </div>
-    <div class="shot rv"><img src="/site/img/overview.jpg" alt="A client record in EVVora: authorizations with units left, the care team and the signing code" width="1600" height="800" loading="lazy"></div>
+    <div class="show rv" aria-label="EVVora on a desktop and a caregiver's phone">
+      <div class="fit" id="show-fit">
+        <div class="win">
+          <div class="rail"><span class="logo">E</span><i>⌂</i><i class="on">☺</i><i>☷</i><i>◷</i><i>✎</i><i>▤</i></div>
+          <div class="main">
+            <div class="ban"><span class="av">HL</span><b>Hal Lindqvist</b><span class="pillx ok">Active</span><span class="meta">PMI 12345678 · Client since Jul 1, 2026</span><span class="org">Northstar Home Supports</span></div>
+            <div class="tabs"><span>Overview</span><span class="on">Programming</span><span>Sessions</span><span>Documents</span><span>Medication</span><span>Profile</span></div>
+            <div class="body">
+              <div class="list">
+                <div class="search">Search outcomes</div>
+                <div class="seg"><span class="on">Active</span><span>Met</span><span>All</span></div>
+                <div class="item on"><b>Eat three meals a day</b><div class="row"><span class="pillx ok">On track</span><span class="pillx grey">Daily questions</span></div><small>90% yes over the last 30 days</small></div>
+                <div class="item"><b>Take every medication as prescribed</b><div class="row"><span class="pillx nav">Working on</span></div><small>84% yes · 4 notes this week</small></div>
+                <div class="item"><b>Stay safe through the night</b><div class="row"><span class="pillx amber">Needs attention</span></div><small>2 wake-ups flagged this week</small></div>
+                <div class="item"><b>Walk to the mailbox</b><div class="row"><span class="pillx nav">Working on</span><span class="pillx grey">Judged at review</span></div><small>Last review Sep 15</small></div>
+                <div class="item"><b>Give Ingrid a break every week</b><div class="row"><span class="pillx ok">Met</span></div><small>Closed Sep 1</small></div>
+              </div>
+              <div class="detail">
+                <div class="dh"><b>Eat three meals a day</b><span class="pillx ok">On track</span><div class="btns"><span>Add an entry</span><span class="pri">Review</span></div></div>
+                <p class="outcome">Hal will eat three meals a day and drink at least six glasses of water, with staff preparing meals at set times and sitting with him while he eats.</p>
+                <div class="chart"><div class="ct"><b>Answered yes, by week</b><span>From daily notes · 16 weeks</span></div><svg viewBox="0 0 640 210" preserveAspectRatio="none" font-family="Inter" font-size="10" fill="#767068">
+<line x1="34" x2="630" y1="186.0" y2="186.0" stroke="#eceae4"/><text x="26" y="190.0" text-anchor="end">0</text><line x1="34" x2="630" y1="151.2" y2="151.2" stroke="#eceae4"/><text x="26" y="155.2" text-anchor="end">20</text><line x1="34" x2="630" y1="116.4" y2="116.4" stroke="#eceae4"/><text x="26" y="120.4" text-anchor="end">40</text><line x1="34" x2="630" y1="81.6" y2="81.6" stroke="#eceae4"/><text x="26" y="85.6" text-anchor="end">60</text><line x1="34" x2="630" y1="46.8" y2="46.8" stroke="#eceae4"/><text x="26" y="50.8" text-anchor="end">80</text><line x1="34" x2="630" y1="12.0" y2="12.0" stroke="#eceae4"/><text x="26" y="16.0" text-anchor="end">100</text>
+<line x1="34" x2="630" y1="46.8" y2="46.8" stroke="#da8a14" stroke-dasharray="5 4"/>
+<text x="40" y="41.8" fill="#b36d0c">Mastery 80%</text>
+<line x1="192.9" x2="192.9" y1="12" y2="186" stroke="#7878C7" stroke-dasharray="4 4"/><text x="197.9" y="22" fill="#5656b9">Plan started</text>
+<line x1="34.0" y1="161.6" x2="630.0" y2="25.9" stroke="#b8412f" stroke-width="1.5" opacity=".7"/>
+<polyline points="34.0,154.7 73.7,147.7 113.5,159.9 153.2,133.8 192.9,126.8 232.7,137.3 272.4,112.9 312.1,102.5 351.9,90.3 391.6,95.5 431.3,76.4 471.1,64.2 510.8,57.2 550.5,43.3 590.3,36.4 630.0,29.4" fill="none" stroke="#0b2672" stroke-width="2.2" stroke-linejoin="round"/>
+<g fill="#0b2672"><circle cx="34.0" cy="154.7" r="3.2"/><circle cx="73.7" cy="147.7" r="3.2"/><circle cx="113.5" cy="159.9" r="3.2"/><circle cx="153.2" cy="133.8" r="3.2"/><circle cx="192.9" cy="126.8" r="3.2"/><circle cx="232.7" cy="137.3" r="3.2"/><circle cx="272.4" cy="112.9" r="3.2"/><circle cx="312.1" cy="102.5" r="3.2"/><circle cx="351.9" cy="90.3" r="3.2"/><circle cx="391.6" cy="95.5" r="3.2"/><circle cx="431.3" cy="76.4" r="3.2"/><circle cx="471.1" cy="64.2" r="3.2"/><circle cx="510.8" cy="57.2" r="3.2"/><circle cx="550.5" cy="43.3" r="3.2"/><circle cx="590.3" cy="36.4" r="3.2"/><circle cx="630.0" cy="29.4" r="3.2"/></g>
+<text x="34.0" y="204" text-anchor="middle">Jul 6</text><text x="153.2" y="204" text-anchor="middle">Jul 27</text><text x="272.4" y="204" text-anchor="middle">Aug 17</text><text x="391.6" y="204" text-anchor="middle">Sep 7</text><text x="510.8" y="204" text-anchor="middle">Sep 28</text>
+</svg>
+                  <div class="legend"><span><i style="background:#0b2672"></i>Yes %</span><span><i style="background:#b8412f"></i>Trend</span><span><i style="background:#da8a14"></i>Mastery</span></div></div>
+                <div class="ranges"><span>30 days</span><span>90 days</span><span class="on">6 months</span><span>1 year</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone"><div class="scr">
+          <div class="sb"><span>9:41</span><span>●●● ◔</span></div><div class="notch"></div>
+          <div class="ph"><span class="av" style="width:26px;height:26px;border-radius:50%;background:#e3e6f1;color:#0b2672;display:grid;place-items:center;font-size:10px;font-weight:700">SN</span><b>On shift with Hal</b><span class="rec"></span></div>
+          <div class="sec"><div class="k">CLOCKED IN 8:02 AM · GPS OK</div><div class="timer"><span class="t">02:14:36</span><span class="stop">Clock out</span></div></div>
+          <div class="sec"><div class="k">MEDICATIONS DUE</div>
+            <div class="med"><span>Donepezil 10 mg · 8:30</span><i class="g">G</i><i>R</i><i>H</i><i>M</i></div>
+            <div class="med"><span>Metformin 500 mg · 12:00</span><i>G</i><i>R</i><i>H</i><i>M</i></div></div>
+          <div class="sec"><div class="k">OUTCOMES TODAY</div><div class="ok2">Ate a full breakfast</div><div class="ok2">Walked the block</div></div>
+          <div class="cta2">Write the note</div>
+        </div></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -512,6 +619,14 @@ show("unsigned");
   addEventListener("resize", reset); still.addEventListener("change", reset);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reset);
   reset();
+})();
+
+// Showcase: drawn at 1120px wide, scaled to its box so it never stretches or blurs.
+(function () {
+  var fit = document.getElementById("show-fit"); if (!fit) return;
+  var box = fit.parentElement;
+  function size() { var pad = parseFloat(getComputedStyle(box).paddingLeft) || 0; var k = Math.min(1, (box.clientWidth - pad) / 1120); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(640 * k + pad) + "px"; }
+  addEventListener("resize", size); size();
 })();
 
 // Nav border once scrolled; reveal on entry (all at once with ?static, and `?y=` scrolls, for captures).
