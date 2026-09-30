@@ -156,22 +156,7 @@ nav.top .right { margin-left: auto; display: flex; gap: 10px; align-items: cente
 .answer li::before { content: "→"; color: var(--accent); font-weight: 700; }
 .answer .fix { margin: 18px 22px 22px; padding: 12px 14px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--line); font-size: 13.5px; color: var(--ink2); }
 .answer .fix b { color: var(--ink); }
-.fine2 { margin-top: 14px; font-size: 13px; color: var(--ink3); }
 
-/* math */
-.math { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: var(--sh-md); background: var(--card); }
-.math .inputs { padding: 32px; display: grid; gap: 26px; }
-.slider label { display: flex; justify-content: space-between; font-size: 14.5px; font-weight: 500; }
-.slider label b { font-family: var(--mono); font-weight: 600; }
-.slider input { width: 100%; margin-top: 10px; accent-color: var(--accent); }
-.slider small { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink3); }
-.math .out { background: var(--dark); color: var(--inv); padding: 32px; display: flex; flex-direction: column; }
-.math .out .k { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--inv2); }
-.math .out .big { font-family: var(--display); font-size: 64px; font-weight: 700; letter-spacing: -0.04em; color: #fff; line-height: 1; margin-top: 10px; }
-.math .out .rows { margin-top: 28px; display: grid; gap: 12px; }
-.math .out .rows div { display: flex; justify-content: space-between; border-top: 1px solid var(--dark2); padding-top: 12px; font-size: 14.5px; }
-.math .out .rows b { font-family: var(--mono); color: #fff; font-weight: 600; }
-.math .out .note { margin-top: auto; padding-top: 24px; font-size: 12.5px; color: var(--inv2); }
 
 /* faq */
 .faq { max-width: 820px; margin: 0 auto; }
@@ -248,10 +233,10 @@ footer a:hover { color: var(--ink); }
 .rv.d1 { transition-delay: .08s; } .rv.d2 { transition-delay: .16s; } .rv.d3 { transition-delay: .24s; }
 @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
 
-.hero .grid > *, .try > *, .math > * { min-width: 0; }
+.hero .grid > *, .try > * { min-width: 0; }
 .badge { max-width: 100%; }
 @media (max-width: 960px) {
-  .hero .grid, .try, .math { grid-template-columns: 1fr; }
+  .hero .grid, .try { grid-template-columns: 1fr; }
   .jobs, .grid3 { grid-template-columns: 1fr; }
   nav.top .links { display: none; }
   section { padding: 76px 0; }
@@ -262,7 +247,6 @@ footer a:hover { color: var(--ink); }
   nav.top .right .line { display: none; }
   .badge { font-size: 12px; white-space: normal; }
   .hero .ctas .btn { flex: 1 1 auto; justify-content: center; }
-  .math .out .big { font-size: 48px; }
 }
 </style>
 </head>
@@ -271,7 +255,7 @@ footer a:hover { color: var(--ink); }
 <nav class="top" id="top">
   <div class="wrap">
     <a class="logo" href="#"><img src="/site/evvora-wordmark.svg" alt="EVVora"></a>
-    <div class="links"><a href="#how">How it works</a><a href="#build">Watch a note</a><a href="#try">Try it</a><a href="#math">Do the math</a><a href="#faq">Questions</a></div>
+    <div class="links"><a href="#how">How it works</a><a href="#build">Watch a note</a><a href="#try">Try it</a><a href="#faq">Questions</a></div>
     <div class="right"><a class="btn line sm" href="/login">Log in</a><a class="btn ink sm" href="#demo">Book a demo</a></div>
   </div>
 </nav>
@@ -387,35 +371,11 @@ footer a:hover { color: var(--ink); }
         <div class="fix" id="a-fix"></div>
       </div>
     </div>
-    <p class="fine2 rv">Examples use sample data. Nothing here is a real client.</p>
   </div>
 </section>
 
-<section id="math" style="padding-top: 0">
-  <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Do the math</span><h2>What is note-writing costing your office?</h2><p class="lead">Move the sliders to match your agency. The estimate uses only your numbers.</p></div>
-    <div class="math rv">
-      <div class="inputs">
-        <div class="slider"><label for="s-notes">Notes a week <b id="v-notes"></b></label><input id="s-notes" type="range" min="10" max="600" step="10" value="120"><small>Across all caregivers and clients</small></div>
-        <div class="slider"><label for="s-min">Office minutes spent per note today <b id="v-min"></b></label><input id="s-min" type="range" min="2" max="30" step="1" value="10"><small>Chasing signatures, retyping, fixing units, filing</small></div>
-        <div class="slider"><label for="s-cut">Of that, how much would you hand to EVVora <b id="v-cut"></b></label><input id="s-cut" type="range" min="10" max="90" step="5" value="60"><small>Your own estimate. Start low.</small></div>
-        <div class="slider"><label for="s-rate">Office hourly cost <b id="v-rate"></b></label><input id="s-rate" type="range" min="18" max="60" step="1" value="28"><small>Wage plus taxes for whoever does it now</small></div>
-      </div>
-      <div class="out">
-        <span class="k">OFFICE HOURS BACK EACH MONTH</span>
-        <span class="big" id="o-hours"></span>
-        <div class="rows">
-          <div><span>Hours spent on notes now</span><b id="o-now"></b></div>
-          <div><span>Cost of those hours per year</span><b id="o-year"></b></div>
-          <div><span>Freed up per year</span><b id="o-saved"></b></div>
-        </div>
-        <p class="note">An estimate from the numbers you entered, not a promise. A month is counted as 4.33 weeks.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
-<section id="faq" style="padding-top: 0">
+<section id="faq">
   <div class="wrap">
     <div class="section-head center rv" style="text-align:center"><span class="kicker">Questions</span><h2>Questions agencies actually ask</h2></div>
     <div class="faq rv">
@@ -484,22 +444,6 @@ function show(k) {
 document.querySelectorAll(".pick").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.k); }); });
 show("unsigned");
 
-// Do the math: only the visitor's own numbers.
-function money(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
-function calc() {
-  var notes = +document.getElementById("s-notes").value, min = +document.getElementById("s-min").value, cut = +document.getElementById("s-cut").value, rate = +document.getElementById("s-rate").value;
-  document.getElementById("v-notes").textContent = notes;
-  document.getElementById("v-min").textContent = min + " min";
-  document.getElementById("v-cut").textContent = cut + "%";
-  document.getElementById("v-rate").textContent = "$" + rate;
-  var nowMonth = notes * min * 4.33 / 60, backMonth = nowMonth * cut / 100;
-  document.getElementById("o-hours").textContent = Math.round(backMonth) + " h";
-  document.getElementById("o-now").textContent = Math.round(nowMonth) + " h / month";
-  document.getElementById("o-year").textContent = money(nowMonth * 12 * rate);
-  document.getElementById("o-saved").textContent = money(backMonth * 12 * rate);
-}
-["s-notes", "s-min", "s-cut", "s-rate"].forEach(function (id) { document.getElementById(id).addEventListener("input", calc); });
-calc();
 
 
 // Build section (smooth): a rAF loop eases `f` (0 … n-1, fractional) toward the scroll position and draws
