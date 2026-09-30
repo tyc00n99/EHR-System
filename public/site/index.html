@@ -113,11 +113,17 @@ nav.top .right { margin-left: auto; display: flex; gap: 10px; align-items: cente
 .visit .foot { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink2); }
 .visit .foot .btn { margin-left: auto; height: 34px; padding: 0 14px; font-size: 13px; }
 
-/* strip */
-.strip { padding: 28px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg2); }
-.strip .wrap { display: flex; align-items: center; justify-content: center; gap: 12px 28px; flex-wrap: wrap; font-family: var(--mono); font-size: 12.5px; color: var(--ink2); }
-.strip .wrap span { display: inline-flex; align-items: center; gap: 8px; }
-.strip .wrap span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+/* strip: one line that flows sideways forever (user, Sept 30, 2026). Two copies of the list slide left by one
+   copy's width, so the loop has no seam; the edges fade out. Hover pauses it; reduced motion stops it. */
+.strip { padding: 22px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg2); overflow: hidden; }
+.marquee { display: flex; width: max-content; animation: flow 38s linear infinite; -webkit-mask-image: none; }
+.strip { -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.strip:hover .marquee { animation-play-state: paused; }
+.run { display: flex; gap: 56px; padding-right: 56px; font-family: var(--mono); font-size: 13.5px; color: var(--ink2); white-space: nowrap; }
+.run span { display: inline-flex; align-items: center; gap: 10px; }
+.run span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+@keyframes flow { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .marquee { animation: none; } .run[aria-hidden] { display: none; } .run { flex-wrap: wrap; white-space: normal; justify-content: center; padding: 0 var(--pad); gap: 12px 28px; } .marquee { width: auto; } }
 
 /* your job */
 .jobs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
@@ -267,7 +273,6 @@ footer a:hover { color: var(--ink); }
       <h1 class="rv d1">Every visit verified. Every note <em>audit&#8209;ready.</em></h1>
       <p class="lead rv d2">EVVora checks each visit as it happens, writes the daily service note the way the county reads it, and tells you what to bill and what to pay. Your caregivers clock in and write. You review.</p>
       <div class="ctas rv d3"><a class="btn ink" href="#demo">Book a demo</a><a class="btn line" href="#try">See what it catches</a></div>
-      <p class="fine rv d3">Works on any phone. No app store download for caregivers.</p>
     </div>
 
     <div class="visit rv d2" aria-label="Example of one visit in EVVora">
@@ -297,7 +302,7 @@ footer a:hover { color: var(--ink); }
   </div>
 </header>
 
-<div class="strip"><div class="wrap"><span>DHS service codes and modifiers</span><span>15-minute units, 8-minute rule</span><span>Ready for the HHAeXchange aggregator</span><span>Licensor's personnel file list</span></div></div>
+<div class="strip" aria-label="What EVVora covers"><div class="marquee"><div class="run"><span>DHS service codes and modifiers</span><span>15-minute units</span><span>Ready for the HHAeXchange aggregator</span><span>Licensor's personnel file list</span><span>Client co-signature on every note</span><span>GPS at clock-in and clock-out</span></div><div class="run" aria-hidden="true"><span>DHS service codes and modifiers</span><span>15-minute units</span><span>Ready for the HHAeXchange aggregator</span><span>Licensor's personnel file list</span><span>Client co-signature on every note</span><span>GPS at clock-in and clock-out</span></div></div></div>
 
 <section id="how">
   <div class="wrap">
