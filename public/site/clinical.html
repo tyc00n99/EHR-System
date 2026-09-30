@@ -20,74 +20,59 @@
 
 <section class="demo" id="watch">
   <div class="wrap">
-    <div class="section-head rv"><span class="kicker">Clinical · Watch it work</span><h2>The service record, doing its job.</h2><p class="lead">This is the note a caregiver writes during the visit — clock-in, narrative, outcomes, medications, and the client's own signature. Watch it happen.</p></div>
+    <div class="section-head rv"><span class="kicker">Clinical · Watch it work</span><h2>The service record, doing its job.</h2><p class="lead">This is the service record exactly as it looks in EVVora — the screen a caregiver fills during the visit, down to the buttons. Watch a visit get recorded, signed and accepted.</p></div>
     <div class="dframe rv"><div class="dfit" id="demo-fit">
-      <div class="dwin" id="demo-win">
-        <div class="drail"><span class="drlogo">E</span><i>👤</i><i>👥</i><i>📅</i><i>📄</i><i class="on">🛡</i><i>💳</i></div>
-        <div class="dmain">
-          <div class="dban">
-            <span class="dav">KN</span>
-            <div><b>Kevin Nguyen</b><small><span class="dmono">PMI 12345678</span> · DOB 02/20/1975 · DD waiver · Hennepin County</small></div>
-            <span class="dchip" id="d-status">DRAFT</span>
+      <div class="dwin rec" id="demo-win">
+        <div class="rhead"><b>Kevin Nguyen</b><span class="rmeta">Sep 30, 2026 &nbsp; 8:00 AM – 12:15 PM · 255 min · 17 units &nbsp; Emma Johnson</span><span class="rchips"><i class="rc g">completed</i><i class="rc" id="r-accepted">draft</i><i class="rc r" id="r-signedchip">unsigned</i></span></div>
+        <div class="rbody">
+          <div class="rclocks">
+            <div class="rclock"><small>CLOCK IN</small><b>Sep 30, 2026, 8:00 AM</b><span class="rgps">◎ 44.9778, −93.2650</span></div>
+            <div class="rclock"><small>CLOCK OUT</small><b>Sep 30, 2026, 12:15 PM</b><span class="rgps">◎ 44.9777, −93.2652</span></div>
           </div>
-          <div class="dtabs"><span>Overview</span><span>Programming</span><span class="on">Service record</span><span>Documents</span><span>Medication</span><span>Profile</span></div>
-          <div class="dcols">
-            <div class="dleft">
-              <div class="drow2">
-                <div>
-                  <div class="dlab">Service</div>
-                  <div class="dselwrap">
-                    <div class="dsel" id="d-sel"><span id="d-seltext" class="dph2">Choose the service…</span><i>▾</i></div>
-                    <div class="dmenu" id="d-menu">
-                      <div class="dmi">Individualized home supports <span class="dmono">S5135</span></div>
-                      <div class="dmi" id="d-opt">Individualized home supports (with training) <span class="dmono">S5135 UC</span></div>
-                      <div class="dmi">Respite care · in home <span class="dmono">S5150</span></div>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div class="dlab">Level of assistance</div>
-                  <div class="dsel" id="d-loa"><span id="d-loatext" class="dph2">Choose…</span><i>▾</i></div>
-                </div>
-              </div>
-              <div class="dlab">Clock-in · electronic visit verification</div>
-              <button class="dclock" id="d-clock">Clock in</button>
-              <div class="dgps" id="d-gps"><b>Clocked in 8:02 AM</b> · GPS <span class="dmono">44.9778, −93.2650</span> matched the address on file</div>
-              <div class="dlab">Service narrative</div>
-              <div class="dnarr" id="d-narr"><span id="d-text"></span><span class="dcaret" id="d-caret"></span><span class="dph" id="d-ph">What happened during the visit…</span></div>
-              <div class="dlab">Supports provided</div>
-              <div class="dsups">
-                <span class="dsup" id="d-sup1">Personal care / ADLs</span>
-                <span class="dsup" id="d-sup2">Medication administration</span>
-                <span class="dsup">Community integration</span>
-              </div>
-              <div class="dlab">Support plan outcomes · <span id="d-outcount">0</span> addressed</div>
-              <div class="dq" id="d-q1"><div><p>Did Kevin take every scheduled dose during this visit?</p><small>Take every medication as prescribed</small></div><span class="dyn"><i class="y" data-v="yes">YES</i><i data-v="no">NO</i></span></div>
-              <div class="dq" id="d-q2"><div><p>Did Kevin complete the morning routine with verbal cues only?</p><small>Complete the morning routine with cueing</small></div><span class="dyn"><i class="y" data-v="yes">YES</i><i data-v="no">NO</i></span></div>
+          <div class="rmeds">
+            <div class="rmt">Medications on 2026-09-30</div>
+            <div class="rmrow"><span class="rtime">08:00</span><span class="rdrug">Lisinopril<small>10 mg</small></span><span class="rstate" id="r-medstate"></span><span class="rbtns" id="r-medbtns"><i id="r-given">Given</i><i>Refused</i><i>Held</i></span></div>
+            <div class="rmrow"><span class="rtime">12:00</span><span class="rdrug">Metoprolol<small>25 mg</small></span><span class="rstate"></span><span class="rbtns"><i>Given</i><i>Refused</i><i>Held</i></span></div>
+          </div>
+          <div class="rlab">Level of interaction</div>
+          <div class="rloa">
+            <div class="rlcard"><b>Low</b><span>Mostly independent; occasional prompts</span></div>
+            <div class="rlcard"><b>Medium</b><span>Regular prompting or partial assistance</span></div>
+            <div class="rlcard" id="r-high"><b>High</b><span>Hands-on support or continuous direction</span></div>
+          </div>
+          <div class="rlab">Skills worked on</div>
+          <div class="rskills">
+            <span class="rskill" id="r-sk1">Personal care / ADLs</span>
+            <span class="rskill" id="r-sk2">Medication support</span>
+            <span class="rskill">Meal preparation</span>
+            <span class="rskill">Community outing</span>
+          </div>
+          <div class="rlab">Daily activities <em>Pick each activity you did with Kevin</em></div>
+          <div class="dselwrap">
+            <div class="dsel" id="d-actsel"><span class="dph2">Add an activity…</span><i>▾</i></div>
+            <div class="dmenu" id="d-actmenu">
+              <div class="dmi" id="d-aopt1">Morning routine with the picture schedule</div>
+              <div class="dmi" id="d-aopt2">Weekly pill organizer, checked against the MAR</div>
+              <div class="dmi">Walk and community outing</div>
             </div>
-            <div class="dright">
-              <div class="dlab">Daily activities</div>
-              <div class="dselwrap">
-                <div class="dsel dsm" id="d-actsel"><span class="dph2">Add an activity…</span><i>▾</i></div>
-                <div class="dmenu" id="d-actmenu">
-                  <div class="dmi" id="d-aopt1">Morning routine with the picture schedule</div>
-                  <div class="dmi" id="d-aopt2">Weekly pill organizer, checked against the MAR</div>
-                  <div class="dmi">Walk and community outing</div>
-                </div>
-              </div>
-              <div class="dacts" id="d-acts"></div>
-              <div class="dlab">Medication administration</div>
-              <div class="dmed"><span>Lisinopril 10 mg <em>8:00 AM</em></span><i class="dg" id="d-g">G</i></div>
-              <div class="dmed"><span>Metoprolol 25 mg <em>12:00 PM</em></span><i class="dg dgq">·</i></div>
-              <div class="dmed"><span>Atorvastatin 20 mg <em>8:00 PM</em></span><i class="dg dgq">·</i></div>
-              <div class="dlab">Incidents</div>
-              <div class="dinc">None reported</div>
-              <div class="dlab">Visit verification</div>
-              <div class="dver dmono">Visit <span>V-20260930-081</span> · EVV required<br>In 8:02 AM · GPS ✓ &nbsp; Out — · pending</div>
-              <div class="dlab">Client signature</div>
-              <div class="dsig" id="d-sig"><span class="ddots" id="d-dots"></span><span class="dname" id="d-name">Kevin Nguyen</span><small id="d-sighint">Kevin enters his own signing code — nobody may enter it for him</small></div>
-              <div class="ddone" id="d-done">Accepted · queued for the HHAeXchange aggregator. Nothing to type up later.</div>
-            </div>
+          </div>
+          <div class="racts" id="d-acts"></div>
+          <div class="rlab">Outcomes this visit addressed <em>Optional · tick any you worked on</em></div>
+          <div class="routs">
+            <span class="rout" id="r-out1">Take every medication as prescribed</span>
+            <span class="rout" id="r-out2">Eat three meals and drink enough water</span>
+            <span class="rout">Complete the morning routine with cueing</span>
+            <span class="rout">Keep the home safe and clean</span>
+          </div>
+          <div class="rlab rpr">Progress review <i class="rdraft" id="r-draft">✦ Draft from what I marked</i></div>
+          <div class="rta" id="r-ta"><span id="d-text"></span><span class="dcaret" id="d-caret"></span><span class="dph" id="d-ph"></span></div>
+          <div class="rhint">What Kevin did, the support provided, and progress toward goals. Objective, past tense.</div>
+          <div class="ractions"><span class="rbtn2">Save draft</span><span class="rbtn1" id="r-sign">✓ Sign and save</span><i class="rsignedby" id="r-signedby">signed by staff</i></div>
+          <div class="rsigs">
+            <div class="rst">Signatures</div>
+            <div class="rsrow"><span class="rdot ok" id="r-cgdot">✓</span><b>Caregiver</b><span id="r-cgwhen">—</span></div>
+            <div class="rsrow"><span class="rdot" id="r-cldot"></span><b>Client</b><span class="rclhint">Hand the phone to the person:</span></div>
+            <div class="rcode" id="r-code"><span class="rcodeph" id="r-codeph">6-digit code</span><span class="rcodedots" id="d-dots"></span></div>
           </div>
         </div>
         <div class="dcursor" id="d-cursor"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9 19z" fill="#1b1818" stroke="#fff" stroke-width="1.6"/></svg></div>
@@ -230,42 +215,42 @@ if (location.protocol === "file:") {
 })();
 
 
-// Clinical live demo: a timed loop plays the service record — runs only while on screen.
+// Clinical live demo: a faithful copy of the real service-record dialog, played on a loop while
+// on screen. Every control shown exists in the product with the same label.
 (function () {
   var fit = document.getElementById("demo-fit"); if (!fit) return;
   var box = fit.parentElement;
-  function size() { var k = Math.min(1, box.clientWidth / 1120); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(810 * k) + "px"; }
+  function size() { var k = Math.min(1, box.clientWidth / 1000); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(1280 * k) + "px"; }
   addEventListener("resize", size); size();
 
   var win = document.getElementById("demo-win"), cur = document.getElementById("d-cursor");
   var el = function (id) { return document.getElementById(id); };
-  var TEXT = "Kevin was up and dressed when I arrived. Cued him through the morning routine \u2014 one verbal prompt for tooth-brushing. Walked the block; he named both landmarks without help.";
-  var SERVICE = "Individualized home supports (with training)";
+  var TEXT = "Kevin was up and dressed on arrival. Cued through the morning routine with the picture schedule \u2014 one verbal prompt for tooth-brushing. Ate a full breakfast, drank two glasses of water. Walked the block; named both landmarks without help. 8:00 Lisinopril given as prescribed.";
   var ACT1 = "Morning routine with the picture schedule", ACT2 = "Weekly pill organizer, checked against the MAR";
   var timers = [], playing = false;
   function at(t, fn) { timers.push(setTimeout(fn, t)); }
   function moveTo(target, dx, dy) {
-    var k = win.getBoundingClientRect().width / 1120;
+    var k = win.getBoundingClientRect().width / 1000;
     var a = target.getBoundingClientRect(), w = win.getBoundingClientRect();
     cur.style.left = ((a.left - w.left) / k + (dx == null ? a.width / k / 2 : dx)) + "px";
     cur.style.top = ((a.top - w.top) / k + (dy == null ? a.height / k / 2 : dy)) + "px";
   }
   function click() { cur.classList.remove("click"); void cur.offsetWidth; cur.classList.add("click"); }
-  function chip(text) { var c = document.createElement("span"); c.className = "dact"; c.textContent = text; c.insertAdjacentHTML("beforeend", "<i>\u00d7</i>"); el("d-acts").appendChild(c); }
+  function chip(text) { var c = document.createElement("div"); c.className = "ract"; c.textContent = text; c.insertAdjacentHTML("beforeend", "<i>\u00d7</i>"); el("d-acts").appendChild(c); }
   function reset() {
-    el("d-status").textContent = "DRAFT"; el("d-status").classList.remove("ok");
-    el("d-seltext").textContent = "Choose the service\u2026"; el("d-seltext").classList.add("dph2");
-    el("d-loatext").textContent = "Choose\u2026"; el("d-loatext").classList.add("dph2");
-    el("d-menu").classList.remove("open"); el("d-actmenu").classList.remove("open");
-    el("d-acts").innerHTML = "";
-    el("d-sup1").classList.remove("on"); el("d-sup2").classList.remove("on");
-    el("d-q1").classList.remove("yes"); el("d-q2").classList.remove("yes"); el("d-outcount").textContent = "0";
-    el("d-clock").classList.remove("gone"); el("d-gps").classList.remove("on");
-    el("d-text").textContent = ""; el("d-caret").classList.remove("on"); el("d-ph").classList.remove("gone");
-    el("d-g").classList.remove("on");
-    el("d-sig").classList.remove("signed"); el("d-dots").textContent = "";
-    el("d-done").classList.remove("on");
-    cur.style.left = "110px"; cur.style.top = "150px";
+    el("r-accepted").textContent = "draft";
+    var sc = el("r-signedchip"); sc.textContent = "unsigned"; sc.className = "rc r";
+    el("r-medstate").classList.remove("on"); el("r-given").classList.remove("on");
+    el("r-high").classList.remove("on");
+    el("r-sk1").classList.remove("on"); el("r-sk2").classList.remove("on");
+    el("d-actmenu").classList.remove("open"); el("d-acts").innerHTML = "";
+    el("r-out1").classList.remove("on"); el("r-out2").classList.remove("on");
+    el("d-text").textContent = ""; el("d-caret").classList.remove("on");
+    el("r-signedby").classList.remove("on");
+    el("r-cgdot").classList.remove("ok"); el("r-cgdot").textContent = ""; el("r-cgwhen").textContent = "\u2014";
+    el("r-cldot").classList.remove("ok"); el("r-cldot").textContent = "";
+    el("r-codeph").style.display = ""; el("d-dots").textContent = "";
+    cur.style.left = "120px"; cur.style.top = "150px";
   }
   function typeInto(node, text, cps) {
     var i = 0;
@@ -273,54 +258,52 @@ if (location.protocol === "file:") {
   }
   function run() {
     reset();
-    at(500, function () { moveTo(el("d-sel")); });
-    at(1100, function () { click(); el("d-menu").classList.add("open"); });
-    at(1750, function () { moveTo(el("d-opt")); });
-    at(2350, function () { click(); el("d-menu").classList.remove("open"); var t = el("d-seltext"); t.textContent = "Individualized home supports (with training)"; t.classList.remove("dph2"); });
-    at(3000, function () { moveTo(el("d-loa")); });
-    at(3550, function () { click(); var t = el("d-loatext"); t.textContent = "High \u2014 hands-on support"; t.classList.remove("dph2"); });
-    at(4200, function () { moveTo(el("d-clock")); });
-    at(4750, function () { click(); el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); });
-    at(5400, function () { moveTo(el("d-narr"), 40, 30); });
-    at(5950, function () { click(); el("d-ph").classList.add("gone"); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 22); });
-    at(10200, function () { el("d-caret").classList.remove("on"); moveTo(el("d-sup1")); });
-    at(10750, function () { click(); el("d-sup1").classList.add("on"); });
-    at(11200, function () { moveTo(el("d-sup2")); });
-    at(11700, function () { click(); el("d-sup2").classList.add("on"); });
-    at(12300, function () { moveTo(el("d-q1"), null, null); var q = el("d-q1").querySelector(".dyn .y"); moveTo(q); });
-    at(12850, function () { click(); el("d-q1").classList.add("yes"); el("d-outcount").textContent = "1"; });
-    at(13350, function () { var q = el("d-q2").querySelector(".dyn .y"); moveTo(q); });
-    at(13900, function () { click(); el("d-q2").classList.add("yes"); el("d-outcount").textContent = "2"; });
-    at(14500, function () { moveTo(el("d-actsel")); });
-    at(15050, function () { click(); el("d-actmenu").classList.add("open"); });
-    at(15650, function () { moveTo(el("d-aopt1")); });
-    at(16200, function () { click(); chip(ACT1); });
-    at(16750, function () { moveTo(el("d-aopt2")); });
-    at(17300, function () { click(); chip(ACT2); el("d-actmenu").classList.remove("open"); });
-    at(17950, function () { moveTo(el("d-g")); });
-    at(18500, function () { click(); el("d-g").classList.add("on"); });
-    at(19150, function () { moveTo(el("d-sig"), 60, 30); });
-    at(19700, function () {
+    at(600, function () { moveTo(el("r-given")); });
+    at(1200, function () { click(); el("r-given").classList.add("on"); el("r-medstate").classList.add("on"); });
+    at(1850, function () { moveTo(el("r-high")); });
+    at(2450, function () { click(); el("r-high").classList.add("on"); });
+    at(3050, function () { moveTo(el("r-sk1")); });
+    at(3600, function () { click(); el("r-sk1").classList.add("on"); });
+    at(4050, function () { moveTo(el("r-sk2")); });
+    at(4600, function () { click(); el("r-sk2").classList.add("on"); });
+    at(5250, function () { moveTo(el("d-actsel")); });
+    at(5800, function () { click(); el("d-actmenu").classList.add("open"); });
+    at(6400, function () { moveTo(el("d-aopt1")); });
+    at(6950, function () { click(); chip(ACT1); });
+    at(7500, function () { moveTo(el("d-aopt2")); });
+    at(8050, function () { click(); chip(ACT2); el("d-actmenu").classList.remove("open"); });
+    at(8700, function () { moveTo(el("r-out1")); });
+    at(9250, function () { click(); el("r-out1").classList.add("on"); });
+    at(9700, function () { moveTo(el("r-out2")); });
+    at(10250, function () { click(); el("r-out2").classList.add("on"); });
+    at(10900, function () { moveTo(el("r-draft")); });
+    at(11500, function () { click(); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 18); });
+    at(17400, function () { el("d-caret").classList.remove("on"); moveTo(el("r-sign")); });
+    at(18100, function () { click(); el("r-signedby").classList.add("on"); var d = el("r-cgdot"); d.classList.add("ok"); d.textContent = "\u2713"; el("r-cgwhen").textContent = "signed Sep 30, 2026, 12:16 PM"; });
+    at(19000, function () { moveTo(el("r-code")); });
+    at(19600, function () {
+      el("r-codeph").style.display = "none";
       var dots = el("d-dots"), n = 0;
-      (function dot() { if (!playing) return; dots.textContent += "\u25cf"; if (++n < 4) timers.push(setTimeout(dot, 260)); })();
+      (function dot() { if (!playing) return; dots.textContent += "\u25cf"; if (++n < 6) timers.push(setTimeout(dot, 220)); })();
     });
-    at(21100, function () { el("d-sig").classList.add("signed"); });
-    at(21700, function () { el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on"); });
-    at(25500, function () { if (playing) run(); });
+    at(21300, function () { var d = el("r-cldot"); d.classList.add("ok"); d.textContent = "\u2713"; el("d-dots").textContent = ""; el("r-codeph").style.display = ""; el("r-codeph").textContent = "signed by Kevin"; });
+    at(21900, function () { el("r-accepted").textContent = "accepted"; el("r-accepted").className = "rc b"; var sc = el("r-signedchip"); sc.textContent = "signed"; sc.className = "rc g"; });
+    at(25800, function () { if (playing) { el("r-codeph").textContent = "6-digit code"; run(); } });
   }
   function stop() { playing = false; timers.forEach(clearTimeout); timers = []; }
   var still3 = matchMedia("(prefers-reduced-motion: reduce)").matches || new URLSearchParams(location.search).has("static");
   if (still3) {
     reset();
-    var t = el("d-seltext"); t.textContent = "Individualized home supports (with training)"; t.classList.remove("dph2");
-    var l = el("d-loatext"); l.textContent = "High \u2014 hands-on support"; l.classList.remove("dph2");
-    el("d-clock").classList.add("gone"); el("d-gps").classList.add("on"); el("d-ph").classList.add("gone");
-    el("d-text").textContent = TEXT;
-    el("d-sup1").classList.add("on"); el("d-sup2").classList.add("on");
-    el("d-q1").classList.add("yes"); el("d-q2").classList.add("yes"); el("d-outcount").textContent = "2";
+    el("r-given").classList.add("on"); el("r-medstate").classList.add("on");
+    el("r-high").classList.add("on"); el("r-sk1").classList.add("on"); el("r-sk2").classList.add("on");
     chip(ACT1); chip(ACT2);
-    el("d-g").classList.add("on"); el("d-sig").classList.add("signed");
-    el("d-status").textContent = "VERIFIED \u00b7 EVV"; el("d-status").classList.add("ok"); el("d-done").classList.add("on");
+    el("r-out1").classList.add("on"); el("r-out2").classList.add("on");
+    el("d-text").textContent = TEXT;
+    el("r-signedby").classList.add("on");
+    var d1 = el("r-cgdot"); d1.classList.add("ok"); d1.textContent = "\u2713"; el("r-cgwhen").textContent = "signed Sep 30, 2026, 12:16 PM";
+    var d2 = el("r-cldot"); d2.classList.add("ok"); d2.textContent = "\u2713"; el("r-codeph").textContent = "signed by Kevin";
+    el("r-accepted").textContent = "accepted"; el("r-accepted").className = "rc b";
+    var sc = el("r-signedchip"); sc.textContent = "signed"; sc.className = "rc g";
     cur.style.display = "none";
   } else if ("IntersectionObserver" in window) {
     var io3 = new IntersectionObserver(function (es) {
@@ -328,7 +311,7 @@ if (location.protocol === "file:") {
         if (e.isIntersecting && !playing) { playing = true; run(); }
         else if (!e.isIntersecting && playing) { stop(); }
       });
-    }, { threshold: 0.35 });
+    }, { threshold: 0.3 });
     io3.observe(win);
   } else { playing = true; run(); }
 })();
