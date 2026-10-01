@@ -449,8 +449,8 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
    in a laptop-style card — cursor, typing narrative, outcome ticks, a MAR mark, the client's signature,
    then VERIFIED — on a loop while in view. Fixed 1040x600 stage scaled by #demo-fit. */
 .demo .dframe { position: relative; overflow: hidden; margin-top: 8px; }
-.demo .dfit { width: 1000px; transform-origin: top left; }
-.dwin.rec { position: relative; width: 1000px; height: 1350px; background: #fff; border: 1px solid #e4e7ea; border-radius: 16px; box-shadow: var(--sh-lg); overflow: hidden; font-family: Inter, -apple-system, sans-serif; color: #1d2b33; }
+.demo .dfit { width: 1380px; transform-origin: top left; }
+.dwin.rec { position: relative; width: 1000px; margin: 34px auto; background: #fff; border-radius: 14px; box-shadow: 0 24px 70px -18px rgba(10,30,40,.45); font-family: Inter, -apple-system, sans-serif; color: #1d2b33; }
 .dban { display: flex; align-items: center; gap: 13px; padding: 14px 24px 10px; }
 .dban .dav { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
 .dban b { font-size: 16.5px; display: block; }
@@ -571,3 +571,16 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .rcode { border: 1px solid #dfe3e6; border-radius: 10px; background: #fff; margin-top: 8px; padding: 9px 13px; font-size: 13px; text-align: center; }
 .rcodeph { color: #aab4b9; }
 .rcodedots { font-size: 16px; letter-spacing: 5px; }
+
+/* The demo runs inside a drawn MacBook (Oct 1, 2026, after kibu.com's device framing). The record
+   dialog is a window on the desktop; the scene scrolls the window as it moves down the form. */
+.laptop { width: 1380px; }
+.lscreen { position: relative; background: #0d0f12; border-radius: 26px 26px 0 0; padding: 14px 14px 18px; box-shadow: var(--sh-lg); }
+.lcam { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: 120px; height: 16px; background: #0d0f12; border-radius: 0 0 10px 10px; z-index: 3; }
+.lmenu { display: flex; align-items: center; gap: 18px; background: rgba(250,250,250,.92); border-radius: 10px 10px 0 0; padding: 7px 18px; font-size: 12px; color: #333; }
+.lmenu b { font-size: 12.5px; }
+.lmenu i { margin-left: auto; font-style: normal; color: #555; font-family: var(--mono); font-size: 11px; }
+.ldesk { background: linear-gradient(140deg, #0a5a72 0%, #0098c0 45%, #f0d0a1 120%); border-radius: 0 0 10px 10px; padding: 0 60px; }
+.lviewport { height: 720px; overflow: hidden; }
+.lbase { height: 22px; background: linear-gradient(#e8e9ea, #c9ccce); border-radius: 0 0 22px 22px; position: relative; }
+.lbase::before { content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 180px; height: 9px; background: #b7babc; border-radius: 0 0 10px 10px; }

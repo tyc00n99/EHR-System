@@ -22,7 +22,13 @@
   <div class="wrap">
     <div class="section-head rv"><span class="kicker">Clinical · Watch it work</span><h2>The service record, doing its job.</h2><p class="lead">This is the service record exactly as it looks in EVVora — the screen a caregiver fills during the visit, down to the buttons. Watch a visit get recorded, signed and accepted.</p></div>
     <div class="dframe rv"><div class="dfit" id="demo-fit">
-      <div class="dwin rec" id="demo-win">
+      <div class="laptop">
+        <div class="lscreen">
+          <div class="lcam"></div>
+          <div class="lmenu"><b>EVVora</b><span>File</span><span>Edit</span><span>View</span><span>Window</span><span>Help</span><i>Wed Oct 1&nbsp;&nbsp;9:41 AM</i></div>
+          <div class="ldesk">
+            <div class="lviewport" id="demo-viewport">
+              <div class="dwin rec" id="demo-win">
         <div class="rhead"><b>Kevin Nguyen</b><span class="rmeta">Sep 30, 2026 &nbsp; 8:00 AM – 12:15 PM · 255 min · 17 units &nbsp; Emma Johnson</span><span class="rchips"><i class="rc g">completed</i><i class="rc" id="r-accepted">draft</i><i class="rc r" id="r-signedchip">unsigned</i></span></div>
         <div class="rbody">
           <div class="rclocks">
@@ -79,6 +85,11 @@
           </div>
         </div>
         <div class="dcursor" id="d-cursor"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M5 3l14 8-6.5 1.5L9 19z" fill="#1b1818" stroke="#fff" stroke-width="1.6"/></svg></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lbase"></div>
       </div>
     </div></div>
   </div>
@@ -107,7 +118,7 @@
                 <div class="item"><b>Take every medication as prescribed</b><div class="row"><span class="pillx nav">Working on</span></div><small>84% yes · 4 notes this week</small></div>
                 <div class="item"><b>Stay safe through the night</b><div class="row"><span class="pillx amber">Needs attention</span></div><small>2 wake-ups flagged this week</small></div>
                 <div class="item"><b>Walk to the mailbox</b><div class="row"><span class="pillx nav">Working on</span><span class="pillx grey">Judged at review</span></div><small>Last review Sep 15</small></div>
-                <div class="item"><b>Give Ingrid a break every week</b><div class="row"><span class="pillx ok">Met</span></div><small>Closed Sep 1</small></div>
+                <div class="item"><b>Give Mai a break every week</b><div class="row"><span class="pillx ok">Met</span></div><small>Closed Sep 1</small></div>
               </div>
               <div class="detail">
                 <div class="dh"><b>Eat three meals a day</b><span class="pillx ok">On track</span><div class="btns"><span>Add an entry</span><span class="pri">Review</span></div></div>
@@ -223,10 +234,11 @@ if (location.protocol === "file:") {
 (function () {
   var fit = document.getElementById("demo-fit"); if (!fit) return;
   var box = fit.parentElement;
-  function size() { var k = Math.min(1, box.clientWidth / 1000); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(1350 * k) + "px"; }
+  function size() { var k = Math.min(1, box.clientWidth / 1380); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(822 * k) + "px"; }
   addEventListener("resize", size); size();
 
   var win = document.getElementById("demo-win"), cur = document.getElementById("d-cursor");
+  var view = document.getElementById("demo-viewport");
   var el = function (id) { return document.getElementById(id); };
   var TEXT = "Kevin was dressed but agitated on arrival, insisting he had to get to work. Sat with him on the porch for ten minutes, then redirected with the photo album and a warm drink until he settled. Cued through the morning routine with the picture schedule: toileting, wash, dress, breakfast. One verbal prompt for tooth-brushing. Ate a full breakfast and drank two glasses of water. Sorted the weekly pill organizer together, checking each dose against the MAR. The 8:00 Lisinopril was given as prescribed. Walked the block. Kevin named both landmarks and led the route home. Checked the door alarm and the stove knob covers before leaving, and reported the morning agitation to Mai for the afternoon handoff.";
   var ACT1 = "Cued Kevin through the morning routine with the picture schedule: toileting, wash, dress, breakfast";
@@ -256,6 +268,7 @@ if (location.protocol === "file:") {
     el("r-cldot").classList.remove("ok"); el("r-cldot").textContent = "";
     el("r-codeph").style.display = ""; el("d-dots").textContent = "";
     cur.style.left = "120px"; cur.style.top = "150px";
+    view.scrollTo({ top: 0, behavior: "instant" });
   }
   function typeInto(node, text, cps) {
     var i = 0;
@@ -271,7 +284,8 @@ if (location.protocol === "file:") {
     at(3600, function () { click(); el("r-sk1").classList.add("on"); });
     at(4050, function () { moveTo(el("r-sk2")); });
     at(4600, function () { click(); el("r-sk2").classList.add("on"); });
-    at(5250, function () { moveTo(el("d-actsel")); });
+    at(5100, function () { view.scrollTo({ top: 330, behavior: "smooth" }); });
+    at(5650, function () { moveTo(el("d-actsel")); });
     at(5800, function () { click(); el("d-actmenu").classList.add("open"); });
     at(6400, function () { moveTo(el("d-aopt1")); });
     at(6950, function () { click(); chip(ACT1); });
@@ -285,11 +299,13 @@ if (location.protocol === "file:") {
     at(11350, function () { click(); el("r-out2").classList.add("on"); });
     at(11800, function () { moveTo(el("r-out3")); });
     at(12350, function () { click(); el("r-out3").classList.add("on"); });
-    at(13000, function () { moveTo(el("r-draft")); });
+    at(12800, function () { view.scrollTo({ top: 640, behavior: "smooth" }); });
+    at(13300, function () { moveTo(el("r-draft")); });
     at(13600, function () { click(); el("d-caret").classList.add("on"); typeInto(el("d-text"), TEXT, 10); });
     at(20600, function () { el("d-caret").classList.remove("on"); moveTo(el("r-sign")); });
     at(21300, function () { click(); el("r-signedby").classList.add("on"); var d = el("r-cgdot"); d.classList.add("ok"); d.textContent = "\u2713"; el("r-cgwhen").textContent = "signed Sep 30, 2026, 12:16 PM"; });
-    at(22200, function () { moveTo(el("r-code")); });
+    at(21900, function () { view.scrollTo({ top: view.scrollHeight, behavior: "smooth" }); });
+    at(22400, function () { moveTo(el("r-code")); });
     at(22800, function () {
       el("r-codeph").style.display = "none";
       var dots = el("d-dots"), n = 0;
