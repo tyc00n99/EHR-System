@@ -632,3 +632,6 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .pfact b { font-weight: 600; }
 .pfact span { color: var(--ink3); font-size: 13.5px; text-align: right; }
 @media (max-width: 560px) { .pricecard { padding: 32px 22px; } .pfact { flex-direction: column; gap: 2px; } .pfact span { text-align: left; } }
+
+footer .fwordmark { height: 24px; width: auto; }
+.shnote { position: absolute; z-index: 6; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: rgba(13,15,18,.78); padding: 6px 11px; border-radius: 8px; box-shadow: 0 4px 14px rgba(10,20,30,.35); }

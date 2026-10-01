@@ -22,7 +22,7 @@
   <div class="wrap grid">
     <div>
       <div class="badge rv"><div class="bt"><b>100% compatible with Minnesota Chapter 245D</b><span>Every rule and requirement, built into the software itself</span></div></div>
-      <h1 class="rv d1">Every visit verified. Every note <em>audit&#8209;ready.</em></h1>
+      <h1 class="rv d1">Spend less time checking visits and chasing missing notes.</h1>
       <p class="lead rv d2">EVVora checks each visit as it happens, writes the daily service note the way the county reads it, and tells you what to bill and what to pay. Your caregivers clock in and write. You review.</p>
       <div class="ctas rv d3"><a class="btn ink" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo</a><a class="btn line" href="/practice#try">See what it catches</a></div>
     </div>
@@ -39,7 +39,7 @@
           <div class="step done"><i>✓</i><div><b>Clocked in at the home</b><small>GPS matched the address on file</small></div></div>
           <div class="step done"><i>✓</i><div><b>Note written</b><small>Narrative, supports, outcomes, meds</small></div></div>
           <div class="step done"><i>✓</i><div><b>Client co-signed</b><small>With their own signing code</small></div></div>
-          <div class="step now"><i></i><div><b>Sent to the state aggregator</b><small>Queued for EVV submission</small></div></div>
+          <div class="step now"><i></i><div><b>State aggregator</b><small>Awaiting submission</small></div></div>
           <div class="step"><i></i><div><b>Billed and paid</b><small>Claim line and caregiver hours</small></div></div>
         </div>
         <div class="packet">
@@ -56,7 +56,7 @@
 
 <section id="how">
   <div class="wrap">
-    <div class="section-head rv"><span class="kicker">How it works</span><h2>Their job: clock in and write. Yours: review.</h2><p class="lead">Caregivers do what they already do on shift. EVVora does the checking, the formatting and the paperwork behind it.</p></div>
+    <div class="section-head rv"><span class="kicker">How it works</span><h2>From the caregiver&rsquo;s shift to your review queue.</h2><p class="lead">Caregivers do what they already do on shift. EVVora does the checking, the formatting and the paperwork behind it.</p></div>
     <div class="jobs">
       <div class="job rv"><span class="num">01 · CAREGIVER</span><h3>Clock in at the visit</h3><p>On their phone, with GPS at both ends. They can only clock in with clients they are assigned and oriented to.</p><div class="who">Takes <b>one tap</b></div></div>
       <div class="job rv d1"><span class="num">02 · CAREGIVER + CLIENT</span><h3>Write the note together</h3><p>The narrative, supports, outcomes and that day's medications, then the client signs with their own code.</p><div class="who">Before they <b>clock out</b></div></div>
@@ -69,7 +69,7 @@
   <div class="stage">
     <div class="wrap inner">
       <span class="kicker">As the visit happens</span>
-      <div class="head2"><h2 style="margin-top:14px">A note that writes itself while the caregiver works.</h2><p class="lead">Each moment of the visit lands in the note the county reads, with where it came from beside it. By clock-out there is nothing left to type up.</p></div>
+      <div class="head2"><h2 style="margin-top:14px">Visit details and caregiver notes, assembled in one record.</h2><p class="lead">Each moment of the visit lands in the note the county reads, with where it came from beside it. By clock-out there is nothing left to type up.</p></div>
       <div class="cols">
         <div class="srcs"><div class="track" id="b-track">
           <div class="src" data-i="0"><span class="ic" style="background:#dfe8f4">📍</span><div><b>Clock-in</b><span>Emma J. at 1420 Girard Ave N</span><small>GPS matched the address on file</small></div><time>8:02 AM</time></div>
@@ -119,13 +119,64 @@
         <p>PMI numbers, 15-minute units, the DHS service list, county case managers and the licensor's personnel-file checklist are the product, not a configuration project. Software built for another program has to be bent into shape; EVVora speaks 245D out of the box.</p>
       </div>
     </div>
+    <div class="show rv" aria-label="EVVora on a desktop and a caregiver's phone">
+      <div class="fit" id="show-fit">
+        <span class="shnote" style="left:24px; top:88px">The client&rsquo;s record</span>
+        <span class="shnote" style="left:560px; top:150px">Outcome progress, week by week</span>
+        <span class="shnote" style="left:700px; top:580px">The caregiver&rsquo;s shift, live</span>
+        <div class="win">
+          <div class="rail"><span class="logo">E</span><i>⌂</i><i class="on">☺</i><i>☷</i><i>◷</i><i>✎</i><i>▤</i></div>
+          <div class="main">
+            <div class="ban"><span class="av">KN</span><b>Kevin Nguyen</b><span class="pillx ok">Active</span><span class="meta">PMI 12345678 · Client since Jul 1, 2026</span><span class="org">Northstar Home Supports</span></div>
+            <div class="tabs"><span>Overview</span><span class="on">Programming</span><span>Sessions</span><span>Documents</span><span>Medication</span><span>Profile</span></div>
+            <div class="body">
+              <div class="list">
+                <div class="search">Search outcomes</div>
+                <div class="seg"><span class="on">Active</span><span>Met</span><span>All</span></div>
+                <div class="item on"><b>Eat three meals a day</b><div class="row"><span class="pillx ok">On track</span><span class="pillx grey">Daily questions</span></div><small>90% yes over the last 30 days</small></div>
+                <div class="item"><b>Take every medication as prescribed</b><div class="row"><span class="pillx nav">Working on</span></div><small>84% yes · 4 notes this week</small></div>
+                <div class="item"><b>Stay safe through the night</b><div class="row"><span class="pillx amber">Needs attention</span></div><small>2 wake-ups flagged this week</small></div>
+                <div class="item"><b>Walk to the mailbox</b><div class="row"><span class="pillx nav">Working on</span><span class="pillx grey">Judged at review</span></div><small>Last review Sep 15</small></div>
+                <div class="item"><b>Give Mai a break every week</b><div class="row"><span class="pillx ok">Met</span></div><small>Closed Sep 1</small></div>
+              </div>
+              <div class="detail">
+                <div class="dh"><b>Eat three meals a day</b><span class="pillx ok">On track</span><div class="btns"><span>Add an entry</span><span class="pri">Review</span></div></div>
+                <p class="outcome">Kevin will eat three meals a day and drink at least six glasses of water, with staff preparing meals at set times and sitting with him while he eats.</p>
+                <div class="chart"><div class="ct"><b>Answered yes, by week</b><span>From daily notes · 16 weeks</span></div><svg viewBox="0 0 640 210" preserveAspectRatio="none" font-family="Inter" font-size="10" fill="#767068">
+<line x1="34" x2="630" y1="186.0" y2="186.0" stroke="#eceae4"/><text x="26" y="190.0" text-anchor="end">0</text><line x1="34" x2="630" y1="151.2" y2="151.2" stroke="#eceae4"/><text x="26" y="155.2" text-anchor="end">20</text><line x1="34" x2="630" y1="116.4" y2="116.4" stroke="#eceae4"/><text x="26" y="120.4" text-anchor="end">40</text><line x1="34" x2="630" y1="81.6" y2="81.6" stroke="#eceae4"/><text x="26" y="85.6" text-anchor="end">60</text><line x1="34" x2="630" y1="46.8" y2="46.8" stroke="#eceae4"/><text x="26" y="50.8" text-anchor="end">80</text><line x1="34" x2="630" y1="12.0" y2="12.0" stroke="#eceae4"/><text x="26" y="16.0" text-anchor="end">100</text>
+<line x1="34" x2="630" y1="46.8" y2="46.8" stroke="#da8a14" stroke-dasharray="5 4"/>
+<text x="40" y="41.8" fill="#b36d0c">Mastery 80%</text>
+<line x1="192.9" x2="192.9" y1="12" y2="186" stroke="#7cc7dd" stroke-dasharray="4 4"/><text x="197.9" y="22" fill="#0081a5">Plan started</text>
+<line x1="34.0" y1="161.6" x2="630.0" y2="25.9" stroke="#b8412f" stroke-width="1.5" opacity=".7"/>
+<polyline points="34.0,154.7 73.7,147.7 113.5,159.9 153.2,133.8 192.9,126.8 232.7,137.3 272.4,112.9 312.1,102.5 351.9,90.3 391.6,95.5 431.3,76.4 471.1,64.2 510.8,57.2 550.5,43.3 590.3,36.4 630.0,29.4" fill="none" stroke="#0098c0" stroke-width="2.2" stroke-linejoin="round"/>
+<g fill="#0098c0"><circle cx="34.0" cy="154.7" r="3.2"/><circle cx="73.7" cy="147.7" r="3.2"/><circle cx="113.5" cy="159.9" r="3.2"/><circle cx="153.2" cy="133.8" r="3.2"/><circle cx="192.9" cy="126.8" r="3.2"/><circle cx="232.7" cy="137.3" r="3.2"/><circle cx="272.4" cy="112.9" r="3.2"/><circle cx="312.1" cy="102.5" r="3.2"/><circle cx="351.9" cy="90.3" r="3.2"/><circle cx="391.6" cy="95.5" r="3.2"/><circle cx="431.3" cy="76.4" r="3.2"/><circle cx="471.1" cy="64.2" r="3.2"/><circle cx="510.8" cy="57.2" r="3.2"/><circle cx="550.5" cy="43.3" r="3.2"/><circle cx="590.3" cy="36.4" r="3.2"/><circle cx="630.0" cy="29.4" r="3.2"/></g>
+<text x="34.0" y="204" text-anchor="middle">Jul 6</text><text x="153.2" y="204" text-anchor="middle">Jul 27</text><text x="272.4" y="204" text-anchor="middle">Aug 17</text><text x="391.6" y="204" text-anchor="middle">Sep 7</text><text x="510.8" y="204" text-anchor="middle">Sep 28</text>
+</svg>
+                  <div class="legend"><span><i style="background:#0098c0"></i>Yes %</span><span><i style="background:#b8412f"></i>Trend</span><span><i style="background:#da8a14"></i>Mastery</span></div></div>
+                <div class="ranges"><span>30 days</span><span>90 days</span><span class="on">6 months</span><span>1 year</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="phone"><div class="scr">
+          <div class="sb"><span>9:41</span><span>●●● ◔</span></div><div class="notch"></div>
+          <div class="ph"><span class="av" style="width:26px;height:26px;border-radius:50%;background:#dff3fa;color:#0098c0;display:grid;place-items:center;font-size:10px;font-weight:700">EJ</span><b>On shift with Kevin</b><span class="rec"></span></div>
+          <div class="sec"><div class="k">CLOCKED IN 8:02 AM · GPS OK</div><div class="timer"><span class="t">02:14:36</span><span class="stop">Clock out</span></div></div>
+          <div class="sec"><div class="k">MEDICATIONS DUE</div>
+            <div class="med"><span>Lisinopril 10 mg · 8:00</span><i class="g">G</i><i>R</i><i>H</i><i>M</i></div>
+            <div class="med"><span>Metoprolol 25 mg · 12:00</span><i>G</i><i>R</i><i>H</i><i>M</i></div></div>
+          <div class="sec"><div class="k">OUTCOMES TODAY</div><div class="ok2">Ate a full breakfast</div><div class="ok2">Walked the block</div></div>
+          <div class="cta2">Write the note</div>
+        </div></div>
+      </div>
+    </div>
   </div>
 </section>
 
 <footer>
   <div class="fcols">
     <div class="fbrand">
-      <div class="flock"><span class="evv">EVV</span><i></i><span>ora</span></div>
+      <img class="fwordmark" src="/site/evvora-wordmark.svg" alt="EVVora">
       <div class="fexpand">Electronic Visit Verification</div>
       <p>The record built for Minnesota 245D home and community-based services.</p>
       <div class="fchips"><span><svg viewBox="0 0 24 24" fill="none" stroke="#0098c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z"/><path d="M8.6 12.4l2.3 2.3 4.5-5"/></svg>HIPAA compliant</span><span><svg viewBox="0 0 24 24" fill="none" stroke="#0098c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z"/><path d="M8.6 12.4l2.3 2.3 4.5-5"/></svg>Chapter 245D</span><span><svg viewBox="0 0 24 24" fill="none" stroke="#0098c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z"/><path d="M8.6 12.4l2.3 2.3 4.5-5"/></svg>Audit ready</span></div>
@@ -211,6 +262,14 @@ if (location.protocol === "file:") {
   addEventListener("resize", reset); still.addEventListener("change", reset);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reset);
   reset();
+})();
+
+// Showcase: drawn at 1120px wide, scaled to its box so it never stretches or blurs.
+(function () {
+  var fit = document.getElementById("show-fit"); if (!fit) return;
+  var box = fit.parentElement;
+  function size() { var pad = parseFloat(getComputedStyle(box).paddingLeft) || 0; var k = Math.min(1, (box.clientWidth - pad) / 1120); fit.style.transform = "scale(" + k + ")"; box.style.height = Math.round(640 * k + pad) + "px"; }
+  addEventListener("resize", size); size();
 })();
 
 // Nav border once scrolled; on the home page the pill marks the section in view.
