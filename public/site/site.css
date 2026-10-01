@@ -574,7 +574,7 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 
 /* The demo runs inside a drawn MacBook (Oct 1, 2026, after kibu.com's device framing). The record
    dialog is a window on the desktop; the scene scrolls the window as it moves down the form. */
-.laptop { width: 1380px; }
+.laptop { width: 1270px; }
 .lscreen { position: relative; background: #0d0f12; border-radius: 26px 26px 0 0; padding: 14px 14px 18px; box-shadow: var(--sh-lg); }
 .lcam { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); width: 120px; height: 16px; background: #0d0f12; border-radius: 0 0 10px 10px; z-index: 3; }
 .lmenu { display: flex; align-items: center; gap: 18px; background: rgba(250,250,250,.92); border-radius: 10px 10px 0 0; padding: 7px 18px; font-size: 12px; color: #333; }
@@ -584,3 +584,42 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .lviewport { height: 720px; overflow: hidden; }
 .lbase { height: 22px; background: linear-gradient(#e8e9ea, #c9ccce); border-radius: 0 0 22px 22px; position: relative; }
 .lbase::before { content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 180px; height: 9px; background: #b7babc; border-radius: 0 0 10px 10px; }
+
+/* Mac dock and the caregiver phone beside the demo laptop (Oct 1, 2026). Dock tiles are generic
+   colored squares with emoji, never Apple's icons. */
+.ldock { position: absolute; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 5; display: flex; align-items: center; gap: 7px; padding: 7px 12px; background: rgba(255,255,255,.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.55); border-radius: 18px; box-shadow: 0 10px 30px -12px rgba(10,30,40,.5); }
+.ldock i { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-size: 19px; box-shadow: 0 2px 5px rgba(10,30,40,.25); }
+.ldock i:nth-child(1) { background: linear-gradient(145deg, #58b8e8, #1c6fd2); }
+.ldock i:nth-child(2) { background: linear-gradient(145deg, #6ee08a, #1fa64a); }
+.ldock i:nth-child(3) { background: linear-gradient(145deg, #7fc3f5, #2a7de1); }
+.ldock i:nth-child(4) { background: #fff; }
+.ldock i:nth-child(5) { background: linear-gradient(145deg, #f7f7f7, #d9dde2); }
+.ldock i:nth-child(6) { background: linear-gradient(145deg, #fa6a8c, #e3365f); }
+.ldock i:nth-child(7) { background: linear-gradient(145deg, #a6e06e, #4ca61f); }
+.ldock i:nth-child(8) { background: linear-gradient(145deg, #ffd868, #f2a53a); }
+.ldock i:nth-child(9) { background: linear-gradient(145deg, #b78ef2, #7a4fd2); }
+.ldock i:nth-child(10) { background: linear-gradient(145deg, #ff9f6e, #e86a2a); }
+.ldock i:nth-child(11) { background: linear-gradient(145deg, #c9ced4, #8d959e); }
+.ldock span { width: 1px; height: 34px; background: rgba(255,255,255,.6); margin: 0 3px; }
+.ldock .lev { background: var(--accent); color: #fff; font-weight: 800; font-size: 16px; font-family: var(--display); }
+/* phone */
+.demo .dfit { position: relative; }
+.dphone { position: absolute; right: 0; bottom: -18px; width: 252px; background: #0d0f12; border-radius: 34px; padding: 9px; box-shadow: 0 30px 70px -22px rgba(10,30,40,.55); }
+.dpscr { background: #fbfaf7; border-radius: 26px; overflow: hidden; position: relative; font-family: Inter, sans-serif; padding-bottom: 14px; }
+.dpsb { display: flex; justify-content: space-between; padding: 8px 18px 2px; font-size: 10.5px; font-weight: 600; }
+.dpnotch { position: absolute; left: 50%; top: 7px; transform: translateX(-50%); width: 74px; height: 17px; background: #0d0f12; border-radius: 10px; }
+.dph2r { display: flex; align-items: center; gap: 8px; padding: 10px 14px 8px; border-bottom: 1px solid var(--line); }
+.dpav { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 9.5px; font-weight: 700; }
+.dph2r b { font-size: 12.5px; }
+.dprec { margin-left: auto; width: 9px; height: 9px; border-radius: 50%; background: #c0392b; box-shadow: 0 0 0 3px rgba(192,57,43,.2); }
+.dpsec { padding: 9px 14px 2px; }
+.dpk { font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; color: var(--ink3); margin-bottom: 6px; }
+.dptimer { display: flex; align-items: center; justify-content: space-between; }
+.dptimer span { font-family: var(--mono); font-size: 19px; font-weight: 700; }
+.dptimer i { font-style: normal; background: #c0392b; color: #fff; font-size: 11px; font-weight: 600; border-radius: 9px; padding: 6px 12px; }
+.dpmed { display: flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 500; padding: 3px 0; }
+.dpmed span { flex: 1; }
+.dpmed i { font-style: normal; width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; font-size: 9px; font-weight: 700; border: 1px solid var(--line2); color: var(--ink3); }
+.dpmed i.g { background: #e0f2e5; border-color: #b9dcc4; color: #1f7a55; }
+.dpok { font-size: 11px; font-weight: 500; color: #1f7a55; padding: 2px 0; }
+.dpbtn { margin: 10px 14px 0; background: var(--accent); color: #fff; text-align: center; border-radius: 11px; padding: 9px 0; font-size: 12px; font-weight: 600; }
