@@ -620,3 +620,15 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .dppad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: auto; width: 100%; }
 .dppad i { font-style: normal; height: 42px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 500; background: #efece6; }
 .dppad i.mute { background: transparent; color: var(--ink3); font-size: 14px; }
+
+/* pricing card (Oct 1, 2026, the user's real pricing: $65/user/mo, $325 base with 5 users, user = staff or clients, billed the 1st, $0 implementation) */
+.pricecard { max-width: 620px; margin: 8px auto 0; background: var(--card); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--sh-md); padding: 44px 48px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.pnum b { font-family: var(--display); font-size: 76px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+.pnum span { display: block; margin-top: 6px; font-size: 16px; color: var(--ink2); font-weight: 500; }
+.pchoice { margin-top: 18px; font-size: 15px; color: var(--ink2); background: var(--accent-soft); border: 1px solid var(--accent-rim); border-radius: 999px; padding: 9px 20px; }
+.pchoice b { color: var(--accent); }
+.pfacts { width: 100%; margin-top: 26px; border-top: 1px solid var(--line); }
+.pfact { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 13px 4px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.pfact b { font-weight: 600; }
+.pfact span { color: var(--ink3); font-size: 13.5px; text-align: right; }
+@media (max-width: 560px) { .pricecard { padding: 32px 22px; } .pfact { flex-direction: column; gap: 2px; } .pfact span { text-align: left; } }
