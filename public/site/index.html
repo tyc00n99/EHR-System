@@ -22,19 +22,56 @@
 <header class="hero">
   <div class="wrap grid">
     <div>
-      <div class="badge rv"><div class="bt"><b>100% compatible with Minnesota Chapter 245D</b><span>Every rule and requirement, built into the software itself</span></div></div>
-      <h1 class="rv d1"><span class="h1line">Every visit verified.</span> <span class="h1line">Every note audit&#8209;ready.</span></h1>
-      <p class="lead rv d2">EVVora checks each visit as it happens and writes the note the way the county reads it.</p>
-      <div class="ctas rv d3"><a class="btn ink" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo</a><a class="btn line" href="/practice#try">See what it catches</a></div>
+      <div class="hpill rv">100% compatible with Minnesota Chapter 245D</div>
+      <h1 class="rv d1"><span class="h1line">One queue tells you</span> <span class="h1line">what needs you.</span></h1>
+      <p class="lead rv d2">EVVora checks every visit as it happens. What is clean moves on to billing; what is not waits for you in review.</p>
+      <div class="ctas rv d3"><a class="btn ink" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo &rarr;</a><a class="btn line" href="/practice#try">See what it catches</a></div>
+      <div class="hproof rv d3">GPS at both ends &middot; the client co-signs every note &middot; ready for the HHAeXchange aggregator</div>
     </div>
 
-    <div class="queue rv d2" aria-label="The review queue, shown with fictional sample data">
-      <div class="qh"><b>Review queue</b><span>This pay period · 4 need you</span></div>
-      <div class="qrow"><span class="qc r">UNSIGNED</span><span class="qt"><b>Kevin N. · Sep 30 · Individualized home supports</b><small>Visit complete; waiting on the client&rsquo;s signature</small></span><span class="qa">Open note</span></div>
-      <div class="qrow"><span class="qc b">MANUAL</span><span class="qt"><b>Ruth C. · Sep 29 · Respite care</b><small>Entered by a supervisor; reason on file: phone died mid-shift</small></span><span class="qa">Review</span></div>
-      <div class="qrow"><span class="qc a">78% USED</span><span class="qt"><b>Kevin N. · Authorization S5135 UC</b><small>3,693 of 17,000 units left; ends Dec 31</small></span><span class="qa">See units</span></div>
-      <div class="qrow"><span class="qc a">NEW CODE</span><span class="qt"><b>Ruth C. · Signing code rotated</b><small>Read the new code out at the next visit</small></span><span class="qa">Reveal</span></div>
-      <div class="qf">Nothing bills and nobody is paid for a visit until its note clears this queue.</div>
+    <div class="shot rv d2" aria-label="Reviewing a note in EVVora, shown with fictional sample data">
+      <div class="capbar"><span class="back">&larr;</span><span class="crumb">Notes &rsaquo; <b>Kevin Nguyen</b> &rsaquo; Sep 30 &middot; Individualized home supports <i class="created">submitted by Emma Johnson &middot; 12:17 PM</i></span><span class="capbtns"><span class="cb ghost">Return note</span><span class="cb pri">&#10003; Accept note</span></span></div>
+      <div class="capbody">
+        <div class="canvas">
+          <div class="vsb" aria-hidden><i></i></div>
+          <div class="sheet">
+            <div class="nt">Daily service note</div>
+            <div class="nhead">
+              <div class="nhc">
+                <div class="nhr"><span>Client</span><b>Kevin Nguyen &middot; PMI 12345678</b></div>
+                <div class="nhr"><span>Setting</span><b>Home</b></div>
+                <div class="nhr"><span>Service</span><b>Individualized home supports (S5135 UC)</b></div>
+              </div>
+              <div class="nhc">
+                <div class="nhr"><span>Date</span><b>09/30/2026, 8:02 AM &ndash; 12:17 PM</b></div>
+                <div class="nhr"><span>Hours &middot; units</span><b>4.25 h &middot; 17 units</b></div>
+                <div class="nhr"><span>Caregiver</span><b>Emma Johnson &middot; UMPI A100000003</b></div>
+              </div>
+            </div>
+            <div class="nsec2">Narrative</div>
+            <p class="nbody2">Kevin followed his morning routine with one verbal prompt. Breakfast and fluids finished. We walked to the corner and back before lunch. No incidents.</p>
+            <div class="nsec2">Supports provided</div>
+            <div class="nchips"><span>Verbal prompting</span><span>Meal preparation</span><span>Community walk</span></div>
+            <div class="nsec2">Support plan outcomes</div>
+            <p class="nbody2">&bull; Morning routine with cueing. Worked on during this visit.</p>
+            <div class="nsec2">Medication administration</div>
+            <p class="nbody2">Lisinopril 10 mg &middot; Given, 8:30 AM (EJ)</p>
+            <div class="nver">VISIT VERIFICATION &nbsp; in 8:02 AM &middot; 44.9992, -93.2983 &nbsp; out 12:17 PM &middot; 45.0004, -93.2871</div>
+            <div class="nsig">
+              <div class="nsg"><em>Emma Johnson</em><span>Caregiver &middot; signed 12:17 PM</span></div>
+              <div class="nsg miss2"><em>&nbsp;</em><span>Client &middot; awaiting signature</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="capdoc">
+          <div class="cdt"><b>Review</b><span class="cdedit">2 need attention</span></div>
+          <div class="chk warn2"><div class="chkh"><span class="chip w">EVV &middot; NOT CONFIRMED</span></div><b>Clock-out location didn&rsquo;t match</b><span>The GPS point at clock-out was 410 ft from the address on file. Confirm the visit or record what happened.</span><i>Review location &rarr;</i></div>
+          <div class="chk bad2"><div class="chkh"><span class="chip r">SIGNATURE &middot; MISSING</span></div><b>Kevin hasn&rsquo;t signed yet</b><span>The client co-signs with his own code. Nobody can enter it for him.</span><i>See the note &rarr;</i></div>
+          <div class="chk ok2"><div class="chkh"><span class="chip g">UNITS &middot; OK</span></div><b>17 units, inside the authorization</b><span>Checked against agreement 230180457 &middot; 4,200 units at $5.95.</span></div>
+          <div class="chkfoot">Nothing bills and nobody is paid until these clear.</div>
+        </div>
+      </div>
+      <div class="hub" aria-hidden><span class="hubc">&#9998;</span><em>4</em></div>
     </div>
   </div>
 </header>
