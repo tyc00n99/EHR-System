@@ -772,6 +772,13 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 }
 section, #how, #build, #why { scroll-margin-top: 78px; }
 
+/* blueprint borders, cal.com-style (Oct 4, 2026): content rails, boundary hairlines, + crosses at intersections */
+.bp { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 6; }
+.bp .vl { position: absolute; width: 1px; background: var(--line); }
+.bp .hl { position: absolute; left: 0; right: 0; height: 1px; background: var(--line); }
+.bp .x { position: absolute; width: 15px; height: 15px; transform: translate(-7.5px, -7.5px);
+  background: linear-gradient(#c2bbad, #c2bbad) center/1px 100% no-repeat, linear-gradient(#c2bbad, #c2bbad) center/100% 1px no-repeat; }
+
 /* Libre Franklin pass (Oct 1, 2026): hero reads as two sentences on desktop, wraps naturally on phones. */
 .h1line { display: block; }
 @media (max-width: 760px) { .h1line { display: inline; } }

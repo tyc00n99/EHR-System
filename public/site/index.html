@@ -363,5 +363,53 @@ else { var io = new IntersectionObserver(function (es) { es.forEach(function (e)
 })();
 if (q.has("y")) scrollTo({ top: +q.get("y"), behavior: "instant" });
 </script>
+<script>
+/* Blueprint borders: two content rails, a hairline at each section boundary, a + where they meet.
+   Rails skip bands covered by full-bleed graphics (.nwide). Rebuilt on load and resize. */
+(function () {
+  var bp = document.createElement("div"); bp.className = "bp"; bp.setAttribute("aria-hidden", "true");
+  document.body.appendChild(bp);
+  function build() {
+    bp.innerHTML = "";
+    var doc = document.documentElement, W = doc.clientWidth, H = doc.scrollHeight;
+    var railHalf = Math.min(W / 2 - 16, 606);
+    var lx = Math.round(W / 2 - railHalf), rx = Math.round(W / 2 + railHalf);
+    var hero = document.querySelector(".hero");
+    var first = document.querySelector("section");
+    var top = hero ? hero.offsetTop + hero.offsetHeight + 1 : (first ? first.offsetTop : 0);
+    bp.style.height = H + "px";
+    var skip = [];
+    document.querySelectorAll(".nwide").forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      skip.push([Math.round(r.top + scrollY) - 20, Math.round(r.bottom + scrollY) + 20]);
+    });
+    function seg(x, a, b) {
+      if (b - a < 24) return;
+      var v = document.createElement("i"); v.className = "vl";
+      v.style.left = x + "px"; v.style.top = a + "px"; v.style.height = (b - a) + "px";
+      bp.appendChild(v);
+    }
+    [lx, rx].forEach(function (x) {
+      var a = top;
+      skip.slice().sort(function (p, q) { return p[0] - q[0]; }).forEach(function (band) {
+        seg(x, a, band[0]); a = Math.max(a, band[1]);
+      });
+      seg(x, a, H);
+    });
+    document.querySelectorAll("section, footer").forEach(function (s) {
+      var y = Math.round(s.getBoundingClientRect().top + scrollY);
+      if (y <= top + 20) return;
+      var inSkip = skip.some(function (b) { return y > b[0] && y < b[1]; });
+      var l = document.createElement("i"); l.className = "hl"; l.style.top = y + "px"; bp.appendChild(l);
+      if (inSkip) return;
+      [lx, rx].forEach(function (x) {
+        var c = document.createElement("i"); c.className = "x"; c.style.left = x + "px"; c.style.top = y + "px"; bp.appendChild(c);
+      });
+    });
+  }
+  if (document.readyState === "complete") setTimeout(build, 50); else addEventListener("load", function () { setTimeout(build, 50); });
+  addEventListener("resize", build);
+})();
+</script>
 </body>
 </html>
