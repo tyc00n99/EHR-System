@@ -74,11 +74,11 @@ nav.top .menubtn { display: none; margin-left: 4px; width: 40px; height: 40px; b
 .hero { margin: 10px auto 0; width: min(calc(100% - 28px), 1340px); border-radius: 24px; padding: 88px 0 96px;
   background: #fff; border: 1px solid #e5e5e5; box-shadow: 0 1px 2px rgba(27,24,24,.03), 0 18px 50px -30px rgba(27,24,24,.14); }
 .hero .wrap { max-width: 1330px; }
-.hero .grid { display: grid; grid-template-columns: 0.86fr 1.36fr; gap: 36px; align-items: center; }
+.hero .grid { display: grid; grid-template-columns: 1fr 1.18fr; gap: 48px; align-items: center; }
 .hpill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line2); background: var(--card); color: var(--ink); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; letter-spacing: .01em; }
 .hpill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); }
-.hero h1 { margin-top: 18px; font-size: clamp(30px, 2.5vw, 36px); letter-spacing: -0.018em; }
-.hero .lead { margin-top: 16px; max-width: 440px; font-size: 17.5px; }
+.hero h1 { margin-top: 20px; font-size: clamp(33px, 3.35vw, 48px); letter-spacing: -0.022em; line-height: 1.05; }
+.hero .lead { margin-top: 20px; max-width: 470px; font-size: 18px; }
 .hero .ctas { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
 .hproof { margin-top: 16px; font-size: 13px; font-weight: 500; color: var(--ink3); max-width: 440px; line-height: 1.6; }
 
@@ -702,7 +702,7 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 /* Why: editorial rows, not a matching grid */
 @media (max-width: 760px) { .jobs { grid-template-columns: 1fr; } .job + .job { border-left: 0; padding-left: 0; } }
 /* hero product window: a note under review (Oct 3, 2026) — toolbar, Charter note on a grid canvas, Review checks, corner hub */
-.shot { position: relative; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e6e8ea; box-shadow: 0 2px 6px rgba(27,24,24,.06), 0 44px 90px -34px rgba(27,24,24,.28); font-size: 12.5px; min-width: 0; }
+.shot { position: relative; margin-right: calc(0px - var(--pad) - 64px); background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e6e8ea; box-shadow: 0 2px 6px rgba(27,24,24,.06), 0 44px 90px -34px rgba(27,24,24,.28); font-size: 12.5px; min-width: 0; }
 .capbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e6e8ea; background: #fff; }
 .capbar .back { color: var(--ink3); font-size: 14px; }
 .capbar .crumb { font-size: 12px; color: var(--ink3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -756,6 +756,7 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 .hub em { position: absolute; top: -3px; right: -3px; font-style: normal; background: var(--bad); color: #fff; font-size: 9.5px; font-weight: 700; border-radius: 999px; padding: 1px 6px; border: 2px solid #fff; }
 @media (max-width: 960px) {
   .hero { width: calc(100% - 16px); border-radius: 20px; padding-top: 64px; }
+  .shot { margin-right: 0; }
   .capbody { grid-template-columns: 1fr; }
   .canvas { border-right: 0; padding: 18px 16px 22px; }
   .capbar .crumb .created { display: none; }
