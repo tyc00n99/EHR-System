@@ -270,25 +270,27 @@ nav.top .menubtn { display: none; margin-left: 4px; width: 40px; height: 40px; b
 .cta .btn { position: relative; margin-top: 30px; background: var(--card); color: var(--accent); }
 .cta .fine { position: relative; margin-top: 16px; font-family: var(--mono); font-size: 12px; color: var(--inv2); letter-spacing: .04em; }
 
-/* footer: SessionABA-shaped, user's pick "G3" (Sept 30, 2026) — EVV|ora lockup, compliance chips, link columns. */
-footer { border-top: 1px solid var(--line); }
-footer .fcols { max-width: var(--max); margin: 0 auto; padding: 64px var(--pad) 56px; display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 48px; }
-footer .flock { font-family: var(--display); font-size: 27px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px; color: var(--ink); }
-footer .flock .evv { color: var(--accent); }
-footer .flock i { width: 2.5px; height: 26px; border-radius: 2px; background: var(--ink2); }
-footer .fexpand { margin-top: 10px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); }
-footer .fbrand p { margin-top: 14px; font-size: 14.5px; color: var(--ink3); max-width: 280px; line-height: 1.5; }
-footer .fchips { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+/* footer: Harbor-shaped (user's pick, Oct 3, 2026) — updates signup + chips left, tracked-caps link columns right, ghost wordmark. */
+footer.f2 { position: relative; overflow: hidden; border-top: 1px solid var(--line); background: var(--bg); padding: 76px 0 0; }
+.f2top { display: grid; grid-template-columns: 1fr 1.1fr; gap: 72px; position: relative; z-index: 1; }
+.f2h { font-size: 15.5px; font-weight: 600; }
+.f2p { margin: 8px 0 0; font-size: 14.5px; color: var(--ink2); max-width: 400px; }
+.f2mail { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line2); max-width: 420px; margin-top: 18px; padding-bottom: 9px; }
+.f2mail input { flex: 1; border: 0; background: transparent; font: 500 14.5px var(--body); color: var(--ink); outline: none; }
+.f2mail input::placeholder { color: var(--ink3); }
+.f2mail button { border: 0; background: transparent; font-size: 17px; color: var(--ink); cursor: pointer; padding: 0 2px; }
+footer .fchips { display: flex; gap: 8px; margin-top: 26px; flex-wrap: wrap; }
 footer .fchips span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink2); border: 1px solid var(--line2); background: var(--card); border-radius: 999px; padding: 6px 12px; }
 footer .fchips svg { width: 14px; height: 14px; flex: none; }
-footer h4 { margin: 0 0 18px; font-family: var(--mono); font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
-footer .fcol a { display: block; padding: 6px 0; font-size: 15px; font-weight: 500; color: var(--ink2); }
+.f2cols { display: grid; grid-template-columns: repeat(3, auto); gap: 48px; justify-content: end; }
+footer h4 { margin: 0 0 14px; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ink3); }
+footer .fcol a { display: block; padding: 5px 0; font-size: 14.5px; font-weight: 500; color: var(--ink2); }
 footer .fcol a:hover { color: var(--ink); }
 footer .fcol a.go { color: var(--accent); font-weight: 600; }
-footer .fbar { border-top: 1px solid var(--line); }
-footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pad); font-size: 13.5px; color: var(--ink3); }
-@media (max-width: 960px) { footer .fcols { grid-template-columns: 1fr 1fr; gap: 36px; } }
-@media (max-width: 560px) { footer .fcols { grid-template-columns: 1fr; } }
+.f2base { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line); margin-top: 56px; padding-top: 22px; padding-bottom: 10px; font-size: 13.5px; color: var(--ink3); position: relative; z-index: 1; }
+.f2ghost { font-weight: 700; font-size: clamp(120px, 19vw, 270px); letter-spacing: -0.02em; line-height: .78; text-align: center; color: var(--ink); opacity: .055; user-select: none; pointer-events: none; margin: 10px 0 -0.14em; white-space: nowrap; }
+@media (max-width: 960px) { .f2top { grid-template-columns: 1fr; gap: 44px; } .f2cols { justify-content: start; } }
+@media (max-width: 560px) { .f2cols { grid-template-columns: 1fr 1fr; gap: 32px; } }
 
 
 /* build: scroll-driven, after usealmanac.com (user, Sept 30, 2026: then "much larger and more smooth"). The section
@@ -654,7 +656,6 @@ footer .fbar .in { max-width: var(--max); margin: 0 auto; padding: 20px var(--pa
 .pfact span { color: var(--ink3); font-size: 13.5px; text-align: right; }
 @media (max-width: 560px) { .pricecard { padding: 32px 22px; } .pfact { flex-direction: column; gap: 2px; } .pfact span { text-align: left; } }
 
-footer .fwordmark { height: 24px; width: auto; }
 .shnote { position: absolute; z-index: 6; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #fff; background: rgba(13,15,18,.78); padding: 6px 11px; border-radius: 8px; box-shadow: 0 4px 14px rgba(10,20,30,.35); }
 
 /* Oct 1, 2026 redesign brief: flat header, no glows, open sections, product-first hero. */

@@ -159,19 +159,28 @@
   </div>
 </section>
 
-<footer>
-  <div class="fcols">
-    <div class="fbrand">
-      <img class="fwordmark" src="/site/evvora-wordmark.svg" alt="EVVora">
-      <div class="fexpand">Electronic Visit Verification</div>
-      <p>The record built for Minnesota 245D home and community-based services.</p>
+<footer class="f2">
+  <div class="wrap f2top">
+    <div class="f2left">
+      <b class="f2h">Get EVVora product updates</b>
+      <p class="f2p">Occasional notes on new features and what we&rsquo;re building for 245D providers.</p>
+      <form class="f2mail" onsubmit="location.href='mailto:demo@evvora.com?subject=EVVora%20updates&body='+encodeURIComponent('Please send product updates to: '+this.em.value);return false;">
+        <input name="em" type="email" required placeholder="Email address" aria-label="Email address">
+        <button type="submit" aria-label="Sign up">&rarr;</button>
+      </form>
       <div class="fchips"><span><svg viewBox="0 0 24 24" fill="none" stroke="#0098c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z"/><path d="M8.6 12.4l2.3 2.3 4.5-5"/></svg>HIPAA compliant</span><span><svg viewBox="0 0 24 24" fill="none" stroke="#0098c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z"/><path d="M8.6 12.4l2.3 2.3 4.5-5"/></svg>Chapter 245D</span><span><svg viewBox="0 0 24 24" fill="none" stroke="#0098c0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l7.4 3v5.2c0 4.9-3.1 8.6-7.4 10.6-4.3-2-7.4-5.7-7.4-10.6V5.6l7.4-3z"/><path d="M8.6 12.4l2.3 2.3 4.5-5"/></svg>Audit ready</span></div>
     </div>
-    <div class="fcol"><h4>Platform</h4><a href="/clinical">Daily service notes</a><a href="/clinical">Visit verification · EVV</a><a href="/clinical">Medication record</a><a href="/practice">Scheduling</a><a href="/practice">The personnel file</a><a href="/practice">Hours for payroll</a></div>
-    <div class="fcol"><h4>Product</h4><a href="/clinical">Clinical</a><a href="/practice">Practice management</a><a href="/pricing">Pricing</a><a href="/questions">Questions</a></div>
-    <div class="fcol"><h4>Company</h4><a href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo</a><a href="mailto:demo@evvora.com">Contact</a><a class="go" href="/login">Staff sign in ↗</a></div>
+    <div class="f2cols">
+      <div class="fcol"><h4>Platform</h4><a href="/clinical">Daily service notes</a><a href="/clinical">Visit verification &middot; EVV</a><a href="/clinical">Medication record</a><a href="/practice">Scheduling</a><a href="/practice">The personnel file</a><a href="/practice">Hours for payroll</a></div>
+      <div class="fcol"><h4>Product</h4><a href="/clinical">Clinical</a><a href="/practice">Practice management</a><a href="/pricing">Pricing</a><a href="/questions">Questions</a></div>
+      <div class="fcol"><h4>Company</h4><a href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo</a><a href="mailto:demo@evvora.com">Contact</a><a class="go" href="/login">Staff sign in &#8599;</a></div>
+    </div>
   </div>
-  <div class="fbar"><div class="in">© 2026 EVVora</div></div>
+  <div class="wrap f2base">
+    <span>Made for Minnesota 245D providers</span>
+    <span>&copy; 2026 EVVora</span>
+  </div>
+  <div class="f2ghost" aria-hidden>EVVora</div>
 </footer>
 
 <script>
