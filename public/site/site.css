@@ -161,14 +161,61 @@ nav.top .menubtn { display: none; margin-left: 4px; width: 40px; height: 40px; b
 .why .section-head.center { max-width: 860px; margin-left: auto; margin-right: auto; text-align: center; }
 .why h2 .hacc { color: var(--accent); }
 .whycards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: start; margin-top: 44px; }
-.whycard { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 28px 28px 30px; box-shadow: 0 18px 44px -30px rgba(6,56,74,.25); }
+.whycard { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 0 0 26px; box-shadow: 0 18px 44px -30px rgba(6,56,74,.25); overflow: hidden; }
 .whycard:nth-child(2) { margin-top: 84px; }
 .whycard:nth-child(3) { margin-top: 26px; }
-.whycard .wtop { display: flex; align-items: center; gap: 14px; margin-bottom: 38px; }
-.whycard .wnum { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 600; font-size: 16px; }
-.whycard .wtile { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 14px; background: var(--accent-soft); color: var(--lilac); }
+.whycard .wnum { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 600; font-size: 14px; margin-bottom: 12px; }
 .whycard h3 { margin: 0 0 10px; font-size: 21px; letter-spacing: -0.018em; }
 .whycard p { margin: 0; color: var(--ink2); font-size: 15.5px; line-height: 1.6; }
+.wybody { padding: 20px 26px 0; }
+/* each card's stage plays a scene from the product's own screens (Oct 4, 2026, Harbor-style) */
+.wstage { height: 258px; border-bottom: 1px solid var(--line); position: relative; padding: 18px; }
+.wstage.st1 { background: linear-gradient(140deg, #e8f0ee, #d7e5e0); }
+.wstage.st2 { background: linear-gradient(140deg, #e9ecf4, #dcdcec); }
+.wstage.st3 { background: linear-gradient(140deg, #f6efe6, #eadbc4); }
+.wyapp { position: absolute; inset: 18px; background: #fff; border: 1px solid #e2e4e7; border-radius: 10px; overflow: hidden; font-size: 11px; box-shadow: 0 14px 34px -18px rgba(27,24,24,.35); }
+.wyah { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #eceef0; font-weight: 600; font-size: 12px; }
+.wycnt { margin-left: auto; font-size: 10px; font-weight: 600; color: var(--bad); background: var(--bad-soft); border-radius: 999px; padding: 1px 8px; transition: background .4s, color .4s; }
+.wycnt::after { content: "2 need you"; }
+.whycards.s4 .wycnt { background: var(--good-soft); color: var(--good); }
+.whycards.s4 .wycnt::after { content: "1 needs you"; }
+.wyrow { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #f0f1f3; }
+.wyrow b { font-weight: 600; font-size: 11px; display: block; }
+.wyrow small { display: block; color: var(--ink3); font-size: 9px; }
+.wypill { flex: none; font-family: var(--mono); font-weight: 700; font-size: 8px; border-radius: 5px; padding: 3px 7px; letter-spacing: .03em; }
+.wypill.pr { background: var(--bad-soft); color: var(--bad); }
+.wypill.pb { background: var(--accent-soft); color: var(--lilac); }
+.wypill.pg { background: var(--good-soft); color: var(--good); }
+.wypill.pa { background: var(--warn-soft); color: var(--warn); }
+.wyact { margin-left: auto; color: var(--accent); font-weight: 600; font-size: 10px; white-space: nowrap; }
+.wyfoot { position: absolute; left: 0; right: 0; bottom: 0; padding: 5px 12px; background: #fafafa; border-top: 1px solid #eceef0; font-size: 9.5px; color: var(--ink3); }
+.wygood { color: var(--good); }
+.sw1 .pg { display: none; }
+.whycards.s3 .sw1 .pr, .whycards.s3 .sw1 .wyact { display: none; }
+.whycards.s3 .sw1 .pg { display: inline-block; }
+.wyth { display: grid; grid-template-columns: 1.1fr .5fr .55fr .95fr; gap: 6px; padding: 6px 12px; border-bottom: 1px solid #eceef0; font-family: var(--mono); font-weight: 600; font-size: 8.5px; letter-spacing: .06em; color: var(--ink3); }
+.wytr { display: grid; grid-template-columns: 1.1fr .5fr .55fr .95fr; gap: 6px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #f0f1f3; font-size: 10.5px; font-weight: 600; }
+.wymono { font-family: var(--mono); font-weight: 500; font-size: 10px; white-space: nowrap; }
+.wystat { display: none; }
+.whycards.s6 .w6, .whycards.s7 .w7, .whycards.s8 .w8 { display: inline-block; }
+.whycards.s7 .w6, .whycards.s8 .w6, .whycards.s8 .w7 { display: none; }
+.wyup { display: flex; align-items: center; gap: 7px; margin: 8px 12px 2px; border: 1.5px dashed var(--line2); border-radius: 8px; padding: 5px 8px; font-size: 8.5px; color: var(--ink2); white-space: nowrap; }
+.wyup > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+.wyfile { font-family: var(--mono); font-weight: 600; font-size: 9px; background: var(--accent-soft); color: var(--lilac); border-radius: 5px; padding: 2px 7px; }
+.wyread::after { content: "Reading…"; font-size: 9px; color: var(--ink3); }
+.whycards.s10 .wyread::after { content: "Read ✓"; color: var(--good); }
+.wyff2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; padding-right: 12px; }
+.wyff { margin: 5px 12px 0; } .wyff2 .wyff:last-child { margin-right: 0; }
+.wyff label { display: block; font-size: 8.5px; font-weight: 600; color: var(--ink3); margin-bottom: 2px; }
+.wyfv { border: 1px solid #d8dbde; border-radius: 7px; padding: 4px 7px; min-height: 22px; font-size: 10.5px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.wyfv i { font-style: normal; font-family: var(--mono); font-weight: 700; font-size: 7.5px; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 1px 5px; flex: none; }
+.wyfv > * { opacity: 0; transition: opacity .4s var(--ease); }
+.whycards.s10 .fx1 > *, .whycards.s11 .fx2 > *, .whycards.s11 .fx3 > * { opacity: 1; }
+.wysave { margin: 7px 12px 0; background: #eceef0; color: #9aa0a6; border-radius: 7px; text-align: center; font-size: 10.5px; font-weight: 700; padding: 7px 0; transition: background .4s, color .4s; }
+.whycards.s12 .wysave { background: var(--accent); color: #fff; }
+/* step reveals: e(k) appears when the container carries s(k); classes accumulate as the scene plays */
+.whycards .e1, .whycards .e2, .whycards .e4, .whycards .e5, .whycards .e6, .whycards .e7, .whycards .e8, .whycards .e9 { opacity: 0; transform: translateY(6px); transition: opacity .45s var(--ease), transform .45s var(--ease); }
+.whycards.s1 .e1, .whycards.s2 .e2, .whycards.s4 .e4, .whycards.s5 .e5, .whycards.s6 .e6, .whycards.s7 .e7, .whycards.s8 .e8, .whycards.s9 .e9 { opacity: 1; transform: none; }
 /* showcase: a drawn product shot, after Passage Health's (user, Sept 30, 2026) — a desktop window on a colored
    backdrop with a phone overlapping its corner. Built in HTML at a fixed 1120px design width and scaled to fit
    by a few lines of script, so it stays sharp and never stretches. */

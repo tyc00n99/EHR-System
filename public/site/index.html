@@ -110,21 +110,47 @@
 <section class="why" id="why">
   <div class="wrap">
     <div class="section-head center rv"><h2>Every visit verified. Every claim paid. <span class="hacc">One system.</span></h2><p class="lead" style="margin-left:auto;margin-right:auto">Generic home-care platforms were built for other states and other programs. EVVora was built for Minnesota 245D, and it shows in three places.</p></div>
-    <div class="whycards rv">
+    <div class="whycards rv" id="whyplay" aria-label="Three scenes from the product, fictional sample data">
       <div class="whycard">
-        <div class="wtop"><span class="wnum">1</span><span class="wtile"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.1 7-11a7 7 0 1 0-14 0c0 5.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg></span></div>
+        <div class="wstage st1"><div class="wyapp">
+          <div class="wyah">Review queue <span class="wycnt e2"></span></div>
+          <div class="wyrow e1 sw1"><div><b>Kevin N. &middot; Sep 30 &middot; Individualized home supports</b><small>Visit complete; waiting on the client&rsquo;s signature</small></div><span class="wypill pr">UNSIGNED</span><span class="wypill pg">&#10003; SIGNED</span><span class="wyact">Open note</span></div>
+          <div class="wyrow e2"><div><b>Ruth C. &middot; Sep 29 &middot; Respite care</b><small>Entered by a supervisor; reason on file: phone died mid-shift</small></div><span class="wypill pb">MANUAL</span><span class="wyact">Review</span></div>
+          <div class="wyfoot e4">Nothing bills and nobody is paid until its note clears this queue.</div>
+        </div></div>
+        <div class="wybody"><span class="wnum">1</span>
         <h3>Verification you never think about</h3>
-        <p>Every visit is GPS-checked at both ends and held against the state's EVV rules while it is happening, not at month end. Problems surface in your review queue while they can still be fixed, instead of after a claim bounces.</p>
+        <p>Every visit is GPS-checked at both ends and held against the state's EVV rules while it is happening. Problems land in the review queue, get fixed, and clear, before a claim ever bounces.</p>
+        </div>
       </div>
       <div class="whycard">
-        <div class="wtop"><span class="wnum">2</span><span class="wtile"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span></div>
+        <div class="wstage st2"><div class="wyapp">
+          <div class="wyah">Billing &middot; claim lines</div>
+          <div class="wyth"><span>SERVICE</span><span>UNITS</span><span>EVV</span><span>STATUS</span></div>
+          <div class="wytr e5"><span class="wymono">S5135 UC</span><span>17</span><span><span class="wypill pg e6" style="padding:2px 5px">&#10003;</span></span><span><span class="wypill pb wystat w6">READY</span><span class="wypill pa wystat w7">SUBMITTED</span><span class="wypill pg wystat w8">PAID</span></span></div>
+          <div class="wyrow e7" style="border-bottom:0"><small>Through Waystar into MNITS &middot; nothing leaves without your review</small></div>
+          <div class="wyfoot e8">Remittance posted to the claim: <b class="wygood">$101.15</b> &middot; 17 units &times; $5.95</div>
+        </div></div>
+        <div class="wybody"><span class="wnum">2</span>
         <h3>Billing that flows into MNITS</h3>
         <p>A signed note already carries its claim line, checked against the authorization before anything leaves. Claims go through Waystar into MNITS, and remittances come back onto the claim, so you know what is paid and what is stuck.</p>
+        </div>
       </div>
       <div class="whycard">
-        <div class="wtop"><span class="wnum">3</span><span class="wtile"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/><path d="M9.3 14.2l1.9 1.9 3.5-4"/></svg></span></div>
+        <div class="wstage st3"><div class="wyapp">
+          <div class="wyah" style="padding:6px 12px">New authorization</div>
+          <div class="wyup e9"><span>Upload the DHS letter and the fields fill in</span><span class="wyfile">service_agreement_kevin.pdf</span><span class="wyread" style="margin-left:auto"></span></div>
+          <div class="wyff2">
+            <div class="wyff"><label>Authorized units</label><div class="wyfv fx1"><span>4,200</span><i>&#10022; from document</i></div></div>
+            <div class="wyff"><label>Rate per unit</label><div class="wyfv fx2"><span>$5.95</span><i>&#10022;</i></div></div>
+          </div>
+          <div class="wyff"><label>Service</label><div class="wyfv fx3"><span>S5135 UC &middot; Individualized home supports</span><i>&#10022;</i></div></div>
+          <div class="wysave">Save authorization</div>
+        </div></div>
+        <div class="wybody"><span class="wnum">3</span>
         <h3>Paperwork that reads itself</h3>
         <p>Hand EVVora the county's service agreement letter, a referral packet or a training certificate. It reads the document, fills in the form, and you confirm what it found. Nothing gets retyped, and every filed document becomes searchable.</p>
+        </div>
       </div>
     </div>
     <div class="show rv" aria-label="EVVora on a desktop and a caregiver's phone">
@@ -315,6 +341,26 @@ addEventListener("scroll", function () { document.getElementById("top").classLis
 if (q.has("static")) document.documentElement.classList.add("static");
 if (q.has("static") || !("IntersectionObserver" in window)) document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
 else { var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { rootMargin: "0px 0px -8% 0px" }); document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); }); }
+
+// The Why cards play their twelve-step scene when they scroll into view, and replay on re-entry.
+(function () {
+  var wrap = document.getElementById("whyplay");
+  if (!wrap) return;
+  var STEPS = 12, timers = [];
+  function showAll() { for (var k = 1; k <= STEPS; k++) wrap.classList.add("s" + k); }
+  if (q.has("static") || matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) { showAll(); return; }
+  function play() {
+    stop();
+    for (var k = 1; k <= STEPS; k++) timers.push(setTimeout(function (kk) { wrap.classList.add("s" + kk); }.bind(null, k), 200 + k * 300));
+  }
+  function stop() { timers.forEach(clearTimeout); timers = []; }
+  new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting) play();
+      else { stop(); for (var k = 1; k <= STEPS; k++) wrap.classList.remove("s" + k); }
+    });
+  }, { threshold: 0.25 }).observe(wrap);
+})();
 if (q.has("y")) scrollTo({ top: +q.get("y"), behavior: "instant" });
 </script>
 </body>
