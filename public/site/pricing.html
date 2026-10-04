@@ -112,9 +112,7 @@ if (q.has("y")) scrollTo({ top: +q.get("y"), behavior: "instant" });
     var doc = document.documentElement, W = doc.clientWidth, H = doc.scrollHeight;
     var railHalf = Math.min(W / 2 - 16, 606);
     var lx = Math.round(W / 2 - railHalf), rx = Math.round(W / 2 + railHalf);
-    var hero = document.querySelector(".hero");
-    var first = document.querySelector("section");
-    var top = hero ? hero.offsetTop + hero.offsetHeight + 1 : (first ? first.offsetTop : 0);
+    var top = 0;
     bp.style.height = H + "px";
     var skip = [];
     document.querySelectorAll(".nwide").forEach(function (el) {
