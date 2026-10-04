@@ -326,8 +326,7 @@ footer h4 { margin: 0 0 14px; font-family: var(--mono); font-size: 11px; font-we
 footer .fcol a { display: block; padding: 5px 0; font-size: 14.5px; font-weight: 500; color: var(--ink2); }
 footer .fcol a:hover { color: var(--ink); }
 footer .fcol a.go { color: var(--accent); font-weight: 600; }
-.f2base { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line); margin-top: 56px; padding-top: 22px; padding-bottom: 10px; font-size: 13.5px; color: var(--ink3); position: relative; z-index: 1; }
-.f2ghost { font-weight: 700; font-size: clamp(120px, 19vw, 270px); letter-spacing: -0.02em; line-height: .78; text-align: center; color: var(--ink); opacity: .055; user-select: none; pointer-events: none; margin: 10px 0 -0.14em; white-space: nowrap; }
+.f2base { display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line); margin-top: 56px; padding-top: 22px; padding-bottom: 40px; font-size: 13.5px; color: var(--ink3); position: relative; z-index: 1; }
 @media (max-width: 960px) { .f2top { grid-template-columns: 1fr; gap: 44px; } .f2cols { justify-content: start; } }
 @media (max-width: 560px) { .f2cols { grid-template-columns: 1fr 1fr; gap: 32px; } }
 
