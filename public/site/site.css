@@ -702,7 +702,7 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 /* Why: editorial rows, not a matching grid */
 @media (max-width: 760px) { .jobs { grid-template-columns: 1fr; } .job + .job { border-left: 0; padding-left: 0; } }
 /* hero product window: a note under review (Oct 3, 2026) — toolbar, Charter note on a grid canvas, Review checks, corner hub */
-.shot { position: relative; margin-right: calc(0px - var(--pad) - 64px); background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e6e8ea; box-shadow: 0 2px 6px rgba(27,24,24,.06), 0 44px 90px -34px rgba(27,24,24,.28); font-size: 12.5px; min-width: 0; }
+.shot { position: relative; background: #fff; border-radius: 12px; overflow: hidden; border: 1px solid #e6e8ea; box-shadow: 0 2px 6px rgba(27,24,24,.06), 0 44px 90px -34px rgba(27,24,24,.28); font-size: 12.5px; min-width: 0; }
 .capbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e6e8ea; background: #fff; }
 .capbar .back { color: var(--ink3); font-size: 14px; }
 .capbar .crumb { font-size: 12px; color: var(--ink3); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -712,7 +712,7 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 .cb { border-radius: 7px; padding: 6px 12px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
 .cb.ghost { border: 1px solid #d8dbde; color: var(--ink2); background: #fff; }
 .cb.pri { background: var(--accent); color: #fff; }
-.capbody { display: grid; grid-template-columns: 1.2fr 0.88fr; }
+.capbody { display: grid; grid-template-columns: 1.3fr 0.84fr; }
 .capbody > * { min-width: 0; }
 .canvas { position: relative; background: #eef0f2; background-image: linear-gradient(#e4e7ea 1px, transparent 1px), linear-gradient(90deg, #e4e7ea 1px, transparent 1px); background-size: 22px 22px; padding: 22px 30px 26px 24px; border-right: 1px solid #e2e4e7; }
 .vsb { position: absolute; top: 6px; bottom: 6px; right: 3px; width: 10px; border-radius: 6px; background: rgba(27,24,24,.05); }
@@ -756,7 +756,6 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 .hub em { position: absolute; top: -3px; right: -3px; font-style: normal; background: var(--bad); color: #fff; font-size: 9.5px; font-weight: 700; border-radius: 999px; padding: 1px 6px; border: 2px solid #fff; }
 @media (max-width: 960px) {
   .hero { width: calc(100% - 16px); border-radius: 20px; padding-top: 64px; }
-  .shot { margin-right: 0; }
   .capbody { grid-template-columns: 1fr; }
   .canvas { border-right: 0; padding: 18px 16px 22px; }
   .capbar .crumb .created { display: none; }
