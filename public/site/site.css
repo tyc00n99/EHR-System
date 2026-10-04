@@ -720,10 +720,10 @@ footer .fcol a.go { color: var(--accent); font-weight: 600; }
 /* the note, drawn the way the printed Daily Service Note looks: Charter, black ink, grey rules */
 .sheet { background: #fff; border: 1px solid #e3e5e8; border-radius: 3px; box-shadow: 0 10px 28px -18px rgba(27,24,24,.4); padding: 18px 20px 16px; max-width: 492px; margin: 0 auto; font-family: Charter, Georgia, 'Times New Roman', serif; color: #000; }
 .nt { font-size: 15.5px; font-weight: 700; letter-spacing: .01em; }
-.nhead { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; border-top: 1px solid #c9c9c9; border-bottom: 1px solid #c9c9c9; margin-top: 8px; padding: 6px 0; }
+.nhead { border-top: 1px solid #c9c9c9; border-bottom: 1px solid #c9c9c9; margin-top: 8px; padding: 5px 0; }
 .nhc { min-width: 0; }
-.nhr { display: flex; gap: 8px; font-size: 10.5px; padding: 2.5px 0; }
-.nhr span { color: #555; flex: none; width: 62px; }
+.nhr { display: flex; gap: 10px; font-size: 10.5px; padding: 3px 0; align-items: baseline; }
+.nhr span { color: #555; flex: none; width: 78px; }
 .nhr b { font-weight: 700; }
 .nsec2 { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #333; margin: 10px 0 3px; }
 .nbody2 { margin: 0; font-size: 11.5px; line-height: 1.5; }
