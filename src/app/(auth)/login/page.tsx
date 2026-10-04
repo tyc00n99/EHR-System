@@ -7,7 +7,7 @@ export const metadata = { title: "Log in" };
 
 // This page deliberately wears the public website's palette (Hubble paper/navy), not the app
 // theme — it is the doorway between the two. The hexes below are the site's tokens.
-const PAPER = "#f0efeb";
+const PAPER = "#f4f4f4";
 
 function GoogleMark() {
   return (
@@ -44,27 +44,27 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10" style={{ background: PAPER }}>
       {/* The product, out of focus behind the door: your agency is one password away. Sample data only. */}
       <div aria-hidden className="absolute -inset-10 opacity-55 blur-[3px]">
-        <div className="absolute inset-x-[4%] top-[6%] -bottom-[8%] rounded-3xl border border-[#e0dcd3] bg-[#fbfaf7] px-8 py-7 shadow-2xl">
-          <div className="flex items-center gap-3 border-b border-[#e0dcd3] pb-4">
+        <div className="absolute inset-x-[4%] top-[6%] -bottom-[8%] rounded-3xl border border-[#e6e6e6] bg-[#fcfcfc] px-8 py-7 shadow-2xl">
+          <div className="flex items-center gap-3 border-b border-[#e6e6e6] pb-4">
             <span className="grid size-10 place-items-center rounded-full bg-[#dff3fa] text-[13px] font-bold text-[#0098c0]">KN</span>
             <div>
-              <div className="text-[16px] font-bold text-[#1b1818]">Kevin Nguyen</div>
-              <div className="text-[12.5px] font-medium text-[#767068]">PMI 12345678 · Client since Jul 1, 2026</div>
+              <div className="text-[16px] font-bold text-[#1a1a1a]">Kevin Nguyen</div>
+              <div className="text-[12.5px] font-medium text-[#757575]">PMI 12345678 · Client since Jul 1, 2026</div>
             </div>
           </div>
           {["62%", "84%", "71%", "78%", "52%", "66%"].map((w, i) => (
-            <div key={i} className="mt-[18px] h-[15px] rounded-[7px] bg-[#edeae2]" style={{ width: w }} />
+            <div key={i} className="mt-[18px] h-[15px] rounded-[7px] bg-[#ebebeb]" style={{ width: w }} />
           ))}
         </div>
       </div>
       <div aria-hidden className="absolute inset-0" style={{ background: `linear-gradient(${PAPER}59, ${PAPER}c0)` }} />
 
       <div className="relative w-[404px] max-w-full">
-      <div className="rounded-[22px] border border-[#e0dcd3] bg-[#f8f7f3] p-9 shadow-[0_40px_100px_-24px_rgba(6,56,74,0.35)]">
+      <div className="rounded-[22px] border border-[#e6e6e6] bg-[#fafafa] p-9 shadow-[0_40px_100px_-24px_rgba(6,56,74,0.35)]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static brand asset */}
         <img src="/evvora-wordmark.svg" alt="EVVora" width={84} height={22} className="h-[22px] w-auto" />
         <div className="mt-5 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0098c0]">Welcome back</div>
-        <div className="mb-6 mt-1 text-[26px] font-bold leading-tight tracking-tight text-[#1b1818]">Your agency is waiting.</div>
+        <div className="mb-6 mt-1 text-[26px] font-bold leading-tight tracking-tight text-[#1a1a1a]">Your agency is waiting.</div>
 
         {sp.reset === "1" && <p className="mb-4 rounded-lg bg-[#e3efe6] px-3 py-2 text-[13.5px] font-medium text-[#1f7a55]">Your password is updated. Log in with it here.</p>}
         {sp.error && <p className="mb-4 rounded-lg bg-[#f6e3dc] px-3 py-2 text-[13.5px] font-medium text-[#b8412f]">{sp.error}</p>}
@@ -73,17 +73,17 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
         {providers.length > 0 && (
           <>
-            <div className="my-5 flex items-center gap-3 text-[12.5px] font-medium text-[#767068]">
-              <span className="h-px flex-1 bg-[#e0dcd3]" />
+            <div className="my-5 flex items-center gap-3 text-[12.5px] font-medium text-[#757575]">
+              <span className="h-px flex-1 bg-[#e6e6e6]" />
               Or
-              <span className="h-px flex-1 bg-[#e0dcd3]" />
+              <span className="h-px flex-1 bg-[#e6e6e6]" />
             </div>
             <div className="space-y-2.5">
               {providers.map((p) => (
                 <a
                   key={p.provider}
                   href={`/api/auth/${p.provider}`}
-                  className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[#d6d1c7] bg-white text-[14.5px] font-semibold text-[#1b1818] transition-colors hover:bg-[#f0efeb]"
+                  className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-[#d9d9d9] bg-white text-[14.5px] font-semibold text-[#1a1a1a] transition-colors hover:bg-[#f4f4f4]"
                 >
                   {MARKS[p.provider]}
                   Sign in with {p.label}
