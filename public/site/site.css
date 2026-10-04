@@ -51,9 +51,9 @@ section { padding: 72px 0; }
 
 /* nav */
 /* cal.com-style header (Oct 4, 2026): flat links, ink button, white bar once scrolled */
-nav.top { position: sticky; top: 0; z-index: 50; width: min(100% - 28px, 1372px); margin: 0 auto; background: transparent; border: 1px solid transparent; border-top: 0; border-radius: 0 0 14px 14px; transition: background .25s, border-color .25s; }
-nav.top.scrolled { background: rgba(255,255,255,.92); backdrop-filter: saturate(1.2) blur(10px); border-color: var(--line); }
-nav.top .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 72px; max-width: none; padding: 0 28px; }
+nav.top { position: sticky; top: 10px; z-index: 50; width: min(100% - 28px, 1372px); margin: 0 auto; background: transparent; border: 1px solid transparent; border-radius: 999px; transition: background .25s, border-color .25s, box-shadow .25s; }
+nav.top.scrolled { background: rgba(255,255,255,.92); backdrop-filter: saturate(1.2) blur(10px); border-color: var(--line); box-shadow: 0 12px 32px -18px rgba(26,26,26,.18); }
+nav.top .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 68px; max-width: none; padding: 0 14px 0 30px; }
 nav.top .logo img { height: 22px; }
 nav.top .links { display: flex; gap: 30px; font-size: 14.5px; font-weight: 500; color: var(--ink2); white-space: nowrap; }
 nav.top .links a { padding: 7px 0; transition: color .15s; }
