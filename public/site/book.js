@@ -62,14 +62,14 @@
 
   function paintTimes() {
     var t = ov.querySelector("#bk-times"); t.innerHTML = "";
-    ov.querySelector("#bk-form").classList.toggle("show", !!(selDate && selTime));
+    ov.querySelector("#bk-form").classList.toggle("bk-on", !!(selDate && selTime));
     if (!selDate) return;
     TIMES.forEach(function (x) {
       var b = el("button", "bk-t" + (x === selTime ? " on" : ""), x);
       b.onclick = function () { selTime = x; paintTimes(); };
       t.appendChild(b);
     });
-    ov.querySelector("#bk-form").classList.toggle("show", !!(selDate && selTime));
+    ov.querySelector("#bk-form").classList.toggle("bk-on", !!(selDate && selTime));
   }
 
   function submit() {
@@ -83,8 +83,8 @@
     location.href = "mailto:" + MAIL + "?subject=" + encodeURIComponent("EVVora demo · " + when) + "&body=" + encodeURIComponent(body);
   }
 
-  function open() { if (!ov) build(); ov.classList.add("show"); document.documentElement.classList.add("bk-lock"); }
-  function close() { if (ov) ov.classList.remove("show"); document.documentElement.classList.remove("bk-lock"); }
+  function open() { if (!ov) build(); ov.classList.add("bk-on"); document.documentElement.classList.add("bk-lock"); }
+  function close() { if (ov) ov.classList.remove("bk-on"); document.documentElement.classList.remove("bk-lock"); }
 
   document.addEventListener("click", function (e) {
     var a = e.target.closest && e.target.closest('a[href^="mailto:' + MAIL + '"]');
