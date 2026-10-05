@@ -23,8 +23,8 @@
   <div class="wrap grid">
     <div>
       <div class="hpill rv">100% compatible with Minnesota Chapter 245D</div>
-      <h1 class="rv d1"><span class="h1line">Notes, claims, payroll.</span> <span class="h1line">Handled.</span></h1>
-      <p class="lead rv d2">EVVora checks every visit as it happens. What is clean moves on to billing; what is not waits for you in review.</p>
+      <h1 class="rv d1"><span class="h1line">Stay ahead of</span> <span class="h1line tw-hold"><span id="tw"></span><span class="tw-caret" aria-hidden="true"></span></span><span class="sr-tw">missing signatures, unverified visits and expiring authorizations.</span></h1>
+      <p class="lead rv d2">EVVora brings service notes, visit verification, and authorizations together for Minnesota 245D providers.</p>
       <div class="ctas rv d3"><a class="btn ink" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo &rarr;</a><a class="btn line" href="/practice#try">See what it catches</a></div>
       <div class="hproof rv d3">GPS at both ends &middot; the client co-signs every note &middot; ready for the HHAeXchange aggregator</div>
     </div>
@@ -334,6 +334,34 @@ addEventListener("scroll", function () { document.getElementById("top").classLis
 if (q.has("static")) document.documentElement.classList.add("static");
 if (q.has("static") || !("IntersectionObserver" in window)) document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
 else { var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { rootMargin: "0px 0px -8% 0px" }); document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); }); }
+
+
+// Hero typewriter: cycles the risks EVVora stays ahead of.
+(function () {
+  var el = document.getElementById("tw");
+  if (!el) return;
+  var words = ["missing signatures.", "unverified visits.", "expiring authorizations."];
+  if (q.has("static") || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = words[0];
+    var c = document.querySelector(".tw-caret"); if (c) c.style.display = "none";
+    return;
+  }
+  var w = 0, i = 0, deleting = false;
+  function tick() {
+    var word = words[w];
+    if (!deleting) {
+      i++;
+      el.textContent = word.slice(0, i);
+      if (i === word.length) { deleting = true; return setTimeout(tick, 1700); }
+      return setTimeout(tick, 52);
+    }
+    i--;
+    el.textContent = word.slice(0, i);
+    if (i === 0) { deleting = false; w = (w + 1) % words.length; return setTimeout(tick, 300); }
+    return setTimeout(tick, 30);
+  }
+  setTimeout(tick, 500);
+})();
 
 // The Why cards play their twelve-step scene when they scroll into view, and replay on re-entry.
 (function () {
