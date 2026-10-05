@@ -108,6 +108,7 @@ if (q.has("y")) scrollTo({ top: +q.get("y"), behavior: "instant" });
   document.body.appendChild(bp);
   function build() {
     bp.innerHTML = "";
+    bp.style.height = "0px"; // collapse before measuring, or the overlay's old height feeds back into scrollHeight
     var doc = document.documentElement, W = doc.clientWidth, H = doc.scrollHeight;
     var railHalf = Math.min(W / 2 - 16, 670);
     var lx = Math.round(W / 2 - railHalf), rx = Math.round(W / 2 + railHalf);
