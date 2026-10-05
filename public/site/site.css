@@ -772,3 +772,37 @@ section, #how, #build, #why { scroll-margin-top: 78px; }
 .h1line { display: block; }
 @media (max-width: 760px) { .h1line { display: inline; } }
 .lead, .lead0 { font-size: 17.5px; line-height: 1.6; }
+
+/* pricing calculator (Oct 5, 2026, user's pick after a dark-calculator reference): live estimate, light */
+.pcgrid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 72px; align-items: start; }
+.pcctl { margin-top: 34px; }
+.pct { display: block; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.pcseg { display: inline-flex; border: 1px solid var(--line2); border-radius: 999px; padding: 4px; background: var(--card); }
+.pcseg button { border: 0; background: transparent; border-radius: 999px; padding: 9px 22px; font: 600 14.5px var(--body); color: var(--ink2); cursor: pointer; }
+.pcseg button.on { background: var(--ink); color: #fff; }
+.pchint { margin-top: 10px; font-size: 13px; color: var(--ink3); }
+.pcnhead { display: flex; justify-content: space-between; align-items: baseline; }
+.pcval output { font-size: 34px; font-weight: 600; letter-spacing: -0.01em; }
+.pcval span { font-size: 14px; color: var(--ink3); margin-left: 6px; }
+.pcsrow { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.pcsrow input[type=range], .pcclaims input[type=range] { flex: 1; width: 100%; accent-color: var(--accent); }
+.pcrb { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line2); background: #fff; font-size: 19px; color: var(--ink2); cursor: pointer; flex: none; line-height: 1; }
+.pcrb:hover { border-color: var(--ink); color: var(--ink); }
+.pcway { display: flex; align-items: flex-start; gap: 12px; border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-top: 34px; cursor: pointer; transition: border-color .15s, background .15s; }
+.pcway.on { border-color: var(--accent); background: var(--accent-soft); }
+.pcway input { margin-top: 3px; accent-color: var(--accent); width: 18px; height: 18px; }
+.pcway b { font-size: 15px; } .pcway p { margin: 3px 0 0; font-size: 13.5px; color: var(--ink2); }
+.pcclaims { margin-top: 18px; }
+.pccv { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink2); margin-top: 6px; }
+.pcest { position: sticky; top: 96px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); padding: 30px 32px 28px; }
+.pcel { font-size: 13.5px; font-weight: 500; color: var(--ink2); }
+.pcbig { margin-top: 8px; font-size: 56px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+.pcbig small { font-size: 17px; font-weight: 500; color: var(--ink3); letter-spacing: 0; margin-left: 6px; }
+.pcrows { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 10px; }
+.pcr { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; font-size: 14.5px; }
+.pcr span { color: var(--ink2); } .pcr b { font-weight: 600; white-space: nowrap; }
+.pccta { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 18px; height: 52px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 15.5px; }
+.pccta:hover { background: var(--lilac); }
+.pcfine { margin-top: 14px; font-size: 12.5px; color: var(--ink3); text-align: center; }
+.pcincl { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink2); }
+@media (max-width: 960px) { .pcgrid { grid-template-columns: 1fr; gap: 44px; } .pcest { position: static; } }

@@ -21,20 +21,91 @@
 
 <section id="pricing">
   <div class="wrap">
-    <div class="section-head center rv" style="text-align:center"><span class="kicker">Pricing</span><h2>One subscription. Everything in it.</h2><p class="lead" style="margin-left:auto;margin-right:auto">Clinical records, visit verification, scheduling, the personnel file, payroll hours and billing are all included. Nothing is a separate module, and nothing costs extra to turn on.</p></div>
-    <div class="pricecard rv">
-      <div class="pnum"><b>$65</b><span>per user, per month</span></div>
-      <div class="pchoice">Count users your way — <b>by staff</b> or <b>by clients</b>. Your choice.</div>
-      <div class="pfacts">
-        <div class="pfact"><b>$325 / month base</b><span>includes your first 5 users</span></div>
-        <div class="pfact"><b>$0 implementation fee</b><span>nothing to pay before you start</span></div>
-        <div class="pfact"><b>Billed the 1st of each month</b><span>one invoice, no surprises</span></div>
-        <div class="pfact"><b>Clearinghouse billing · optional</b><span>$0.75 per clean claim line through Waystar — or skip it and bill manually at no charge</span></div>
+    <div class="pcgrid">
+      <div class="rv">
+        <span class="kicker">Pricing</span>
+        <h2 style="margin-top:14px">What will your agency pay?</h2>
+        <p class="lead" style="margin-top:14px; max-width:460px">Everything included. $65 per user per month, and you choose what a user means. The base is $325 a month and covers your first five.</p>
+        <div class="pcctl">
+          <label class="pct">Count users your way</label>
+          <div class="pcseg" id="pcseg"><button type="button" class="on" data-m="staff">By staff</button><button type="button" data-m="clients">By clients</button></div>
+          <div class="pchint" id="pcseghint">Counting caregivers and office staff who log in.</div>
+        </div>
+        <div class="pcctl">
+          <div class="pcnhead"><label class="pct" id="pcnlabel" style="margin-bottom:0">How many staff?</label><div class="pcval"><output id="pcn">12</output><span id="pcunit">staff</span></div></div>
+          <div class="pcsrow">
+            <button type="button" class="pcrb" id="pcdec" aria-label="Fewer">&minus;</button>
+            <input type="range" id="pcnrange" min="1" max="60" step="1" value="12" aria-label="Number of users">
+            <button type="button" class="pcrb" id="pcinc" aria-label="More">+</button>
+          </div>
+          <div class="pchint">$65 each a month. The first five are included in the base.</div>
+        </div>
+        <label class="pcway on" id="pcwayrow">
+          <input type="checkbox" id="pcway" checked>
+          <span><b>Send claims through Waystar</b>
+          <p>Clean claim lines go through the clearinghouse into MNITS for $0.75 each. Skip it and bill manually at no charge.</p></span>
+        </label>
+        <div class="pcclaims" id="pcclaims">
+          <input type="range" id="pclines" min="0" max="2000" step="25" value="300" aria-label="Clean claim lines per month">
+          <div class="pccv"><span><b id="pclinesv">300</b> clean claim lines a month</span><span id="pclinescost">$225</span></div>
+        </div>
       </div>
-      <a class="btn ink" href="mailto:demo@evvora.com?subject=EVVora%20demo" style="margin-top:28px">Book a demo</a>
+      <div class="pcest rv d2">
+        <div class="pcel">Estimated monthly total</div>
+        <div class="pcbig"><span id="pctotal">$1,005</span><small>/ month</small></div>
+        <div class="pcrows">
+          <div class="pcr"><span>Base &middot; includes your first 5 users</span><b>$325.00</b></div>
+          <div class="pcr" id="pcrex"><span id="pcexl">7 more users &times; $65</span><b id="pcexv">$455.00</b></div>
+          <div class="pcr" id="pcrcl"><span id="pccll">300 claim lines &times; $0.75</span><b id="pcclv">$225.00</b></div>
+          <div class="pcr"><span>Implementation</span><b>$0</b></div>
+        </div>
+        <a class="pccta" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo &rarr;</a>
+        <div class="pcfine">One invoice, billed the 1st of each month. Claim charges follow actual use.</div>
+      </div>
     </div>
+    <div class="pcincl rv">Included for everyone: clinical records &middot; visit verification &middot; scheduling &middot; the personnel file &middot; payroll hours &middot; billing tools &middot; the document readers</div>
   </div>
 </section>
+
+<script>
+(function () {
+  var n = 12, mode = "staff", lines = 300, way = true;
+  function money(x) { return "$" + x.toLocaleString("en-US"); }
+  function money2(x) { return "$" + x.toLocaleString("en-US", { minimumFractionDigits: 2 }); }
+  function paint() {
+    document.getElementById("pcn").textContent = n;
+    document.getElementById("pcnrange").value = n;
+    document.getElementById("pcunit").textContent = mode === "staff" ? (n === 1 ? "staff member" : "staff") : (n === 1 ? "client" : "clients");
+    var extra = Math.max(0, n - 5), ex = extra * 65, cl = way ? lines * 0.75 : 0;
+    document.getElementById("pcrex").style.display = extra ? "flex" : "none";
+    document.getElementById("pcexl").textContent = extra + " more " + (extra === 1 ? "user" : "users") + " \u00d7 $65";
+    document.getElementById("pcexv").textContent = money2(ex);
+    document.getElementById("pcrcl").style.display = way ? "flex" : "none";
+    document.getElementById("pccll").textContent = lines + " claim lines \u00d7 $0.75";
+    document.getElementById("pcclv").textContent = money2(cl);
+    document.getElementById("pclinesv").textContent = lines;
+    document.getElementById("pclinescost").textContent = money(Math.round(cl));
+    document.getElementById("pcclaims").style.display = way ? "block" : "none";
+    document.getElementById("pcwayrow").classList.toggle("on", way);
+    document.getElementById("pctotal").textContent = money(Math.round(325 + ex + cl));
+  }
+  document.getElementById("pcinc").onclick = function () { n = Math.min(60, n + 1); paint(); };
+  document.getElementById("pcdec").onclick = function () { if (n > 1) n--; paint(); };
+  document.getElementById("pcnrange").oninput = function () { n = +this.value; paint(); };
+  document.getElementById("pcway").onchange = function () { way = this.checked; paint(); };
+  document.getElementById("pclines").oninput = function () { lines = +this.value; paint(); };
+  document.querySelectorAll("#pcseg button").forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll("#pcseg button").forEach(function (x) { x.classList.remove("on"); });
+      b.classList.add("on"); mode = b.dataset.m;
+      document.getElementById("pcnlabel").textContent = mode === "staff" ? "How many staff?" : "How many clients?";
+      document.getElementById("pcseghint").textContent = mode === "staff" ? "Counting caregivers and office staff who log in." : "Counting the people you serve.";
+      paint();
+    };
+  });
+  paint();
+})();
+</script>
 
 <footer class="f2">
   <div class="wrap f2top">
