@@ -809,7 +809,7 @@ section, #how, #build, #why { scroll-margin-top: 78px; }
 
 /* Book a demo popup: dark cal.com-style booking card (Oct 5, 2026; sized like the Outpace reference) */
 .bk-lock { overflow: hidden; }
-.bk-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(14,14,15,.38); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; padding: 24px; }
+.bk-ov { position: fixed; inset: 0; z-index: 1000; background: rgba(93,170,196,.22); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; padding: 24px; }
 .bk-ov.bk-on { display: flex; }
 .bk-card { position: relative; width: 660px; max-width: 100%; max-height: min(90vh, 980px); overflow-y: auto; background: #121315; color: #ececec; border: 1px solid #26282b; border-radius: 34px; padding: 44px 46px 40px; box-shadow: 0 70px 160px -40px rgba(0,0,0,.75); transform: translateZ(0); }
 .bk-x { position: absolute; top: 20px; right: 20px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: #202225; color: #b9bcc0; font-size: 15px; cursor: pointer; }
