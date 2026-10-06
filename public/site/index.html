@@ -172,35 +172,6 @@
   </div>
 </section>
 
-<section class="build" id="build" aria-label="EVVora watching authorizations and personnel files over a season">
-  <div class="stage">
-    <div class="wrap inner">
-      <span class="kicker">While the work happens</span>
-      <div class="head2"><h2 style="margin-top:14px">It keeps watch while you work.</h2><p class="lead">Authorizations run down and personnel files come due. EVVora counts both as the season goes by, and tells you before it matters.</p></div>
-      <div class="cols">
-        <div class="srcs"><div class="track" id="b-track">
-          <div class="src" data-i="0"><span class="ic" style="background:#dfe8f4">📍</span><div><b>A summer of visits</b><span>1,700 units delivered against Kevin's authorization</span><small>Every one GPS-verified and signed</small></div><time>JUL–AUG</time></div>
-          <div class="src" data-i="1"><span class="ic" style="background:#ececec">👤</span><div><b>Marcus is hired</b><span>Application, signed job description, background study submitted</span><small>Each paper filed as it arrives</small></div><time>SEP 3</time></div>
-          <div class="src" data-i="2"><span class="ic" style="background:#dfe8f4">📍</span><div><b>September's visits</b><span>1,020 more units, notes accepted in review</span><small>The authorization keeps counting down</small></div><time>SEP</time></div>
-          <div class="src" data-i="3"><span class="ic" style="background:#e3efe6">✓</span><div><b>Marcus is cleared</b><span>DHS results back, orientation to Kevin, first supervised contact</span><small>The trainer named on every record</small></div><time>SEP 26</time></div>
-          <div class="src" data-i="4"><span class="ic" style="background:#f8e8d0">⚠︎</span><div><b>The line is crossed</b><span>October's visits take the authorization past 75%</span><small>You hear about it today, not at billing</small></div><time>OCT 15</time></div>
-        </div></div>
-        <div class="doc2" id="b-doc">
-          <div class="dh">THE AGENCY'S WATCHLIST · KEPT AS THE SEASON GOES BY</div>
-          <div class="who"><i>SH</i>Authorization 230180457 · Marcus's personnel file</div>
-          <div class="ln" data-i="0">Authorization: 2,500 of 4,200 units left. Pace steady.<span class="tag">📍 Units</span></div>
-          <div class="ln" data-i="1">Marcus's file opens: application, job description, study submitted. 3 of 13 on file.<span class="tag">👤 File</span></div>
-          <div class="ln" data-i="2">Authorization: 1,480 units left. Still clears December at this pace.<span class="tag">📍 Units</span></div>
-          <div class="ln" data-i="3">DHS results, orientation with the trainer named, first supervised contact. 13 of 13. Cleared to clock in with Kevin.<span class="tag">✓ 13/13</span></div>
-          <div class="ln" data-i="4">75% used · 1,029 units left. At this pace they run out in November. Time to ask the county for more.<span class="tag">⚠︎ 75%</span></div>
-          <div class="done" id="b-done">Both clocks watched all season. Nothing found out at billing.</div>
-        </div>
-        <svg class="wire" id="b-wire" aria-hidden="true"><path id="b-path" d=""/><circle id="b-dot" r="3.5" cx="-10" cy="-10"/></svg>
-      </div>
-    </div>
-  </div>
-</section>
-
 <footer class="f2">
   <div class="wrap f2top">
     <div class="f2left">
@@ -236,69 +207,6 @@ if (location.protocol === "file:") {
     else if (/^\/(clinical|practice|pricing|questions)(#.*)?$/.test(h)) el.href = "." + h.replace(/^\/(\w+)/, "/$1.html");
   });
 }
-
-// Build section (smooth): a rAF loop eases `f` (0 … n-1, fractional) toward the scroll position and draws
-// everything from it — no step snaps, no CSS transitions to wait on. Idle when the section is off screen.
-(function () {
-  var sec = document.getElementById("build"); if (!sec) return;
-  var track = document.getElementById("b-track"), srcs = [].slice.call(sec.querySelectorAll(".src")), lns = [].slice.call(sec.querySelectorAll(".ln"));
-  var done = document.getElementById("b-done"), path = document.getElementById("b-path"), dot = document.getElementById("b-dot"), wire = document.getElementById("b-wire");
-  var still = matchMedia("(max-width: 960px), (prefers-reduced-motion: reduce)");
-  var n = srcs.length, f = 0, target = 0, raf = 0, heights = [];
-  var ease = function (t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
-  var clamp = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
-  function measure() { heights = lns.map(function (el) { el.style.maxHeight = "none"; var h = el.scrollHeight; el.style.maxHeight = ""; return h; }); }
-  function centre(k) { var el = srcs[k]; return el.offsetTop + el.offsetHeight / 2; }
-  function targetFromScroll() {
-    var r = sec.getBoundingClientRect(), span = sec.offsetHeight - innerHeight;
-    var p = clamp(-r.top / Math.max(1, span), 0, 1);
-    // Hold a beat at each step: the value dwells near whole numbers and moves between them.
-    var x = p * (n - 1 + 0.6) - 0.3, i = Math.floor(x), frac = x - i;
-    return clamp(i + ease(clamp((frac - 0.1) / 0.8, 0, 1)), 0, n - 1);
-  }
-  function draw() {
-    var lo = Math.floor(f), hi = Math.min(n - 1, lo + 1), t = f - lo;
-    track.style.transform = "translateY(" + -(centre(lo) + (centre(hi) - centre(lo)) * t) + "px)";
-    srcs.forEach(function (el, k) {
-      var d = Math.abs(k - f), on = clamp(1 - d, 0, 1);
-      el.style.opacity = String(0.28 + 0.72 * on);
-      el.style.transform = "scale(" + (0.955 + 0.045 * on) + ")";
-    });
-    lns.forEach(function (el, k) {
-      var show = clamp(f - k + 1, 0, 1), s2 = ease(show);
-      el.style.maxHeight = (heights[k] * s2) + "px";
-      el.style.opacity = String(s2);
-      var glow = clamp(1 - Math.abs(f - k) * 1.4, 0, 1);
-      el.style.background = "rgba(240, 208, 161, " + (0.6 * glow) + ")";
-    });
-    done.style.opacity = String(clamp((f - (n - 1.35)) / 0.35, 0, 1));
-    // Connector from the nearest source to its line.
-    var k = Math.round(f), box = wire.getBoundingClientRect(), a = srcs[k].getBoundingClientRect(), b = lns[k].getBoundingClientRect();
-    var x1 = a.right - box.left, y1 = a.top + a.height / 2 - box.top, x2 = b.left - box.left - 10, y2 = b.top + Math.min(b.height, 34) / 2 - box.top, mx = (x1 + x2) / 2;
-    path.setAttribute("d", "M" + x1 + "," + y1 + " C" + mx + "," + y1 + " " + mx + "," + y2 + " " + x2 + "," + y2);
-    path.style.opacity = String(clamp(1 - Math.abs(f - k) * 2.2, 0, 1));
-    dot.setAttribute("cx", x2); dot.setAttribute("cy", y2);
-  }
-  function loop() {
-    f += (target - f) * 0.2;
-    if (Math.abs(target - f) < 0.0005) f = target;
-    draw();
-    raf = f === target ? 0 : requestAnimationFrame(loop);
-  }
-  function onScroll() {
-    if (still.matches) return;
-    target = targetFromScroll();
-    if (!raf) raf = requestAnimationFrame(loop);
-  }
-  function reset() {
-    if (still.matches) { srcs.concat(lns).forEach(function (el) { el.style.cssText = ""; }); return; }
-    measure(); target = f = targetFromScroll(); draw();
-  }
-  addEventListener("scroll", onScroll, { passive: true });
-  addEventListener("resize", reset); still.addEventListener("change", reset);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reset);
-  reset();
-})();
 
 // Showcase: drawn at 1120px wide, scaled to its box so it never stretches or blurs.
 (function () {
