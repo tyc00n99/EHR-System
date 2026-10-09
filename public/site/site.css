@@ -155,7 +155,7 @@ nav.top .menubtn { display: none; margin-left: 4px; width: 40px; height: 40px; b
 .cell p { margin-top: 6px; color: var(--ink2); font-size: 14.5px; }
 /* why EVVora (Hubble's "Why teams build" shape: open columns, no cards) */
 /* Graded statement between the hero and Why: ink phrases carry the claim, grey phrases breathe. */
-.bigsay { text-align: center; padding-bottom: 20px; }
+.bigsay { text-align: center; }
 .bigsay p { font-family: var(--display); font-size: clamp(28px, 3.2vw, 44px); line-height: 1.28; font-weight: 600; letter-spacing: -0.018em; max-width: 1040px; margin: 0 auto; text-wrap: balance; }
 .bigsay i { font-style: normal; color: #bdbdbd; }
 
