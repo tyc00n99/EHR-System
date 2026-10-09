@@ -56,12 +56,15 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const user = await requireUser();
   const { id } = await params;
   const sp = await searchParams;
-  const tab = typeof sp.tab === "string" ? sp.tab : "overview";
+  const rawTab = typeof sp.tab === "string" ? sp.tab : "overview";
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
   const newCode = typeof sp.code === "string" ? sp.code : null;
   const person = await getPerson(id);
   if (!person || !(await canViewPerson(user, id))) notFound();
   const manage = can(user, "manage_people");
+  // Caregivers do not get the Sessions tab: a past note is exactly what could be pasted into a new one (user, Oct 8, 2026).
+  const seesNotes = can(user, "edit_visits");
+  const tab = rawTab === "notes" && !seesNotes ? "overview" : rawTab;
   const aiReady = aiConfigured();
   // The MAR shows one week at a time (Sept 22, 2026, user's pick "D"): `?week=` is the Monday. Month
   // totals are for the month that Monday falls in.
@@ -76,7 +79,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const goalFrom = daysAgo(goalDays);
   const [my0, mm0] = month.split("-").map(Number);
   const monthEnd = `${month}-${String(new Date(Date.UTC(my0, mm0, 0)).getUTCDate()).padStart(2, "0")}`;
-  const vt = tab === "notes" ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
+  const vt = tab === "notes" && seesNotes ? await buildVisitTable({ sp, personId: id, defaultParam: `from=${isoDay(-90)}&to=${isoDay(0)}` }) : null;
   const [agreements, documents, team, goals, meds, admins, docTypes, staffList] = await Promise.all([
     listAgreementsForPerson(id),
     listClientDocuments(id),
@@ -130,7 +133,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
   const tabs = [
     { key: "overview", label: "Overview" },
     { key: "lifeplan", label: "Programming", count: goals.filter((g) => g.goal.status === "active").length },
-    { key: "notes", label: "Sessions", count: noteCount },
+    ...(seesNotes ? [{ key: "notes", label: "Sessions", count: noteCount }] : []),
     { key: "files", label: "Documents", count: liveDocuments.length },
     { key: "medical", label: "Medication", count: person.medicationSupport ? meds.filter((m) => m.active).length || undefined : undefined },
     { key: "profile", label: "Profile", count: profileOutstanding || undefined },

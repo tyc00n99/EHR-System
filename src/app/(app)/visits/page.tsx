@@ -1,5 +1,6 @@
 import { Crumb, CrumbSep, LinkButton, PageHeader } from "@/components/kit";
 import { VisitsTable } from "./visits-table";
+import { MySessions } from "./my-sessions";
 import { VisitTotals } from "./visit-totals";
 import { VisitSheet } from "./record/visit-sheet";
 import { getPerson } from "@/db/queries";
@@ -14,6 +15,11 @@ export const metadata = { title: "Notes" };
 export default async function VisitsPage({ searchParams }: PageProps<"/visits">) {
   const user = await requireUser();
   const sp = await searchParams;
+  // Caregivers do not get the notes table (user, Oct 8, 2026): totals and the notes that still
+  // need them, nothing browsable to copy an old narrative from.
+  if (!user.abilities.includes("edit_visits") && user.staffId) {
+    return <MySessions staffId={user.staffId} openVisit={typeof sp.visit === "string" ? sp.visit : null} />;
+  }
   const personId = typeof sp.person === "string" ? sp.person : undefined;
   const person = personId ? await getPerson(personId) : null;
   const vt = await buildVisitTable({ sp, personId, staffId: user.abilities.includes("edit_visits") ? undefined : (user.staffId ?? undefined) });

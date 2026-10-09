@@ -45,7 +45,7 @@ export function primaryNav(abilities: readonly string[]): Destination[] {
       { href: "/", label: "Today", icon: "home" },
       { href: "/clients", label: "My clients", icon: "clients" },
       { href: "/clock", label: "Clock in", icon: "clock" },
-      { href: "/visits", label: "My notes", icon: "visits", also: ["/notes"] },
+      { href: "/visits", label: "My sessions", icon: "visits", also: ["/notes"] },
       { href: "/messages", label: "Messages", icon: "chat" },
     ];
   }
