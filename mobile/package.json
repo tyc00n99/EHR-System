@@ -1,0 +1,18 @@
+{
+  "name": "evvora-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Native iOS/Android shell for the EVVora caregiver app",
+  "scripts": {
+    "sync": "cap sync",
+    "ios": "cap run ios",
+    "android": "cap run android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/geolocation": "^8.2.3",
+    "@capacitor/ios": "^8.5.3"
+  }
+}
