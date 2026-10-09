@@ -568,3 +568,19 @@ input::placeholder, textarea::placeholder { color: #94a3b8; opacity: 1; }
 /* Number fields have no spinner arrows (user, Sept 22, 2026): units and rates are typed, not nudged. */
 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* Active record tab: a Maersk-style squiggle (flat line dipping in the middle) instead of the 3px underline.
+   Unlayered on purpose so Tailwind's after:* utilities cannot fight it; shown only on the aria-current tab. */
+.tab-squig::after {
+  content: "";
+  position: absolute;
+  inset-inline: 8px;
+  bottom: -2px;
+  height: 12px;
+  background: var(--primary);
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 16' preserveAspectRatio='none'%3E%3Cpath d='M3 4 H38 C44 4 46 12.5 50 12.5 C54 12.5 56 4 62 4 H97' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 16' preserveAspectRatio='none'%3E%3Cpath d='M3 4 H38 C44 4 46 12.5 50 12.5 C54 12.5 56 4 62 4 H97' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.tab-squig[aria-current="page"]::after { opacity: 1; }
