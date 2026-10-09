@@ -253,6 +253,13 @@
       "when": 1790797498781,
       "tag": "0035_password_resets",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791514664367,
+      "tag": "0036_shiny_annihilus",
+      "breakpoints": true
     }
   ]
 }

@@ -1631,3 +1631,26 @@ export const evvAuditEvents = pgTable(
   (t) => [index("evv_audit_events_visit_idx").on(t.evvVisitId, t.seq), index("evv_audit_events_org_idx").on(t.organizationId, t.at)],
 );
 export type EvvAuditEvent = typeof evvAuditEvents.$inferSelect;
+
+/**
+ * Direct messages between signed-in users (Oct 2026): the in-app Slack-shaped inbox so staff can
+ * reach management without texting PHI around. A message body may name a client, so every write
+ * goes through `audited` like any other PHI table. Threads are derived from the sender/recipient
+ * pair; `readAt` is set when the recipient opens the thread.
+ */
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    senderId: uuid("sender_id").notNull().references(() => users.id),
+    recipientId: uuid("recipient_id").notNull().references(() => users.id),
+    body: text("body").notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    index("messages_sender_idx").on(t.senderId, t.createdAt),
+    index("messages_recipient_idx").on(t.recipientId, t.readAt, t.createdAt),
+  ],
+);
+export type Message = typeof messages.$inferSelect;

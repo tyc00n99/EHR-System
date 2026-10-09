@@ -60,6 +60,7 @@ export const Icon = {
   filter: (p: P) => <I {...p}><path d="M3 5h18l-7 8v6l-4-2v-4z" /></I>,
   spark: (p: P) => <I {...p}><path d="M3 17l5-6 4 3 5-8 4 5" /></I>,
   trend: (p: P) => <I {...p}><path d="M3 17l6-6 4 4 8-8M15 7h6v6" /></I>,
+  chat: (p: P) => <I {...p}><path d="M21 12a8 8 0 0 1-8 8H4l2.2-2.6A8 8 0 1 1 21 12z" /><path d="M8.5 11h7M8.5 14.5h4.5" /></I>,
 };
 
 export type IconName = keyof typeof Icon;

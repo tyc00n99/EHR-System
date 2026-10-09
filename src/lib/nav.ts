@@ -46,6 +46,7 @@ export function primaryNav(abilities: readonly string[]): Destination[] {
       { href: "/clients", label: "My clients", icon: "clients" },
       { href: "/clock", label: "Clock in", icon: "clock" },
       { href: "/visits", label: "My notes", icon: "visits", also: ["/notes"] },
+      { href: "/messages", label: "Messages", icon: "chat" },
     ];
   }
   // No Today entry for office roles: the home screen is a greeting, and the logo tile already
@@ -55,6 +56,7 @@ export function primaryNav(abilities: readonly string[]): Destination[] {
     ...(has("view_team") ? [{ href: "/staff", label: "Team", icon: "team" as IconName }] : []),
     { href: "/scheduling", label: "Schedule", icon: "calendar" },
     { href: "/visits", label: "Notes", icon: "visits", also: ["/notes", "/clock"] },
+    { href: "/messages", label: "Messages", icon: "chat" as IconName },
     ...(has("review") ? [{ href: "/evv", label: "EVV", icon: "shield" as IconName }] : []),
     ...(has("billing") ? [{ href: "/billing", label: "Billing", icon: "money" as IconName }] : []),
     ...(has("review") ? [{ href: "/attention", label: "Review", icon: "bell" as IconName, badge: "review" as const }] : []),
