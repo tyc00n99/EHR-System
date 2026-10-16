@@ -7,16 +7,16 @@ import { cx } from "@/components/kit";
 
 /**
  * The Messages door (user's pick "C", Oct 16, 2026): a pill pinned bottom-left, mirroring the
- * corner hub on the right. Full — blue circle, unread badge, "Messages" and a line — on Home and
- * the Schedule; shrunk to the circle alone on the other main pages; drawn nowhere else
+ * corner hub on the right. Full — blue circle, unread badge, "Messages" and a line — on Home;
+ * shrunk to the circle alone on the other main pages; drawn nowhere else
  * (user, Oct 16). On phones it is always the circle, so it never crowds the hub.
  */
 export function MessagesPill({ unread }: { unread: number }) {
   const path = usePathname();
-  const full = path === "/" || path === "/scheduling";
+  const full = path === "/";
   // The other main pages (the hub's destinations, by exact path): the circle alone. Records and
   // deeper screens, and Messages itself, get nothing.
-  const compact = ["/clients", "/staff", "/visits", "/evv", "/billing", "/attention", "/clock"].includes(path);
+  const compact = ["/clients", "/staff", "/scheduling", "/visits", "/evv", "/billing", "/attention", "/clock"].includes(path);
   if (!full && !compact) return null;
   const label = unread ? `Messages, ${unread} unread` : "Messages";
   return (
