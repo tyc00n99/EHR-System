@@ -9,6 +9,7 @@ import { SectionNav } from "@/components/top-nav";
 import { ModulePanelProvider } from "@/components/module-panel";
 import { Avatar } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MessagesPill } from "@/components/messages-pill";
 import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeMenuItems } from "@/components/theme-switcher";
@@ -104,8 +105,10 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
       </main>
 
       <CornerHub abilities={user.abilities} counts={counts} />
+      <MessagesPill unread={unread} />
       <Suspense fallback={null}><NotePreview /></Suspense>
-      <Toaster position="bottom-left" richColors closeButton />
+      {/* Toasts sit above the Messages pill rather than under it. */}
+      <Toaster position="bottom-left" offset={{ bottom: 104, left: 28 }} richColors closeButton />
     </div>
     </HubProvider>
     </ModulePanelProvider>
