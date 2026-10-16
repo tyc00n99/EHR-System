@@ -74,19 +74,15 @@ export function whereAmI(pathname: string, abilities: readonly string[], names: 
 export function HereChip({ abilities, names }: { abilities: readonly string[]; names: HubName[] }) {
   const pathname = usePathname();
   const w = whereAmI(pathname, abilities, names);
-  const Ic = Icon[w.icon];
   const back = Boolean(w.record) && pathname !== w.href;
+  // On a main page the chip only named where you are, which the page itself already does, so it
+  // is not drawn (user, Oct 16, 2026). On a record it is the way back, and stays.
+  if (!back) return null;
   return (
     <div className="flex h-10 max-w-full items-center overflow-hidden rounded-full border border-line bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
-      {back ? (
-        <Link href={w.href} aria-label={`Back to ${w.area}`} title={`Back to ${w.area}`} className="flex h-full shrink-0 items-center gap-1.5 bg-primary-soft pl-3 pr-4 text-[15px] font-semibold text-primary transition-[filter] hover:brightness-95">
-          <Icon.chevronLeft size={18} /> {w.area}
-        </Link>
-      ) : (
-        <Link href={w.href} aria-label={w.area} className="flex h-full shrink-0 items-center gap-2 pl-3.5 pr-4 text-[15px] font-medium text-text-strong hover:bg-tab-hover">
-          <Ic size={16} className="text-primary" /> {w.area}
-        </Link>
-      )}
+      <Link href={w.href} aria-label={`Back to ${w.area}`} title={`Back to ${w.area}`} className="flex h-full shrink-0 items-center gap-1.5 bg-primary-soft pl-3 pr-4 text-[15px] font-semibold text-primary transition-[filter] hover:brightness-95">
+        <Icon.chevronLeft size={18} /> {w.area}
+      </Link>
       {/* The record's name is not repeated here (user, Sept 28, 2026): the banner below already carries it, and the chip's job on a record is the way back. */}
     </div>
   );
