@@ -4,6 +4,7 @@ import {
   listThreadMessages, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
 } from "@/db/message-queries";
 import { requireUser } from "@/lib/auth";
+import { nowMs } from "@/lib/format";
 import { Messenger, type OpenView } from "./messenger";
 
 export const metadata: Metadata = { title: "Messages" };
@@ -44,7 +45,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   return (
     <Messenger
       meId={user.id}
-      now={Date.now()}
+      now={nowMs()}
       tab={tab}
       canCreateChannels={canCreateChannels(me)}
       dms={conversations.map((c) => ({ ...c, lastAt: c.lastAt.toISOString() }))}

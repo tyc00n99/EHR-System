@@ -263,7 +263,7 @@ async function enrich(rows: { id: string; senderId: string; body: string; create
     body: r.body,
     at: r.createdAt.toISOString(),
     mentions: ments.filter((m) => m.messageId === r.id).map((m) => ({ userId: m.userId, name: people.get(m.userId)?.name ?? "Former login" })),
-    attachments: files.filter((f) => f.messageId === r.id).map(({ messageId: _m, ...f }) => f),
+    attachments: files.filter((f) => f.messageId === r.id).map((f) => ({ id: f.id, fileName: f.fileName, contentType: f.contentType, sizeBytes: f.sizeBytes })),
   }));
 }
 

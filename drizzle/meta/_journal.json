@@ -260,6 +260,13 @@
       "when": 1791514664367,
       "tag": "0036_shiny_annihilus",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792131509250,
+      "tag": "0037_messages_channels",
+      "breakpoints": true
     }
   ]
 }

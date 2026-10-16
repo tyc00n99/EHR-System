@@ -78,3 +78,8 @@ export function fmtHistoryAt(v: Date): string {
   const t = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).format(v);
   return `${d} · ${t}`;
 }
+
+/** The current time in milliseconds, for server components that pass "now" down (the React Compiler lint rejects a bare Date.now() in render). */
+export function nowMs(): number {
+  return Date.now();
+}
