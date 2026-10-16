@@ -1643,7 +1643,10 @@ export const messages = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     senderId: uuid("sender_id").notNull().references(() => users.id),
-    recipientId: uuid("recipient_id").notNull().references(() => users.id),
+    /** Set for a direct message; null when the message belongs to a channel thread. */
+    recipientId: uuid("recipient_id").references(() => users.id),
+    /** Set when the message is posted in a channel thread (Oct 16, 2026); null for a direct message. */
+    threadId: uuid("thread_id").references((): AnyPgColumn => chatThreads.id),
     body: text("body").notNull(),
     readAt: timestamp("read_at", { withTimezone: true }),
     ...timestamps,
@@ -1651,6 +1654,93 @@ export const messages = pgTable(
   (t) => [
     index("messages_sender_idx").on(t.senderId, t.createdAt),
     index("messages_recipient_idx").on(t.recipientId, t.readAt, t.createdAt),
+    index("messages_thread_idx").on(t.threadId, t.createdAt),
   ],
 );
 export type Message = typeof messages.$inferSelect;
+
+/**
+ * Channels and threads (Oct 16, 2026, the user's Slack-style reference). A channel is a standing
+ * room ("scheduling", "on-call"); conversations inside it are named threads, and every message in a
+ * thread is a row in `messages` with `threadId` set. Every channel has a member list. An open channel
+ * is also visible to office staff (`all_clients`), who may read and post in it; a private (locked)
+ * channel is members only. Caregivers only ever see channels they were added to.
+ */
+export const chatChannels = pgTable("chat_channels", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  /** Icon key from the small set the channel form offers. */
+  icon: text("icon").notNull().default("chat"),
+  /** Tile tint: one of the app's soft status tints. */
+  tint: text("tint").notNull().default("primary"),
+  isPrivate: boolean("is_private").notNull().default(false),
+  createdBy: uuid("created_by").references(() => users.id),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  ...timestamps,
+});
+export type ChatChannel = typeof chatChannels.$inferSelect;
+
+export const chatChannelMembers = pgTable(
+  "chat_channel_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    channelId: uuid("channel_id").notNull().references(() => chatChannels.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    addedBy: uuid("added_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("chat_channel_members_idx").on(t.channelId, t.userId), index("chat_channel_members_user_idx").on(t.userId)],
+);
+
+export const chatThreads = pgTable(
+  "chat_threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    channelId: uuid("channel_id").notNull().references(() => chatChannels.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    startedBy: uuid("started_by").references(() => users.id),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (t) => [index("chat_threads_channel_idx").on(t.channelId, t.lastMessageAt)],
+);
+export type ChatThread = typeof chatThreads.$inferSelect;
+
+/** How far each person has read each thread. Bookkeeping, not PHI: upserted directly, not audited. */
+export const chatReads = pgTable(
+  "chat_reads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    threadId: uuid("thread_id").notNull().references(() => chatThreads.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("chat_reads_idx").on(t.threadId, t.userId)],
+);
+
+/** Someone @-mentioned in a message. Drives the @me tab. */
+export const messageMentions = pgTable(
+  "message_mentions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    messageId: uuid("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [index("message_mentions_user_idx").on(t.userId, t.createdAt)],
+);
+
+/** A file sent with a message. Bytes live in stored_files; served only to people who can read the message. */
+export const messageAttachments = pgTable(
+  "message_attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    messageId: uuid("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+    path: text("path").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    ...timestamps,
+  },
+  (t) => [index("message_attachments_message_idx").on(t.messageId)],
+);

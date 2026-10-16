@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import type { PaletteEntry } from "@/components/command-palette";
 import { getOrganization, listPeople, listStaff } from "@/db/queries";
+import { countUnread } from "@/db/message-queries";
 import { attentionItems } from "@/lib/attention";
 import { requireUser } from "@/lib/auth";
 import { NO_COUNTS, type NavCounts } from "@/lib/nav";
@@ -9,7 +10,7 @@ import { NO_COUNTS, type NavCounts } from "@/lib/nav";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const [user, org] = await Promise.all([requireUser(), getOrganization()]);
   const office = user.abilities.includes("review");
-  const [items, people, staff] = await Promise.all([office ? attentionItems() : [], office ? listPeople() : [], office ? listStaff() : []]);
+  const [items, people, staff, unread] = await Promise.all([office ? attentionItems() : [], office ? listPeople() : [], office ? listStaff() : [], countUnread({ userId: user.id, role: user.role, abilities: user.abilities })]);
 
   // Every number in the top bar and the section row comes from the list the bell already builds,
   // so the two can never disagree and nothing extra is queried to draw the nav.
@@ -30,5 +31,5 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ...people.map((p) => ({ id: p.id, label: `${p.firstName} ${p.lastName}`, hint: `PMI ${p.pmi} · ${p.waiverProgram}`, href: `/clients/${p.id}`, group: "Clients" as const })),
     ...staff.map((s) => ({ id: s.id, label: `${s.firstName} ${s.lastName}`, hint: s.title, href: `/staff/${s.id}`, group: "Staff" as const })),
   ];
-  return <AppShell user={user} orgName={org.name} counts={counts} palette={palette}>{children}</AppShell>;
+  return <AppShell user={user} orgName={org.name} counts={counts} unread={unread} palette={palette}>{children}</AppShell>;
 }

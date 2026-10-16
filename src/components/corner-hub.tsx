@@ -60,6 +60,7 @@ export function whereAmI(pathname: string, abilities: readonly string[], names: 
   const gear = gearGroups(abilities).flatMap((g) => g.items).find((i) => pathname === i.href || pathname.startsWith(i.href + "/"));
   if (gear) return { icon: gear.icon, area: gear.label, href: gear.href };
   if (pathname === "/") return { icon: "home", area: "Home", href: "/" };
+  if (pathname.startsWith("/messages")) return { icon: "chat", area: "Messages", href: "/messages" };
   if (pathname.startsWith("/me")) return { icon: "user", area: "My profile", href: "/me" };
   if (pathname.startsWith("/search")) return { icon: "search", area: "Search", href: "/search" };
   return { icon: "home", area: "EVVora", href: "/" };

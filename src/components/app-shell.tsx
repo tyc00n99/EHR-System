@@ -29,7 +29,7 @@ const ROLE_LABEL = { admin: "Admin", supervisor: "Supervisor", dsp: "Caregiver" 
  * account; the section row sits under it; the corner hub in the bottom-right is the whole primary
  * navigation. The page gets every pixel of width.
  */
-export function AppShell({ user, orgName, counts, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; palette: PaletteEntry[]; children: ReactNode }) {
+export function AppShell({ user, orgName, counts, unread, palette, children }: { user: CurrentUser; orgName: string; counts: NavCounts; unread: number; palette: PaletteEntry[]; children: ReactNode }) {
   const gear = gearGroups(user.abilities);
   const names = palette.map((p) => ({ href: p.href, label: p.label }));
   return (
@@ -53,6 +53,11 @@ export function AppShell({ user, orgName, counts, palette, children }: { user: C
             <span className="flex size-2.5 rounded-full bg-warn" /> No password on this link
           </span>
         )}
+        {/* Messages live in the top-right corner, not on the hub (user, Oct 16, 2026). */}
+        <Link href="/messages" aria-label={unread ? `Messages, ${unread} unread` : "Messages"} title="Messages" className="relative flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong">
+          <Icon.chat size={19} />
+          {unread > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[13px] font-semibold leading-none text-white">{unread > 99 ? "99+" : unread}</span>}
+        </Link>
         {gear.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" title="Setup & reports" className="flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[19px]" /></DropdownMenuTrigger>
