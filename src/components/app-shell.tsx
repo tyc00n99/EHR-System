@@ -12,7 +12,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { MessagesPill } from "@/components/messages-pill";
 import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeMenuItems } from "@/components/theme-switcher";
 import { gearGroups, type NavCounts } from "@/lib/nav";
 import { loginRequired, signOut, type CurrentUser } from "@/lib/auth";
 
@@ -54,11 +53,7 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
             <span className="flex size-2.5 rounded-full bg-warn" /> No password on this link
           </span>
         )}
-        {/* Messages live in the top-right corner, not on the hub (user, Oct 16, 2026). */}
-        <Link href="/messages" aria-label={unread ? `Messages, ${unread} unread` : "Messages"} title="Messages" className="relative flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong">
-          <Icon.chat size={19} />
-          {unread > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[13px] font-semibold leading-none text-white">{unread > 99 ? "99+" : unread}</span>}
-        </Link>
+        {/* Messages are the bottom-left pill (MessagesPill); the strip carries no chat icon (user, Oct 16, 2026). */}
         {gear.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" title="Setup & reports" className="flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[19px]" /></DropdownMenuTrigger>
@@ -77,7 +72,7 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
           </DropdownMenu>
         )}
         <DropdownMenu>
-          <DropdownMenuTrigger render={<button aria-label="Account and appearance" className="flex size-9 items-center justify-center rounded-full hover:bg-tab-hover" />}>
+          <DropdownMenuTrigger render={<button aria-label="Account" className="flex size-9 items-center justify-center rounded-full hover:bg-tab-hover" />}>
             <Avatar name={user.staffName ?? user.email} size={32} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60">
@@ -85,7 +80,6 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
             <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/me" />}><User className="size-4" /> My profile</DropdownMenuItem>
             <DropdownMenuItem render={<Link href="/services" />}><FileText className="size-4" /> 245D service types</DropdownMenuItem>
-            <ThemeMenuItems />
             <DropdownMenuSeparator />
             {loginRequired()
               ? <form action={logout}><DropdownMenuItem render={<button type="submit" className="w-full" />}><LogOut className="size-4" /> Log out</DropdownMenuItem></form>
