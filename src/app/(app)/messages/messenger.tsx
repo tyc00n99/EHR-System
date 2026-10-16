@@ -67,7 +67,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     const s = q.toString();
     return s ? `/messages?${s}` : "/messages";
   };
-  const openDm = (userId: string) => href({ dm: userId, thread: null });
+  const openDm = (userId: string) => href({ dm: userId, thread: null, channel: null });
   const openThread = (id: string) => href({ thread: id, dm: null, channel: null });
   const openChannel = (id: string) => href({ channel: id, thread: null, dm: null });
   // A thread with an empty title is the channel's own conversation: listed as the channel, not as a thread.
@@ -84,14 +84,14 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     const rows: { key: string; at: string; unread: number; node: (active: boolean) => ReactNode; active: boolean; href: string }[] = [];
     for (const d of dms) rows.push({
       key: `dm:${d.contact.userId}`, at: d.lastAt, unread: d.unread, active: d.contact.userId === activeDm, href: openDm(d.contact.userId),
-      node: () => <ListRow face={<Face initials={d.contact.initials} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody}`} when={ago(d.lastAt, now)} unread={d.unread} />,
+      node: () => <ListRow face={<Face initials={d.contact.initials} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody || "Sent an attachment"}`} when={ago(d.lastAt, now)} unread={d.unread} />,
     });
     for (const t of threads) {
       const ch = channelById.get(t.channelId);
       if (isChannelHome(t.title) && !t.lastBody) continue; // an untouched channel chat is not "recent"
       rows.push({
         key: `t:${t.id}`, at: t.lastAt, unread: t.unread, active: t.id === activeThread, href: isChannelHome(t.title) && ch ? openChannel(ch.id) : openThread(t.id),
-        node: () => <ListRow face={isChannelHome(t.title) && ch ? <ChannelTile icon={ch.icon} tint={ch.tint} size={52} /> : <Face initials={t.lastSenderInitials} badge={ch && <ChannelTile icon={ch.icon} tint={ch.tint} size={20} />} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} />,
+        node: () => <ListRow face={isChannelHome(t.title) && ch ? <ChannelTile icon={ch.icon} tint={ch.tint} size={52} /> : <Face initials={t.lastSenderInitials} badge={ch && <ChannelTile icon={ch.icon} tint={ch.tint} size={20} />} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastSender || t.lastFromMe ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody || "Sent an attachment"}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} />,
       });
     }
     return rows.filter((r) => { if (r.key.startsWith("dm:")) return hit(dms.find((d) => `dm:${d.contact.userId}` === r.key)?.contact.name); const t = threads.find((x) => `t:${x.id}` === r.key); return hit(t && isChannelHome(t.title) ? channelById.get(t.channelId)?.name : t?.title); }).sort((a, b) => b.at.localeCompare(a.at));
@@ -134,7 +134,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                             <ListRow
                               face={<Face initials={t.lastSenderInitials} badge={<ChannelTile icon={c.icon} tint={c.tint} size={20} />} />}
                               title={t.title}
-                              preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"}
+                              preview={t.lastSender || t.lastFromMe ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody || "Sent an attachment"}` : "No messages yet"}
                               when={ago(t.lastAt, now)}
                               unread={t.unread}
                             />
@@ -202,7 +202,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
               {dms.length === 0 && !needle && <p className="px-5 pb-2 text-[14px] text-muted">No direct messages yet. Press + to start one.</p>}
               {dms.filter((d) => hit(d.contact.name, d.lastBody)).map((d) => (
                 <Link key={d.contact.userId} href={openDm(d.contact.userId)} className={rowCls(d.contact.userId === activeDm)}>
-                  <ListRow face={<Face initials={d.contact.initials} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody}`} when={ago(d.lastAt, now)} unread={d.unread} />
+                  <ListRow face={<Face initials={d.contact.initials} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody || "Sent an attachment"}`} when={ago(d.lastAt, now)} unread={d.unread} />
                 </Link>
               ))}
 
@@ -265,7 +265,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             key={open.kind === "dm" ? `dm:${open.contact.userId}` : `t:${open.thread.id}`}
             meId={meId}
             open={open}
-            backHref={href({ dm: null, thread: null })}
+            backHref={href({ dm: null, thread: null, channel: null })}
             onChannelSettings={(c) => setDialog({ kind: "channel", channel: c })}
             onNewThread={() => setDialog({ kind: "thread", channelId: open.kind === "thread" ? open.thread.channel.id : undefined })}
           />

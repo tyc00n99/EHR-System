@@ -32,7 +32,7 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   let open: OpenView = null;
   const dmId = sp.dm ?? sp.with;
   // A channel opens its own conversation (its empty-titled thread), created on first open.
-  const threadId = sp.thread ?? (sp.channel ? await ensureChannelHome(me, sp.channel) : null);
+  const threadId = dmId ? null : sp.thread ?? (sp.channel ? await ensureChannelHome(me, sp.channel) : null);
   if (threadId) {
     const t = await threadFor(me, threadId);
     if (t) {
