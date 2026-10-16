@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ChannelInfo, ChatMessage, MessageContact } from "@/db/message-queries";
 import { markChatThreadRead, markThreadRead, postMessage, renameThread } from "./actions";
-import { ChannelTile, dayOf, Face, fileSize, MentionText, roleWord, timeOf } from "./chat-bits";
+import { ChannelTile, dayOf, Face, fileSize, isChannelHome, MentionText, roleWord, timeOf } from "./chat-bits";
 import type { OpenView } from "./messenger";
 import { MAX_FILE_BYTES, MAX_FILES, PART_BYTES } from "./upload/shared";
 
@@ -54,6 +54,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
   }, [open.kind, targetId, lastId]);
 
   const audience: MessageContact[] = open.kind === "dm" ? [open.contact] : open.audience;
+  const home = open.kind === "thread" && isChannelHome(open.thread.title);
   const me = msgs.find((m) => m.sender.userId === meId)?.sender.name;
 
   // Group: day → runs of one sender within five minutes.
@@ -83,12 +84,16 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
       <header className="flex shrink-0 items-center gap-4 border-b border-line px-5 py-4 md:px-7">
         <Link href={backHref} aria-label="Back to conversations" className="grid size-9 place-items-center rounded-full hover:bg-tab-hover md:hidden"><ArrowLeft className="size-5" /></Link>
         {open.kind === "thread"
-          ? <span className="hidden size-16 shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-7" strokeWidth={1.7} /></span>
+          ? home
+            ? <span className="hidden sm:block"><ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={60} /></span>
+            : <span className="hidden size-16 shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-7" strokeWidth={1.7} /></span>
           : <Face initials={open.contact.initials} size={60} />}
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[24px] font-semibold tracking-[-0.015em] text-text-strong">{open.kind === "thread" ? open.thread.title : open.contact.name}</h2>
+          <h2 className="truncate text-[24px] font-semibold tracking-[-0.015em] text-text-strong">{open.kind === "thread" ? (home ? open.thread.channel.name : open.thread.title) : open.contact.name}</h2>
           <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[16px] text-text">
-            {open.kind === "thread" ? (
+            {open.kind === "thread" ? home ? (
+              <span className="truncate">{open.thread.channel.isPrivate ? "Private channel" : "Channel"} · {audience.length + 1} {audience.length === 0 ? "person" : "people"}</span>
+            ) : (
               <>
                 <ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={22} />
                 <span className="truncate">{open.thread.channel.name} · Started by {open.thread.startedBy.split(" ")[0]} at {timeOf(open.thread.createdAt)}</span>
@@ -102,7 +107,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
             <DropdownMenuTrigger render={<button aria-label="Thread options" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover" />}><MoreHorizontal className="size-5" /></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={rename}>Rename thread</DropdownMenuItem>
+                {!home && <DropdownMenuItem onClick={rename}>Rename thread</DropdownMenuItem>}
                 {open.thread.channel.canManage && <DropdownMenuItem onClick={() => onChannelSettings(open.thread.channel)}>Channel settings</DropdownMenuItem>}
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -111,7 +116,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
       </header>
 
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8">
-        {msgs.length === 0 && <p className="py-10 text-center text-[15px] text-muted">No messages yet. Say hello.</p>}
+        {msgs.length === 0 && <p className="py-10 text-center text-[15px] text-muted">{home ? `This is the start of ${open.kind === "thread" ? open.thread.channel.name : ""}. Say hello.` : "No messages yet. Say hello."}</p>}
         {days.map((d) => (
           <div key={d.day}>
             <div className="my-4 flex items-center gap-3 text-[13px] font-medium text-muted"><span className="h-px flex-1 bg-line" />{d.day}<span className="h-px flex-1 bg-line" /></div>
@@ -177,13 +182,14 @@ function AttachmentViewer({ file, onClose }: { file: Attachment; onClose: () => 
   const [ready, setReady] = useState(false);
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="flex h-[90vh] w-[min(96vw,1060px)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none">
+      {/* A picture gets a window its own size (user, Oct 16: "why is there so much extra space?"); a PDF needs the tall one. */}
+      <DialogContent className={cx("flex max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none", isImage ? "h-auto w-auto max-h-[92vh] max-w-[min(96vw,1600px)]" : "h-[90vh] w-[min(96vw,1060px)]")}>
         <DialogTitle className="flex h-12 shrink-0 items-center gap-3 whitespace-nowrap border-b border-line-soft bg-page pl-4 pr-14 text-[13.5px] font-medium">
           <span className="min-w-0 flex-1 truncate">{file.fileName}</span>
           <span className="shrink-0 text-muted">{fileSize(file.sizeBytes)}</span>
           <a href={src} download={file.fileName} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Download className="size-3.5" /> Download</a>
         </DialogTitle>
-        <div className="relative min-h-0 flex-1 bg-panel">
+        <div className={cx("relative min-h-0 flex-1", isImage ? "bg-card" : "bg-panel")}>
           {isPdf && (
             <>
               {!ready && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted"><Loader2 className="size-4 animate-spin" aria-hidden /> Opening…</div>}
@@ -191,10 +197,8 @@ function AttachmentViewer({ file, onClose }: { file: Attachment; onClose: () => 
             </>
           )}
           {isImage && (
-            <div className="grid size-full place-items-center overflow-auto p-4">
-              {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file */}
-              <img src={src} alt={file.fileName} className="max-h-full max-w-full object-contain" />
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file
+            <img src={src} alt={file.fileName} className="block max-h-[calc(92vh-3rem)] max-w-[min(96vw,1600px)] object-contain" />
           )}
           {!isPdf && !isImage && (
             <div className="flex size-full flex-col items-center justify-center gap-3 p-6 text-center">

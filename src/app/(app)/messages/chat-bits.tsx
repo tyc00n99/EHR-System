@@ -11,6 +11,9 @@ export const CHANNEL_ICONS: Record<string, LucideIcon> = {
   /** Reserved for a client's own channel; not offered when creating a channel. */
   person: User,
 };
+/** A thread with an empty title is its channel's own conversation (see `ensureChannelHome`). */
+export const isChannelHome = (title: string) => title === "";
+
 export const ICON_KEYS = Object.keys(CHANNEL_ICONS).filter((k) => k !== "person");
 
 /** Soft tile tints, drawn from the app's own status tints so channels never bring in a new colour. */

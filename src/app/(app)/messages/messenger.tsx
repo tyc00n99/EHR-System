@@ -13,7 +13,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ChannelInfo, ChatMessage, Conversation, MentionItem, MessageContact, ThreadSummary } from "@/db/message-queries";
-import { ago, ChannelTile, Face, MentionText } from "./chat-bits";
+import { ago, ChannelTile, Face, isChannelHome, MentionText } from "./chat-bits";
 import { ConversationPane } from "./conversation";
 import { ChannelDialog, NewMessageDialog, NewThreadDialog } from "./dialogs";
 
@@ -68,7 +68,10 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     return s ? `/messages?${s}` : "/messages";
   };
   const openDm = (userId: string) => href({ dm: userId, thread: null });
-  const openThread = (id: string) => href({ thread: id, dm: null });
+  const openThread = (id: string) => href({ thread: id, dm: null, channel: null });
+  const openChannel = (id: string) => href({ channel: id, thread: null, dm: null });
+  // A thread with an empty title is the channel's own conversation: listed as the channel, not as a thread.
+  const homeOf = (channelId: string) => threads.find((t) => t.channelId === channelId && isChannelHome(t.title)) ?? null;
   const activeDm = open?.kind === "dm" ? open.contact.userId : null;
   const activeThread = open?.kind === "thread" ? open.thread.id : null;
 
@@ -85,29 +88,34 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     });
     for (const t of threads) {
       const ch = channelById.get(t.channelId);
+      if (isChannelHome(t.title) && !t.lastBody) continue; // an untouched channel chat is not "recent"
       rows.push({
-        key: `t:${t.id}`, at: t.lastAt, unread: t.unread, active: t.id === activeThread, href: openThread(t.id),
-        node: () => <ListRow face={<Face initials={t.lastSenderInitials} badge={ch && <ChannelTile icon={ch.icon} tint={ch.tint} size={20} />} />} title={t.title} preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} />,
+        key: `t:${t.id}`, at: t.lastAt, unread: t.unread, active: t.id === activeThread, href: isChannelHome(t.title) && ch ? openChannel(ch.id) : openThread(t.id),
+        node: () => <ListRow face={isChannelHome(t.title) && ch ? <ChannelTile icon={ch.icon} tint={ch.tint} size={52} /> : <Face initials={t.lastSenderInitials} badge={ch && <ChannelTile icon={ch.icon} tint={ch.tint} size={20} />} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} />,
       });
     }
-    return rows.filter((r) => hit(r.key.startsWith("dm:") ? dms.find((d) => `dm:${d.contact.userId}` === r.key)?.contact.name : threads.find((t) => `t:${t.id}` === r.key)?.title)).sort((a, b) => b.at.localeCompare(a.at));
+    return rows.filter((r) => { if (r.key.startsWith("dm:")) return hit(dms.find((d) => `dm:${d.contact.userId}` === r.key)?.contact.name); const t = threads.find((x) => `t:${x.id}` === r.key); return hit(t && isChannelHome(t.title) ? channelById.get(t.channelId)?.name : t?.title); }).sort((a, b) => b.at.localeCompare(a.at));
   })();
 
   const renderChannel = (c: ChannelInfo) => {
-                const own = threads.filter((t) => t.channelId === c.id && (hit(c.name) || hit(t.title)));
+                const home = homeOf(c.id);
+                const own = threads.filter((t) => t.channelId === c.id && !isChannelHome(t.title) && (hit(c.name) || hit(t.title)));
                 if (needle && !hit(c.name) && own.length === 0) return null;
-                const isOpen = needle ? true : collapsed[c.id] === undefined ? own.length > 0 || own.some((t) => t.id === activeThread) : !collapsed[c.id];
-                const unread = own.reduce((n, t) => n + t.unread, 0);
+                const isOpen = needle ? true : collapsed[c.id] === undefined ? own.some((t) => t.id === activeThread) : !collapsed[c.id];
+                const channelActive = home !== null && home.id === activeThread;
+                const unread = own.reduce((n, t) => n + t.unread, 0) + (home?.unread ?? 0);
                 return (
                   <div key={c.id} className="mt-2">
-                    <div className="group flex items-center gap-2 px-3 py-1.5">
-                      <button onClick={() => setCollapsed((s) => ({ ...s, [c.id]: isOpen }))} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-tab-hover">
-                        {isOpen ? <ChevronDown className="size-4 shrink-0 text-muted" /> : <ChevronRight className="size-4 shrink-0 text-muted" />}
-                        <ChannelTile icon={c.icon} tint={c.tint} size={32} />
-                        <span className="truncate text-[19px] font-medium text-text-strong">{c.name}</span>
-                        {c.isPrivate && <Lock className="size-4 shrink-0 text-text" aria-label="Private channel" />}
+                    <div className={cx("group mx-3 flex items-center gap-1 rounded-2xl pl-1 pr-2 py-1", channelActive ? "bg-tab-hover" : "hover:bg-tab-hover")}>
+                      <button onClick={() => setCollapsed((s) => ({ ...s, [c.id]: isOpen }))} aria-expanded={isOpen} aria-label={isOpen ? `Hide threads in ${c.name}` : `Show threads in ${c.name}`} className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-black/5">
+                        {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
                       </button>
-                      {!isOpen && unread > 0 && <Count n={unread} />}
+                      <Link href={openChannel(c.id)} aria-current={channelActive ? "page" : undefined} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1.5 text-left">
+                        <ChannelTile icon={c.icon} tint={c.tint} size={32} />
+                        <span className={cx("truncate text-[19px] text-text-strong", unread ? "font-semibold" : "font-medium")}>{c.name}</span>
+                        {c.isPrivate && <Lock className="size-4 shrink-0 text-text" aria-label="Private channel" />}
+                      </Link>
+                      {unread > 0 && !channelActive && <Count n={unread} />}
                       <DropdownMenu>
                         <DropdownMenuTrigger render={<button aria-label={`${c.name} options`} className="grid size-8 place-items-center rounded-full text-muted opacity-0 hover:bg-tab-hover focus-visible:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100" />}><MoreHorizontal className="size-4" /></DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">

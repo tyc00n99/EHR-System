@@ -211,6 +211,24 @@ export async function ensureClientChannels(actorUserId: string | null): Promise<
   }
 }
 
+/**
+ * A channel's own conversation (Oct 16, 2026, user: clicking a channel should start a chat). It is
+ * the channel's thread with an empty title — no new column, and every thread rule (visibility,
+ * posting, mentions, files, unread marks) applies unchanged. Created the first time the channel
+ * is opened; the list draws it as the channel itself, never as a thread.
+ */
+export async function ensureChannelHome(me: Me, channelId: string): Promise<string | null> {
+  const channel = await channelFor(me, channelId);
+  if (!channel) return null;
+  const db = await getDb();
+  const [home] = await db.select({ id: chatThreads.id }).from(chatThreads).where(and(eq(chatThreads.channelId, channelId), eq(chatThreads.title, ""))).limit(1);
+  if (home) return home.id;
+  const row = await audited(db, { userId: me.userId }).insert(chatThreads, { channelId, title: "", startedBy: me.userId });
+  return row.id;
+}
+
+export const isChannelHome = (title: string) => title === "";
+
 export async function channelFor(me: Me, channelId: string): Promise<ChannelInfo | null> {
   return (await visibleChannels(me)).find((c) => c.id === channelId) ?? null;
 }

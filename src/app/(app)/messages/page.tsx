@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import {
-  canCreateChannels, channelAudience, ensureClientChannels, listConversations, listDmMessages, listMentions, listMessageContacts,
-  listThreadMessages, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
+  canCreateChannels, channelAudience, ensureChannelHome, ensureClientChannels, listConversations, listDmMessages, listMentions,
+  listMessageContacts, listThreadMessages, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
 } from "@/db/message-queries";
 import { requireUser } from "@/lib/auth";
 import { nowMs } from "@/lib/format";
@@ -17,7 +17,7 @@ type Tab = "home" | "recent" | "unread" | "me";
  * right. The URL is the state: `?dm=<userId>` or `?thread=<id>`, plus `?tab=`. `?with=` is the
  * older name for `?dm=` and still works.
  */
-export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ with?: string; dm?: string; thread?: string; tab?: string }> }) {
+export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ with?: string; dm?: string; thread?: string; channel?: string; tab?: string }> }) {
   const user = await requireUser();
   const sp = await searchParams;
   const me: Me = { userId: user.id, role: user.role, abilities: user.abilities, staffId: user.staffId };
@@ -31,8 +31,10 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
 
   let open: OpenView = null;
   const dmId = sp.dm ?? sp.with;
-  if (sp.thread) {
-    const t = await threadFor(me, sp.thread);
+  // A channel opens its own conversation (its empty-titled thread), created on first open.
+  const threadId = sp.thread ?? (sp.channel ? await ensureChannelHome(me, sp.channel) : null);
+  if (threadId) {
+    const t = await threadFor(me, threadId);
     if (t) {
       const [msgs, audience] = await Promise.all([listThreadMessages(t.id), channelAudience(t.channel.id)]);
       open = { kind: "thread", thread: t, messages: msgs, audience: audience.filter((p) => p.userId !== user.id) };
