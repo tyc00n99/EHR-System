@@ -1,15 +1,17 @@
 "use client";
 
 /** Small shared pieces of the Messages screen: avatars, channel tiles, times, mention-aware text. */
-import { Banknote, Bell, CalendarDays, ClipboardList, Heart, House, MessageSquare, ShieldCheck, Users, Wrench, type LucideIcon } from "lucide-react";
+import { Banknote, Bell, CalendarDays, ClipboardList, Heart, House, MessageSquare, ShieldCheck, User, Users, Wrench, type LucideIcon } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { cx } from "@/components/kit";
 
 export const CHANNEL_ICONS: Record<string, LucideIcon> = {
   chat: MessageSquare, calendar: CalendarDays, money: Banknote, team: Users, shield: ShieldCheck,
   home: House, heart: Heart, wrench: Wrench, clipboard: ClipboardList, bell: Bell,
+  /** Reserved for a client's own channel; not offered when creating a channel. */
+  person: User,
 };
-export const ICON_KEYS = Object.keys(CHANNEL_ICONS);
+export const ICON_KEYS = Object.keys(CHANNEL_ICONS).filter((k) => k !== "person");
 
 /** Soft tile tints, drawn from the app's own status tints so channels never bring in a new colour. */
 export const TINTS: Record<string, string> = {

@@ -6,7 +6,7 @@
  * threads), the open conversation on the right. Selection lives in the URL. The page re-reads itself
  * every 25 seconds while visible, so new messages arrive without a reload.
  */
-import { ChevronDown, ChevronRight, Lock, MessageCircle, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Hash, Lock, MessageCircle, MoreHorizontal, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -87,6 +87,55 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     return rows.sort((a, b) => b.at.localeCompare(a.at));
   })();
 
+  const renderChannel = (c: ChannelInfo) => {
+                const own = threads.filter((t) => t.channelId === c.id);
+                const isOpen = collapsed[c.id] === undefined ? own.length > 0 || own.some((t) => t.id === activeThread) : !collapsed[c.id];
+                const unread = own.reduce((n, t) => n + t.unread, 0);
+                return (
+                  <div key={c.id} className="mt-2">
+                    <div className="group flex items-center gap-2 px-3 py-1.5">
+                      <button onClick={() => setCollapsed((s) => ({ ...s, [c.id]: isOpen }))} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-tab-hover">
+                        {isOpen ? <ChevronDown className="size-4 shrink-0 text-muted" /> : <ChevronRight className="size-4 shrink-0 text-muted" />}
+                        <ChannelTile icon={c.icon} tint={c.tint} size={30} />
+                        <span className="truncate text-[17px] font-medium text-text-strong">{c.name}</span>
+                        {c.isPrivate && <Lock className="size-4 shrink-0 text-text" aria-label="Private channel" />}
+                      </button>
+                      {!isOpen && unread > 0 && <Count n={unread} />}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<button aria-label={`${c.name} options`} className="grid size-8 place-items-center rounded-full text-muted opacity-0 hover:bg-tab-hover focus-visible:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100" />}><MoreHorizontal className="size-4" /></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => setDialog({ kind: "thread", channelId: c.id })}>New thread here</DropdownMenuItem>
+                            {c.canManage && <DropdownMenuItem onClick={() => setDialog({ kind: "channel", channel: c })}>Channel settings</DropdownMenuItem>}
+                            {c.personId && <DropdownMenuItem render={<Link href={`/clients/${c.personId}`} />}>Open client record</DropdownMenuItem>}
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    {isOpen && (
+                      <>
+                        {own.map((t) => (
+                          <Link key={t.id} href={openThread(t.id)} className={rowCls(t.id === activeThread)}>
+                            <ListRow
+                              face={<Face initials={t.lastSenderInitials} badge={<ChannelTile icon={c.icon} tint={c.tint} size={20} />} />}
+                              title={t.title}
+                              preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"}
+                              when={ago(t.lastAt, now)}
+                              unread={t.unread}
+                            />
+                          </Link>
+                        ))}
+                        <button onClick={() => setDialog({ kind: "thread", channelId: c.id })} className="ml-[68px] flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-medium text-primary hover:bg-tab-hover">
+                          <Plus className="size-4" /> New thread
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              };
+  const clientChannels = channels.filter((c) => c.personId);
+  const otherChannels = channels.filter((c) => !c.personId);
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "home", label: "Home" },
     { key: "recent", label: "Recent" },
@@ -132,54 +181,18 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                 </Link>
               ))}
 
-              {channels.map((c) => {
-                const own = threads.filter((t) => t.channelId === c.id);
-                const isOpen = collapsed[c.id] === undefined ? own.length > 0 || own.some((t) => t.id === activeThread) : !collapsed[c.id];
-                const unread = own.reduce((n, t) => n + t.unread, 0);
-                return (
-                  <div key={c.id} className="mt-2">
-                    <div className="group flex items-center gap-2 px-3 py-1.5">
-                      <button onClick={() => setCollapsed((s) => ({ ...s, [c.id]: isOpen }))} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-tab-hover">
-                        {isOpen ? <ChevronDown className="size-4 shrink-0 text-muted" /> : <ChevronRight className="size-4 shrink-0 text-muted" />}
-                        <ChannelTile icon={c.icon} tint={c.tint} size={30} />
-                        <span className="truncate text-[17px] font-medium text-text-strong">{c.name}</span>
-                        {c.isPrivate && <Lock className="size-4 shrink-0 text-text" aria-label="Private channel" />}
-                      </button>
-                      {!isOpen && unread > 0 && <Count n={unread} />}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={<button aria-label={`${c.name} options`} className="grid size-8 place-items-center rounded-full text-muted opacity-0 hover:bg-tab-hover focus-visible:opacity-100 group-hover:opacity-100 data-[popup-open]:opacity-100" />}><MoreHorizontal className="size-4" /></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem onClick={() => setDialog({ kind: "thread", channelId: c.id })}>New thread here</DropdownMenuItem>
-                            {c.canManage && <DropdownMenuItem onClick={() => setDialog({ kind: "channel", channel: c })}>Channel settings</DropdownMenuItem>}
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    {isOpen && (
-                      <>
-                        {own.map((t) => (
-                          <Link key={t.id} href={openThread(t.id)} className={rowCls(t.id === activeThread)}>
-                            <ListRow
-                              face={<Face initials={t.lastSenderInitials} badge={<ChannelTile icon={c.icon} tint={c.tint} size={20} />} />}
-                              title={t.title}
-                              preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"}
-                              when={ago(t.lastAt, now)}
-                              unread={t.unread}
-                            />
-                          </Link>
-                        ))}
-                        <button onClick={() => setDialog({ kind: "thread", channelId: c.id })} className="ml-[68px] flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-medium text-primary hover:bg-tab-hover">
-                          <Plus className="size-4" /> New thread
-                        </button>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-              {channels.length === 0 && canCreateChannels && (
+              {clientChannels.length > 0 && (
+                <>
+                  <SectionLabel icon={<Users className="size-[18px]" strokeWidth={1.8} />}>Clients</SectionLabel>
+                  <p className="-mt-1 px-5 pb-1 text-[13px] text-muted">Each client&apos;s channel holds everyone assigned to them.</p>
+                  {clientChannels.map(renderChannel)}
+                </>
+              )}
+              {(otherChannels.length > 0 || canCreateChannels) && <SectionLabel icon={<Hash className="size-[18px]" strokeWidth={1.8} />}>Channels</SectionLabel>}
+              {otherChannels.map(renderChannel)}
+              {otherChannels.length === 0 && canCreateChannels && (
                 <button onClick={() => setDialog({ kind: "channel" })} className="mx-5 mt-4 flex items-center gap-2 rounded-lg border border-dashed border-line px-3 py-2.5 text-[14px] font-medium text-primary hover:bg-tab-hover">
-                  <Plus className="size-4" /> Create your first channel
+                  <Plus className="size-4" /> Create a team channel
                 </button>
               )}
             </>

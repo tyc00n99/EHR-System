@@ -1668,6 +1668,12 @@ export type Message = typeof messages.$inferSelect;
  */
 export const chatChannels = pgTable("chat_channels", {
   id: uuid("id").primaryKey().defaultRandom(),
+  /**
+   * Set on a client's own channel (Oct 16, 2026): one per person, created with the client. Its
+   * members are never stored — they are whoever has an active assignment to this person, read live
+   * from `assignments`, so assigning or unassigning a caregiver adds or removes them at once.
+   */
+  personId: uuid("person_id").references(() => people.id),
   name: text("name").notNull(),
   /** Icon key from the small set the channel form offers. */
   icon: text("icon").notNull().default("chat"),
@@ -1677,7 +1683,7 @@ export const chatChannels = pgTable("chat_channels", {
   createdBy: uuid("created_by").references(() => users.id),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
   ...timestamps,
-});
+}, (t) => [uniqueIndex("chat_channels_person_idx").on(t.personId)]);
 export type ChatChannel = typeof chatChannels.$inferSelect;
 
 export const chatChannelMembers = pgTable(

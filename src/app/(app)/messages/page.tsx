@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import {
-  canCreateChannels, channelAudience, listConversations, listDmMessages, listMentions, listMessageContacts,
+  canCreateChannels, channelAudience, ensureClientChannels, listConversations, listDmMessages, listMentions, listMessageContacts,
   listThreadMessages, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
 } from "@/db/message-queries";
 import { requireUser } from "@/lib/auth";
@@ -20,9 +20,10 @@ type Tab = "home" | "recent" | "unread" | "me";
 export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ with?: string; dm?: string; thread?: string; tab?: string }> }) {
   const user = await requireUser();
   const sp = await searchParams;
-  const me: Me = { userId: user.id, role: user.role, abilities: user.abilities };
+  const me: Me = { userId: user.id, role: user.role, abilities: user.abilities, staffId: user.staffId };
   const tab: Tab = sp.tab === "recent" || sp.tab === "unread" || sp.tab === "me" ? sp.tab : "home";
 
+  await ensureClientChannels(user.id);
   const [conversations, contacts, channels, mentions] = await Promise.all([
     listConversations(me), listMessageContacts(me), visibleChannels(me), listMentions(me),
   ]);

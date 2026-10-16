@@ -13,6 +13,7 @@ import { requireAbility } from "@/lib/auth";
 import { issueClientCode } from "@/lib/client-code";
 import { decryptField } from "@/lib/crypto";
 import { putFile } from "@/lib/storage";
+import { ensureClientChannels } from "@/db/message-queries";
 import { agreementSchema, fieldErrors, formToObject, personSchema, type ActionState, activityLibrarySchema } from "@/lib/validation";
 
 export async function createPerson(_prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -28,6 +29,8 @@ export async function createPerson(_prev: ActionState, fd: FormData): Promise<Ac
     if (String(e).includes("people_pmi_idx")) return { errors: { pmi: "A client with this PMI number already exists" } };
     throw e;
   }
+  // Every client gets their own channel in Messages; its members are whoever is assigned to them.
+  await ensureClientChannels(user.id);
   const org = await getOrganization();
   const issued = await issueClientCode(db, user.id, { id, firstName: parsed.data.firstName, phone: parsed.data.phone ?? null, smsConsent: parsed.data.smsConsent }, org.name);
   revalidatePath("/clients");

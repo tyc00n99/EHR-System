@@ -70,6 +70,7 @@ export async function addAssignment(staffId: string, personId: string): Promise<
   else await w.insert(schema.assignments, { staffId, personId });
   revalidatePath(`/staff/${staffId}`);
   revalidatePath("/clock");
+  revalidatePath("/messages");
   return {};
 }
 
@@ -79,6 +80,7 @@ export async function endAssignment(id: string, staffId: string): Promise<void> 
   await audited(db, { userId: user.id }).update(schema.assignments, id, { active: false });
   revalidatePath(`/staff/${staffId}`);
   revalidatePath("/clock");
+  revalidatePath("/messages");
 }
 
 /** Records 245D.09, subd. 4a orientation to this person's needs (today unless a date is given). */
@@ -88,6 +90,7 @@ export async function markOriented(id: string, staffId: string, date?: string): 
   await audited(db, { userId: user.id }).update(schema.assignments, id, { orientedOn: date ?? new Date().toISOString().slice(0, 10) });
   revalidatePath(`/staff/${staffId}`);
   revalidatePath("/clock");
+  revalidatePath("/messages");
 }
 
 /* ---------- credentials ---------- */

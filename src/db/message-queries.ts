@@ -2,9 +2,10 @@ import "server-only";
 import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { abilitiesFor } from "@/lib/auth";
 import { hasAbility } from "@/lib/abilities";
+import { audited } from "./audited";
 import { getDb, schema } from "./index";
 
-const { messages, users, staff, chatChannels, chatChannelMembers, chatThreads, chatReads, messageMentions, messageAttachments } = schema;
+const { messages, users, staff, people, assignments, chatChannels, chatChannelMembers, chatThreads, chatReads, messageMentions, messageAttachments } = schema;
 
 /** A user someone can message, with the name the roster knows them by. */
 export interface MessageContact {
@@ -108,6 +109,8 @@ export interface Me {
   userId: string;
   role: "admin" | "supervisor" | "dsp";
   abilities: readonly string[];
+  /** The caregiver record behind this login, if any: client channels follow its assignments. */
+  staffId: string | null;
 }
 
 /** Office staff (anyone who sees every client) may read and post in any open channel. */
@@ -137,26 +140,75 @@ export interface ChannelInfo {
   isMember: boolean;
   canManage: boolean;
   createdBy: string | null;
-  /** Everyone on the member list (for the settings window). */
+  /** Everyone on the member list (for the settings window). Empty for a client channel, whose members are its assigned staff. */
   memberIds: string[];
+  /** Set on a client's own channel. */
+  personId: string | null;
 }
 
-/** Channels this person can see: ones they belong to, plus open channels when they are office staff. */
+/**
+ * Channels this person can see.
+ * - A client's channel: anyone with an active assignment to that client, plus every office login.
+ *   Membership is read live from `assignments`, so an unassigned caregiver loses it immediately.
+ *   Channels of discharged clients leave the list (their threads are kept).
+ * - Any other channel: its members, plus every office login when it is not private.
+ */
 export async function visibleChannels(me: Me): Promise<ChannelInfo[]> {
   const db = await getDb();
-  const allMembers = await db.select({ channelId: chatChannelMembers.channelId, userId: chatChannelMembers.userId }).from(chatChannelMembers);
+  const [allMembers, rows, mine] = await Promise.all([
+    db.select({ channelId: chatChannelMembers.channelId, userId: chatChannelMembers.userId }).from(chatChannelMembers),
+    db.select({ c: chatChannels, firstName: people.firstName, lastName: people.lastName, status: people.status })
+      .from(chatChannels).leftJoin(people, eq(chatChannels.personId, people.id))
+      .where(isNull(chatChannels.archivedAt)),
+    me.staffId
+      ? db.select({ personId: assignments.personId }).from(assignments).where(and(eq(assignments.staffId, me.staffId), eq(assignments.active, true)))
+      : Promise.resolve([] as { personId: string }[]),
+  ]);
   const memberOf = new Set(allMembers.filter((m) => m.userId === me.userId).map((m) => m.channelId));
-  const rows = await db.select().from(chatChannels).where(isNull(chatChannels.archivedAt)).orderBy(asc(chatChannels.name));
+  const assigned = new Set(mine.map((m) => m.personId));
   const office = isOffice(me);
   const manager = canCreateChannels(me);
-  return rows
-    .filter((c) => memberOf.has(c.id) || (!c.isPrivate && office))
-    .map((c) => ({
-      id: c.id, name: c.name, icon: c.icon, tint: c.tint, isPrivate: c.isPrivate, createdBy: c.createdBy,
+  const out: ChannelInfo[] = [];
+  for (const { c, firstName, lastName, status } of rows) {
+    if (c.personId) {
+      if (status === "discharged") continue;
+      const isMember = assigned.has(c.personId);
+      if (!isMember && !office) continue;
+      out.push({
+        id: c.id, name: `${firstName ?? ""} ${lastName ?? ""}`.trim() || c.name, icon: "person", tint: "primary", isPrivate: false,
+        createdBy: null, isMember, canManage: false, memberIds: [], personId: c.personId,
+      });
+      continue;
+    }
+    if (!memberOf.has(c.id) && (c.isPrivate || !office)) continue;
+    out.push({
+      id: c.id, name: c.name, icon: c.icon, tint: c.tint, isPrivate: c.isPrivate, createdBy: c.createdBy, personId: null,
       isMember: memberOf.has(c.id),
       memberIds: allMembers.filter((m) => m.channelId === c.id).map((m) => m.userId),
       canManage: me.role === "admin" || (manager && (c.createdBy === me.userId || memberOf.has(c.id))),
-    }));
+    });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Make sure every client has their own channel. Cheap when nothing is missing (one read); the
+ * migration back-filled existing clients and `createPerson` calls this for new ones, so this only
+ * catches rows written some other way (a seed, a script).
+ */
+export async function ensureClientChannels(actorUserId: string | null): Promise<void> {
+  const db = await getDb();
+  const missing = await db
+    .select({ id: people.id, firstName: people.firstName, lastName: people.lastName })
+    .from(people)
+    .leftJoin(chatChannels, eq(chatChannels.personId, people.id))
+    .where(isNull(chatChannels.id));
+  if (missing.length === 0) return;
+  const w = audited(db, { userId: actorUserId });
+  for (const p of missing) {
+    await w.insert(chatChannels, { personId: p.id, name: `${p.firstName} ${p.lastName}`.trim(), icon: "person", tint: "primary", isPrivate: false })
+      .catch(() => undefined); // another request created it first (unique on person_id)
+  }
 }
 
 export async function channelFor(me: Me, channelId: string): Promise<ChannelInfo | null> {
@@ -216,18 +268,30 @@ export async function threadFor(me: Me, threadId: string) {
   return { id: t.id, title: t.title, createdAt: t.createdAt.toISOString(), startedBy: starter.name, channel };
 }
 
-/** Who can read a channel: its members, plus every office login when the channel is open. */
+/**
+ * Who can read a channel: for a client's channel, the logins of everyone actively assigned to the
+ * client; otherwise its members. Plus every office login, unless the channel is private.
+ */
 export async function channelAudience(channelId: string): Promise<MessageContact[]> {
   const db = await getDb();
   const [c] = await db.select().from(chatChannels).where(eq(chatChannels.id, channelId));
   if (!c) return [];
-  const members = await db.select({ userId: chatChannelMembers.userId }).from(chatChannelMembers).where(eq(chatChannelMembers.channelId, channelId));
-  const ids = new Set(members.map((m) => m.userId));
+  const ids = new Set<string>();
+  if (c.personId) {
+    const rows = await db.select({ userId: users.id }).from(assignments)
+      .innerJoin(users, eq(users.staffId, assignments.staffId))
+      .where(and(eq(assignments.personId, c.personId), eq(assignments.active, true)));
+    for (const r of rows) ids.add(r.userId);
+  } else {
+    const members = await db.select({ userId: chatChannelMembers.userId }).from(chatChannelMembers).where(eq(chatChannelMembers.channelId, channelId));
+    for (const m of members) ids.add(m.userId);
+  }
   if (!c.isPrivate) {
     const active = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.active, true));
     for (const u of active) if (hasAbility(await abilitiesFor(u.role), "all_clients")) ids.add(u.id);
   }
-  const active = await db.select({ id: users.id }).from(users).where(and(eq(users.active, true), inArray(users.id, [...ids].length ? [...ids] : ["00000000-0000-0000-0000-000000000000"])));
+  if (ids.size === 0) return [];
+  const active = await db.select({ id: users.id }).from(users).where(and(eq(users.active, true), inArray(users.id, [...ids])));
   const named = await namedUsers(active.map((a) => a.id));
   return [...named.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

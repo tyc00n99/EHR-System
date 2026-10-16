@@ -18,7 +18,7 @@ const TINTS = ["primary", "ok", "warn", "danger", "neutral"] as const;
 
 type Result<T = object> = ({ ok: true } & T) | { error: string };
 
-const meOf = (u: CurrentUser): Me => ({ userId: u.id, role: u.role, abilities: u.abilities });
+const meOf = (u: CurrentUser): Me => ({ userId: u.id, role: u.role, abilities: u.abilities, staffId: u.staffId });
 
 /** Can `me` send a direct message to `recipientId`? Caregivers write to management only. */
 async function dmProblem(me: CurrentUser, recipientId: string): Promise<string | null> {
@@ -229,7 +229,7 @@ export async function joinChannel(channelId: string): Promise<Result> {
   const user = await requireUser();
   const ch = await channelFor(meOf(user), channelId);
   if (!ch) return { error: "That channel is not open to you." };
-  if (ch.isMember) return { ok: true };
+  if (ch.isMember || ch.personId) return { ok: true }; // a client's channel follows assignments, not a member list
   const db = await getDb();
   await audited(db, { userId: user.id }).insert(schema.chatChannelMembers, { channelId, userId: user.id, addedBy: user.id });
   revalidatePath("/messages");

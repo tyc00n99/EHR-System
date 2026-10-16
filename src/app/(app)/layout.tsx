@@ -10,7 +10,7 @@ import { NO_COUNTS, type NavCounts } from "@/lib/nav";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const [user, org] = await Promise.all([requireUser(), getOrganization()]);
   const office = user.abilities.includes("review");
-  const [items, people, staff, unread] = await Promise.all([office ? attentionItems() : [], office ? listPeople() : [], office ? listStaff() : [], countUnread({ userId: user.id, role: user.role, abilities: user.abilities })]);
+  const [items, people, staff, unread] = await Promise.all([office ? attentionItems() : [], office ? listPeople() : [], office ? listStaff() : [], countUnread({ userId: user.id, role: user.role, abilities: user.abilities, staffId: user.staffId })]);
 
   // Every number in the top bar and the section row comes from the list the bell already builds,
   // so the two can never disagree and nothing extra is queried to draw the nav.

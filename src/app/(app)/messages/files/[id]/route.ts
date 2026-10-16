@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .limit(1);
   if (!row) notFound();
   const allowed = row.threadId
-    ? Boolean(await threadFor({ userId: user.id, role: user.role, abilities: user.abilities }, row.threadId))
+    ? Boolean(await threadFor({ userId: user.id, role: user.role, abilities: user.abilities, staffId: user.staffId }, row.threadId))
     : row.senderId === user.id || row.recipientId === user.id;
   if (!allowed) notFound();
   const file = await getFile(row.path);
