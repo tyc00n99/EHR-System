@@ -25,11 +25,13 @@ const IMAGE = /^image\/(png|jpe?g|webp|gif)$/;
 const PDF = "application/pdf";
 type Attachment = ChatMessage["attachments"][number];
 
-export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
+export function ConversationPane({ meId, open, backHref, onChannelSettings, onNewThread }: {
   meId: string;
   open: NonNullable<OpenView>;
   backHref: string;
   onChannelSettings: (c: ChannelInfo) => void;
+  /** Start another thread in this thread's channel (the composer's thread button). */
+  onNewThread?: () => void;
 }) {
   const router = useRouter();
   const scroller = useRef<HTMLDivElement>(null);
@@ -81,11 +83,11 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
       <header className="flex shrink-0 items-center gap-4 border-b border-line px-5 py-4 md:px-7">
         <Link href={backHref} aria-label="Back to conversations" className="grid size-9 place-items-center rounded-full hover:bg-tab-hover md:hidden"><ArrowLeft className="size-5" /></Link>
         {open.kind === "thread"
-          ? <span className="hidden size-14 shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-6" strokeWidth={1.7} /></span>
-          : <Face initials={open.contact.initials} size={52} />}
+          ? <span className="hidden size-16 shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-7" strokeWidth={1.7} /></span>
+          : <Face initials={open.contact.initials} size={60} />}
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[22px] font-semibold tracking-[-0.01em] text-text-strong">{open.kind === "thread" ? open.thread.title : open.contact.name}</h2>
-          <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[15px] text-text">
+          <h2 className="truncate text-[24px] font-semibold tracking-[-0.015em] text-text-strong">{open.kind === "thread" ? open.thread.title : open.contact.name}</h2>
+          <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[16px] text-text">
             {open.kind === "thread" ? (
               <>
                 <ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={22} />
@@ -108,25 +110,25 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
         )}
       </header>
 
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-7">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8">
         {msgs.length === 0 && <p className="py-10 text-center text-[15px] text-muted">No messages yet. Say hello.</p>}
         {days.map((d) => (
           <div key={d.day}>
             <div className="my-4 flex items-center gap-3 text-[13px] font-medium text-muted"><span className="h-px flex-1 bg-line" />{d.day}<span className="h-px flex-1 bg-line" /></div>
             {d.runs.map((r) => (
-              <div key={r.items[0].id} className="mb-5 flex gap-3.5">
-                <Face initials={r.sender.initials} size={44} />
+              <div key={r.items[0].id} className="mb-6 flex gap-4">
+                <Face initials={r.sender.initials} size={52} />
                 <div className="min-w-0 flex-1">
                   <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
-                    <span className="text-[16px] font-medium text-text-strong">{r.sender.userId === meId ? "You" : r.sender.name}</span>
-                    {r.sender.userId !== meId && <span className="text-[15px] text-muted">{roleWord(r.sender)}</span>}
-                    <span className="text-[13px] text-muted">{timeOf(r.at)}</span>
+                    <span className="text-[17px] font-medium text-text-strong">{r.sender.userId === meId ? "You" : r.sender.name}</span>
+                    {r.sender.userId !== meId && <span className="text-[16px] text-muted">{roleWord(r.sender)}</span>}
+                    <span className="text-[14px] text-muted">{timeOf(r.at)}</span>
                   </div>
                   <div className="space-y-2">
                     {r.items.map((m) => (
-                      <div key={m.id} className="max-w-[min(100%,680px)]">
+                      <div key={m.id} className="max-w-[min(100%,760px)]">
                         {m.body && (
-                          <div className="w-fit max-w-full whitespace-pre-wrap break-words rounded-2xl bg-card-soft px-5 py-3 text-[16px] leading-relaxed text-text-strong">
+                          <div className="w-fit max-w-full whitespace-pre-wrap break-words rounded-[22px] bg-card-soft px-6 py-4 text-[18px] leading-[1.5] text-text-strong">
                             <MentionText body={m.body} names={m.mentions.map((x) => x.name)} meName={me} />
                           </div>
                         )}
@@ -157,7 +159,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
 
       {open.kind === "dm" && !open.canReply
         ? <p className="shrink-0 border-t border-line px-7 py-4 text-[15px] text-muted">This login is no longer active, so replies are closed.</p>
-        : <Composer to={open.kind === "dm" ? open.contact.userId : null} thread={open.kind === "thread" ? open.thread.id : null} audience={audience} placeholder={open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]}…` : "Message…"} />}
+        : <Composer to={open.kind === "dm" ? open.contact.userId : null} thread={open.kind === "thread" ? open.thread.id : null} audience={audience} placeholder={open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]}…` : "Message…"} onNewThread={open.kind === "thread" ? onNewThread : undefined} />}
       {viewing && <AttachmentViewer file={viewing} onClose={() => setViewing(null)} />}
     </>
   );
@@ -219,7 +221,7 @@ async function uploadParts(p: Pending, onPart: (sent: number) => void) {
   }
 }
 
-function Composer({ to, thread, audience, placeholder }: { to: string | null; thread: string | null; audience: MessageContact[]; placeholder: string }) {
+function Composer({ to, thread, audience, placeholder, onNewThread }: { to: string | null; thread: string | null; audience: MessageContact[]; placeholder: string; onNewThread?: () => void }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
   const [files, setFiles] = useState<Pending[]>([]);
@@ -322,8 +324,8 @@ function Composer({ to, thread, audience, placeholder }: { to: string | null; th
   const ready = (draft.trim().length > 0 || files.length > 0) && !uploading;
 
   return (
-    <div className="shrink-0 px-4 pb-4 md:px-7 md:pb-6">
-      <div className="relative rounded-2xl border border-line bg-card-soft focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-soft">
+    <div className="shrink-0 px-4 pb-4 md:px-8 md:pb-7">
+      <div className="relative rounded-[28px] border border-line bg-card focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-soft">
         {query && (
           <div role="listbox" aria-label="Mention someone" className="absolute bottom-full left-3 mb-2 w-72 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg">
             {matches.length === 0
@@ -363,16 +365,17 @@ function Composer({ to, thread, audience, placeholder }: { to: string | null; th
           onChange={(e) => { setDraft(e.target.value); readQuery(e.target.value, e.target.selectionStart); }}
           onClick={(e) => readQuery(draft, e.currentTarget.selectionStart)}
           onKeyDown={onKey}
-          className="own-focus block max-h-48 min-h-[56px] w-full resize-none bg-transparent px-5 pt-4 text-[16px] text-text-strong outline-none placeholder:text-muted"
+          className="own-focus block max-h-48 min-h-[60px] w-full resize-none bg-transparent px-7 pt-5 text-[18px] text-text-strong outline-none placeholder:text-muted"
         />
-        <div className="flex items-center gap-1 px-3 pb-2.5">
+        <div className="flex items-center gap-1 px-4 pb-3">
           <input ref={fileInput} type="file" multiple hidden onChange={(e) => { pick(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
-          <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach files" title={`Attach files (up to ${MAX_FILES}, 10 MB each)`} className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><Plus className="size-6" strokeWidth={1.8} /></button>
-          <button type="button" onClick={startMention} aria-label="Mention someone" title="Mention someone" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><AtSign className="size-5" /></button>
+          <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach files" title={`Attach files (up to ${MAX_FILES}, 10 MB each)`} className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><Plus className="size-7" strokeWidth={1.8} /></button>
+          <button type="button" onClick={startMention} aria-label="Mention someone" title="Mention someone" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><AtSign className="size-6" strokeWidth={1.8} /></button>
+          {onNewThread && <button type="button" onClick={onNewThread} aria-label="Start a new thread in this channel" title="New thread in this channel" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><ListTree className="size-6" strokeWidth={1.8} /></button>}
           <span className="flex-1" />
           <button type="button" onClick={send} disabled={!ready || pending} aria-label="Send" title={uploading ? "Waiting for the upload to finish" : "Send (Enter)"}
-            className={cx("grid size-10 place-items-center rounded-full transition-colors", ready ? "bg-primary text-primary-foreground hover:bg-primary-hover" : "text-muted")}>
-            <SendHorizontal className="size-5" />
+            className={cx("grid size-10 place-items-center rounded-full transition-colors", ready ? "text-primary hover:bg-primary-soft" : "text-muted")}>
+            <SendHorizontal className="size-6" strokeWidth={1.8} />
           </button>
         </div>
       </div>
