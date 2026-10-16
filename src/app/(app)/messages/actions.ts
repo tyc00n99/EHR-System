@@ -1,18 +1,32 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, like } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { canCreateChannels, channelAudience, channelFor, channelMemberIds, threadFor, type Me } from "@/db/message-queries";
 import { putFile } from "@/lib/storage";
 import { requireUser, type CurrentUser } from "@/lib/auth";
+import { MAX_FILE_BYTES, MAX_FILES, pendingPrefix } from "./upload/shared";
 
 const MAX_BODY = 4000;
-const MAX_FILES = 6;
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TITLE = 120;
+
+/** A file the composer already uploaded in parts (see `upload/route.ts`), named by its upload id. */
+interface Upload { id: string; name: string; type: string; size: number }
+
+function readUploads(raw: string): Upload[] | string {
+  let list: unknown;
+  try { list = JSON.parse(raw || "[]"); } catch { return "The attachments could not be read. Remove them and attach again."; }
+  if (!Array.isArray(list)) return "The attachments could not be read. Remove them and attach again.";
+  const out: Upload[] = [];
+  for (const u of list as Partial<Upload>[]) {
+    if (typeof u?.id !== "string" || !/^[0-9a-f-]{36}$/.test(u.id) || typeof u.name !== "string" || typeof u.size !== "number") return "The attachments could not be read. Remove them and attach again.";
+    out.push({ id: u.id, name: u.name, type: typeof u.type === "string" && u.type ? u.type : "application/octet-stream", size: u.size });
+  }
+  return out;
+}
 const ICONS = ["chat", "calendar", "money", "team", "shield", "home", "heart", "wrench", "clipboard", "bell"] as const;
 const TINTS = ["primary", "ok", "warn", "danger", "neutral"] as const;
 
@@ -32,8 +46,10 @@ async function dmProblem(me: CurrentUser, recipientId: string): Promise<string |
 
 /**
  * Post a message, to a person (`to`) or into a channel thread (`thread`), with optional @mentions
- * (`mentions`, a JSON list of user ids) and files (`files`). Every row is written through
- * `audited` in one transaction: a body or a file can name a client.
+ * (`mentions`, a JSON list of user ids) and files (`uploads`, a JSON list of uploads the composer
+ * already sent in parts). Every row is written through `audited` in one transaction: a body or a
+ * file can name a client. The parts are joined inside that transaction, so a message never points
+ * at a file that is not there.
  */
 export async function postMessage(form: FormData): Promise<Result> {
   const user = await requireUser();
@@ -41,7 +57,8 @@ export async function postMessage(form: FormData): Promise<Result> {
   const to = String(form.get("to") ?? "") || null;
   const threadId = String(form.get("thread") ?? "") || null;
   const text = String(form.get("body") ?? "").trim();
-  const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+  const files = readUploads(String(form.get("uploads") ?? "[]"));
+  if (typeof files === "string") return { error: files };
   if (!text && files.length === 0) return { error: "Write a message or attach a file first." };
   if (text.length > MAX_BODY) return { error: `Keep a message under ${MAX_BODY} characters.` };
   if (files.length > MAX_FILES) return { error: `Attach up to ${MAX_FILES} files at a time.` };
@@ -65,7 +82,20 @@ export async function postMessage(form: FormData): Promise<Result> {
   mentionIds = [...new Set(mentionIds)].filter((id) => id !== user.id && allowed.has(id));
 
   const db = await getDb();
-  const bytes = await Promise.all(files.map(async (f) => new Uint8Array(await f.arrayBuffer())));
+  // Join each upload's parts, in order. Only this person's pending parts are read, so an upload id
+  // from someone else's composer finds nothing.
+  const joined: Uint8Array[] = [];
+  for (const f of files) {
+    const prefix = `${pendingPrefix(user.id)}${f.id}/`;
+    const parts = await db.select({ bytes: schema.storedFiles.bytes }).from(schema.storedFiles).where(like(schema.storedFiles.path, `${prefix}%`)).orderBy(asc(schema.storedFiles.path));
+    const chunks = parts.map((p) => (p.bytes instanceof Uint8Array ? p.bytes : new Uint8Array(p.bytes as ArrayBuffer)));
+    const total = chunks.reduce((n, c) => n + c.byteLength, 0);
+    if (chunks.length === 0 || total !== f.size) return { error: `${f.name} did not finish uploading. Remove it and attach it again.` };
+    const whole = new Uint8Array(total);
+    let at = 0;
+    for (const c of chunks) { whole.set(c, at); at += c.byteLength; }
+    joined.push(whole);
+  }
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
     const msg = await w.insert(schema.messages, { senderId: user.id, recipientId: to, threadId, body: text });
@@ -74,8 +104,9 @@ export async function postMessage(form: FormData): Promise<Result> {
       const f = files[i];
       const safe = f.name.replace(/[^\w.\- ]+/g, "_").slice(-120) || "file";
       const path = `messages/${msg.id}/${randomUUID()}-${safe}`;
-      await putFile(path, bytes[i], f.type || "application/octet-stream", tx);
-      await w.insert(schema.messageAttachments, { messageId: msg.id, path, fileName: f.name.slice(0, 200), contentType: f.type || "application/octet-stream", sizeBytes: f.size });
+      await putFile(path, joined[i], f.type, tx);
+      await w.insert(schema.messageAttachments, { messageId: msg.id, path, fileName: f.name.slice(0, 200), contentType: f.type, sizeBytes: f.size });
+      await tx.delete(schema.storedFiles).where(like(schema.storedFiles.path, `${pendingPrefix(user.id)}${f.id}/%`));
     }
     if (threadId) {
       await w.update(schema.chatThreads, threadId, { lastMessageAt: msg.createdAt });
