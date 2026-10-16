@@ -1,4 +1,5 @@
 import { Badge, Button, Card, PageHeader, StatTile, Table, Td, Th, Thead, Tr } from "@/components/kit";
+import { QuarterlyCheckIn } from "./check-in";
 import { SUBMISSION } from "@/evv/labels";
 import type { ComplianceSummary } from "@/evv/reporting";
 import { fmtDate } from "@/lib/format";
@@ -19,8 +20,10 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
         <Button type="submit" variant="secondary">Update</Button>
       </form>
 
+      <QuarterlyCheckIn s={s} />
+
       <div className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-4">
-        <StatTile label="Estimated compliance" value={pct(s.estimatedCompliancePercent)} note="Compliant + exempt of completed EVV-required visits" tone={s.estimatedCompliancePercent == null ? undefined : s.estimatedCompliancePercent >= 90 ? "ok" : s.estimatedCompliancePercent >= 75 ? "warn" : "danger"} />
+        <StatTile label="Estimated compliance" value={pct(s.estimatedCompliancePercent)} note="Compliant + exempt of completed EVV-required visits · DHS requires 80%" tone={s.estimatedCompliancePercent == null ? undefined : s.estimatedCompliancePercent >= 80 ? "ok" : s.estimatedCompliancePercent >= 70 ? "warn" : "danger"} />
         <StatTile label="EVV-required visits" value={s.totals.evvRequired} note={`${s.totals.complete} completed`} />
         <StatTile label="Noncompliant" value={s.totals.noncompliant} note={`${s.totals.manualOrCorrected} manual or corrected`} tone={s.totals.noncompliant ? "danger" : "ok"} />
         <StatTile label="Accepted by aggregator" value={s.totals.accepted} note={`${s.totals.rejected} rejected · ${s.totals.unsubmitted} unsubmitted`} tone={s.totals.rejected ? "warn" : undefined} />
