@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite"],
+  // Server actions refuse a request body over 1 MB by default, which silently failed every upload
+  // form (client documents, personnel file, photos) past that. 4 MB is just under Vercel's hard cap
+  // on a single request; Messages goes further by uploading in parts (messages/upload/route.ts).
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   // Bottom-left so the dev indicator never sits on the corner hub (Sept 20, 2026).
   devIndicators: { position: "bottom-left" },
   // PDF routes load font files from disk at render time; make sure they ship in the serverless bundle.

@@ -6,10 +6,10 @@
  * threads), the open conversation on the right. Selection lives in the URL. The page re-reads itself
  * every 25 seconds while visible, so new messages arrive without a reload.
  */
-import { ChevronDown, ChevronRight, Hash, Lock, MessageCircle, MoreHorizontal, Plus, Users } from "lucide-react";
+import { ChevronDown, ChevronRight, Hash, Lock, MessageCircle, MoreHorizontal, Plus, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ChannelInfo, ChatMessage, Conversation, MentionItem, MessageContact, ThreadSummary } from "@/db/message-queries";
@@ -48,6 +48,12 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   const params = useSearchParams();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  // The search beside the + (the reference's magnifier): a filter over names, previews and channels.
+  const [searching, setSearching] = useState(false);
+  const [q, setQ] = useState("");
+  const searchBox = useRef<HTMLInputElement>(null);
+  const needle = q.trim().toLowerCase();
+  const hit = (...parts: (string | null | undefined)[]) => !needle || parts.some((x) => x?.toLowerCase().includes(needle));
 
   useEffect(() => {
     const t = setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, 25000);
@@ -84,20 +90,21 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
         node: () => <ListRow face={<Face initials={t.lastSenderInitials} badge={ch && <ChannelTile icon={ch.icon} tint={ch.tint} size={20} />} />} title={t.title} preview={t.lastBody ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} />,
       });
     }
-    return rows.sort((a, b) => b.at.localeCompare(a.at));
+    return rows.filter((r) => hit(r.key.startsWith("dm:") ? dms.find((d) => `dm:${d.contact.userId}` === r.key)?.contact.name : threads.find((t) => `t:${t.id}` === r.key)?.title)).sort((a, b) => b.at.localeCompare(a.at));
   })();
 
   const renderChannel = (c: ChannelInfo) => {
-                const own = threads.filter((t) => t.channelId === c.id);
-                const isOpen = collapsed[c.id] === undefined ? own.length > 0 || own.some((t) => t.id === activeThread) : !collapsed[c.id];
+                const own = threads.filter((t) => t.channelId === c.id && (hit(c.name) || hit(t.title)));
+                if (needle && !hit(c.name) && own.length === 0) return null;
+                const isOpen = needle ? true : collapsed[c.id] === undefined ? own.length > 0 || own.some((t) => t.id === activeThread) : !collapsed[c.id];
                 const unread = own.reduce((n, t) => n + t.unread, 0);
                 return (
                   <div key={c.id} className="mt-2">
                     <div className="group flex items-center gap-2 px-3 py-1.5">
                       <button onClick={() => setCollapsed((s) => ({ ...s, [c.id]: isOpen }))} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-tab-hover">
                         {isOpen ? <ChevronDown className="size-4 shrink-0 text-muted" /> : <ChevronRight className="size-4 shrink-0 text-muted" />}
-                        <ChannelTile icon={c.icon} tint={c.tint} size={30} />
-                        <span className="truncate text-[17px] font-medium text-text-strong">{c.name}</span>
+                        <ChannelTile icon={c.icon} tint={c.tint} size={32} />
+                        <span className="truncate text-[19px] font-medium text-text-strong">{c.name}</span>
                         {c.isPrivate && <Lock className="size-4 shrink-0 text-text" aria-label="Private channel" />}
                       </button>
                       {!isOpen && unread > 0 && <Count n={unread} />}
@@ -144,11 +151,13 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-line bg-card">
+    <div className="-mx-4 -mt-2 flex min-h-0 flex-1 overflow-hidden bg-card md:-mx-6">
       {/* ---------------- the list ---------------- */}
-      <aside className={cx("flex min-h-0 w-full flex-col border-r border-line md:w-[380px] md:shrink-0", open && "hidden md:flex")}>
-        <div className="flex items-center justify-between px-5 pb-3 pt-5">
-          <h1 className="text-[24px] font-semibold tracking-[-0.01em] text-text-strong">Chat</h1>
+      <aside className={cx("flex min-h-0 w-full flex-col border-r border-line md:w-[400px] md:shrink-0", open && "hidden md:flex")}>
+        <div className="flex items-center justify-between px-6 pb-3 pt-6">
+          <h1 className="text-[28px] font-semibold tracking-[-0.015em] text-text-strong">Chat</h1>
+          <div className="flex items-center gap-1">
+          <button aria-label="Search conversations" aria-pressed={searching} onClick={() => { setSearching((s) => !s); if (searching) setQ(""); requestAnimationFrame(() => searchBox.current?.focus()); }} className={cx("grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover", searching && "bg-card-soft")}><Search className="size-6" strokeWidth={1.8} /></button>
           <DropdownMenu>
             <DropdownMenuTrigger render={<button aria-label="New conversation" title="New" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover" />}><Plus className="size-6" strokeWidth={1.8} /></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -159,12 +168,20 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
+        {searching && (
+          <div className="relative px-6 pb-3">
+            <Search className="pointer-events-none absolute left-9 top-1/2 size-4 -translate-y-[calc(50%+6px)] text-muted" />
+            <input ref={searchBox} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") { setQ(""); setSearching(false); } }} placeholder="Search conversations" aria-label="Search conversations" className="own-focus h-10 w-full rounded-full border border-line bg-card-soft pl-10 pr-9 text-[15px] text-text-strong outline-none placeholder:text-muted focus:border-primary" />
+            {q && <button aria-label="Clear search" onClick={() => setQ("")} className="absolute right-8 top-1/2 grid size-7 -translate-y-[calc(50%+6px)] place-items-center rounded-full text-muted hover:bg-tab-hover"><X className="size-4" /></button>}
+          </div>
+        )}
 
-        <nav aria-label="Filter conversations" className="flex gap-1 overflow-x-auto px-4 pb-3">
+        <nav aria-label="Filter conversations" className="flex gap-1 overflow-x-auto px-5 pb-4">
           {tabs.map((t) => (
             <Link key={t.key} href={href({ tab: t.key === "home" ? null : t.key })} aria-current={tab === t.key ? "page" : undefined}
-              className={cx("shrink-0 rounded-full px-4 py-2 text-[15px] font-medium", tab === t.key ? "bg-card-soft text-text-strong" : "text-text hover:bg-tab-hover")}>
+              className={cx("shrink-0 rounded-full px-5 py-2.5 text-[17px] font-medium", tab === t.key ? "bg-card-soft text-text-strong" : "text-text hover:bg-tab-hover")}>
               {t.label}
             </Link>
           ))}
@@ -173,24 +190,23 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">
           {tab === "home" && (
             <>
-              <SectionLabel icon={<MessageCircle className="size-[18px]" strokeWidth={1.8} />}>Direct messages</SectionLabel>
-              {dms.length === 0 && <p className="px-5 pb-2 text-[14px] text-muted">No direct messages yet. Press + to start one.</p>}
-              {dms.map((d) => (
+              {(!needle || dms.some((d) => hit(d.contact.name, d.lastBody))) && <SectionLabel icon={<MessageCircle className="size-5" strokeWidth={1.8} />}>Direct messages</SectionLabel>}
+              {dms.length === 0 && !needle && <p className="px-5 pb-2 text-[14px] text-muted">No direct messages yet. Press + to start one.</p>}
+              {dms.filter((d) => hit(d.contact.name, d.lastBody)).map((d) => (
                 <Link key={d.contact.userId} href={openDm(d.contact.userId)} className={rowCls(d.contact.userId === activeDm)}>
                   <ListRow face={<Face initials={d.contact.initials} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody}`} when={ago(d.lastAt, now)} unread={d.unread} />
                 </Link>
               ))}
 
-              {clientChannels.length > 0 && (
+              {clientChannels.length > 0 && (!needle || clientChannels.some((c) => hit(c.name) || threads.some((t) => t.channelId === c.id && hit(t.title)))) && (
                 <>
-                  <SectionLabel icon={<Users className="size-[18px]" strokeWidth={1.8} />}>Clients</SectionLabel>
-                  <p className="-mt-1 px-5 pb-1 text-[13px] text-muted">Each client&apos;s channel holds everyone assigned to them.</p>
+                  <SectionLabel icon={<Users className="size-5" strokeWidth={1.8} />} title="Each client's channel holds everyone assigned to them.">Clients</SectionLabel>
                   {clientChannels.map(renderChannel)}
                 </>
               )}
-              {(otherChannels.length > 0 || canCreateChannels) && <SectionLabel icon={<Hash className="size-[18px]" strokeWidth={1.8} />}>Channels</SectionLabel>}
+              {(otherChannels.length > 0 || canCreateChannels) && (!needle || otherChannels.some((c) => hit(c.name) || threads.some((t) => t.channelId === c.id && hit(t.title)))) && <SectionLabel icon={<Hash className="size-5" strokeWidth={1.8} />}>Channels</SectionLabel>}
               {otherChannels.map(renderChannel)}
-              {otherChannels.length === 0 && canCreateChannels && (
+              {otherChannels.length === 0 && canCreateChannels && !needle && (
                 <button onClick={() => setDialog({ kind: "channel" })} className="mx-5 mt-4 flex items-center gap-2 rounded-lg border border-dashed border-line px-3 py-2.5 text-[14px] font-medium text-primary hover:bg-tab-hover">
                   <Plus className="size-4" /> Create a team channel
                 </button>
@@ -243,6 +259,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             open={open}
             backHref={href({ dm: null, thread: null })}
             onChannelSettings={(c) => setDialog({ kind: "channel", channel: c })}
+            onNewThread={() => setDialog({ kind: "thread", channelId: open.kind === "thread" ? open.thread.channel.id : undefined })}
           />
         ) : (
           <div className="grid flex-1 place-items-center p-8 text-center">
@@ -262,27 +279,27 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   );
 }
 
-const rowCls = (active: boolean) => cx("mx-2 flex rounded-xl px-3 py-3", active ? "bg-tab-hover" : "hover:bg-tab-hover");
+const rowCls = (active: boolean) => cx("mx-3 flex rounded-2xl px-3 py-3.5", active ? "bg-tab-hover" : "hover:bg-tab-hover");
 
-function SectionLabel({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return <div className="flex items-center gap-2.5 px-5 pb-2 pt-3 text-[17px] font-medium text-text-strong">{icon}{children}</div>;
+function SectionLabel({ icon, children, title }: { icon: ReactNode; children: ReactNode; title?: string }) {
+  return <div title={title} className="flex items-center gap-3 px-6 pb-2 pt-4 text-[19px] font-medium text-text-strong">{icon}{children}</div>;
 }
 
 function Count({ n }: { n: number }) {
-  return <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-[13px] font-semibold text-primary-foreground">{n > 99 ? "99+" : n}</span>;
+  return <span className="grid h-7 min-w-7 place-items-center rounded-full bg-primary px-2 text-[14px] font-semibold text-primary-foreground">{n > 99 ? "99+" : n}</span>;
 }
 
 function ListRow({ face, title, preview, when, unread }: { face: ReactNode; title: string; preview: string; when: string; unread: number }) {
   return (
-    <div className="flex w-full min-w-0 gap-3.5">
+    <div className="flex w-full min-w-0 gap-4">
       {face}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <span className={cx("truncate text-[16px] text-text-strong", unread ? "font-semibold" : "font-medium")}>{title}</span>
-          <span className="shrink-0 text-[13px] text-muted">{when}</span>
+          <span className={cx("truncate text-[18px] text-text-strong", unread ? "font-semibold" : "font-medium")}>{title}</span>
+          <span className="shrink-0 text-[15px] text-muted">{when}</span>
         </div>
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-[15px] text-text"><MentionText body={preview} names={[]} /></span>
+          <span className="truncate text-[16px] text-text"><MentionText body={preview} names={[]} /></span>
           {unread > 0 && <Count n={unread} />}
         </div>
       </div>

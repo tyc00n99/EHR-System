@@ -6,28 +6,37 @@
  * a list of the people who can read this conversation; picking one inserts "@Name" and records who
  * was meant, so a mention survives two people sharing a first name.
  */
-import { ArrowLeft, AtSign, FileText, Link2, ListTree, MoreHorizontal, Plus, SendHorizontal, X } from "lucide-react";
+import { ArrowLeft, AtSign, Download, FileText, Link2, ListTree, Loader2, MoreHorizontal, Plus, SendHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { cx } from "@/components/kit";
+import { PdfPages } from "@/components/pdf-pages";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { ChannelInfo, ChatMessage, MessageContact } from "@/db/message-queries";
 import { markChatThreadRead, markThreadRead, postMessage, renameThread } from "./actions";
 import { ChannelTile, dayOf, Face, fileSize, MentionText, roleWord, timeOf } from "./chat-bits";
 import type { OpenView } from "./messenger";
+import { MAX_FILE_BYTES, MAX_FILES, PART_BYTES } from "./upload/shared";
 
 const IMAGE = /^image\/(png|jpe?g|webp|gif)$/;
+const PDF = "application/pdf";
+type Attachment = ChatMessage["attachments"][number];
 
-export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
+export function ConversationPane({ meId, open, backHref, onChannelSettings, onNewThread }: {
   meId: string;
   open: NonNullable<OpenView>;
   backHref: string;
   onChannelSettings: (c: ChannelInfo) => void;
+  /** Start another thread in this thread's channel (the composer's thread button). */
+  onNewThread?: () => void;
 }) {
   const router = useRouter();
   const scroller = useRef<HTMLDivElement>(null);
+  // A clicked attachment opens here, over the conversation, rather than in a new tab (user, Oct 16, 2026).
+  const [viewing, setViewing] = useState<Attachment | null>(null);
   const msgs = open.messages;
   const lastId = msgs.length ? msgs[msgs.length - 1].id : null;
   const targetId = open.kind === "dm" ? open.contact.userId : open.thread.id;
@@ -74,11 +83,11 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
       <header className="flex shrink-0 items-center gap-4 border-b border-line px-5 py-4 md:px-7">
         <Link href={backHref} aria-label="Back to conversations" className="grid size-9 place-items-center rounded-full hover:bg-tab-hover md:hidden"><ArrowLeft className="size-5" /></Link>
         {open.kind === "thread"
-          ? <span className="hidden size-14 shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-6" strokeWidth={1.7} /></span>
-          : <Face initials={open.contact.initials} size={52} />}
+          ? <span className="hidden size-16 shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-7" strokeWidth={1.7} /></span>
+          : <Face initials={open.contact.initials} size={60} />}
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[22px] font-semibold tracking-[-0.01em] text-text-strong">{open.kind === "thread" ? open.thread.title : open.contact.name}</h2>
-          <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[15px] text-text">
+          <h2 className="truncate text-[24px] font-semibold tracking-[-0.015em] text-text-strong">{open.kind === "thread" ? open.thread.title : open.contact.name}</h2>
+          <p className="mt-0.5 flex min-w-0 items-center gap-2 text-[16px] text-text">
             {open.kind === "thread" ? (
               <>
                 <ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={22} />
@@ -101,40 +110,40 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
         )}
       </header>
 
-      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-7">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-8">
         {msgs.length === 0 && <p className="py-10 text-center text-[15px] text-muted">No messages yet. Say hello.</p>}
         {days.map((d) => (
           <div key={d.day}>
             <div className="my-4 flex items-center gap-3 text-[13px] font-medium text-muted"><span className="h-px flex-1 bg-line" />{d.day}<span className="h-px flex-1 bg-line" /></div>
             {d.runs.map((r) => (
-              <div key={r.items[0].id} className="mb-5 flex gap-3.5">
-                <Face initials={r.sender.initials} size={44} />
+              <div key={r.items[0].id} className="mb-6 flex gap-4">
+                <Face initials={r.sender.initials} size={52} />
                 <div className="min-w-0 flex-1">
                   <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2">
-                    <span className="text-[16px] font-medium text-text-strong">{r.sender.userId === meId ? "You" : r.sender.name}</span>
-                    {r.sender.userId !== meId && <span className="text-[15px] text-muted">{roleWord(r.sender)}</span>}
-                    <span className="text-[13px] text-muted">{timeOf(r.at)}</span>
+                    <span className="text-[17px] font-medium text-text-strong">{r.sender.userId === meId ? "You" : r.sender.name}</span>
+                    {r.sender.userId !== meId && <span className="text-[16px] text-muted">{roleWord(r.sender)}</span>}
+                    <span className="text-[14px] text-muted">{timeOf(r.at)}</span>
                   </div>
                   <div className="space-y-2">
                     {r.items.map((m) => (
-                      <div key={m.id} className="max-w-[min(100%,680px)]">
+                      <div key={m.id} className="max-w-[min(100%,760px)]">
                         {m.body && (
-                          <div className="w-fit max-w-full whitespace-pre-wrap break-words rounded-2xl bg-card-soft px-5 py-3 text-[16px] leading-relaxed text-text-strong">
+                          <div className="w-fit max-w-full whitespace-pre-wrap break-words rounded-[22px] bg-card-soft px-6 py-4 text-[18px] leading-[1.5] text-text-strong">
                             <MentionText body={m.body} names={m.mentions.map((x) => x.name)} meName={me} />
                           </div>
                         )}
                         {m.attachments.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {m.attachments.map((a) => IMAGE.test(a.contentType) ? (
-                              <a key={a.id} href={`/messages/files/${a.id}`} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-xl border border-line">
+                              <button key={a.id} type="button" onClick={() => setViewing(a)} title={a.fileName} className="block overflow-hidden rounded-xl border border-line">
                                 {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file; not for next/image's optimizer */}
                                 <img src={`/messages/files/${a.id}`} alt={a.fileName} className="max-h-56 max-w-[280px] object-cover" />
-                              </a>
+                              </button>
                             ) : (
-                              <a key={a.id} href={`/messages/files/${a.id}`} target="_blank" rel="noreferrer" className="flex max-w-[320px] items-center gap-3 rounded-xl border border-line bg-card px-3.5 py-2.5 hover:bg-tab-hover">
+                              <button key={a.id} type="button" onClick={() => setViewing(a)} className="flex max-w-[320px] items-center gap-3 rounded-xl border border-line bg-card px-3.5 py-2.5 text-left hover:bg-tab-hover">
                                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary"><FileText className="size-5" /></span>
                                 <span className="min-w-0"><span className="block truncate text-[15px] font-medium text-text-strong">{a.fileName}</span><span className="text-[13px] text-muted">{fileSize(a.sizeBytes)}</span></span>
-                              </a>
+                              </button>
                             ))}
                           </div>
                         )}
@@ -150,15 +159,72 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings }: {
 
       {open.kind === "dm" && !open.canReply
         ? <p className="shrink-0 border-t border-line px-7 py-4 text-[15px] text-muted">This login is no longer active, so replies are closed.</p>
-        : <Composer to={open.kind === "dm" ? open.contact.userId : null} thread={open.kind === "thread" ? open.thread.id : null} audience={audience} placeholder={open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]}…` : "Message…"} />}
+        : <Composer to={open.kind === "dm" ? open.contact.userId : null} thread={open.kind === "thread" ? open.thread.id : null} audience={audience} placeholder={open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]}…` : "Message…"} onNewThread={open.kind === "thread" ? onNewThread : undefined} />}
+      {viewing && <AttachmentViewer file={viewing} onClose={() => setViewing(null)} />}
     </>
   );
 }
 
-function Composer({ to, thread, audience, placeholder }: { to: string | null; thread: string | null; audience: MessageContact[]; placeholder: string }) {
+/**
+ * A file from a message, shown in place: pictures and PDFs are drawn in a window over the
+ * conversation; anything else is offered as a download, since the browser cannot draw it. The
+ * Download button saves the file without leaving the screen (the route already names it).
+ */
+function AttachmentViewer({ file, onClose }: { file: Attachment; onClose: () => void }) {
+  const src = `/messages/files/${file.id}`;
+  const isImage = IMAGE.test(file.contentType);
+  const isPdf = file.contentType === PDF;
+  const [ready, setReady] = useState(false);
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="flex h-[90vh] w-[min(96vw,1060px)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none">
+        <DialogTitle className="flex h-12 shrink-0 items-center gap-3 whitespace-nowrap border-b border-line-soft bg-page pl-4 pr-14 text-[13.5px] font-medium">
+          <span className="min-w-0 flex-1 truncate">{file.fileName}</span>
+          <span className="shrink-0 text-muted">{fileSize(file.sizeBytes)}</span>
+          <a href={src} download={file.fileName} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Download className="size-3.5" /> Download</a>
+        </DialogTitle>
+        <div className="relative min-h-0 flex-1 bg-panel">
+          {isPdf && (
+            <>
+              {!ready && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted"><Loader2 className="size-4 animate-spin" aria-hidden /> Opening…</div>}
+              <PdfPages src={src} fit="width" onFirstPage={() => setReady(true)} />
+            </>
+          )}
+          {isImage && (
+            <div className="grid size-full place-items-center overflow-auto p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file */}
+              <img src={src} alt={file.fileName} className="max-h-full max-w-full object-contain" />
+            </div>
+          )}
+          {!isPdf && !isImage && (
+            <div className="flex size-full flex-col items-center justify-center gap-3 p-6 text-center">
+              <span className="grid size-14 place-items-center rounded-xl bg-primary-soft text-primary"><FileText className="size-7" /></span>
+              <p className="text-[15px] text-text-strong">This kind of file cannot be shown here.</p>
+              <a href={src} download={file.fileName} className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-btn)] bg-primary px-4 text-[14px] font-medium text-primary-foreground hover:bg-primary-hover"><Download className="size-4" /> Download {file.fileName}</a>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** A file in the composer: uploaded in parts the moment it is picked, so Send has nothing left to carry. */
+interface Pending { id: string; file: File; sent: number; error: string | null }
+
+async function uploadParts(p: Pending, onPart: (sent: number) => void) {
+  const parts = Math.ceil(p.file.size / PART_BYTES);
+  for (let i = 0; i < parts; i++) {
+    const res = await fetch("/messages/upload", { method: "POST", headers: { "x-upload-id": p.id, "x-upload-part": String(i), "content-type": "application/octet-stream" }, body: p.file.slice(i * PART_BYTES, (i + 1) * PART_BYTES) });
+    if (!res.ok) throw new Error(res.status === 413 ? "too large" : `upload failed (${res.status})`);
+    onPart(i + 1);
+  }
+}
+
+function Composer({ to, thread, audience, placeholder, onNewThread }: { to: string | null; thread: string | null; audience: MessageContact[]; placeholder: string; onNewThread?: () => void }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<Pending[]>([]);
   const [picked, setPicked] = useState<Record<string, string>>({}); // name → userId
   const [query, setQuery] = useState<{ text: string; start: number } | null>(null);
   const [hi, setHi] = useState(0);
@@ -201,14 +267,41 @@ function Composer({ to, thread, audience, placeholder }: { to: string | null; th
     requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(caret + pad.length + 1, caret + pad.length + 1); });
   }
 
+  const partsOf = (f: File) => Math.ceil(f.size / PART_BYTES);
+  const uploading = files.some((p) => !p.error && p.sent < partsOf(p.file));
+  const failed = files.some((p) => p.error);
+
+  function pick(list: File[]) {
+    const room = MAX_FILES - files.length;
+    if (list.length > room) toast.error(`Attach up to ${MAX_FILES} files at a time.`);
+    const added: Pending[] = [];
+    for (const file of list.slice(0, Math.max(0, room))) {
+      if (file.size > MAX_FILE_BYTES) { toast.error(`${file.name} is over 10 MB.`); continue; }
+      if (file.size === 0) { toast.error(`${file.name} is empty.`); continue; }
+      added.push({ id: crypto.randomUUID(), file, sent: 0, error: null });
+    }
+    if (added.length === 0) return;
+    setFiles((s) => [...s, ...added]);
+    for (const p of added) {
+      void uploadParts(p, (sent) => setFiles((s) => s.map((x) => (x.id === p.id ? { ...x, sent } : x))))
+        .catch((e: Error) => setFiles((s) => s.map((x) => (x.id === p.id ? { ...x, error: e.message === "too large" ? "Over 10 MB" : "Upload failed" } : x))));
+    }
+  }
+
+  function remove(p: Pending) {
+    setFiles((s) => s.filter((x) => x.id !== p.id));
+    void fetch(`/messages/upload?id=${p.id}`, { method: "DELETE" }).catch(() => {});
+  }
+
   function send() {
-    if (pending || (!draft.trim() && files.length === 0)) return;
+    if (pending || uploading || (!draft.trim() && files.length === 0)) return;
+    if (failed) { toast.error("Remove the file that failed to upload, or attach it again."); return; }
     const form = new FormData();
     if (to) form.set("to", to);
     if (thread) form.set("thread", thread);
     form.set("body", draft);
     form.set("mentions", JSON.stringify(Object.entries(picked).filter(([name]) => draft.includes(`@${name}`)).map(([, id]) => id)));
-    for (const f of files) form.append("files", f);
+    form.set("uploads", JSON.stringify(files.map((p) => ({ id: p.id, name: p.file.name, type: p.file.type, size: p.file.size }))));
     const keep = { draft, files, picked };
     setDraft(""); setFiles([]); setPicked({}); setQuery(null);
     startTransition(async () => {
@@ -228,11 +321,11 @@ function Composer({ to, thread, audience, placeholder }: { to: string | null; th
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); }
   }
 
-  const ready = draft.trim().length > 0 || files.length > 0;
+  const ready = (draft.trim().length > 0 || files.length > 0) && !uploading;
 
   return (
-    <div className="shrink-0 px-4 pb-4 md:px-7 md:pb-6">
-      <div className="relative rounded-2xl border border-line bg-card-soft focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-soft">
+    <div className="shrink-0 px-4 pb-4 md:px-8 md:pb-7">
+      <div className="relative rounded-[28px] border border-line bg-card focus-within:border-primary focus-within:ring-4 focus-within:ring-primary-soft">
         {query && (
           <div role="listbox" aria-label="Mention someone" className="absolute bottom-full left-3 mb-2 w-72 overflow-hidden rounded-xl border border-line bg-card py-1 shadow-lg">
             {matches.length === 0
@@ -248,14 +341,19 @@ function Composer({ to, thread, audience, placeholder }: { to: string | null; th
         )}
         {files.length > 0 && (
           <div className="flex flex-wrap gap-2 px-4 pt-3">
-            {files.map((f, i) => (
-              <span key={`${f.name}-${i}`} className="flex max-w-[260px] items-center gap-2 rounded-lg border border-line bg-card py-1.5 pl-2.5 pr-1.5 text-[13px]">
-                <FileText className="size-4 shrink-0 text-primary" />
-                <span className="truncate font-medium text-text-strong">{f.name}</span>
-                <span className="shrink-0 text-muted">{fileSize(f.size)}</span>
-                <button aria-label={`Remove ${f.name}`} onClick={() => setFiles((s) => s.filter((_, j) => j !== i))} className="grid size-6 place-items-center rounded hover:bg-tab-hover"><X className="size-3.5" /></button>
-              </span>
-            ))}
+            {files.map((p) => {
+              const parts = partsOf(p.file);
+              const busy = !p.error && p.sent < parts;
+              return (
+                <span key={p.id} className={cx("relative flex max-w-[260px] items-center gap-2 overflow-hidden rounded-lg border bg-card py-1.5 pl-2.5 pr-1.5 text-[13px]", p.error ? "border-danger" : "border-line")}>
+                  {busy ? <Loader2 className="size-4 shrink-0 animate-spin text-primary" aria-label="Uploading" /> : <FileText className={cx("size-4 shrink-0", p.error ? "text-danger" : "text-primary")} />}
+                  <span className="truncate font-medium text-text-strong">{p.file.name}</span>
+                  <span className={cx("shrink-0", p.error ? "text-danger" : "text-muted")}>{p.error ?? (busy ? `${Math.round((p.sent / parts) * 100)}%` : fileSize(p.file.size))}</span>
+                  <button aria-label={`Remove ${p.file.name}`} onClick={() => remove(p)} className="grid size-6 place-items-center rounded hover:bg-tab-hover"><X className="size-3.5" /></button>
+                  {busy && <span aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 bg-primary transition-[width]" style={{ width: `${(p.sent / parts) * 100}%` }} />}
+                </span>
+              );
+            })}
           </div>
         )}
         <textarea
@@ -267,16 +365,17 @@ function Composer({ to, thread, audience, placeholder }: { to: string | null; th
           onChange={(e) => { setDraft(e.target.value); readQuery(e.target.value, e.target.selectionStart); }}
           onClick={(e) => readQuery(draft, e.currentTarget.selectionStart)}
           onKeyDown={onKey}
-          className="own-focus block max-h-48 min-h-[56px] w-full resize-none bg-transparent px-5 pt-4 text-[16px] text-text-strong outline-none placeholder:text-muted"
+          className="own-focus block max-h-48 min-h-[60px] w-full resize-none bg-transparent px-7 pt-5 text-[18px] text-text-strong outline-none placeholder:text-muted"
         />
-        <div className="flex items-center gap-1 px-3 pb-2.5">
-          <input ref={fileInput} type="file" multiple hidden onChange={(e) => { const list = Array.from(e.target.files ?? []); setFiles((s) => [...s, ...list].slice(0, 6)); e.target.value = ""; }} />
-          <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach files" title="Attach files (up to 6, 10 MB each)" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><Plus className="size-6" strokeWidth={1.8} /></button>
-          <button type="button" onClick={startMention} aria-label="Mention someone" title="Mention someone" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><AtSign className="size-5" /></button>
+        <div className="flex items-center gap-1 px-4 pb-3">
+          <input ref={fileInput} type="file" multiple hidden onChange={(e) => { pick(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
+          <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach files" title={`Attach files (up to ${MAX_FILES}, 10 MB each)`} className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><Plus className="size-7" strokeWidth={1.8} /></button>
+          <button type="button" onClick={startMention} aria-label="Mention someone" title="Mention someone" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><AtSign className="size-6" strokeWidth={1.8} /></button>
+          {onNewThread && <button type="button" onClick={onNewThread} aria-label="Start a new thread in this channel" title="New thread in this channel" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><ListTree className="size-6" strokeWidth={1.8} /></button>}
           <span className="flex-1" />
-          <button type="button" onClick={send} disabled={!ready || pending} aria-label="Send" title="Send (Enter)"
-            className={cx("grid size-10 place-items-center rounded-full transition-colors", ready ? "bg-primary text-primary-foreground hover:bg-primary-hover" : "text-muted")}>
-            <SendHorizontal className="size-5" />
+          <button type="button" onClick={send} disabled={!ready || pending} aria-label="Send" title={uploading ? "Waiting for the upload to finish" : "Send (Enter)"}
+            className={cx("grid size-10 place-items-center rounded-full transition-colors", ready ? "text-primary hover:bg-primary-soft" : "text-muted")}>
+            <SendHorizontal className="size-6" strokeWidth={1.8} />
           </button>
         </div>
       </div>
