@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import {
-  canCreateChannels, channelAudience, ensureChannelHome, ensureClientChannels, listConversations, listDmMessages, listMentions,
-  listMessageContacts, listThreadMessages, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
+  canCreateChannels, channelAudience, ensureChannelHome, ensureClientChannels, isOffice, listConversations, listDmMessages, listMentions,
+  listMessageContacts, listOnShift, listThreadMessages, messageById, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
 } from "@/db/message-queries";
+import { hasAbility } from "@/lib/abilities";
 import { requireUser } from "@/lib/auth";
 import { nowMs } from "@/lib/format";
 import { Messenger, type OpenView } from "./messenger";
@@ -17,15 +18,16 @@ type Tab = "home" | "recent" | "unread" | "me";
  * right. The URL is the state: `?dm=<userId>` or `?thread=<id>`, plus `?tab=`. `?with=` is the
  * older name for `?dm=` and still works.
  */
-export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ with?: string; dm?: string; thread?: string; channel?: string; tab?: string }> }) {
+export default async function MessagesPage({ searchParams }: { searchParams: Promise<{ with?: string; dm?: string; thread?: string; channel?: string; tab?: string; side?: string }> }) {
   const user = await requireUser();
   const sp = await searchParams;
   const me: Me = { userId: user.id, role: user.role, abilities: user.abilities, staffId: user.staffId };
   const tab: Tab = sp.tab === "recent" || sp.tab === "unread" || sp.tab === "me" ? sp.tab : "home";
 
   await ensureClientChannels(user.id);
-  const [conversations, contacts, channels, mentions] = await Promise.all([
-    listConversations(me), listMessageContacts(me), visibleChannels(me), listMentions(me),
+  // Who is working today: office staff only, since a caregiver messages management, not colleagues.
+  const [conversations, contacts, channels, mentions, onShift] = await Promise.all([
+    listConversations(me), listMessageContacts(me), visibleChannels(me), listMentions(me), isOffice(me) ? listOnShift() : Promise.resolve([]),
   ]);
   const threads = await listThreadSummaries(me, channels.map((c) => c.id));
 
@@ -36,13 +38,23 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
   if (threadId) {
     const t = await threadFor(me, threadId);
     if (t) {
-      const [msgs, audience] = await Promise.all([listThreadMessages(t.id), channelAudience(t.channel.id)]);
-      open = { kind: "thread", thread: t, messages: msgs, audience: audience.filter((p) => p.userId !== user.id) };
+      const [msgs, audience, parent] = await Promise.all([listThreadMessages(t.id, user.id), channelAudience(t.channel.id), t.parentMessageId ? messageById(t.parentMessageId, user.id) : null]);
+      open = { kind: "thread", thread: t, messages: parent ? [parent, ...msgs] : msgs, audience: audience.filter((p) => p.userId !== user.id) };
     }
   } else if (dmId) {
     const contact: MessageContact | null =
       contacts.find((c) => c.userId === dmId) ?? conversations.find((c) => c.contact.userId === dmId)?.contact ?? null;
     if (contact) open = { kind: "dm", contact, canReply: contacts.some((c) => c.userId === dmId), messages: await listDmMessages(user.id, dmId) };
+  }
+
+  // "Reply in thread" opens that thread beside the conversation (`?side=<threadId>`).
+  let side: OpenView = null;
+  if (sp.side && open && sp.side !== threadId) {
+    const t = await threadFor(me, sp.side);
+    if (t) {
+      const [msgs, audience, parent] = await Promise.all([listThreadMessages(t.id, user.id), channelAudience(t.channel.id), t.parentMessageId ? messageById(t.parentMessageId, user.id) : null]);
+      side = { kind: "thread", thread: t, messages: parent ? [parent, ...msgs] : msgs, audience: audience.filter((p) => p.userId !== user.id) };
+    }
   }
 
   return (
@@ -56,7 +68,11 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
       channels={channels}
       threads={threads}
       mentions={mentions}
+      onShift={onShift}
+      canSchedule={hasAbility(user.abilities, "schedule")}
+      canSwap={Boolean(user.staffId)}
       open={open}
+      side={side}
     />
   );
 }

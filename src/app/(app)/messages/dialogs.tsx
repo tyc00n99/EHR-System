@@ -126,12 +126,13 @@ export function NewThreadDialog({ channels, channelId, onClose, onCreated }: { c
 
 /* ---------- channel create / settings ---------- */
 
-export function ChannelDialog({ channel, contacts, meId, onClose, onSaved }: { channel?: ChannelInfo; contacts: MessageContact[]; meId: string; onClose: () => void; onSaved: () => void }) {
+export function ChannelDialog({ channel, group, contacts, meId, onClose, onSaved }: { channel?: ChannelInfo; group?: boolean; contacts: MessageContact[]; meId: string; onClose: () => void; onSaved: () => void }) {
   const editing = Boolean(channel);
+  // A group (New → Group) is a private channel of a few people with a name; the same window, set up for it.
   const [name, setName] = useState(channel?.name ?? "");
-  const [icon, setIcon] = useState(channel?.icon ?? "chat");
+  const [icon, setIcon] = useState(channel?.icon ?? (group ? "team" : "chat"));
   const [tint, setTint] = useState(channel?.tint ?? "primary");
-  const [isPrivate, setPrivate] = useState(channel?.isPrivate ?? false);
+  const [isPrivate, setPrivate] = useState(channel?.isPrivate ?? Boolean(group));
   // Whoever creates or edits the channel stays in it: they are not listed, so they cannot untick themselves out.
   const [members, setMembers] = useState<Set<string>>(() => new Set((channel?.memberIds ?? []).filter((id) => id !== meId)));
   const [q, setQ] = useState("");
@@ -149,7 +150,7 @@ export function ChannelDialog({ channel, contacts, meId, onClose, onSaved }: { c
     start(async () => {
       const r = editing ? await updateChannel(channel!.id, input) : await createChannel(input);
       if ("error" in r) toast.error(r.error);
-      else { toast.success(editing ? "Channel saved." : "Channel created."); onSaved(); }
+      else { toast.success(editing ? "Channel saved." : group ? "Group created." : "Channel created."); onSaved(); }
     });
   }
 
@@ -163,12 +164,12 @@ export function ChannelDialog({ channel, contacts, meId, onClose, onSaved }: { c
   }
 
   return (
-    <Window title={editing ? "Channel settings" : "New channel"} onClose={onClose} width="sm:max-w-[620px]">
+    <Window title={editing ? "Channel settings" : group ? "New group" : "New channel"} onClose={onClose} width="sm:max-w-[620px]">
       <div className="flex items-end gap-3">
         <ChannelTile icon={icon} tint={tint} size={44} />
         <label className="block flex-1">
           <Label>Name</Label>
-          <Input autoFocus={!editing} value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="e.g. scheduling" />
+          <Input autoFocus={!editing} value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder={group ? "e.g. weekend-coverage" : "e.g. scheduling"} />
         </label>
       </div>
 
@@ -223,7 +224,7 @@ export function ChannelDialog({ channel, contacts, meId, onClose, onSaved }: { c
       <Actions>
         {editing && <button className="mr-auto h-10 rounded-lg px-3 text-[15px] font-medium text-danger hover:bg-danger-soft" onClick={archive} disabled={pending}>Archive channel</button>}
         <button className={plainBtn} onClick={onClose}>Cancel</button>
-        <button className={primaryBtn} disabled={pending || !name.trim()} onClick={save}>{pending ? "Saving…" : editing ? "Save" : "Create channel"}</button>
+        <button className={primaryBtn} disabled={pending || !name.trim()} onClick={save}>{pending ? "Saving…" : editing ? "Save" : group ? `Create group · ${members.size + 1} people` : "Create channel"}</button>
       </Actions>
     </Window>
   );

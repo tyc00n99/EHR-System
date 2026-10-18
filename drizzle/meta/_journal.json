@@ -274,6 +274,13 @@
       "when": 1792132309771,
       "tag": "0038_client_channels",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1792318300379,
+      "tag": "0039_messages_extras",
+      "breakpoints": true
     }
   ]
 }

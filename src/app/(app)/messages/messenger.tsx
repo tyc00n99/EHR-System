@@ -7,13 +7,14 @@
  * outlined in ink), the conversation in a white card with a framed "To …" composer. Selection lives in the URL. The page re-reads itself
  * every 25 seconds while visible, so new messages arrive without a reload.
  */
-import { ChevronDown, ChevronRight, Hash, Lock, MessageCircle, MoreHorizontal, Plus, Search, Users, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Hash, ListTree, Lock, MessageCircle, MoreHorizontal, PenSquare, Plus, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { cx } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import type { ChannelInfo, ChatMessage, Conversation, MentionItem, MessageContact, ThreadSummary } from "@/db/message-queries";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { ChannelInfo, ChatMessage, Conversation, MentionItem, MessageContact, OnShift, ThreadSummary } from "@/db/message-queries";
 import { ago, ChannelTile, Face, isChannelHome, MentionText, roleWord } from "./chat-bits";
 import { ConversationPane } from "./conversation";
 import { ChannelDialog, NewMessageDialog, NewThreadDialog } from "./dialogs";
@@ -23,16 +24,16 @@ type Tab = "home" | "recent" | "unread" | "me";
 
 export type OpenView =
   | { kind: "dm"; contact: MessageContact; canReply: boolean; messages: ChatMessage[] }
-  | { kind: "thread"; thread: { id: string; title: string; createdAt: string; startedBy: string; channel: ChannelInfo }; messages: ChatMessage[]; audience: MessageContact[] }
+  | { kind: "thread"; thread: { id: string; title: string; createdAt: string; startedBy: string; parentMessageId: string | null; channel: ChannelInfo }; messages: ChatMessage[]; audience: MessageContact[] }
   | null;
 
 type Dialog =
   | { kind: "dm" }
   | { kind: "thread"; channelId?: string }
-  | { kind: "channel"; channel?: ChannelInfo }
+  | { kind: "channel"; channel?: ChannelInfo; group?: boolean }
   | null;
 
-export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, channels, threads, mentions, open }: {
+export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, channels, threads, mentions, onShift, canSchedule, canSwap, open, side }: {
   meId: string;
   /** Server time of this render, for relative times; refreshed with every poll. */
   now: number;
@@ -43,11 +44,18 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   channels: ChannelInfo[];
   threads: ThreadSummary[];
   mentions: MentionItem[];
+  /** Who is working today (office staff only; empty for caregivers). */
+  onShift: OnShift[];
+  canSchedule: boolean;
+  canSwap: boolean;
   open: OpenView;
+  /** A reply thread open beside the conversation (`?side=`). */
+  side: OpenView;
 }) {
   const router = useRouter();
   const params = useSearchParams();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [newOpen, setNewOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   // The search in the page header: a filter over names, previews, channels and thread titles.
   const [q, setQ] = useState("");
@@ -66,9 +74,11 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     const s = q.toString();
     return s ? `/messages?${s}` : "/messages";
   };
-  const openDm = (userId: string) => href({ dm: userId, thread: null, channel: null });
-  const openThread = (id: string) => href({ thread: id, dm: null, channel: null });
-  const openChannel = (id: string) => href({ channel: id, thread: null, dm: null });
+  const openDm = (userId: string) => href({ dm: userId, thread: null, channel: null, side: null });
+  const openThread = (id: string) => href({ thread: id, dm: null, channel: null, side: null });
+  const openChannel = (id: string) => href({ channel: id, thread: null, dm: null, side: null });
+  // A reply thread opens beside the conversation where there is room for it, and in its place where there is not.
+  const openReplies = (id: string) => router.push(window.matchMedia("(min-width: 1280px)").matches ? href({ side: id }) : openThread(id));
   // A thread with an empty title is the channel's own conversation: listed as the channel, not as a thread.
   const homeOf = (channelId: string) => threads.find((t) => t.channelId === channelId && isChannelHome(t.title)) ?? null;
   const activeDm = open?.kind === "dm" ? open.contact.userId : null;
@@ -167,6 +177,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     { key: "unread", label: "Unread", n: unreadConversations },
     { key: "me", label: "@me", n: unreadMentions },
   ];
+  const onShiftNow = onShift.filter((p) => p.state === "on").length;
   const total = dms.length + threads.filter((t) => !isChannelHome(t.title) || t.lastBody).length;
   const listTitle = { home: "Inbox", recent: "Recent", unread: "Unread", me: "Mentions" }[tab];
   const listCount = tab === "me" ? unreadMentions : unreadConversations;
@@ -178,7 +189,8 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
         <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
           <h1 className="text-[28px] font-semibold tracking-[-0.015em] text-text-strong">Messages</h1>
           <p className="mt-1 text-[15px] text-muted">
-            {unreadConversations ? `${unreadConversations} unread` : "All caught up"} · {total} {total === 1 ? "conversation" : "conversations"}
+            {unreadConversations ? `${unreadConversations} unread` : "All caught up"}
+            {onShift.length > 0 ? ` · ${onShiftNow} on shift` : ` · ${total} ${total === 1 ? "conversation" : "conversations"}`}
             {unreadMentions > 0 && ` · ${unreadMentions} ${unreadMentions === 1 ? "mention" : "mentions"}`}
           </p>
         </div>
@@ -188,23 +200,24 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             className="own-focus h-11 w-full rounded-full border border-line pl-11 pr-10 text-[15px] text-text-strong outline-none placeholder:text-muted focus:border-text-strong" />
           {q && <button aria-label="Clear search" onClick={() => setQ("")} className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-tab-hover"><X className="size-4" /></button>}
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<button className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-4 text-[15px] font-medium text-text-strong hover:bg-tab-hover" />}>
-            <Plus className="size-4" strokeWidth={2} /> New <ChevronDown className="size-4 text-muted" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => setDialog({ kind: "dm" })}>New direct message</DropdownMenuItem>
-              {channels.length > 0 && <DropdownMenuItem onClick={() => setDialog({ kind: "thread" })}>New thread in a channel</DropdownMenuItem>}
-              {canCreateChannels && <DropdownMenuItem onClick={() => setDialog({ kind: "channel" })}>New channel</DropdownMenuItem>}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* "Start something new" (Oct 18, 2026): one door for a chat, a group or a thread, each saying what it is. */}
+        <Popover open={newOpen} onOpenChange={setNewOpen}>
+          <PopoverTrigger render={<button className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-[15px] font-medium text-primary-foreground hover:bg-primary-hover" />}>
+            <PenSquare className="size-4" strokeWidth={2} /> New
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[300px] p-2">
+            <p className="px-3 pb-1 pt-1.5 text-[13px] text-muted">Start something new</p>
+            <NewOption icon={<MessageCircle className="size-5" strokeWidth={1.8} />} title="Chat" note="Message one person" onClick={() => { setNewOpen(false); setDialog({ kind: "dm" }); }} />
+            {canCreateChannels && <NewOption icon={<Users className="size-5" strokeWidth={1.8} />} title="Group" note="A few people, with a name" onClick={() => { setNewOpen(false); setDialog({ kind: "channel", group: true }); }} />}
+            {channels.length > 0 && <NewOption icon={<ListTree className="size-5" strokeWidth={1.8} />} title="Thread" note="A topic inside a channel" onClick={() => { setNewOpen(false); setDialog({ kind: "thread", channelId: open?.kind === "thread" ? open.thread.channel.id : undefined }); }} />}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="flex min-h-0 flex-1 gap-5">
         {/* ---------------- the list ---------------- */}
         <aside className={cx("min-h-0 w-full flex-col rounded-2xl border border-line md:w-[420px] md:shrink-0", open ? "hidden md:flex" : "flex")}>
+          {onShift.length > 0 && <OnShiftStrip people={onShift} now={now} hrefFor={openDm} />}
           <div className="flex items-center justify-between gap-3 px-5 pb-3 pt-5">
             <div className="flex items-center gap-2.5">
               <h2 className="text-[17px] font-semibold text-text-strong">{listTitle}</h2>
@@ -289,8 +302,12 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             <ConversationPane
               key={open.kind === "dm" ? `dm:${open.contact.userId}` : `t:${open.thread.id}`}
               meId={meId}
+              now={now}
               open={open}
-              backHref={href({ dm: null, thread: null, channel: null })}
+              canSchedule={canSchedule}
+              canSwap={canSwap}
+              onOpenThread={openReplies}
+              backHref={href({ dm: null, thread: null, channel: null, side: null })}
               onChannelSettings={(c) => setDialog({ kind: "channel", channel: c })}
               onNewThread={() => setDialog({ kind: "thread", channelId: open.kind === "thread" ? open.thread.channel.id : undefined })}
             />
@@ -304,11 +321,30 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             </div>
           )}
         </section>
+
+        {/* ---------------- a reply thread, beside the conversation ---------------- */}
+        {side && side.kind === "thread" && (
+          <aside className="hidden min-h-0 w-[400px] shrink-0 flex-col overflow-hidden rounded-2xl border border-line xl:flex">
+            <ConversationPane
+              key={`side:${side.thread.id}`}
+              variant="side"
+              meId={meId}
+              now={now}
+              open={side}
+              canSchedule={canSchedule}
+              canSwap={canSwap}
+              onOpenThread={openReplies}
+              onClose={() => router.push(href({ side: null }))}
+              backHref={href({ side: null })}
+              onChannelSettings={(c) => setDialog({ kind: "channel", channel: c })}
+            />
+          </aside>
+        )}
       </div>
 
       {dialog?.kind === "dm" && <NewMessageDialog contacts={contacts} onClose={() => setDialog(null)} onPick={(id) => { setDialog(null); router.push(openDm(id)); }} />}
       {dialog?.kind === "thread" && <NewThreadDialog channels={channels} channelId={dialog.channelId} onClose={() => setDialog(null)} onCreated={(id) => { setDialog(null); router.push(openThread(id)); }} />}
-      {dialog?.kind === "channel" && <ChannelDialog channel={dialog.channel} contacts={contacts} meId={meId} onClose={() => setDialog(null)} onSaved={() => { setDialog(null); router.refresh(); }} />}
+      {dialog?.kind === "channel" && <ChannelDialog channel={dialog.channel} group={dialog.group} contacts={contacts} meId={meId} onClose={() => setDialog(null)} onSaved={() => { setDialog(null); router.refresh(); }} />}
     </div>
   );
 }
@@ -351,6 +387,52 @@ function ListRow({ face, title, preview, when, unread, tag, compact }: { face: R
           {unread > 0 && <Count n={unread} />}
         </div>
         {tag && <div className="mt-2 flex">{tag}</div>}
+      </div>
+    </div>
+  );
+}
+
+function NewOption({ icon, title, note, onClick }: { icon: ReactNode; title: string; note: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left text-text-strong hover:bg-[color-mix(in_srgb,var(--brand,#0098c0)_8%,transparent)]">
+      <span className="mt-0.5 text-[var(--brand-ink,#00708e)]">{icon}</span>
+      <span><span className="block text-[15.5px] font-semibold">{title}</span><span className="block text-[14px] text-muted">{note}</span></span>
+    </button>
+  );
+}
+
+const RING: Record<OnShift["state"], string> = {
+  on: "ring-ok",
+  late: "ring-warn",
+  later: "ring-line",
+};
+
+/**
+ * "On shift now" (Oct 18, 2026, the user's favourite part of the combined view): a face per
+ * caregiver working today, ringed green when clocked in, amber when a shift has started with no
+ * clock-in, grey with the start time when they are due later. A face opens a direct message.
+ */
+function OnShiftStrip({ people, now, hrefFor }: { people: OnShift[]; now: number; hrefFor: (userId: string) => string }) {
+  const time = (iso: string) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }).format(new Date(iso)).replace(":00", "");
+  return (
+    <div className="border-b border-line-soft px-5 pb-4 pt-5">
+      <div className="mb-3 text-[13px] font-medium uppercase tracking-[0.08em] text-[var(--brand-ink,#00708e)]">On shift now</div>
+      <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 pt-1">
+        {people.map((p) => {
+          const note = p.state === "on" ? `With ${p.clientName} since ${time(p.at)}` : p.state === "late" ? `Due at ${p.clientName}'s at ${time(p.at)} · not clocked in (${Math.max(1, Math.round((now - new Date(p.at).getTime()) / 60000))} min)` : `With ${p.clientName} at ${time(p.at)}`;
+          const label = p.state === "late" ? "Late" : p.state === "later" ? time(p.at) : p.name.split(" ")[0];
+          const face = (
+            <>
+              <span className={cx("grid size-[50px] place-items-center rounded-full bg-card text-[17px] font-semibold text-text-strong ring-2 ring-offset-2 ring-offset-card", RING[p.state])}>{p.initials}</span>
+              <span className={cx("mt-2 block max-w-[64px] truncate text-center text-[13px]", p.state === "late" ? "font-semibold text-warn" : "text-text")}>{label}</span>
+            </>
+          );
+          return p.userId ? (
+            <Link key={p.staffId} href={hrefFor(p.userId)} title={`${p.name} · ${note}`} aria-label={`${p.name}, ${note}. Message them.`} className="flex shrink-0 flex-col items-center rounded-xl px-1 py-0.5 hover:bg-tab-hover">{face}</Link>
+          ) : (
+            <span key={p.staffId} title={`${p.name} · ${note} · no login`} className="flex shrink-0 flex-col items-center px-1 py-0.5 opacity-80">{face}</span>
+          );
+        })}
       </div>
     </div>
   );
