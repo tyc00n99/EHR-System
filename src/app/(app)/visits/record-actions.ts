@@ -171,3 +171,31 @@ export async function recordMedAdmin(_prev: ActionState, fd: FormData): Promise<
   if (d.visitId) revalidatePath(`/visits/${d.visitId}`);
   return { message: "Recorded." };
 }
+
+/**
+ * Cleans up dictated speech for the progress review (Oct 18, 2026): punctuation, capitals, filler
+ * words and obvious mishearings only. It never adds facts; the caregiver reads it before saving.
+ */
+export async function cleanDictation(visitId: string, spoken: string): Promise<{ text?: string; message?: string }> {
+  const user = await requireUser();
+  const raw = spoken.trim().slice(0, 8000);
+  if (!raw) return { message: "Nothing was heard." };
+  if (!aiConfigured()) return { message: "Clean-up is off, so the words were added as heard." };
+  const record = await getVisitRecord(visitId);
+  if (!record) return { message: "Note not found." };
+  if (!user.abilities.includes("edit_visits") && record.visit.staffId !== user.staffId) return { message: "This is not your visit." };
+  try {
+    const client = new Anthropic({ defaultHeaders: process.env.ANTHROPIC_WORKSPACE_ID ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID } : undefined });
+    const res = await client.messages.create({
+      model: "claude-sonnet-5-5",
+      max_tokens: 3000,
+      thinking: { type: "disabled" },
+      system: `You clean up speech-to-text dictation from a caregiver writing a progress note about ${record.person.firstName}. Add punctuation, sentence breaks and capitals; remove filler words (um, uh, like, you know), false starts and repeated words; spell out spoken punctuation ("period", "comma", "new paragraph"); fix a word only when the speech engine clearly misheard it. Keep the caregiver's own words, meaning and order. Never add, remove or change a fact, and never add anything that was not said. Return only the cleaned text.`,
+      messages: [{ role: "user", content: raw }],
+    });
+    const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+    return text ? { text } : { message: "Clean-up came back empty, so the words were added as heard." };
+  } catch (e) {
+    return { message: explainAiError(e) };
+  }
+}

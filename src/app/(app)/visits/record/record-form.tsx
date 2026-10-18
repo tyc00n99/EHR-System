@@ -8,7 +8,8 @@ import { X } from "lucide-react";
 import { INTERACTION_LEVELS } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
 import { AssistantChat } from "@/components/assistant/assistant-chat";
-import { acceptNote, draftProgressReview, recordMedAdmin, returnNote, saveDocumentation, signVisitWithCode } from "../record-actions";
+import { Dictation } from "@/components/assistant/dictation";
+import { acceptNote, cleanDictation, draftProgressReview, recordMedAdmin, returnNote, saveDocumentation, signVisitWithCode } from "../record-actions";
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
@@ -124,7 +125,7 @@ export function RecordForm({ visitId, personFirst, locked, aiReady = false, skil
         )}
 
         <section>
-          <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-text-strong">Progress review</div><Button type="button" variant="secondary" onClick={draft} disabled={drafting} className="h-7 gap-1.5 text-[13px]">{drafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}{drafting ? "Drafting…" : "Draft from what I marked"}</Button></div>
+          <div className="mb-2 flex flex-wrap items-center gap-2"><div className="mr-auto text-[13px] font-semibold text-text-strong">Progress review</div>{!locked && <Dictation onText={(t) => setNote((cur) => (cur.trim() ? `${cur.trimEnd()} ${t}` : t))} clean={aiReady ? (spoken) => cleanDictation(visitId, spoken) : undefined} />}<Button type="button" variant="secondary" onClick={draft} disabled={drafting} className="h-7 gap-1.5 text-[13px]">{drafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}{drafting ? "Drafting…" : "Draft from what I marked"}</Button></div>
           <Field label="" error={e.shiftNote} hint={`What ${personFirst} did, the support provided, and progress toward goals. Objective, past tense.`}>
             <Textarea name="shiftNote" value={note} onChange={(ev) => setNote(ev.target.value)} className="min-h-32" placeholder={`${personFirst} …`} />
           </Field>
