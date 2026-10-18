@@ -72,7 +72,7 @@ export function MentionText({ body, names, meName }: { body: string; names: stri
     <>
       {body.split(re).map((part, i) =>
         part.startsWith("@") && names.includes(part.slice(1))
-          ? <span key={i} className={cx("font-semibold text-primary", part.slice(1) === meName && "rounded bg-primary-soft px-1")}>{part}</span>
+          ? <span key={i} className={cx("font-semibold text-[var(--brand-ink,#00708e)]", part.slice(1) === meName && "rounded bg-[color-mix(in_srgb,var(--brand,#0098c0)_12%,transparent)] px-1")}>{part}</span>
           : <Fragment key={i}>{part}</Fragment>,
       )}
     </>

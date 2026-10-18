@@ -139,7 +139,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           <div className="mt-3 space-y-1 border-t border-line-soft pt-2">
             {own.map((t) => (
               <Link key={t.id} href={openThread(t.id)} aria-current={t.id === activeThread ? "page" : undefined}
-                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", t.id === activeThread ? "border-text-strong" : "border-transparent hover:border-line")}>
+                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", t.id === activeThread ? "border-[var(--brand,#0098c0)]" : "border-transparent hover:border-line")}>
                 <ListRow
                   compact
                   face={<Face initials={t.lastSenderInitials} size={32} />}
@@ -213,8 +213,8 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             <nav aria-label="Filter conversations" className="flex gap-0.5 rounded-full border border-line p-1">
               {tabs.map((t) => (
                 <Link key={t.key} href={href({ tab: t.key === "home" ? null : t.key })} aria-current={tab === t.key ? "page" : undefined}
-                  className={cx("shrink-0 rounded-full px-3 py-1 text-[14px] font-medium", tab === t.key ? "bg-text-strong text-card" : "text-muted hover:text-text-strong")}>
-                  {t.label}{t.n ? <span className="ml-1 font-semibold text-text-strong">{t.n}</span> : null}
+                  className={cx("shrink-0 rounded-full px-3 py-1 text-[14px] font-medium", tab === t.key ? "bg-[var(--brand-ink,#00708e)] text-white" : "text-muted hover:text-text-strong")}>
+                  {t.label}{t.n ? <span className="ml-1 font-semibold">{t.n}</span> : null}
                 </Link>
               ))}
             </nav>
@@ -313,11 +313,11 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   );
 }
 
-/** One card in the list; the open one is white and outlined in ink, as the reference marks it. */
-const cardCls = (active: boolean) => cx("block rounded-2xl border px-4 py-3.5 transition-colors", active ? "border-text-strong" : "border-line hover:border-text-strong/40");
+/** One card in the list; the open one is outlined in EVVora blue (the design system marks "where you are" in blue). */
+const cardCls = (active: boolean) => cx("block rounded-2xl border px-4 py-3.5 transition-colors", active ? "border-[var(--brand,#0098c0)] ring-1 ring-[var(--brand,#0098c0)]" : "border-line hover:border-text-strong/40");
 
 function SectionLabel({ icon, children, title }: { icon: ReactNode; children: ReactNode; title?: string }) {
-  return <div title={title} className="flex items-center gap-2 px-2 pb-0.5 pt-3 text-[13px] font-medium uppercase tracking-[0.08em] text-muted first:pt-1">{icon}{children}</div>;
+  return <div title={title} className="flex items-center gap-2 px-2 pb-0.5 pt-3 text-[13px] font-medium uppercase tracking-[0.08em] text-[var(--brand-ink,#00708e)] first:pt-1">{icon}{children}</div>;
 }
 
 function Count({ n }: { n: number }) {
