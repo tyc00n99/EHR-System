@@ -59,3 +59,14 @@ export const EXCEPTION_LABEL: Record<string, string> = {
 };
 
 export const reasonLabel = (code: string) => EXCEPTION_LABEL[code as ReasonCode] ?? code.replaceAll("_", " ").toLowerCase();
+
+/** The review queue's filter tabs, each a set of filter params. "" is every visit. */
+export const QUEUE_VIEWS = {
+  "": {}, exceptions: { openExceptionsOnly: "true" }, noncompliant: { complianceStatus: "NONCOMPLIANT" }, review: { complianceStatus: "PENDING_REVIEW" },
+  manual: { manualOrCorrected: "true" }, rejected: { rejected: "true" }, deadline: { approachingDeadline: "true" },
+} as const satisfies Record<string, Record<string, string>>;
+export type QueueView = keyof typeof QUEUE_VIEWS;
+export const QUEUE_VIEW_LABEL: Record<QueueView, string> = {
+  "": "All", exceptions: "Open exceptions", noncompliant: "Noncompliant", review: "Needs review", manual: "Manual or corrected", rejected: "Rejected", deadline: "Deadline soon",
+};
+export const QUEUE_VIEW_KEYS = ["openExceptionsOnly", "complianceStatus", "manualOrCorrected", "rejected", "approachingDeadline"] as const;

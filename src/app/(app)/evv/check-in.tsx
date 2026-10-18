@@ -41,7 +41,7 @@ export function QuarterlyCheckIn({ s }: { s: ComplianceSummary }) {
         ? `Nothing has reached HHAeXchange: ${t.unsubmitted} unsubmitted, ${t.rejected} rejected. Visits only count once the aggregator holds them.`
         : `${t.accepted} accepted · ${t.rejected} rejected · ${t.unsubmitted} unsubmitted`,
       tone: t.complete === 0 ? "neutral" : t.rejected || t.unsubmitted ? "danger" : "ok",
-      href: "/evv?tab=integration", linkLabel: "Integration",
+      href: "/settings?tab=integrations", linkLabel: "Integrations",
     },
     {
       title: "Compliance reports",
@@ -55,7 +55,7 @@ export function QuarterlyCheckIn({ s }: { s: ComplianceSummary }) {
         ? `${unknownIds} visit${unknownIds === 1 ? "" : "s"} with no NPI or UMPI on the caregiver — DHS cannot match those`
         : "Every visit carries an NPI or UMPI. Confirm each one under your tax ID is connected to the HHAeXchange portal and matches MHCP enrollment.",
       tone: unknownIds ? "danger" : "ok",
-      href: "/evv?tab=settings", linkLabel: "Settings",
+      href: "/settings?tab=evv", linkLabel: "EVV settings",
     },
   ];
 

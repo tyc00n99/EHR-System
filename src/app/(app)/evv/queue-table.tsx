@@ -6,7 +6,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 import { DataTable, TwoLine } from "@/components/data-table";
 import { DateRangePill, FilterPill, type PillOption } from "@/components/filter-pill";
-import { Badge, type Tone } from "@/components/kit";
+import { Badge, cx, type Tone } from "@/components/kit";
+import { QUEUE_VIEW_KEYS, QUEUE_VIEW_LABEL, QUEUE_VIEWS, type QueueView } from "@/evv/labels";
 import { resubmitAction, reviewVisitAction } from "./actions";
 
 export interface QueueRow {
@@ -15,22 +16,15 @@ export interface QueueRow {
   openExceptions: number; flags: string[];
 }
 
-const SHOW: PillOption[] = [
-  { value: "", label: "All visits" }, { value: "exceptions", label: "Open exceptions" }, { value: "noncompliant", label: "Noncompliant" }, { value: "review", label: "Needs review" },
-  { value: "manual", label: "Manual or corrected" }, { value: "rejected", label: "Rejected by aggregator" }, { value: "deadline", label: "Deadline approaching" },
-];
-const SHOW_PARAMS: Record<string, Record<string, string>> = { "": {}, exceptions: { openExceptionsOnly: "true" }, noncompliant: { complianceStatus: "NONCOMPLIANT" }, review: { complianceStatus: "PENDING_REVIEW" }, manual: { manualOrCorrected: "true" }, rejected: { rejected: "true" }, deadline: { approachingDeadline: "true" } };
-const SHOW_KEYS = ["openExceptionsOnly", "complianceStatus", "manualOrCorrected", "rejected", "approachingDeadline"];
-
 /** The EVV review queue as the same table the notes use, with the queue's own columns and filters. */
-export function QueueTable({ rows, filter, options, presets, rangeLabel }: { rows: QueueRow[]; filter: Record<string, string>; options: { people: PillOption[]; staff: PillOption[]; submission: PillOption[] }; presets: { label: string; param: string }[]; rangeLabel: string }) {
+export function QueueTable({ rows, filter, counts, options, presets, rangeLabel }: { rows: QueueRow[]; filter: Record<string, string>; counts: Record<QueueView, number>; options: { people: PillOption[]; staff: PillOption[]; submission: PillOption[] }; presets: { label: string; param: string }[]; rangeLabel: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const show = Object.entries(SHOW_PARAMS).find(([k, set]) => k && Object.entries(set).every(([p, v]) => filter[p] === v))?.[0] ?? "";
+  const show = (Object.entries(QUEUE_VIEWS) as [QueueView, Record<string, string>][]).find(([k, set]) => k && Object.entries(set).every(([p, v]) => filter[p] === v))?.[0] ?? "";
   const navigate = (patch: Record<string, string | undefined>, resetShow = false) => {
     const next: Record<string, string> = { ...filter };
     delete next.offset; delete next.visit;
-    if (resetShow) for (const k of SHOW_KEYS) delete next[k];
+    if (resetShow) for (const k of QUEUE_VIEW_KEYS) delete next[k];
     for (const [k, v] of Object.entries(patch)) { if (v) next[k] = v; else delete next[k]; }
     const q = new URLSearchParams(next);
     router.push(`/evv${q.toString() ? `?${q}` : ""}`);
@@ -54,7 +48,20 @@ export function QueueTable({ rows, filter, options, presets, rangeLabel }: { row
   ], []);
   const bulkBtn = "inline-flex h-8 items-center rounded-md px-3 text-[14px] font-medium text-text hover:bg-tab-hover disabled:opacity-50";
 
-  return (
+  return (<>
+    <nav aria-label="Filter the queue" className="-mx-1 mb-3 flex gap-0.5 overflow-x-auto border-b border-line-soft px-1">
+      {(Object.keys(QUEUE_VIEWS) as QueueView[]).map((k) => {
+        const on = show === k, bad = (k === "noncompliant" || k === "rejected") && counts[k] > 0;
+        return (
+          <button key={k || "all"} type="button" aria-current={on ? "true" : undefined} onClick={() => navigate({ ...QUEUE_VIEWS[k] }, true)}
+            className={cx("inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-md px-3 text-[15px] font-medium transition-colors hover:bg-tab-hover hover:text-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30",
+              on ? "bg-tab-hover text-text-strong shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground")}>
+            {QUEUE_VIEW_LABEL[k]}
+            <span className={cx("rounded-full px-1.5 text-[13px] leading-[18px] tabular-nums", bad ? "bg-danger-soft text-danger" : "bg-panel text-text-strong")}>{counts[k]}</span>
+          </button>
+        );
+      })}
+    </nav>
     <DataTable
       columns={columns}
       data={rows}
@@ -71,7 +78,6 @@ export function QueueTable({ rows, filter, options, presets, rangeLabel }: { row
         <FilterPill label="Client" value={filter.personId ? [filter.personId] : []} options={[{ value: "", label: "Any client" }, ...options.people]} single onApply={(v) => navigate({ personId: v[0] })} />
         <FilterPill label="Caregiver" value={filter.staffId ? [filter.staffId] : []} options={[{ value: "", label: "Any caregiver" }, ...options.staff]} single onApply={(v) => navigate({ staffId: v[0] })} />
         <FilterPill label="Submission" value={filter.submissionStatus ? [filter.submissionStatus] : []} options={[{ value: "", label: "Any status" }, ...options.submission]} single onApply={(v) => navigate({ submissionStatus: v[0] })} />
-        <FilterPill label="Show" value={show ? [show] : []} options={SHOW} single onApply={(v) => navigate(SHOW_PARAMS[v[0] ?? ""], true)} />
         {filtered && <button type="button" onClick={() => router.push("/evv")} className="text-[14px] font-medium text-primary hover:underline">Clear</button>}
       </>}
       rowHref={(r) => visitHref(r.id)}
@@ -80,5 +86,5 @@ export function QueueTable({ rows, filter, options, presets, rangeLabel }: { row
       initialSorting={[{ id: "dateIso", desc: true }]}
       dense
     />
-  );
+  </>);
 }

@@ -24,7 +24,7 @@ async function office(permission: EvvPermission): Promise<EvvCtx> {
   return makeCtx(db, await defaultOrganizationId(db), user.id);
 }
 
-const done = (message?: string): ActionState => { revalidatePath("/evv"); return { ok: true, message }; };
+const done = (message?: string): ActionState => { revalidatePath("/evv"); revalidatePath("/settings"); return { ok: true, message }; };
 const failed = (e: unknown): ActionState => ({ message: e instanceof Error ? e.message : "Something went wrong." });
 
 export async function reviewVisitAction(visitId: string, note?: string): Promise<ActionState> {

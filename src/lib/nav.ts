@@ -93,12 +93,10 @@ export interface SectionEntry {
   match?: (path: string, params: URLSearchParams) => boolean;
 }
 
-const param = (key: string, value: string) => (_path: string, p: URLSearchParams) => p.get(key) === value;
-
 /**
  * The second row: what belongs to the section you have open. Returns null where a section has no
  * depth worth a row — Today, Clients, Team, Schedule, Notes, Billing and every caregiver screen.
- * Only EVV has one now: its entries are different pages, not filters.
+ * No section has one at the moment; the function stays so one can come back without rewiring.
  */
 export function sectionRow(pathname: string, abilities: readonly string[]): SectionEntry[] | null {
   if (!hasAbility(abilities, "review")) return null;
@@ -108,16 +106,8 @@ export function sectionRow(pathname: string, abilities: readonly string[]): Sect
 
   // The review queue has no section row: its own issue-type and priority menus do that job.
 
-  if (pathname === "/evv") {
-    return [
-      { href: "/evv", label: "Review queue", match: (_p, p) => !p.get("tab") || p.get("tab") === "queue" },
-      { href: "/evv?tab=compliance", label: "Compliance", match: param("tab", "compliance") },
-      ...(hasAbility(abilities, "settings") ? [
-        { href: "/evv?tab=settings", label: "Settings", match: param("tab", "settings") },
-        { href: "/evv?tab=integration", label: "Integration", match: param("tab", "integration") },
-      ] : []),
-    ];
-  }
+  // EVV has no section row (Oct 18, 2026): its title is a menu between Review queue and
+  // Compliance, and its Settings and Integration moved under Settings.
 
   return null;
 }
