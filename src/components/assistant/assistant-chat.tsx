@@ -155,7 +155,9 @@ export function AssistantChat({ context, suggestions, target, canSave, heading =
           </div>
         )}
         {/* A div, not a form: this chat also sits inside the service record's own form. */}
-        <div className="rounded-2xl border border-line bg-card px-3 pb-2 pt-2.5 focus-within:border-gray-400">
+        {/* own-focus: the global :focus-visible outline would draw a hard rectangle around the inner
+            textarea; the wrapper's border change is the focus cue instead. */}
+        <div className="own-focus rounded-2xl border border-line bg-card px-3 pb-2 pt-2.5 transition-colors focus-within:border-gray-400">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
