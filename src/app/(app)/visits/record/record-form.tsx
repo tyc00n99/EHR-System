@@ -7,11 +7,12 @@ import { Badge, Button, Field, FormError, Input, Select, Textarea, cx } from "@/
 import { X } from "lucide-react";
 import { INTERACTION_LEVELS } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
+import { AssistantChat } from "@/components/assistant/assistant-chat";
 import { acceptNote, draftProgressReview, recordMedAdmin, returnNote, saveDocumentation, signVisitWithCode } from "../record-actions";
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
-export function RecordForm({ visitId, personFirst, locked, skillsOptions, activityOptions, defaults, tasks, questions, goals, addressed: addressed0 }: { visitId: string; personFirst: string; locked: boolean; skillsOptions: string[]; activityOptions: string[]; goals: { id: string; title: string; questions: string[] }[]; addressed: Record<string, string>; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
+export function RecordForm({ visitId, personFirst, locked, aiReady = false, skillsOptions, activityOptions, defaults, tasks, questions, goals, addressed: addressed0 }: { visitId: string; personFirst: string; locked: boolean; aiReady?: boolean; skillsOptions: string[]; activityOptions: string[]; goals: { id: string; title: string; questions: string[] }[]; addressed: Record<string, string>; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
   const [state, submit, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
     // Best-effort device location for the note history; never blocks the save.
     const fix = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
@@ -32,6 +33,9 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
   const [addressed, setAddressed] = useState<Record<string, string>>(addressed0);
   const toggleGoal = (id: string) => setAddressed((cur) => { if (id in cur) { const next = { ...cur }; delete next[id]; return next; } return { ...cur, [id]: "" }; });
   const [drafting, startDraft] = useTransition();
+  const [assistOpen, setAssistOpen] = useState(false);
+  // What the in-note assistant may draft from: exactly what is marked on this form right now.
+  const noteFacts = () => ({ interactionLevel: interaction || undefined, skills, activities, tasks: tasks.filter((t) => t.completed).map((t) => t.label), outcomes: goals.filter((g) => g.id in addressed).map((g) => ({ title: g.title, line: addressed[g.id] })), goalAnswers: questions.filter((q) => answers[q.id]).map((q) => ({ prompt: q.prompt, response: answers[q.id], note: notes[q.id] })), text: note });
   const e = state.errors ?? {};
   const toggleSkill = (s: string) => setSkills((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   const draft = () => startDraft(async () => {
@@ -124,6 +128,32 @@ export function RecordForm({ visitId, personFirst, locked, skillsOptions, activi
           <Field label="" error={e.shiftNote} hint={`What ${personFirst} did, the support provided, and progress toward goals. Objective, past tense.`}>
             <Textarea name="shiftNote" value={note} onChange={(ev) => setNote(ev.target.value)} className="min-h-32" placeholder={`${personFirst} …`} />
           </Field>
+          {aiReady && !locked && (
+            <div className="mt-3 rounded-2xl border border-line">
+              <button type="button" onClick={() => setAssistOpen((o) => !o)} aria-expanded={assistOpen} className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] font-medium text-text-strong">
+                <Sparkles className="size-3.5" />Assistant · improve, organize, or check this note
+                <span className="ml-auto text-muted-foreground">{assistOpen ? "Hide" : "Open"}</span>
+              </button>
+              {assistOpen && (
+                <div className="border-t border-line px-3.5 pb-3.5">
+                  <AssistantChat
+                    compact
+                    context={{ visitId }}
+                    canSave={false}
+                    heading={`Help with ${personFirst}'s note`}
+                    contextLabel="this note"
+                    target={{ label: "Progress review", apply: setNote, facts: noteFacts }}
+                    suggestions={[
+                      { label: "Draft from what I marked", prompt: "Draft the progress review for this note from what I marked. Use only those facts, and tell me what is missing." },
+                      { label: "Improve the wording", prompt: "Improve the wording of my progress review. Keep every fact; make it clear, objective and professional." },
+                      { label: "Organize it", prompt: "Reorganize my progress review into a clear order: activities and supports, outcomes worked on, health and safety, anything to follow up. Keep every fact." },
+                      { label: "Check for missing details", prompt: "Check this note for details a reviewer would expect but that are missing, compared with what I marked. List them; do not draft yet." },
+                    ]}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-line-soft pt-4">
