@@ -36,7 +36,7 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
   const names = palette.map((p) => ({ href: p.href, label: p.label }));
   return (
     <ModulePanelProvider>
-    <HubProvider>
+    <HubProvider homeOpen={!(aiConfigured() && user.abilities.includes("all_clients"))}>
     <div className="flex h-screen flex-col overflow-hidden bg-page-bg">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 

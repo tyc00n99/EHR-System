@@ -102,3 +102,20 @@ export function AssistantLauncher({ abilities, names, enabled }: { abilities: re
 function PanelBody({ ctx, label, suggestions, canSave, queued, onQueuedTaken }: { ctx: AssistantContext; label?: string; suggestions: Suggestion[]; canSave: boolean; queued: string | null; onQueuedTaken: () => void }) {
   return <AssistantChat context={ctx} suggestions={suggestions} canSave={canSave} contextLabel={label} heading={label ? `What do you need for ${label.split(" ")[0]}?` : "What should we work on?"} autoAsk={queued} onAutoAsked={onQueuedTaken} />;
 }
+
+/**
+ * The assistant on the office home page (Oct 18, 2026, user: "right under Welcome Mustafa"): the
+ * same chat as the side panel, inline in a card under the greeting, so the home screen opens on it.
+ */
+export function HomeAssistant({ abilities }: { abilities: readonly Ability[] }) {
+  return (
+    <div className="flex h-[min(540px,64vh)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-line bg-card text-left shadow-sm">
+      <AssistantChat
+        context={{ path: "/" }}
+        canSave={false}
+        heading="What should we work on?"
+        suggestions={suggestionsFor({ path: "/" }, abilities)}
+      />
+    </div>
+  );
+}

@@ -23,11 +23,13 @@ const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void; forget
  * The fan is open by default on the home page (user, Sept 21: a greeting with nothing to click
  * is a dead end) and closed everywhere else. A choice the person makes is remembered for the
  * path it was made on, so a route change falls back to the default without an effect.
+ * `homeOpen` is false when the office home carries the assistant (Oct 18, 2026): the home is no
+ * longer empty, and the open fan would sit over the chat box and swallow its clicks.
  */
-export function HubProvider({ children }: { children: ReactNode }) {
+export function HubProvider({ homeOpen = true, children }: { homeOpen?: boolean; children: ReactNode }) {
   const pathname = usePathname();
   const [choice, setChoice] = useState<{ path: string; open: boolean } | null>(null);
-  const open = choice && choice.path === pathname ? choice.open : pathname === "/";
+  const open = choice && choice.path === pathname ? choice.open : homeOpen && pathname === "/";
   const setOpen = (v: boolean) => setChoice({ path: pathname, open: v });
   // Arriving at home again should open the fan again, so the home button forgets the last choice.
   const forget = () => setChoice(null);
