@@ -3,9 +3,10 @@
 /**
  * Voice notes (Oct 18, 2026, from the user's pick of the combined Messages view): a recording with
  * its written transcript, so a caregiver can talk instead of type and the office can read it at a
- * glance. The transcript is made on the device, never by sending the audio to a speech service:
- * a voice note can name a client, and no such service here has a business associate agreement. A
- * browser that cannot transcribe on the device still records; the note simply goes without text.
+ * glance. Chrome transcribes on the device (`processLocally`). Other browsers, Safari among them,
+ * fall back to their own speech recognition, as note dictation already does (user, Oct 18: the
+ * transcript has to work everywhere); Safari sends that audio to Apple and Chrome's fallback to
+ * Google, which waits on the same business-associate decision as dictation and the assistant.
  * The person checks, and can correct, the transcript before it is sent.
  */
 import { Loader2, Mic, Pause, Play, Square, Trash2 } from "lucide-react";
@@ -15,7 +16,7 @@ import { cx } from "@/components/kit";
 
 const MAX_SECONDS = 180;
 
-/* ---------- on-device speech recognition (Chrome's `processLocally`), typed by hand ---------- */
+/* ---------- speech recognition (on-device in Chrome via `processLocally`), typed by hand ---------- */
 
 interface RecognitionResultList { length: number; [i: number]: { isFinal: boolean; 0: { transcript: string } } }
 interface Recognition {
@@ -36,22 +37,25 @@ interface RecognitionCtor {
   install?: (o: { langs: string[]; processLocally: boolean }) => Promise<boolean>;
 }
 
-/** A recognizer that runs on this device, or null. Never one that would send the audio away. */
-async function localRecognizer(): Promise<Recognition | null> {
+/** On-device recognition where the browser has it, else the browser's own; null when it has neither. */
+async function recognizer(): Promise<Recognition | null> {
   const w = window as unknown as { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
   const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-  if (!Ctor?.available || !("processLocally" in Ctor.prototype)) return null;
-  const opts = { langs: ["en-US"], processLocally: true };
-  try {
-    let state = await Ctor.available(opts);
-    if (state === "downloadable" && Ctor.install) state = (await Ctor.install(opts)) ? "available" : state;
-    if (state !== "available") return null;
-  } catch { return null; }
+  if (!Ctor) return null;
+  let local = false;
+  if (Ctor.available && "processLocally" in Ctor.prototype) {
+    const opts = { langs: ["en-US"], processLocally: true };
+    try {
+      let state = await Ctor.available(opts);
+      if (state === "downloadable" && Ctor.install) state = (await Ctor.install(opts)) ? "available" : state;
+      local = state === "available";
+    } catch { local = false; }
+  }
   const r = new Ctor();
   r.lang = "en-US";
   r.continuous = true;
   r.interimResults = true;
-  r.processLocally = true;
+  if (local) r.processLocally = true;
   return r;
 }
 
@@ -108,7 +112,7 @@ export function VoiceRecorder({ onSend, onCancel, sending }: { onSend: (v: Recor
         rec.current = r;
         startedAt.current = Date.now();
         setPhase("recording");
-        const g = await localRecognizer();
+        const g = await recognizer();
         if (cancelled) return;
         setCanTranscribe(Boolean(g));
         if (g) {
@@ -123,6 +127,8 @@ export function VoiceRecorder({ onSend, onCancel, sending }: { onSend: (v: Recor
             setInterim(mid);
           };
           g.onerror = () => undefined;
+          // Safari ends recognition after a pause even when continuous; pick it up again while recording.
+          g.onend = () => { if (!cancelled && recog.current === g && rec.current?.state === "recording") { try { g.start(); } catch { /* already running */ } } };
           g.start();
           recog.current = g;
         }

@@ -7,17 +7,12 @@ import { cx } from "@/components/kit";
 
 /**
  * The Messages door (user's pick "C", Oct 16, 2026): a pill pinned bottom-left, mirroring the
- * corner hub on the right. Full — blue circle, unread badge, "Messages" and a line — on Home;
- * shrunk to the circle alone on the other main pages; drawn nowhere else
- * (user, Oct 16). On phones it is always the circle, so it never crowds the hub.
+ * corner hub on the right: blue circle, unread badge, "Messages" and a line. Home only (user,
+ * Oct 18); every other page reaches Messages through the hub. On phones it is the circle alone.
  */
 export function MessagesPill({ unread }: { unread: number }) {
   const path = usePathname();
-  const full = path === "/";
-  // The other main pages (the hub's destinations, by exact path): the circle alone. Records and
-  // deeper screens, and Messages itself, get nothing.
-  const compact = ["/clients", "/staff", "/scheduling", "/visits", "/evv", "/billing", "/attention", "/clock"].includes(path);
-  if (!full && !compact) return null;
+  if (path !== "/") return null;
   const label = unread ? `Messages, ${unread} unread` : "Messages";
   return (
     <Link
@@ -26,7 +21,7 @@ export function MessagesPill({ unread }: { unread: number }) {
       title="Messages"
       className={cx(
         "fixed bottom-7 left-7 z-30 flex items-center gap-3 rounded-full border border-line bg-card shadow-[0_8px_24px_rgba(15,23,42,0.14)] transition-colors hover:bg-tab-hover",
-        full ? "h-16 p-[9px] md:pr-6" : "size-16 justify-center",
+        "h-16 p-[9px] md:pr-6",
       )}
     >
       <span className="relative grid size-[46px] shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
@@ -37,12 +32,10 @@ export function MessagesPill({ unread }: { unread: number }) {
           </span>
         )}
       </span>
-      {full && (
-        <span className="hidden leading-[1.2] md:block">
-          <span className="block text-[16px] font-semibold text-text-strong">Messages</span>
-          <span className="block text-[13px] text-text">{unread ? `${unread} unread` : "You are all caught up"}</span>
-        </span>
-      )}
+      <span className="hidden leading-[1.2] md:block">
+        <span className="block text-[16px] font-semibold text-text-strong">Messages</span>
+        <span className="block text-[13px] text-text">{unread ? `${unread} unread` : "You are all caught up"}</span>
+      </span>
     </Link>
   );
 }
