@@ -9,7 +9,7 @@ import { cx } from "@/components/kit";
  * The Messages door (user's pick "C", Oct 16, 2026): a pill pinned bottom-left, mirroring the
  * corner hub on the right. Full — blue circle, unread badge, "Messages" and a line — on Home;
  * shrunk to the circle alone on the other main pages; drawn nowhere else
- * (user, Oct 16). On phones it is always the circle, so it never crowds the hub.
+ * (user, Oct 16). Phones use the tab bar's Messages button instead (Oct 18).
  */
 export function MessagesPill({ unread }: { unread: number }) {
   const path = usePathname();
@@ -25,14 +25,14 @@ export function MessagesPill({ unread }: { unread: number }) {
       aria-label={label}
       title="Messages"
       className={cx(
-        "fixed bottom-7 left-7 z-30 flex items-center gap-3 rounded-full border border-line bg-card shadow-[0_8px_24px_rgba(15,23,42,0.14)] transition-colors hover:bg-tab-hover",
+        "fixed bottom-7 left-7 z-30 hidden items-center gap-3 rounded-full border border-line bg-card shadow-[0_8px_24px_rgba(35,42,58,0.12)] transition-colors hover:bg-tab-hover md:flex",
         full ? "h-16 p-[9px] md:pr-6" : "size-16 justify-center",
       )}
     >
       <span className="relative grid size-[46px] shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
         <MessageCircle className="size-6" strokeWidth={2} />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[12px] font-bold leading-none text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[13px] font-semibold leading-none text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -40,7 +40,7 @@ export function MessagesPill({ unread }: { unread: number }) {
       {full && (
         <span className="hidden leading-[1.2] md:block">
           <span className="block text-[16px] font-semibold text-text-strong">Messages</span>
-          <span className="block text-[13px] text-text">{unread ? `${unread} unread` : "You are all caught up"}</span>
+          <span className="block text-[13px] text-muted-foreground">{unread ? `${unread} unread` : "You are all caught up"}</span>
         </span>
       )}
     </Link>
