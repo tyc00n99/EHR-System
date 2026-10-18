@@ -199,7 +199,7 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
       aria-expanded={open}
       aria-label={open ? "Close navigation" : "Open navigation (⌘ .)"}
       title={open ? "Close" : "Go to… (⌘ .)"}
-      className={cx("fixed bottom-7 right-7 z-30 hidden size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(35,42,58,0.28)] transition-[transform,background-color] duration-200 hover:bg-primary-hover md:flex", open && "scale-105")}
+      className={cx("fixed bottom-7 right-7 z-30 hidden size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(0,152,192,0.4)] transition-[transform,background-color] duration-200 hover:bg-primary-hover md:flex", open && "scale-105")}
     >
       <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-90 opacity-0" : "rotate-0 opacity-100")}><HubIcon size={26} /></span>
       <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-0 opacity-100" : "-rotate-90 opacity-0")}><Icon.plus size={26} className="rotate-45" /></span>
