@@ -142,7 +142,6 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
   }, [open, items, setOpen]);
 
   const HubIcon = Icon[here?.icon ?? "home"];
-  const review = counts.review;
 
   return (<>
     {/* A click anywhere outside the fan closes it. Invisible on purpose (user, Sept 21: no dimming —
@@ -204,9 +203,6 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
     >
       <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-90 opacity-0" : "rotate-0 opacity-100")}><HubIcon size={26} /></span>
       <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-0 opacity-100" : "-rotate-90 opacity-0")}><Icon.plus size={26} className="rotate-45" /></span>
-      {!open && review > 0 && here?.badge !== "review" && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-danger px-1 text-[13px] font-semibold leading-none text-white">{review}</span>
-      )}
     </button>
   </>);
 }
@@ -245,7 +241,6 @@ export function PhoneTabBar({ abilities, counts, unread }: { abilities: readonly
           <button type="button" onClick={() => setOpen(!phoneOpen, true)} aria-expanded={phoneOpen} className={cx(tab, phoneOpen || moreOn ? "bg-primary-soft text-text-strong" : "text-muted-foreground hover:text-text-strong")}>
             <Icon.grid size={20} />
             <span>More</span>
-            {counts.review > 0 && <span className="absolute right-[18%] top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">{counts.review}</span>}
           </button>
         )}
       </nav>
