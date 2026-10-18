@@ -28,22 +28,22 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-nav px-5 py-3 text-white">
-        <div className="min-w-0 flex-1"><div className="text-[13px] font-medium uppercase tracking-[0.08em] text-white/60">Service record</div><div className="truncate text-[15px] font-semibold">{fullName(person)} <span className="font-normal text-white/70">· {labelForCode(v.serviceCode, v.modifiers)}</span></div></div>
-        <a href={`/visits/${v.id}/note.pdf`} target="_blank" rel="noreferrer" className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-white/80 hover:bg-white/10"><FileDown className="size-3.5" /> PDF</a>
-        {!inSheet ? null : <Link href={`/visits/${v.id}`} className="flex h-8 items-center gap-1.5 rounded-md px-2 text-[13px] text-white/80 hover:bg-white/10"><ExternalLink className="size-3.5" /> Full page</Link>}
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-line bg-background px-5 py-3">
+        <div className="min-w-0 flex-1"><div className="text-[13px] font-medium text-muted-foreground">Service record</div><div className="truncate text-[17px] font-semibold text-text-strong">{fullName(person)}</div><div className="truncate text-[13px] text-muted-foreground">{labelForCode(v.serviceCode, v.modifiers)}</div></div>
+        <a href={`/visits/${v.id}/note.pdf`} target="_blank" rel="noreferrer" className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-text hover:bg-hover"><FileDown className="size-4" /> PDF</a>
+        {!inSheet ? null : <Link href={`/visits/${v.id}`} className="hidden h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-text hover:bg-hover sm:flex"><ExternalLink className="size-4" /> Full page</Link>}
         {inSheet && <CloseSheetButton><X className="size-4" /></CloseSheetButton>}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line-soft bg-sidebar px-5 py-3 text-[13px]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line-soft px-5 py-3 text-[13px]">
         <span className="font-medium text-text-strong">{day.format(v.clockInAt)}</span>
         <span className="tabular-nums text-muted-foreground">{time.format(v.clockInAt)}{v.clockOutAt ? ` – ${time.format(v.clockOutAt)}` : " – in progress"}{minutes != null && ` · ${minutes} min · ${v.units} units`}</span>
         <span className="text-muted-foreground">{s.firstName} {s.lastName}</span>
         <span className="ml-auto flex gap-1">
-          <Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status.replace("_", " ")}</Badge>
-          <Badge tone={docState === "accepted" ? "ok" : docState === "returned" ? "warn" : docState === "draft" ? "warn" : "neutral"}>{docState === "accepted" ? "accepted" : docState === "returned" ? "returned" : docState === "draft" ? "draft" : "no note"}</Badge>
-          {v.status === "completed" && (v.clientSignedAt ? <Badge tone="ok">client signed</Badge> : <Badge tone="danger">unsigned</Badge>)}
-          {v.manualEntry && <Badge tone="warn">manual</Badge>}
+          <Badge tone={v.status === "completed" ? "ok" : v.status === "void" ? "neutral" : "accent"}>{v.status === "in_progress" ? "In progress" : v.status[0].toUpperCase() + v.status.slice(1)}</Badge>
+          <Badge tone={docState === "accepted" ? "ok" : docState === "returned" ? "warn" : docState === "draft" ? "warn" : "neutral"}>{docState === "accepted" ? "Accepted" : docState === "returned" ? "Returned" : docState === "draft" ? "Draft" : "No note"}</Badge>
+          {v.status === "completed" && (v.clientSignedAt ? <Badge tone="ok">Client signed</Badge> : <Badge tone="danger">Unsigned</Badge>)}
+          {v.manualEntry && <Badge tone="warn">Manual</Badge>}
         </span>
       </div>
 
