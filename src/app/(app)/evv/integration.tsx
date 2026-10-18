@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, Notice, PageHeader, Properties } from "@/components/kit";
+import { Badge, Button, Card, Notice, Properties } from "@/components/kit";
 import type { EvvProviderProfile, EvvSubmission } from "@/db/schema";
 import type { HealthResult } from "@/evv/adapters/types";
 import { SUBMISSION } from "@/evv/labels";
@@ -17,13 +17,16 @@ export function IntegrationTab({ adapterKey, health, profile, identifierCount, s
   const run = (fn: () => Promise<{ ok?: boolean; message?: string }>) => start(async () => { const r = await fn(); if (r.ok) toast.success(r.message ?? "Done."); else toast.error(r.message ?? "Failed."); });
   const productionActive = health.ok && health.environment === "production" && profile.productionEnabled;
   const readiness: string[] = [];
-  if (!profile.medicaidProviderId) readiness.push("Minnesota Medicaid provider ID is not entered (Settings).");
-  if (!identifierCount) readiness.push("No NPI or UMPI recorded (Settings).");
+  if (!profile.medicaidProviderId) readiness.push("Minnesota Medicaid provider ID is not entered (Settings → EVV).");
+  if (!identifierCount) readiness.push("No NPI or UMPI recorded (Settings → EVV).");
   if (!profile.hhaxProviderId) readiness.push("HHAeXchange provider identifier is not entered — assigned at onboarding.");
 
   return (
     <div>
-      <PageHeader title="Aggregator integration" meta={<span>How visits reach the Minnesota HHAeXchange aggregator, and whether that path is live.</span>} actions={<div className="flex gap-2"><Button variant="secondary" disabled={pending} onClick={() => run(runQueueAction)}>Run queue now</Button><Button variant="secondary" disabled={pending} onClick={() => run(reconcileAction)}>Reconcile now</Button></div>} />
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[15px] text-muted-foreground">How visits reach the Minnesota HHAeXchange aggregator, and whether that path is live.</p>
+        <div className="flex gap-2"><Button variant="secondary" disabled={pending} onClick={() => run(runQueueAction)}>Run queue now</Button><Button variant="secondary" disabled={pending} onClick={() => run(reconcileAction)}>Reconcile now</Button></div>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Status" padded>

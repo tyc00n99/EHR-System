@@ -1,10 +1,10 @@
-import { PageHeader } from "@/components/kit";
 import { COMPLIANCE, SUBMISSION } from "@/evv/labels";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, shiftPayPeriod, type PayRule } from "@/lib/pay-period";
 import { isoDay } from "@/lib/format";
 import { QueueTable, type QueueRow } from "./queue-table";
-import type { reviewQueue } from "@/evv/review";
+import type { queueCounts, reviewQueue } from "@/evv/review";
+import { EvvViewTitle } from "./view-title";
 import { fmtDate } from "@/lib/format";
 
 type QueueData = Awaited<ReturnType<typeof reviewQueue>>;
@@ -12,7 +12,7 @@ type Names = { person: Record<string, string>; staff: Record<string, string> };
 
 const fmtTime = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/Chicago" }).format(d) : "—");
 
-export function Queue({ queue, filter, names, people, staff, payRules }: { queue: QueueData; filter: Record<string, string>; names: Names; people: { id: string; name: string }[]; staff: { id: string; name: string }[]; payRules: PayRule[] }) {
+export function Queue({ queue, counts, filter, names, people, staff, payRules }: { queue: QueueData; counts: Awaited<ReturnType<typeof queueCounts>>; filter: Record<string, string>; names: Names; people: { id: string; name: string }[]; staff: { id: string; name: string }[]; payRules: PayRule[] }) {
   const rows: QueueRow[] = queue.items.map((v) => {
     const open = v.exceptions.filter((e) => e.status === "open");
     return {
@@ -40,8 +40,8 @@ export function Queue({ queue, filter, names, people, staff, payRules }: { queue
 
   return (
     <div>
-      <PageHeader title="EVV review queue" meta={<span>{queue.count} visit{queue.count === 1 ? "" : "s"} · every visit that needs electronic verification, with what is wrong and what to do about it.</span>} />
-      <QueueTable rows={rows} filter={filter} options={options} presets={presets} rangeLabel={rangeLabel} />
+      <EvvViewTitle current="queue" />
+      <QueueTable rows={rows} filter={filter} counts={counts} options={options} presets={presets} rangeLabel={rangeLabel} />
     </div>
   );
 }

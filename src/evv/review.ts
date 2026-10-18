@@ -2,11 +2,12 @@
  * The admin review queue and the actions a reviewer takes on it. Every action is audited; none
  * of them deletes anything.
  */
-import { and, asc, desc, eq, gte, inArray, lte, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, lte, or } from "drizzle-orm";
 import { z } from "zod";
 import { schema } from "@/db";
 import { evvAudit } from "./audit";
 import { getPolicy, writer, type EvvCtx } from "./context";
+import { QUEUE_VIEWS, QUEUE_VIEW_KEYS, type QueueView } from "./labels";
 import { submissionDeadlineFor, localDate } from "./time";
 import { EvvError, requireVisit } from "./visits";
 
@@ -30,8 +31,7 @@ export const queueFilterSchema = z.object({
 });
 export type QueueFilter = z.infer<typeof queueFilterSchema>;
 
-export async function reviewQueue(ctx: EvvCtx, raw: unknown) {
-  const f = queueFilterSchema.parse(raw);
+function queueConds(ctx: EvvCtx, f: QueueFilter) {
   const v = schema.evvVisits;
   const conds = [eq(v.organizationId, ctx.orgId)];
   if (f.from) conds.push(gte(v.serviceDate, f.from));
@@ -50,6 +50,40 @@ export async function reviewQueue(ctx: EvvCtx, raw: unknown) {
     const sub = ctx.db.select({ id: e.evvVisitId }).from(e).where(and(eq(e.organizationId, ctx.orgId), inArray(e.status, ["open", "acknowledged"]), ...(f.exceptionType ? [eq(e.type, f.exceptionType)] : [])));
     conds.push(inArray(v.id, sub));
   }
+  return conds;
+}
+
+
+/** How many visits each filter tab holds under the rest of the filter (dates, client, caregiver,
+ *  submission), so a tab's number is what clicking it shows. Not capped by the page limit. */
+export async function queueCounts(ctx: EvvCtx, raw: unknown): Promise<Record<QueueView, number>> {
+  const base = queueFilterSchema.parse(raw);
+  for (const k of QUEUE_VIEW_KEYS) delete base[k];
+  const v = schema.evvVisits;
+  const n = async (patch: Record<string, string>) => {
+    const conds = queueConds(ctx, queueFilterSchema.parse({ ...base, ...patch }));
+    const [r] = await ctx.db.select({ n: count() }).from(v).where(and(...conds));
+    return Number(r?.n ?? 0);
+  };
+  const deadline = async () => {
+    const policy = await getPolicy(ctx, "MN");
+    const windowEnd = new Date(ctx.now().getTime() + policy.deadlineWarningDays * 86_400_000).toISOString().slice(0, 10);
+    const rows = await ctx.db.select({ serviceDate: v.serviceDate, evvRequired: v.evvRequired, submissionStatus: v.submissionStatus }).from(v).where(and(...queueConds(ctx, base)));
+    return rows.filter((r) => {
+      const due = r.serviceDate ? submissionDeadlineFor(r.serviceDate, policy.submissionDeadlineDay) : null;
+      return r.evvRequired && due && due <= windowEnd && !["accepted", "accepted_with_warning"].includes(r.submissionStatus ?? "");
+    }).length;
+  };
+  const [all, exceptions, noncompliant, review, manual, rejected, dl] = await Promise.all([
+    n({}), n(QUEUE_VIEWS.exceptions), n(QUEUE_VIEWS.noncompliant), n(QUEUE_VIEWS.review), n(QUEUE_VIEWS.manual), n(QUEUE_VIEWS.rejected), deadline(),
+  ]);
+  return { "": all, exceptions, noncompliant, review, manual, rejected, deadline: dl };
+}
+
+export async function reviewQueue(ctx: EvvCtx, raw: unknown) {
+  const f = queueFilterSchema.parse(raw);
+  const v = schema.evvVisits;
+  const conds = queueConds(ctx, f);
   let rows = await ctx.db.select().from(v).where(and(...conds)).orderBy(desc(v.serviceDate), desc(v.createdAt)).limit(f.approachingDeadline ? 5000 : f.limit).offset(f.approachingDeadline ? 0 : f.offset);
   const policy = await getPolicy(ctx, "MN");
   const today = localDate(ctx.now());

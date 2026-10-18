@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Badge, Button, Card, Checkbox, Field, FormError, Input, PageHeader, Select, Textarea } from "@/components/kit";
+import { Badge, Button, Card, Checkbox, Field, FormError, Input, Select, Textarea } from "@/components/kit";
 import type { EvvLiveInRelationship, EvvPayer, EvvPolicy, EvvProviderIdentifier, EvvProviderProfile, EvvServiceRule } from "@/db/schema";
 import { fmtDate } from "@/lib/format";
 import type { ActionState } from "@/lib/validation";
@@ -18,7 +18,7 @@ type Opt = { id: string; name: string };
 export function SettingsTab({ profile, identifiers, payers, policy, rules, liveIns, people, staff }: { profile: EvvProviderProfile; identifiers: EvvProviderIdentifier[]; payers: EvvPayer[]; policy: EvvPolicy; rules: EvvServiceRule[]; liveIns: EvvLiveInRelationship[]; people: Opt[]; staff: Opt[] }) {
   return (
     <div>
-      <PageHeader title="EVV settings" meta={<span>Provider enrollment data, the Minnesota policy tolerances, which services require EVV, and documented live-in caregivers.</span>} />
+      <p className="mb-4 text-[15px] text-muted-foreground">Provider enrollment data, the Minnesota policy tolerances, which services require EVV, and documented live-in caregivers.</p>
       <div className="grid gap-4 lg:grid-cols-2">
         <ProviderForm profile={profile} />
         <IdentifiersCard identifiers={identifiers} payers={payers} />
