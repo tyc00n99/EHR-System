@@ -87,9 +87,9 @@ export function QueueTable({ rows, filter, counts, options, presets, rangeLabel 
       suggestions={[{ label: "Clients", items: [...new Set(rows.map((r) => r.client))].sort() }, { label: "Team Members", items: [...new Set(rows.map((r) => r.caregiver))].sort() }, { label: "Services", items: [...new Set(rows.map((r) => r.serviceLabel))].sort() }]}
       chips={<>
         <DateRangePill label={rangeLabel} presets={presets} current={{ param: filter.from && filter.to ? `from=${filter.from}&to=${filter.to}` : "", from: filter.from ?? "", to: filter.to ?? "" }} onApply={(param) => { const p = new URLSearchParams(param); navigate({ from: p.get("from") ?? undefined, to: p.get("to") ?? undefined }); }} />
-        <FilterPill label="Client" value={filter.personId ? [filter.personId] : []} options={[{ value: "", label: "Any client" }, ...options.people]} single onApply={(v) => navigate({ personId: v[0] })} />
-        <FilterPill label="Caregiver" value={filter.staffId ? [filter.staffId] : []} options={[{ value: "", label: "Any caregiver" }, ...options.staff]} single onApply={(v) => navigate({ staffId: v[0] })} />
-        <FilterPill label="Submission" value={filter.submissionGroup ? [filter.submissionGroup] : []} options={[{ value: "", label: "Any status" }, ...options.submission]} single onApply={(v) => navigate({ submissionGroup: v[0], submissionStatus: undefined })} />
+        <FilterPill label="Client" value={filter.personId ? [filter.personId] : []} options={options.people} single onApply={(v) => navigate({ personId: v[0] })} />
+        <FilterPill label="Caregiver" value={filter.staffId ? [filter.staffId] : []} options={options.staff} single onApply={(v) => navigate({ staffId: v[0] })} />
+        <FilterPill label="Submission" value={filter.submissionGroup ? [filter.submissionGroup] : []} options={options.submission} single onApply={(v) => navigate({ submissionGroup: v[0], submissionStatus: undefined })} />
         {filtered && <button type="button" onClick={() => router.push("/evv")} className="text-[14px] font-medium text-primary hover:underline">Clear</button>}
       </>}
       rowHref={(r) => visitHref(r.id)}
