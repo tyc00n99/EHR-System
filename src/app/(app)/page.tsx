@@ -9,11 +9,14 @@ import { getOpenVisitForStaff, getStaff, listAssignmentsForStaff, listCredential
 import { listConversations } from "@/db/message-queries";
 import { labelForCode } from "@/lib/hcpcs";
 import { requireUser } from "@/lib/auth";
+import type { Ability } from "@/lib/abilities";
 import { evaluateCompliance } from "@/lib/credentials";
 import { fmtDate, fmtDateTime, fullName } from "@/lib/format";
 import { currentPayPeriod } from "@/lib/pay-period";
 import { getPayRules } from "@/db/pay-queries";
 import { VisitSheet } from "./visits/record/visit-sheet";
+import { HomeAssistant } from "@/components/assistant/assistant-panel";
+import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 
 const today = () => new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "America/Chicago" }).format(new Date());
@@ -22,7 +25,7 @@ export default async function Dashboard({ searchParams }: PageProps<"/">) {
   const user = await requireUser();
   const sp = await searchParams;
   const openVisit = typeof sp.visit === "string" ? sp.visit : null;
-  return (<>{openVisit && <VisitSheet id={openVisit} />}{!user.abilities.includes("all_clients") && user.staffId ? <CaregiverHome staffId={user.staffId} userId={user.id} name={user.staffName} day={typeof sp.day === "string" ? sp.day : null} /> : <OfficeHome user={user} />}</>);
+  return (<>{openVisit && <VisitSheet id={openVisit} />}{!user.abilities.includes("all_clients") && user.staffId ? <CaregiverHome staffId={user.staffId} userId={user.id} name={user.staffName} day={typeof sp.day === "string" ? sp.day : null} /> : <OfficeHome user={user} abilities={user.abilities} />}</>);
 }
 
 /* ---------- caregiver home ---------- */
@@ -254,11 +257,13 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
  * user's request). The counters, the board and the recent notes it used to carry all live where
  * they are acted on: the Review queue, the Schedule, and Notes.
  */
-function OfficeHome({ user }: { user: { staffName: string | null; email: string } }) {
+function OfficeHome({ user, abilities }: { user: { staffName: string | null; email: string }; abilities: readonly Ability[] }) {
   const firstName = user.staffName?.split(" ")[0] ?? user.email.split("@")[0];
+  const ai = aiConfigured();
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+    <div className={cxh("flex flex-col items-center px-6 text-center", ai ? "gap-6 pt-[8vh]" : "min-h-[60vh] justify-center")}>
       <p className="text-[32px] font-bold tracking-tight text-primary">Welcome, {firstName}</p>
+      {ai && <HomeAssistant abilities={abilities} />}
     </div>
   );
 }
