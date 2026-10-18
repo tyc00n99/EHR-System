@@ -150,7 +150,41 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Phones get the reference's grouped list instead of a squeezed table (Oct 18, 2026): one
+          row per record, the first column as its title and the rest as small labelled facts. */}
+      <ul className="divide-y divide-line-soft overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)] md:hidden">
+        {rows.length === 0 ? (
+          <li className="px-5 py-10 text-center"><div className="font-medium text-text-strong">{emptyTitle}</div>{emptyHint && <div className="mt-1 text-[13.5px] text-muted-foreground">{emptyHint}</div>}</li>
+        ) : rows.map((row) => {
+          const href = rowHref?.(row.original);
+          const cells = row.getVisibleCells();
+          const pick = cells.find((c) => c.column.id === "__select");
+          const acts = cells.find((c) => c.column.id === "__actions");
+          const [first, ...rest] = cells.filter((c) => c.column.id !== "__select" && c.column.id !== "__actions");
+          const label = (c: (typeof cells)[number]) => { const h = c.column.columnDef.header; return typeof h === "string" ? h : c.column.id; };
+          return (
+            <li key={row.id} onClick={href ? () => go(href) : undefined} className={cn("flex items-start gap-3 px-4 py-3", href && "cursor-pointer active:bg-hover", row.getIsSelected() && "bg-tab-hover")}>
+              {pick && <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>{flexRender(pick.column.columnDef.cell, pick.getContext())}</div>}
+              <div className="min-w-0 flex-1">
+                {first && <div className="text-[15px] font-medium text-text-strong">{flexRender(first.column.columnDef.cell, first.getContext())}</div>}
+                {rest.length > 0 && (
+                  <dl className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+                    {rest.map((c) => (
+                      <div key={c.id} className="flex min-w-0 items-center gap-1.5">
+                        <dt className="text-muted-foreground">{label(c)}</dt>
+                        <dd className="min-w-0 text-text">{flexRender(c.column.columnDef.cell, c.getContext())}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+              {acts ? <div onClick={(e) => e.stopPropagation()}>{flexRender(acts.column.columnDef.cell, acts.getContext())}</div> : href && <ChevronRight className="mt-1 size-4 shrink-0 text-hint" />}
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="hidden overflow-x-auto md:block">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -221,7 +255,7 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
   const groups = (suggestions ?? []).map((g) => ({ label: g.label, items: g.items.filter((n) => !needle || n.toLowerCase().includes(needle)) }));
   const any = groups.some((g) => g.items.length);
   return (
-    <div ref={box} className="relative">
+    <div ref={box} className="relative w-full sm:w-auto">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
       <Input
         value={value}
@@ -231,7 +265,7 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
         placeholder={placeholder}
         role={suggestions ? "combobox" : undefined}
         aria-expanded={suggestions ? open : undefined}
-        className="h-9 w-56 rounded-full bg-card pl-9 pr-7 text-[14px]"
+        className="h-9 w-full rounded-full bg-card pl-9 pr-7 text-[14px] sm:w-56"
       />
       {value && <button type="button" onClick={() => { onChange(""); setOpen(false); }} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground hover:text-text-strong">✕</button>}
       {suggestions && open && (
