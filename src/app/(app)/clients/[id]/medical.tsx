@@ -90,11 +90,11 @@ export function Medical({ personId, meds, admins, week, weekLabel, month, monthL
             <table className="w-full border-collapse text-[13px]">
               <thead className="bg-sidebar">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Medication</th>
+                  <th className="min-w-[200px] px-4 py-2 text-left font-medium text-muted-foreground">Medication</th>
                   <th className="px-2 py-2 text-left font-medium text-muted-foreground">Time</th>
                   {days.map((d) => (
-                    <th key={d} className={cx("px-1 py-1.5 text-center font-medium leading-tight", d === today ? "bg-primary-soft text-primary" : "text-muted-foreground")}>
-                      {DOW[days.indexOf(d)]}<br /><span className={cx("text-[13px] tabular-nums", d === today ? "text-primary" : "text-text-strong")}>{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`))}</span>
+                    <th key={d} className={cx("px-1 py-1.5 text-center font-medium leading-tight", d === today ? "bg-brand/10 text-brand-ink" : "text-muted-foreground")}>
+                      {DOW[days.indexOf(d)]}<br /><span className={cx("text-[13px] tabular-nums", d === today ? "text-brand-ink" : "text-text-strong")}>{new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`))}</span>
                     </th>
                   ))}
                   <th className="whitespace-nowrap px-3 py-2 text-right font-medium text-muted-foreground">{monthLabel.split(" ")[0]}</th>
@@ -119,7 +119,7 @@ export function Medical({ personId, meds, admins, week, weekLabel, month, monthL
                         const future = d > today, off = !scheduled(m, d);
                         const picked = pick && pick.med.id === m.id && pick.date === d && pick.time === t;
                         return (
-                          <td key={d} className={cx("px-1 py-2 text-center align-top", d === today && "bg-primary-soft/40")}>
+                          <td key={d} className={cx("px-1 py-2 text-center align-top", d === today && "bg-brand/5")}>
                             <button
                               type="button"
                               disabled={!canRecord || future || off}

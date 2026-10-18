@@ -8,6 +8,7 @@ import { ActionItems, type ActionGroup } from "./action-items";
 import { MonthGrid } from "./month-grid";
 import { ScheduleGrid, type GridDay, type GridEvent, type GridRow } from "./schedule-grid";
 import { ScheduleToolbar, type ToolbarState } from "./schedule-toolbar";
+import { ScheduleAgenda, type AgendaFilter, type AgendaItem } from "./agenda";
 import { ShiftSheet } from "./shift-sheet";
 
 export const metadata = { title: "Schedule" };
@@ -145,7 +146,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
   ];
 
   const href = (patch: Record<string, string>) => {
-    const p = new URLSearchParams({ mode, view, date, dept, q, code: codeF, status: statusF, staff: staffF, ...patch });
+    const p = new URLSearchParams({ mode, view, date, dept, q, code: codeF, status: statusF, staff: staffF, agenda: one("agenda"), ...patch });
     for (const [k, v] of [...p.entries()]) if (!v) p.delete(k);
     return `/scheduling?${p}`;
   };
@@ -172,8 +173,33 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
     .sort((a, b) => a.label.localeCompare(b.label));
   const teamList = staffRows.map((st) => ({ id: st.id, name: `${st.firstName} ${st.lastName}` }));
 
+  // The phone's one-day agenda reads the same rows, for the day the URL names.
+  const agendaFilter: AgendaFilter = (["cover", "late", "live"] as const).find((f) => f === one("agenda")) ?? "all";
+  const staffIds = new Set(staffRows.map((s) => s.id));
+  const agendaItems: AgendaItem[] = rows
+    .filter((r) => chicagoDate(r.shift.startAt) === date)
+    .map((r) => ({
+      id: r.shift.id, start: r.shift.startAt, end: r.shift.endAt,
+      client: `${r.personFirst} ${r.personLast}`, caregiver: `${r.staffFirst} ${r.staffLast}`,
+      status: r.shift.status,
+      uncovered: r.shift.status === "scheduled" && !staffIds.has(r.shift.staffId),
+      href: r.shift.status === "completed" && r.visitId ? href({ note: r.visitId }) : href({ shift: r.shift.id }),
+    }));
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      <ScheduleAgenda
+        title={manage ? "Schedule" : "My schedule"}
+        dayLabel={fmt(date, { weekday: "short", month: "short", day: "numeric" })}
+        items={agendaItems}
+        filter={agendaFilter}
+        now={new Date()}
+        hrefFor={(f) => href({ agenda: f === "all" ? "" : f })}
+        prev={href({ date: addDays(date, -1) })}
+        next={href({ date: addDays(date, 1) })}
+        today={href({ date: today })}
+        isToday={date === today}
+      />
       {openShift && (
         <ShiftSheet
           shift={{
@@ -189,6 +215,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
         />
       )}
 
+      <div className="hidden min-h-0 flex-1 flex-col md:flex">
       <ScheduleToolbar
         state={state}
         departments={departments}
@@ -216,6 +243,7 @@ export default async function SchedulingPage({ searchParams }: PageProps<"/sched
             canCreate={manage}
           />
         )}
+      </div>
       </div>
     </div>
   );

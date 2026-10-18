@@ -17,7 +17,7 @@ import { gearGroups, primaryNav, type Destination, type NavCounts } from "@/lib/
  * centred in the strip says the same in words and, on a record, is the way back to the list.
  */
 
-const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void; forget: () => void }>({ open: false, setOpen: () => {}, forget: () => {} });
+const Ctx = createContext<{ open: boolean; phone: boolean; setOpen: (v: boolean, phone?: boolean) => void; forget: () => void }>({ open: false, phone: false, setOpen: () => {}, forget: () => {} });
 
 /**
  * The fan is open by default on the home page (user, Sept 21: a greeting with nothing to click
@@ -26,21 +26,23 @@ const Ctx = createContext<{ open: boolean; setOpen: (v: boolean) => void; forget
  */
 export function HubProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [choice, setChoice] = useState<{ path: string; open: boolean } | null>(null);
+  const [choice, setChoice] = useState<{ path: string; open: boolean; phone?: boolean } | null>(null);
   const open = choice && choice.path === pathname ? choice.open : pathname === "/";
-  const setOpen = (v: boolean) => setChoice({ path: pathname, open: v });
+  // Phones never get the home page's default-open fan; only the tab bar's "More" opens it there.
+  const phone = Boolean(choice && choice.path === pathname && choice.open && choice.phone);
+  const setOpen = (v: boolean, fromPhone?: boolean) => setChoice({ path: pathname, open: v, phone: fromPhone });
   // Arriving at home again should open the fan again, so the home button forgets the last choice.
   const forget = () => setChoice(null);
-  return <Ctx.Provider value={{ open, setOpen, forget }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ open, phone, setOpen, forget }}>{children}</Ctx.Provider>;
 }
 
 /** The home button in the strip: a house on the soft tint, the agency's name beside it on desktop. */
 export function HomeLink({ orgName }: { orgName: string }) {
   const { forget } = useHub();
   return (
-    <Link href="/" aria-label={`${orgName} home`} title="Home" onClick={forget} className="flex h-9 shrink-0 items-center gap-2 rounded-lg px-1.5 text-text-strong hover:bg-tab-hover">
-      <span className="flex size-7 items-center justify-center rounded-md bg-primary-soft text-primary"><Icon.home size={16} /></span>
-      <span className="hidden text-[14.5px] font-medium md:inline">{orgName}</span>
+    <Link href="/" aria-label={`${orgName} home`} title="Home" onClick={forget} className="flex h-9 shrink-0 items-center gap-2 rounded-full pl-1 pr-3 text-text-strong hover:bg-tab-hover">
+      <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-text-strong"><Icon.home size={16} /></span>
+      <span className="hidden text-[15px] font-semibold tracking-[-0.01em] md:inline">{orgName}</span>
     </Link>
   );
 }
@@ -79,8 +81,8 @@ export function HereChip({ abilities, names }: { abilities: readonly string[]; n
   // is not drawn (user, Oct 16, 2026). On a record it is the way back, and stays.
   if (!back) return null;
   return (
-    <div className="flex h-10 max-w-full items-center overflow-hidden rounded-full border border-line bg-card shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
-      <Link href={w.href} aria-label={`Back to ${w.area}`} title={`Back to ${w.area}`} className="flex h-full shrink-0 items-center gap-1.5 bg-primary-soft pl-3 pr-4 text-[15px] font-semibold text-primary transition-[filter] hover:brightness-95">
+    <div className="flex h-9 max-w-full items-center overflow-hidden rounded-full border border-line bg-card">
+      <Link href={w.href} aria-label={`Back to ${w.area}`} title={`Back to ${w.area}`} className="flex h-full shrink-0 items-center gap-1.5 pl-2.5 pr-4 text-[14.5px] font-medium text-text-strong transition-colors hover:bg-hover">
         <Icon.chevronLeft size={18} /> {w.area}
       </Link>
       {/* The record's name is not repeated here (user, Sept 28, 2026): the banner below already carries it, and the chip's job on a record is the way back. */}
@@ -89,7 +91,7 @@ export function HereChip({ abilities, names }: { abilities: readonly string[]; n
 }
 
 export function CornerHub({ abilities, counts }: { abilities: readonly string[]; counts: NavCounts }) {
-  const { open, setOpen } = useHub();
+  const { open, phone, setOpen } = useHub();
   const pathname = usePathname();
   const router = useRouter();
   const panel = useModulePanel();
@@ -150,10 +152,10 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
       tabIndex={-1}
       aria-hidden
       onClick={() => setOpen(false)}
-      className={cx("fixed inset-0 z-30 cursor-default bg-transparent", open ? "" : "pointer-events-none")}
+      className={cx("fixed inset-0 z-30 cursor-default bg-transparent", open ? "" : "pointer-events-none", !phone && "max-md:hidden")}
     />
 
-    <nav aria-label="Main" aria-hidden={!open} style={arc}>
+    <nav aria-label="Main" aria-hidden={!open} style={arc} className={phone ? undefined : "max-md:hidden"}>
       {items.map((d, i) => {
         const Ic = Icon[d.icon];
         const t = angle(i);
@@ -170,8 +172,8 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
             aria-current={on ? "page" : undefined}
             aria-label={`${d.label}${badge > 0 ? `, ${badge} to review` : ""}`}
             className={cx(
-              "fixed bottom-9 right-9 z-30 flex size-12 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(15,23,42,0.14)] transition-[transform,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
-              on ? "border-transparent bg-primary-soft text-primary" : "border-line bg-card text-text-strong hover:bg-tab-hover",
+              "fixed bottom-24 right-6 z-30 flex size-12 md:bottom-9 md:right-9 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(35,42,58,0.14)] transition-[transform,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+              on ? "border-transparent bg-brand text-white" : "border-line bg-card text-text-strong hover:bg-tab-hover",
               open ? "opacity-100" : "pointer-events-none opacity-0",
             )}
             style={{ transform: open ? `translate(calc(${cx_} * var(--hub-r)), calc(${sy} * var(--hub-r))) scale(1)` : "translate(0, 0) scale(0.5)", transitionDelay: open ? `${i * 22}ms` : "0ms" }}
@@ -198,7 +200,7 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
       aria-expanded={open}
       aria-label={open ? "Close navigation" : "Open navigation (⌘ .)"}
       title={open ? "Close" : "Go to… (⌘ .)"}
-      className={cx("fixed bottom-7 right-7 z-30 flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(0,152,192,0.4)] transition-[transform,background-color] duration-200 hover:bg-primary-hover", open && "scale-105")}
+      className={cx("fixed bottom-7 right-7 z-30 hidden size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_28px_rgba(35,42,58,0.28)] transition-[transform,background-color] duration-200 hover:bg-primary-hover md:flex", open && "scale-105")}
     >
       <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-90 opacity-0" : "rotate-0 opacity-100")}><HubIcon size={26} /></span>
       <span className={cx("absolute inset-0 flex items-center justify-center transition-[opacity,transform] duration-200", open ? "rotate-0 opacity-100" : "-rotate-90 opacity-0")}><Icon.plus size={26} className="rotate-45" /></span>
@@ -207,4 +209,50 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
       )}
     </button>
   </>);
+}
+
+/**
+ * The phone's navigation (Oct 18, 2026, from the reference): a floating white pill of tabs along
+ * the bottom with the current one filled, and a round button beside it. Up to four areas fit; when
+ * a role has more, the fourth slot becomes "More", which opens the same fan the corner hub draws on
+ * desktop. The round button is Messages, with its unread count. Hidden from `md` up, where the
+ * corner hub and the Messages pill take over.
+ */
+export function PhoneTabBar({ abilities, counts, unread }: { abilities: readonly string[]; counts: NavCounts; unread: number }) {
+  const pathname = usePathname();
+  const { phone: phoneOpen, setOpen } = useHub();
+  const items = primaryNav(abilities);
+  const shown = items.length > 4 ? items.slice(0, 3) : items;
+  const more = items.length > 4;
+  const moreOn = more && items.slice(3).some((d) => isActive(pathname, d));
+  const tab = "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-[13px] font-medium leading-none transition-colors";
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex items-end gap-2 px-3 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden">
+      <nav aria-label="Primary" className="pointer-events-auto flex h-16 min-w-0 flex-1 items-stretch gap-1 rounded-full border border-line bg-card p-1.5 shadow-[0_10px_30px_rgba(35,42,58,0.12)]">
+        {shown.map((d) => {
+          const Ic = Icon[d.icon];
+          const on = isActive(pathname, d);
+          const badge = d.badge ? counts[d.badge] : 0;
+          return (
+            <Link key={d.href} href={d.href} onClick={() => setOpen(false)} aria-current={on ? "page" : undefined} className={cx(tab, on ? "bg-brand/10 text-brand-ink" : "text-muted-foreground hover:text-text-strong")}>
+              <Ic size={20} />
+              <span className="max-w-full truncate">{d.label.replace(/^My (.)/, (_m, c: string) => c.toUpperCase())}</span>
+              {badge > 0 && <span className="absolute right-[18%] top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">{badge}</span>}
+            </Link>
+          );
+        })}
+        {more && (
+          <button type="button" onClick={() => setOpen(!phoneOpen, true)} aria-expanded={phoneOpen} className={cx(tab, phoneOpen || moreOn ? "bg-primary-soft text-text-strong" : "text-muted-foreground hover:text-text-strong")}>
+            <Icon.grid size={20} />
+            <span>More</span>
+            {counts.review > 0 && <span className="absolute right-[18%] top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">{counts.review}</span>}
+          </button>
+        )}
+      </nav>
+      <Link href="/messages" aria-label={unread ? `Messages, ${unread} unread` : "Messages"} className={cx("pointer-events-auto relative grid size-16 shrink-0 place-items-center rounded-full border border-line shadow-[0_10px_30px_rgba(35,42,58,0.12)]", pathname.startsWith("/messages") ? "bg-primary text-primary-foreground" : "bg-card text-text-strong")}>
+        <Icon.chat size={22} />
+        {unread > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-card bg-danger px-1 text-[13px] font-semibold leading-none text-white">{unread > 99 ? "99+" : unread}</span>}
+      </Link>
+    </div>
+  );
 }

@@ -68,7 +68,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
     <div className={cx("relative grid min-h-0 flex-1 gap-0 lg:-mb-28", wide ? "lg:grid-cols-1" : "lg:grid-cols-[420px_minmax(0,1fr)]")}>
       {/* The section list scrolls on its own, so picking a section never moves the whole page. */}
       <div className={cx("border-line py-4 lg:min-h-0 lg:overflow-y-auto lg:pr-4 lg:pb-6", wide && "hidden")}>
-        <div className="rounded-2xl bg-card-soft p-6">
+        <div className="rounded-2xl border border-line bg-card p-6">
           <div className="mb-4 flex items-center">
             <div className="text-[17px] font-semibold text-text-strong">General information</div>
             {manage && (

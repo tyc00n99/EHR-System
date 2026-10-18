@@ -42,8 +42,8 @@ export function ClientsTable({ rows, canAdd }: { rows: ClientRow[]; canAdd: bool
     { accessorKey: "status", header: "Status", cell: ({ row }) => { const s = STATUSES.find((x) => x.key === row.original.status)!; return <Badge tone={s.tone}>{s.label}</Badge>; } },
   ], []);
 
-  const chip = (on: boolean) => cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[14px] transition-colors", on ? "border-transparent bg-primary-soft font-medium text-primary" : "border-line bg-card text-text hover:bg-tab-hover");
-  const countPill = (n: number, on: boolean) => <span className={cx("inline-flex h-[18px] items-center rounded-full px-1.5 text-[13px] tabular-nums", on ? "bg-card text-primary" : "bg-panel text-muted-foreground")}>{n}</span>;
+  const chip = (on: boolean) => cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[14px] transition-colors", on ? "border-primary bg-primary font-medium text-primary-foreground" : "border-line bg-card font-medium text-text-strong hover:bg-tab-hover");
+  const countPill = (n: number, on: boolean) => <span className={cx("inline-flex h-[18px] items-center rounded-full px-1.5 text-[13px] tabular-nums", on ? "opacity-80" : "text-muted-foreground")}>{n}</span>;
 
   return (
     <DataTable

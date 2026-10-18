@@ -100,7 +100,7 @@ export function ScheduleGrid({
           {days.map((d) => (
             <div
               key={d.date}
-              className={cx("border-r border-line px-4 py-2 text-[14px] last:border-r-0", d.today ? "bg-primary-soft font-semibold text-primary" : "text-muted-foreground")}
+              className={cx("border-r border-line px-4 py-2 text-[14px] last:border-r-0", d.today ? "bg-brand/10 font-semibold text-brand-ink" : "text-muted-foreground")}
             >
               {d.label}
             </div>
@@ -151,7 +151,7 @@ export function ScheduleGrid({
               const cell = events.filter((e) => e.rowId === r.id && e.date === d.date);
               const off = r.unavailable?.includes(d.date);
               return (
-                <div key={d.date} className={cx("group/cell relative min-h-[116px] border-r border-line p-1.5 last:border-r-0", d.today && "bg-primary-soft/40")}>
+                <div key={d.date} className={cx("group/cell relative min-h-[116px] border-r border-line p-1.5 last:border-r-0", d.today && "bg-brand/5")}>
                   {off && cell.length === 0 && (
                     <div className="rounded-md bg-panel px-2 py-1.5 text-[13px] text-muted-foreground">Unavailable</div>
                   )}
