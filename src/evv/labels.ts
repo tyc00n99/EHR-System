@@ -83,3 +83,8 @@ export const QUEUE_VIEW_LABEL: Record<QueueView, string> = {
 export const QUEUE_TABS: QueueView[] = ["", "attention", "rejected", "deadline"];
 export const QUEUE_MORE: QueueView[] = ["manual"];
 export const QUEUE_VIEW_KEYS = ["needsAttention", "openExceptionsOnly", "complianceStatus", "manualOrCorrected", "rejected", "approachingDeadline"] as const;
+
+/** Which queue view the filter is showing; "" when none of the view params are set. */
+export function currentView(filter: Record<string, string>): QueueView {
+  return (Object.entries(QUEUE_VIEWS) as [QueueView, Record<string, string>][]).find(([k, set]) => k && Object.entries(set).every(([p, v]) => filter[p] === v))?.[0] ?? "";
+}
