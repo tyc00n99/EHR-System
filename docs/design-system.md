@@ -15,7 +15,7 @@ two background colors"**. Every value below is a token in `src/app/globals.css` 
 | Ink: primary buttons, selected chip/day, hub | `bg-primary` / `text-primary-foreground` | `#2f3a4f` / white |
 | Soft: secondary buttons, hover, active tab fill | `bg-primary-soft`, `bg-tab-hover` | `#eef0f5` |
 | Text / headings / secondary | `text-text`, `text-text-strong`, `text-muted-foreground` | `#2b3241`, `#232a3a`, `#6b7183` |
-| Brand blue (accent only) | `ring`, `bg-brand`, `border-brand` | `#0098c0` — focus ring, the "in progress" dot |
+| Brand blue (accents) | `bg-brand`, `border-brand`, `ring`; text `text-brand-ink` | `#0098c0` (fills), `#00708e` (text, small icons) — current tab, selected day, eyebrows, phone tab, focus, "in progress" |
 | Status | `ok` / `warn` / `danger` (+ `-soft`) | green `#2f7a4a`, amber `#a2620c` on `#fcefe0`, rose `#c0394f` on `#fbe8ec` |
 
 No large surface takes a fill other than white. `bg-panel` / `bg-card-soft` are for small chips only.
@@ -56,3 +56,5 @@ Cards 16px (`--radius`), inputs 10px (`--radius-field`), buttons and chips full 
   clock), week chips, "Later today" and "Done" lists, needs-action, messages, period tiles.
 - Schedule on phones (`scheduling/agenda.tsx`): one day, All / Needs cover / Late / Live chips,
   "Now" then by start time; the desktop grid is unchanged above `md`.
+
+Blue accents were the user's pick (Oct 18): blue marks where you are and what is selected; buttons stay ink. Never put #0098c0 behind or under small text — use `brand-ink`.
