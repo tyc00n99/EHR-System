@@ -58,7 +58,8 @@ export function primaryNav(abilities: readonly string[]): Destination[] {
     { href: "/visits", label: "Notes", icon: "visits", also: ["/notes", "/clock"] },
     ...(has("review") ? [{ href: "/evv", label: "EVV", icon: "shield" as IconName }] : []),
     ...(has("billing") ? [{ href: "/billing", label: "Billing", icon: "money" as IconName }] : []),
-    ...(has("review") ? [{ href: "/attention", label: "Review", icon: "bell" as IconName, badge: "review" as const }] : []),
+    // No Review entry (Oct 18, 2026, user: "remove the review icon from my entire platform").
+    // `/attention` still exists and opens from ⌘K and from Agency performance.
   ];
 }
 

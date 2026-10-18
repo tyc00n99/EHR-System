@@ -7,6 +7,10 @@ two background colors"**. Every value below is a token in `src/app/globals.css` 
 
 ## Colour
 
+> **Reverted Oct 18, 2026 (user: "take it back how it was").** The colour table below is no longer
+> applied: the app is back on its pre-redesign palette (Passage blue `#0098c0` primary, one ink for
+> text). `--brand`/`--brand-ink` now point at `--primary`. Shape, spacing and layout below still hold.
+
 | Role | Token / class | Value |
 | --- | --- | --- |
 | Page and cards (one background) | `bg-page`, `bg-card` | `#ffffff` |
