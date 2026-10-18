@@ -15,6 +15,7 @@ import { Queue } from "./queue";
 import { getPayRules } from "@/db/pay-queries";
 import { VisitDrawer } from "./visit-drawer";
 import { EvvSidebar } from "./evv-sidebar";
+import { EvvFrame as Frame } from "./evv-frame";
 
 export const metadata = { title: "EVV" };
 
@@ -64,16 +65,3 @@ export default async function EvvPage({ searchParams }: { searchParams: Promise<
   return <>{drawer}<Frame side={<EvvSidebar screen="queue" filter={filter as Record<string, string>} counts={counts} groupCounts={groupCounts} />}><Queue queue={queue} counts={counts} filter={filter as Record<string, string>} names={names} people={people.map((p) => ({ id: p.id, name: fullName(p) }))} staff={staff.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}` }))} payRules={await getPayRules()} /></Frame></>;
 }
 
-/** Sidebar on the left from lg up; below that it sits above the screen, folded behind one line. */
-function Frame({ side, children }: { side: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className="lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-8">
-      <div className="hidden border-line lg:block lg:border-r lg:pr-4">{side}</div>
-      <details className="mb-4 rounded-xl border border-line px-3 py-2 lg:hidden">
-        <summary className="cursor-pointer text-[15px] font-medium text-text-strong">EVV menu</summary>
-        <div className="pt-3">{side}</div>
-      </details>
-      <div className="min-w-0">{children}</div>
-    </div>
-  );
-}
