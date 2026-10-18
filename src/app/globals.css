@@ -590,3 +590,6 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 /* `--brand`/`--brand-ink` are named by the assistant and messaging components; after the Oct 18
    redesign was reverted they point at the theme's own primary. */
 :root { --brand: var(--primary); --brand-ink: var(--primary); }
+
+/* Messages runs flush left across the whole width rather than in the centred 1440px column (user, Oct 18). */
+.mx-auto:has(> [data-full-bleed]) { max-width: none; margin-left: 0; }

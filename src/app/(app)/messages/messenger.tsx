@@ -100,12 +100,11 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
       if (isChannelHome(t.title) && !t.lastBody) continue; // an untouched channel chat is not "recent"
       rows.push({
         key: `t:${t.id}`, at: t.lastAt, unread: t.unread, active: t.id === activeThread, href: isChannelHome(t.title) && ch ? openChannel(ch.id) : openThread(t.id),
-        node: () => <ListRow face={isChannelHome(t.title) && ch ? <ChannelTile icon={ch.icon} tint={ch.tint} size={40} /> : <Face initials={t.lastSenderInitials} size={40} badge={ch && <ChannelTile icon={ch.icon} tint={ch.tint} size={18} />} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastSender || t.lastFromMe ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody || "Sent an attachment"}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} tag={ch && <Tag tint={ch.tint}>{isChannelHome(t.title) ? (ch.personId ? "Client channel" : "Channel") : ch.name}</Tag>} />,
+        node: () => <ListRow face={ch ? <ChannelTile icon={ch.icon} tint="neutral" size={40} /> : <Face initials={t.lastSenderInitials} size={40} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastSender || t.lastFromMe ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody || "Sent an attachment"}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} tag={ch && <Tag>{isChannelHome(t.title) ? (ch.personId ? "Client channel" : "Channel") : ch.name}</Tag>} />,
       });
     }
     return rows.filter((r) => { if (r.key.startsWith("dm:")) return hit(dms.find((d) => `dm:${d.contact.userId}` === r.key)?.contact.name); const t = threads.find((x) => `t:${x.id}` === r.key); return hit(t && isChannelHome(t.title) ? channelById.get(t.channelId)?.name : t?.title); }).sort((a, b) => b.at.localeCompare(a.at));
   })();
-
 
   const renderChannel = (c: ChannelInfo) => {
     const home = homeOf(c.id);
@@ -118,14 +117,14 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
       <div key={c.id} className={cardCls(channelActive)}>
         <div className="group flex items-center gap-1">
           <Link href={openChannel(c.id)} aria-current={channelActive ? "page" : undefined} className="flex min-w-0 flex-1 items-center gap-3 py-0.5 text-left">
-            <ChannelTile icon={c.icon} tint={c.tint} size={40} />
+            <ChannelTile icon={c.icon} tint="neutral" size={40} />
             <span className="min-w-0">
               <span className="flex items-center gap-1.5">
                 <span className={cx("truncate text-[16.5px] text-text-strong", unread ? "font-semibold" : "font-medium")}>{c.name}</span>
                 {c.isPrivate && <Lock className="size-3.5 shrink-0 text-text" aria-label="Private channel" />}
               </span>
               <span className="mt-1 flex flex-wrap gap-1.5">
-                <Tag tint={c.tint}>{c.personId ? "Client channel" : c.isPrivate ? "Private channel" : "Channel"}</Tag>
+                <Tag>{c.personId ? "Client channel" : c.isPrivate ? "Private channel" : "Channel"}</Tag>
                 {own.length > 0 && <Tag>{own.length} {own.length === 1 ? "thread" : "threads"}</Tag>}
               </span>
             </span>
@@ -149,7 +148,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           <div className="mt-3 space-y-1 border-t border-line-soft pt-2">
             {own.map((t) => (
               <Link key={t.id} href={openThread(t.id)} aria-current={t.id === activeThread ? "page" : undefined}
-                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", t.id === activeThread ? "border-[var(--brand,#0098c0)]" : "border-transparent hover:border-line")}>
+                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", "border-transparent", t.id === activeThread ? "bg-[color-mix(in_srgb,var(--warn)_20%,var(--card))]" : "hover:bg-[color-mix(in_srgb,var(--warn)_20%,var(--card))]")}>
                 <ListRow
                   compact
                   face={<Face initials={t.lastSenderInitials} size={32} />}
@@ -183,7 +182,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   const listCount = tab === "me" ? unreadMentions : unreadConversations;
 
   return (
-    <div className="-mb-28 flex min-h-0 flex-1 flex-col pb-24 md:pt-1">
+    <div data-full-bleed className="-mb-28 flex min-h-0 flex-1 flex-col pb-24 md:pt-1">
       {/* ---------------- title, count line, search and New ---------------- */}
       <div className={cx("mb-5 flex-wrap items-end gap-x-6 gap-y-3", open ? "hidden md:flex" : "flex")}>
         <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
@@ -349,8 +348,9 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   );
 }
 
-/** One card in the list; the open one is outlined in EVVora blue (the design system marks "where you are" in blue). */
-const cardCls = (active: boolean) => cx("block rounded-2xl border px-4 py-3.5 transition-colors", active ? "border-[var(--brand,#0098c0)] ring-1 ring-[var(--brand,#0098c0)]" : "border-line hover:border-text-strong/40");
+/** One card in the list: a hairline at rest, a light orange fill on hover and while open (user, Oct 18: no blue border). */
+
+const cardCls = (active: boolean) => cx("block rounded-2xl border border-line px-4 py-3.5 transition-colors", active ? "bg-[color-mix(in_srgb,var(--warn)_12%,var(--card))]" : "hover:bg-[color-mix(in_srgb,var(--warn)_12%,var(--card))]");
 
 function SectionLabel({ icon, children, title }: { icon: ReactNode; children: ReactNode; title?: string }) {
   return <div title={title} className="flex items-center gap-2 px-2 pb-0.5 pt-3 text-[13px] font-medium uppercase tracking-[0.08em] text-[var(--brand-ink,#00708e)] first:pt-1">{icon}{children}</div>;
@@ -360,17 +360,9 @@ function Count({ n }: { n: number }) {
   return <span className="grid h-6 min-w-6 place-items-center rounded-md bg-text-strong px-1.5 text-[13px] font-semibold text-card">{n > 99 ? "99+" : n}</span>;
 }
 
-const TAG_TINTS: Record<string, string> = {
-  primary: "border border-line text-text",
-  ok: "bg-ok-soft text-ok",
-  warn: "bg-warn-soft text-warn",
-  danger: "bg-danger-soft text-danger",
-  neutral: "border border-line text-text",
-};
-
-/** The small uppercase label under a card's preview (the reference's "HIGH IMPACT" chip), in the app's status tints. */
-function Tag({ children, tint = "neutral" }: { children: ReactNode; tint?: string }) {
-  return <span className={cx("inline-flex max-w-full items-center truncate rounded-md px-2 py-0.5 text-[13px] font-medium uppercase tracking-[0.06em]", TAG_TINTS[tint] ?? TAG_TINTS.neutral)}>{children}</span>;
+/** The small uppercase label under a card's preview: one neutral look on every tab (user, Oct 18). */
+function Tag({ children }: { children: ReactNode }) {
+  return <span className="inline-flex max-w-full items-center truncate rounded-md border border-line px-2 py-0.5 text-[13px] font-medium uppercase tracking-[0.06em] text-text">{children}</span>;
 }
 
 function ListRow({ face, title, preview, when, unread, tag, compact }: { face: ReactNode; title: string; preview: string; when: string; unread: number; tag?: ReactNode; compact?: boolean }) {

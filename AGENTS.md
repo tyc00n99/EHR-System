@@ -608,6 +608,7 @@ Built from the user's pick of the combined Messages view (design canvas, Oct 18)
 - **"/" shortcuts** (`SHORTCUTS` in `conversation.tsx`): /swap, /late, /voice, /thread, /supplies, /call. Typed "/" at the start of an empty box opens the list; ↑ ↓ Enter Tab Esc.
 - **New** is one button opening "Start something new": Chat, Group (a private channel set up by `ChannelDialog group`; needs `review`, like channels), Thread.
 - `"use server"` files export only async functions, so the reaction list lives in `messages/reactions.ts`.
+- **List look (Oct 18, 2026, user):** Messages runs flush left across the full width (`data-full-bleed` on the root; a `.mx-auto:has(> [data-full-bleed])` rule in globals.css lifts the shell's centred 1440px cap). Every tab draws cards the same way: neutral outlined channel tiles and tags (channel tints are not used in the list), a named thread shows its channel's tile. No blue border on the open card: cards have a hairline at rest and a light orange fill (`--warn` at 12% over the card) on hover and while open.
 
 ## Caregiver phone experience (October 8, 2026)
 The "mobile app" is the web app on a phone — the site already says no app-store download. Rebuilt to the user's spec, with a Tours-app screenshot as the schedule reference.
