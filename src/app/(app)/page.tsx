@@ -259,11 +259,10 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
  */
 function OfficeHome({ user, abilities }: { user: { staffName: string | null; email: string }; abilities: readonly Ability[] }) {
   const firstName = user.staffName?.split(" ")[0] ?? user.email.split("@")[0];
-  const ai = aiConfigured();
-  return (
-    <div className={cxh("flex flex-col items-center px-6 text-center", ai ? "gap-6 pt-[8vh]" : "min-h-[60vh] justify-center")}>
+  if (!aiConfigured()) return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
       <p className="text-[32px] font-bold tracking-tight text-primary">Welcome, {firstName}</p>
-      {ai && <HomeAssistant abilities={abilities} />}
     </div>
   );
+  return <HomeAssistant abilities={abilities} name={firstName} />;
 }
