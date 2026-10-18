@@ -1,5 +1,7 @@
 # EVVora design system (October 18, 2026)
 
+> **Not in use (Oct 18, 2026).** The user had this redesign reverted the day it shipped; the app is back on its pre-redesign look. Kept for reference only.
+
 Derived from the user's two reference screenshots (a caregiver "Today" phone screen and a
 "Schedule" phone screen), with two of their notes applied: **"too much blue"** and **"I don't want
 two background colors"**. Every value below is a token in `src/app/globals.css` (the final

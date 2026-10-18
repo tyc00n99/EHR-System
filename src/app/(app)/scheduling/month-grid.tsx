@@ -35,9 +35,9 @@ export function MonthGrid({ from, today, events, baseHref }: { from: string; tod
           return (
             <div
               key={date}
-              className={cx("min-h-[124px] border-b border-r border-line p-2", !inMonth && "bg-panel/60", date === today && "bg-brand/5")}
+              className={cx("min-h-[124px] border-b border-r border-line p-2", !inMonth && "bg-panel/60", date === today && "bg-primary-soft/40")}
             >
-              <div className={cx("mb-1 text-[14px]", date === today ? "font-semibold text-brand-ink" : inMonth ? "text-text-strong" : "text-hint")}>
+              <div className={cx("mb-1 text-[14px]", date === today ? "font-semibold text-primary" : inMonth ? "text-text-strong" : "text-hint")}>
                 {Number(date.slice(8))}
               </div>
               {day.slice(0, 3).map((e) => (

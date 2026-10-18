@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { LogOut, Settings, User, FileText } from "lucide-react";
 import { CommandPalette, type PaletteEntry } from "@/components/command-palette";
-import { CornerHub, HereChip, HomeLink, HubProvider, PhoneTabBar } from "@/components/corner-hub";
+import { CornerHub, HereChip, HomeLink, HubProvider } from "@/components/corner-hub";
 import { Icon } from "@/components/icons";
 import { SectionNav } from "@/components/top-nav";
 import { ModulePanelProvider } from "@/components/module-panel";
@@ -40,7 +40,7 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
     <div className="flex h-screen flex-col overflow-hidden bg-page-bg">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-page focus:p-3 focus:text-primary">Skip to content</a>
 
-      <header className="relative flex h-[56px] shrink-0 items-center gap-2 border-b border-line-soft bg-page px-3 md:gap-3 md:px-5">
+      <header className="relative flex h-[56px] shrink-0 items-center gap-3 border-b border-line-soft px-4 md:px-5">
         {/* A home button, not a logo (user, Sept 21): the product's mark lives on the login page and
             the app icon. The agency's name sits beside it on desktop; phones keep only the icon. */}
         <HomeLink orgName={orgName} />
@@ -59,12 +59,12 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
         <Suspense fallback={null}><AssistantLauncher abilities={user.abilities} names={names} enabled={aiConfigured()} /></Suspense>
         {gear.length > 0 && (
           <DropdownMenu>
-            <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" title="Setup & reports" className="flex size-9 items-center justify-center rounded-full text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[19px]" /></DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" title="Setup & reports" className="flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[19px]" /></DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
               {gear.map((g, i) => (
                 <DropdownMenuGroup key={g.label}>
                   {i > 0 && <DropdownMenuSeparator />}
-                  <DropdownMenuLabel className="text-[13px] font-medium text-muted-foreground">{g.label}</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-[13px] font-medium uppercase tracking-[0.11em] text-hint">{g.label}</DropdownMenuLabel>
                   {g.items.map((it) => {
                     const Ic = Icon[it.icon];
                     return <DropdownMenuItem key={it.href} render={<Link href={it.href} />}><Ic size={16} /> {it.label}</DropdownMenuItem>;
@@ -96,17 +96,16 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
 
       <Suspense fallback={null}><SectionNav abilities={user.abilities} /></Suspense>
 
-      <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-28 md:pt-7">
+      <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-5 md:px-8 md:pb-28 md:pt-6">
         {/* One gutter and one content width for every page: pages do not centre themselves. */}
         <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col">{children}</div>
       </main>
 
       <CornerHub abilities={user.abilities} counts={counts} />
       <MessagesPill unread={unread} />
-      <PhoneTabBar abilities={user.abilities} counts={counts} unread={unread} />
       <Suspense fallback={null}><NotePreview /></Suspense>
       {/* Toasts sit above the Messages pill rather than under it. */}
-      <Toaster position="bottom-left" offset={{ bottom: 104, left: 28 }} mobileOffset={{ bottom: 96 }} richColors closeButton />
+      <Toaster position="bottom-left" offset={{ bottom: 104, left: 28 }} richColors closeButton />
     </div>
     </HubProvider>
     </ModulePanelProvider>

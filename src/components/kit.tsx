@@ -11,15 +11,14 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 
 const btn = {
   primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
-  secondary: "bg-primary-soft text-text-strong hover:bg-gray-300",
+  secondary: "bg-primary-soft text-primary hover:bg-primary-soft/70",
   ghost: "text-text hover:bg-hover",
-  outline: "border border-line bg-page text-text-strong hover:bg-hover",
+  outline: "border border-line bg-page text-text hover:bg-hover",
   danger: "bg-danger-soft text-danger hover:bg-danger/15",
 } as const;
 
 type Variant = keyof typeof btn;
-/* Pills, as in the reference: 36px tall for everyday actions; pass `className="h-11 px-6"` for a hero action. */
-const btnBase = "inline-flex h-9 items-center justify-center gap-1.5 rounded-[var(--radius-btn)] px-4 text-[14px] font-medium whitespace-nowrap transition-colors disabled:opacity-50";
+const btnBase = "inline-flex h-8 items-center justify-center gap-1.5 rounded-[var(--radius-btn)] px-3.5 text-[13px] font-medium whitespace-nowrap transition-colors disabled:opacity-50";
 
 export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={cx(btnBase, btn[variant], className)} {...props} />;
@@ -34,7 +33,7 @@ export function LinkButton({ variant = "secondary", className, ...props }: Compo
 export function Field({ label, error, hint, children, className }: { label: string; error?: string; hint?: string; children: ReactNode; className?: string }) {
   return (
     <label className={cx("block min-w-0", className)}>
-      <span className="mb-1.5 block text-[13px] font-medium text-text-strong">{label}</span>
+      <span className="mb-1.5 block text-[13px] font-medium text-text">{label}</span>
       {children}
       {hint && !error && <span className="mt-1.5 block text-[13px] leading-4 text-muted-foreground">{hint}</span>}
       {error && <span className="mt-1.5 block text-[13px] leading-4 text-danger">{error}</span>}
@@ -42,7 +41,7 @@ export function Field({ label, error, hint, children, className }: { label: stri
   );
 }
 
-const control = "h-10 w-full rounded-[var(--radius-field)] border border-input bg-page px-3 text-text placeholder:text-hint transition-colors hover:border-gray-400 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15 disabled:bg-panel";
+const control = "h-9 w-full rounded-lg border border-line bg-page px-3 text-text placeholder:text-hint transition-colors hover:border-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft disabled:bg-panel";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
   return <input className={cx(control, className)} {...props} />;
@@ -130,7 +129,7 @@ export function Card({ title, titleAfter, description, actions, children, classN
   return (
     <section className={cx("overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)]", className)}>
       {(title || actions || titleAfter) && (
-        <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-3.5">
+        <div className="flex items-center justify-between gap-4 border-b border-line-soft px-5 py-3">
           <div>
             {title && <h3 className="flex items-center gap-1.5">{title}{titleAfter}</h3>}
             {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
@@ -151,7 +150,7 @@ export function StatTile({ label, value, note, tone, href }: { label: string; va
       {note && <div className={cx("mt-2 text-[13px]", tone === "warn" ? "text-warn" : tone === "danger" ? "text-danger" : tone === "ok" ? "text-ok" : "text-muted-foreground")}>{note}</div>}
     </>
   );
-  const cls = "block rounded-[var(--radius-app)] border border-line bg-card px-5 py-4 shadow-[var(--shadow-sm)]";
+  const cls = "block rounded-lg border border-line bg-card px-5 py-4";
   return href ? <Link href={href} className={cx(cls, "transition-colors hover:bg-hover")}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
@@ -189,21 +188,14 @@ const badges = {
   ok: "bg-ok-soft text-ok",
   warn: "bg-warn-soft text-warn",
   danger: "bg-danger-soft text-danger",
-  accent: "bg-primary-soft text-text-strong",
+  accent: "bg-primary-soft text-primary",
   neutral: "bg-panel text-gray-700",
 } as const;
-const dots = { ok: "bg-ok", warn: "bg-warn", danger: "bg-danger", accent: "bg-brand", neutral: "bg-gray-400" } as const;
 
 export type Tone = keyof typeof badges;
 
-/** Status pill from the reference: a soft tint, optionally led by a coloured dot ("● Live", "● Late"). */
-export function Badge({ tone = "neutral", dot, children }: { tone?: Tone; dot?: boolean; children: ReactNode }) {
-  return (
-    <span className={cx("inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-medium leading-none whitespace-nowrap", badges[tone])}>
-      {dot && <span className={cx("size-1.5 shrink-0 rounded-full", dots[tone])} />}
-      {children}
-    </span>
-  );
+export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
+  return <span className={cx("inline-flex h-5 items-center rounded px-1.5 text-[13px] font-medium leading-none whitespace-nowrap", badges[tone])}>{children}</span>;
 }
 
 /* ---------- tables ---------- */
@@ -217,7 +209,7 @@ export function Table({ children }: { children: ReactNode }) {
 }
 
 export function Th({ children, className, align = "left" }: { children?: ReactNode; className?: string; align?: "left" | "right" }) {
-  return <th className={cx("h-10 whitespace-nowrap px-4 text-[13px] font-medium text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
+  return <th className={cx("h-9 whitespace-nowrap px-4 font-mono text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground first:pl-5 last:pr-5", align === "right" ? "text-right" : "text-left", className)}>{children}</th>;
 }
 
 export function Td({ children, className, align = "left", strong, wrap }: { children?: ReactNode; className?: string; align?: "left" | "right"; strong?: boolean; wrap?: boolean }) {
@@ -229,7 +221,7 @@ export function Tr({ children, muted }: { children: ReactNode; muted?: boolean }
 }
 
 export function Thead({ children }: { children: ReactNode }) {
-  return <thead className="border-b border-line-soft"><tr>{children}</tr></thead>;
+  return <thead className="bg-sidebar"><tr>{children}</tr></thead>;
 }
 
 /* ---------- empty states ---------- */
@@ -247,9 +239,9 @@ export function Empty({ icon = "inbox", title, children, action }: { icon?: Icon
 }
 
 export function Notice({ tone = "accent", children, action }: { tone?: "accent" | "ok" | "warn"; children: ReactNode; action?: ReactNode }) {
-  const tones = { accent: "border-line bg-panel", ok: "border-ok/30 bg-ok-soft", warn: "border-warn/30 bg-warn-soft" };
+  const tones = { accent: "border-primary/30 bg-primary-soft", ok: "border-ok/30 bg-ok-soft", warn: "border-warn/30 bg-warn-soft" };
   return (
-    <div className={cx("mb-6 flex items-center justify-between gap-4 rounded-[var(--radius-app)] border px-4 py-3", tones[tone])}>
+    <div className={cx("mb-6 flex items-center justify-between gap-4 rounded-lg border px-4 py-3", tones[tone])}>
       <div>{children}</div>
       {action}
     </div>
@@ -300,15 +292,15 @@ export function Tabs({ tabs, current, base }: { tabs: { key: string; label: stri
 /** Table toolbar: search box (GET form), filter chips, count, right-side actions. */
 export function Toolbar({ action, q, placeholder, chips, count, children, hidden }: { action: string; q?: string; placeholder: string; chips?: { key: string; label: string; href: string; active: boolean; tone?: Tone }[]; count?: ReactNode; children?: ReactNode; hidden?: Record<string, string> }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-line-soft px-4 py-3">
+    <div className="flex flex-wrap items-center gap-2 border-b border-line-soft bg-sidebar px-4 py-2.5">
       <form action={action} className="relative">
         {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
         <Icon.search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input name="q" defaultValue={q} placeholder={placeholder} className="h-9 w-64 rounded-full border border-input bg-page pl-8 pr-3 text-[14px] placeholder:text-hint focus:border-brand focus:outline-none" />
+        <input name="q" defaultValue={q} placeholder={placeholder} className="h-8 w-64 rounded-md border border-line bg-page pl-8 pr-2.5 text-[13px] placeholder:text-hint focus:border-primary focus:outline-none" />
       </form>
       {chips && chips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
-          {chips.map((c) => <Link key={c.key} href={c.href} className={cx("inline-flex h-8 items-center rounded-full border px-3.5 text-[13px] font-medium", c.active ? "border-primary bg-primary text-primary-foreground" : "border-line bg-page text-text hover:bg-hover")}>{c.label}</Link>)}
+          {chips.map((c) => <Link key={c.key} href={c.href} className={cx("inline-flex h-7 items-center rounded-full border px-2.5 text-[13px] font-medium", c.active ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{c.label}</Link>)}
         </div>
       )}
       {count && <span className="text-[13px] text-muted-foreground">{count}</span>}
@@ -343,56 +335,6 @@ export function Kpi({ label, value, note, tone, spark, href }: { label: string; 
       {spark && <Sparkline values={spark} />}
     </div>
   );
-  const cls = "block rounded-[var(--radius-app)] border border-line bg-card px-4 py-3.5 shadow-[var(--shadow-sm)]";
+  const cls = "block rounded-xl border border-line bg-card px-4 py-3.5 shadow-[var(--shadow-sm)]";
   return href ? <Link href={href} className={cx(cls, "transition-colors hover:bg-hover")}>{body}</Link> : <div className={cls}>{body}</div>;
-}
-
-/* ---------- grouped lists (Oct 18, 2026, from the reference) ----------
-   The reference's whole vocabulary: a small grey label ("Now", "Later today"), then a bordered
-   card of rows split by hairlines; each row a leading avatar or icon, a title over a grey line,
-   and a status pill and/or chevron on the right. Use these instead of hand-rolling a list. */
-
-export function GroupLabel({ children, after }: { children: ReactNode; after?: ReactNode }) {
-  return <div className="mb-2 mt-5 flex items-center justify-between px-1 text-[13px] font-medium text-muted-foreground first:mt-0"><span>{children}</span>{after && <span>{after}</span>}</div>;
-}
-
-export function ListGroup({ children, className }: { children: ReactNode; className?: string }) {
-  return <ul className={cx("divide-y divide-line-soft overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)]", className)}>{children}</ul>;
-}
-
-export function ListRow({ lead, title, subtitle, trail, href, onClick, chevron, scroll }: { lead?: ReactNode; title: ReactNode; subtitle?: ReactNode; trail?: ReactNode; href?: string; onClick?: () => void; chevron?: boolean; scroll?: boolean }) {
-  const go = chevron ?? Boolean(href || onClick);
-  const body = (
-    <>
-      {lead}
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-medium text-text-strong">{title}</span>
-        {subtitle && <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">{subtitle}</span>}
-      </span>
-      {trail}
-      {go && <Icon.chevronRight size={16} className="shrink-0 text-hint" />}
-    </>
-  );
-  const cls = "flex w-full items-center gap-3 px-4 py-3 text-left";
-  return (
-    <li>
-      {href ? <Link href={href} scroll={scroll} className={cx(cls, "transition-colors hover:bg-hover")}>{body}</Link>
-        : onClick ? <button type="button" onClick={onClick} className={cx(cls, "transition-colors hover:bg-hover")}>{body}</button>
-        : <div className={cls}>{body}</div>}
-    </li>
-  );
-}
-
-/** Filter chip row from the reference: bordered white pills, the chosen one solid ink, counts inline ("Needs cover 3"). */
-export function ChipLink({ href, active, count, children }: { href: string; active?: boolean; count?: number; children: ReactNode }) {
-  return (
-    <Link href={href} aria-current={active ? "true" : undefined} className={cx("inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13.5px] font-medium transition-colors", active ? "border-primary bg-primary text-primary-foreground" : "border-line bg-card text-text-strong hover:bg-hover")}>
-      {children}{count != null && <span className={active ? "opacity-80" : "text-muted-foreground"}>{count}</span>}
-    </Link>
-  );
-}
-
-/** Small uppercase eyebrow, as on the reference's "NEXT VISIT · 10:00 AM". */
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx("text-[13px] font-medium uppercase tracking-[0.07em] text-brand-ink", className)}>{children}</div>;
 }

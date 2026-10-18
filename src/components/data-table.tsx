@@ -82,7 +82,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
         id: "__actions", enableSorting: false, enableHiding: false, enableGlobalFilter: false, size: 120, header: "",
         cell: ({ row }) => (
           <span className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-            {rowAction && <button type="button" onClick={() => go(rowAction.href(row.original))} className="inline-flex h-8 items-center rounded-full bg-primary px-3.5 text-[13.5px] font-medium text-primary-foreground hover:bg-primary-hover">{rowAction.label}</button>}
+            {rowAction && <button type="button" onClick={() => go(rowAction.href(row.original))} className="inline-flex h-8 items-center rounded-md bg-primary px-3.5 text-[13.5px] font-medium text-primary-foreground hover:bg-primary-hover">{rowAction.label}</button>}
             {rowMenu && (
               <DropdownMenu>
                 <DropdownMenuTrigger render={<button type="button" aria-label="More" className="flex size-8 items-center justify-center rounded-md text-text hover:bg-hover" />}><MoreVertical className="size-4" /></DropdownMenuTrigger>
@@ -146,45 +146,11 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
         <div className="mb-3 flex flex-wrap items-center gap-1 rounded-[10px] border border-line bg-card py-1.5 pl-4 pr-2 text-[14px] shadow-[var(--shadow-sm)]">
           <span className="mr-2 font-medium text-text-strong">{selected.length} selected</span>
           {bulk?.(selected, () => table.resetRowSelection())}
-          <button type="button" onClick={() => table.resetRowSelection()} className="ml-auto rounded-full px-3 py-1.5 text-[14px] font-medium text-text-strong hover:bg-tab-hover">Clear</button>
+          <button type="button" onClick={() => table.resetRowSelection()} className="ml-auto rounded-md px-3 py-1.5 text-[14px] font-medium text-primary hover:bg-tab-hover">Clear</button>
         </div>
       )}
 
-      {/* Phones get the reference's grouped list instead of a squeezed table (Oct 18, 2026): one
-          row per record, the first column as its title and the rest as small labelled facts. */}
-      <ul className="divide-y divide-line-soft overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)] md:hidden">
-        {rows.length === 0 ? (
-          <li className="px-5 py-10 text-center"><div className="font-medium text-text-strong">{emptyTitle}</div>{emptyHint && <div className="mt-1 text-[13.5px] text-muted-foreground">{emptyHint}</div>}</li>
-        ) : rows.map((row) => {
-          const href = rowHref?.(row.original);
-          const cells = row.getVisibleCells();
-          const pick = cells.find((c) => c.column.id === "__select");
-          const acts = cells.find((c) => c.column.id === "__actions");
-          const [first, ...rest] = cells.filter((c) => c.column.id !== "__select" && c.column.id !== "__actions");
-          const label = (c: (typeof cells)[number]) => { const h = c.column.columnDef.header; return typeof h === "string" ? h : c.column.id; };
-          return (
-            <li key={row.id} onClick={href ? () => go(href) : undefined} className={cn("flex items-start gap-3 px-4 py-3", href && "cursor-pointer active:bg-hover", row.getIsSelected() && "bg-tab-hover")}>
-              {pick && <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>{flexRender(pick.column.columnDef.cell, pick.getContext())}</div>}
-              <div className="min-w-0 flex-1">
-                {first && <div className="text-[15px] font-medium text-text-strong">{flexRender(first.column.columnDef.cell, first.getContext())}</div>}
-                {rest.length > 0 && (
-                  <dl className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-                    {rest.map((c) => (
-                      <div key={c.id} className="flex min-w-0 items-center gap-1.5">
-                        <dt className="text-muted-foreground">{label(c)}</dt>
-                        <dd className="min-w-0 text-text">{flexRender(c.column.columnDef.cell, c.getContext())}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-              </div>
-              {acts ? <div onClick={(e) => e.stopPropagation()}>{flexRender(acts.column.columnDef.cell, acts.getContext())}</div> : href && <ChevronRight className="mt-1 size-4 shrink-0 text-hint" />}
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="hidden overflow-x-auto md:block">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
@@ -221,7 +187,7 @@ export function DataTable<T>({ columns, data, searchPlaceholder, suggestions, ro
 
       <div className="mt-3 flex items-center justify-between text-[14px]">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<button type="button" aria-label="Rows per page" className="inline-flex h-9 items-center gap-1.5 rounded-full border border-line bg-card px-3.5 text-[14px] hover:bg-tab-hover" />}>{size} / page <ChevronDown className="size-3.5 text-muted-foreground" /></DropdownMenuTrigger>
+          <DropdownMenuTrigger render={<button type="button" aria-label="Rows per page" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-card px-3 text-[14px] hover:bg-tab-hover" />}>{size} / page <ChevronDown className="size-3.5 text-muted-foreground" /></DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-auto min-w-32">
             <DropdownMenuRadioGroup value={String(size)} onValueChange={(v) => table.setPageSize(Number(v))}>
               {PAGE_SIZES.map((n) => <DropdownMenuRadioItem key={n} value={String(n)} className="py-1.5 pr-9 pl-2.5 text-[14px]">{n} / page</DropdownMenuRadioItem>)}
@@ -255,7 +221,7 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
   const groups = (suggestions ?? []).map((g) => ({ label: g.label, items: g.items.filter((n) => !needle || n.toLowerCase().includes(needle)) }));
   const any = groups.some((g) => g.items.length);
   return (
-    <div ref={box} className="relative w-full sm:w-auto">
+    <div ref={box} className="relative">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
       <Input
         value={value}
@@ -265,11 +231,11 @@ function SearchBox({ value, onChange, placeholder, suggestions }: { value: strin
         placeholder={placeholder}
         role={suggestions ? "combobox" : undefined}
         aria-expanded={suggestions ? open : undefined}
-        className="h-9 w-full rounded-full bg-card pl-9 pr-7 text-[14px] sm:w-56"
+        className="h-9 w-56 rounded-lg bg-card pl-9 pr-7 text-[14px]"
       />
       {value && <button type="button" onClick={() => { onChange(""); setOpen(false); }} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 text-[13px] text-muted-foreground hover:text-text-strong">✕</button>}
       {suggestions && open && (
-        <div role="listbox" className="absolute left-0 top-full z-30 mt-1.5 max-h-80 w-72 overflow-y-auto rounded-xl border border-line bg-card p-1.5 shadow-[var(--shadow-md)]">
+        <div role="listbox" className="absolute left-0 top-full z-30 mt-1.5 max-h-80 w-72 overflow-y-auto rounded-lg border border-line bg-card py-2 shadow-lg">
           {!any && <p className="px-4 py-2 text-[14px] text-muted-foreground">Nothing matches.</p>}
           {groups.map((g) => g.items.length > 0 && (
             <div key={g.label} className="px-2 pb-1">
