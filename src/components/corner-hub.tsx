@@ -173,7 +173,7 @@ export function CornerHub({ abilities, counts }: { abilities: readonly string[];
             aria-label={`${d.label}${badge > 0 ? `, ${badge} to review` : ""}`}
             className={cx(
               "fixed bottom-24 right-6 z-30 flex size-12 md:bottom-9 md:right-9 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(35,42,58,0.14)] transition-[transform,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
-              on ? "border-transparent bg-primary text-primary-foreground" : "border-line bg-card text-text-strong hover:bg-tab-hover",
+              on ? "border-transparent bg-brand text-white" : "border-line bg-card text-text-strong hover:bg-tab-hover",
               open ? "opacity-100" : "pointer-events-none opacity-0",
             )}
             style={{ transform: open ? `translate(calc(${cx_} * var(--hub-r)), calc(${sy} * var(--hub-r))) scale(1)` : "translate(0, 0) scale(0.5)", transitionDelay: open ? `${i * 22}ms` : "0ms" }}
@@ -234,7 +234,7 @@ export function PhoneTabBar({ abilities, counts, unread }: { abilities: readonly
           const on = isActive(pathname, d);
           const badge = d.badge ? counts[d.badge] : 0;
           return (
-            <Link key={d.href} href={d.href} onClick={() => setOpen(false)} aria-current={on ? "page" : undefined} className={cx(tab, on ? "bg-primary-soft text-text-strong" : "text-muted-foreground hover:text-text-strong")}>
+            <Link key={d.href} href={d.href} onClick={() => setOpen(false)} aria-current={on ? "page" : undefined} className={cx(tab, on ? "bg-brand/10 text-brand-ink" : "text-muted-foreground hover:text-text-strong")}>
               <Ic size={20} />
               <span className="max-w-full truncate">{d.label.replace(/^My /, "")}</span>
               {badge > 0 && <span className="absolute right-[18%] top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">{badge}</span>}

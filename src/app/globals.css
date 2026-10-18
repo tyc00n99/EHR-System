@@ -302,6 +302,7 @@
   --color-text-strong: var(--text-strong);
   --color-hint: var(--text-hint);
   --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
   --radius-field: var(--radius-field);
 
   --color-page: var(--page);
@@ -621,6 +622,8 @@ h1, h2 { font-weight: 500; }
 
   /* The brand blue: focus, "live", and nothing louder. */
   --brand: #0098c0;
+  /* Blue for text and small icons: #0098c0 is ~3:1 on white, too faint for 13px words. */
+  --brand-ink: #00708e;
   --ring: #0098c0;
   --blue-100: #eef0f5;
   --blue-200: #e4e7ee;
@@ -661,7 +664,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   inset-inline: 8px;
   bottom: -2px;
   height: 12px;
-  background: var(--primary);
+  background: var(--brand, var(--primary));
   -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 16' preserveAspectRatio='none'%3E%3Cpath d='M3 4 H38 C44 4 46 12.5 50 12.5 C54 12.5 56 4 62 4 H97' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 16' preserveAspectRatio='none'%3E%3Cpath d='M3 4 H38 C44 4 46 12.5 50 12.5 C54 12.5 56 4 62 4 H97' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   opacity: 0;

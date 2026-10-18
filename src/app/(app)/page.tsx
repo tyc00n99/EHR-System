@@ -197,10 +197,10 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
           const n = (byDay.get(d) ?? []).length;
           const on = d === selIso;
           return (
-            <Link key={d} href={`/?day=${d}`} aria-current={on ? "date" : undefined} className={cxh("flex flex-col items-center gap-0.5 rounded-2xl border py-2 transition-colors", on ? "border-primary bg-primary text-primary-foreground" : "border-line bg-card text-text-strong hover:bg-hover")}>
+            <Link key={d} href={`/?day=${d}`} aria-current={on ? "date" : undefined} className={cxh("flex flex-col items-center gap-0.5 rounded-2xl border py-2 transition-colors", on ? "border-brand bg-brand text-white" : "border-line bg-card text-text-strong hover:bg-hover")}>
               <span className={cxh("text-[13px]", on ? "opacity-80" : "text-muted-foreground")}>{wk(d)}</span>
               <span className="text-[17px] font-semibold tabular-nums leading-6">{d.slice(8)}</span>
-              <span className={cxh("size-1.5 rounded-full", n > 0 ? (on ? "bg-primary-foreground" : "bg-text-strong") : "bg-transparent")} aria-label={n > 0 ? `${n} visit${n === 1 ? "" : "s"}` : undefined} />
+              <span className={cxh("size-1.5 rounded-full", n > 0 ? (on ? "bg-white" : "bg-brand") : "bg-transparent")} aria-label={n > 0 ? `${n} visit${n === 1 ? "" : "s"}` : undefined} />
             </Link>
           );
         })}
@@ -226,7 +226,7 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
             {done.map((it) => (
               <ListRow key={it.id} chevron={false}
                 lead={it.status === "completed"
-                  ? <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><Icon.check size={14} /></span>
+                  ? <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ok-soft text-ok"><Icon.check size={14} /></span>
                   : <span className="grid size-6 shrink-0 place-items-center rounded-full border border-line text-muted-foreground"><Icon.close size={12} /></span>}
                 title={<span className={it.status === "cancelled" ? "line-through" : undefined}>{it.who}</span>}
                 subtitle={`${tm(it.at)}${it.end ? ` to ${tm(it.end)}` : ""} · ${it.service}`}
@@ -261,7 +261,7 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
             subtitle={c.lastFromMe ? `You: ${c.lastBody}` : c.lastBody}
             trail={c.unread ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[13px] font-semibold text-primary-foreground">{c.unread}</span> : undefined} />
         ))}
-        {conversations.length === 0 && <ListRow href="/messages" title="Write to your supervisor" subtitle="Without texting client details around" lead={<span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-text-strong"><Icon.chat size={18} /></span>} />}
+        {conversations.length === 0 && <ListRow href="/messages" title="Write to your supervisor" subtitle="Without texting client details around" lead={<span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand-ink"><Icon.chat size={18} /></span>} />}
       </ListGroup>
 
       {/* How much service this pay period. Counts only — the notes themselves live with the office. */}

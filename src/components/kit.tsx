@@ -394,5 +394,5 @@ export function ChipLink({ href, active, count, children }: { href: string; acti
 
 /** Small uppercase eyebrow, as on the reference's "NEXT VISIT · 10:00 AM". */
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cx("text-[13px] font-medium uppercase tracking-[0.07em] text-muted-foreground", className)}>{children}</div>;
+  return <div className={cx("text-[13px] font-medium uppercase tracking-[0.07em] text-brand-ink", className)}>{children}</div>;
 }
