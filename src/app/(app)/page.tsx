@@ -258,7 +258,7 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
             subtitle={c.lastFromMe ? `You: ${c.lastBody}` : c.lastBody}
             trail={c.unread ? <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[13px] font-semibold text-primary-foreground">{c.unread}</span> : undefined} />
         ))}
-        {conversations.length === 0 && <ListRow href="/messages" title="Write to your supervisor" subtitle="Without texting client details around" lead={<span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand-ink"><Icon.chat size={18} /></span>} />}
+        {conversations.length === 0 && <ListRow href="/messages" title="Write to your supervisor" subtitle="Questions and updates about your clients" lead={<span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand-ink"><Icon.chat size={18} /></span>} />}
       </ListGroup>
 
       {/* How much service this pay period. Counts only — the notes themselves live with the office. */}
