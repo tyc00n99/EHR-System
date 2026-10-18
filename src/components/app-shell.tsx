@@ -10,7 +10,6 @@ import { ModulePanelProvider } from "@/components/module-panel";
 import { Avatar } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MessagesPill } from "@/components/messages-pill";
-import { AssistantLauncher } from "@/components/assistant/assistant-panel";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
@@ -55,8 +54,8 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
             <span className="flex size-2.5 rounded-full bg-warn" /> No password on this link
           </span>
         )}
-        {/* Messages are the bottom-left pill (MessagesPill); the strip carries no chat icon (user, Oct 16, 2026). */}
-        <Suspense fallback={null}><AssistantLauncher abilities={user.abilities} names={names} enabled={aiConfigured()} /></Suspense>
+        {/* Messages are the bottom-left pill (MessagesPill); the strip carries no chat icon (user, Oct 16, 2026)
+            and no Assistant button (user, Oct 18, 2026: the assistant lives on the home screen only). */}
         {gear.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" title="Setup & reports" className="flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[19px]" /></DropdownMenuTrigger>

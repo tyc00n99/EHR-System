@@ -19,7 +19,7 @@ import { DRAFT_LABEL, REF_PATTERN, type AssistantContext, type AssistantDraft, t
  * is gone when the page is closed.
  */
 
-export interface Suggestion { label: string; prompt: string }
+export interface Suggestion { label: string; prompt: string; detail?: string }
 
 /** Where an approved progress-review draft goes: the open note's field. */
 export interface DraftTarget {
