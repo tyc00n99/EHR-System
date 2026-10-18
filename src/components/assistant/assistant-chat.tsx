@@ -223,8 +223,10 @@ function SourceLink({ source, className, children }: { source: AssistantSource; 
 }
 
 function Chip({ source }: { source: AssistantSource }) {
+  // No fixed height and no tight width cap: the old h-5/leading-none pair clipped descenders and
+  // 14rem cut labels mid-word ("1 compliance ite…"), which read as broken (user, Oct 18).
   return (
-    <SourceLink source={source} className="mx-0.5 inline-flex h-5 max-w-[14rem] translate-y-[-1px] items-center rounded-full border border-line bg-card px-1.5 align-middle text-[13px] font-medium leading-none text-brand-ink hover:border-brand hover:bg-hover">
+    <SourceLink source={source} className="mx-0.5 inline-flex max-w-[24rem] items-center rounded-full border border-line bg-card px-2 py-px align-middle text-[13px] font-medium leading-5 text-brand-ink hover:border-brand hover:bg-hover">
       <span className="truncate">{source.kind === "note" ? source.detail ?? source.label : source.label}</span>
     </SourceLink>
   );
