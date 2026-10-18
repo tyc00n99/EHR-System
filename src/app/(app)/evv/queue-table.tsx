@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import { DataTable, TwoLine } from "@/components/data-table";
 import { DateRangePill, FilterPill, type PillOption } from "@/components/filter-pill";
 import { Badge, cx, type Tone } from "@/components/kit";
-import { QUEUE_VIEW_KEYS, QUEUE_VIEW_LABEL, QUEUE_VIEWS, type QueueView } from "@/evv/labels";
+import { QUEUE_MORE, QUEUE_TABS, QUEUE_VIEW_KEYS, QUEUE_VIEW_LABEL, QUEUE_VIEWS, type QueueView } from "@/evv/labels";
+import { ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { resubmitAction, reviewVisitAction } from "./actions";
 
 export interface QueueRow {
@@ -46,21 +48,31 @@ export function QueueTable({ rows, filter, counts, options, presets, rangeLabel 
     { id: "submission", accessorFn: (r) => r.submission?.label ?? "", header: "Submission", enableSorting: false, cell: ({ row }) => row.original.submission ? <Badge tone={row.original.submission.tone}>{row.original.submission.label}</Badge> : null },
     { accessorKey: "dueIso", header: "Due", cell: ({ row }) => <span className={row.original.overdue ? "font-medium text-danger" : ""}>{row.original.due}</span> },
   ], []);
+  const more = QUEUE_MORE.includes(show);
+  const tab = "inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-md px-3 text-[15px] font-medium transition-colors hover:bg-tab-hover hover:text-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30";
+  const tabOn = "bg-tab-hover text-text-strong shadow-[inset_0_-2px_0_var(--primary)]";
+  const count = (k: QueueView) => <span className={cx("rounded-full px-1.5 text-[13px] leading-[18px] tabular-nums", k === "rejected" && counts[k] > 0 ? "bg-danger-soft text-danger" : "bg-panel text-text-strong")}>{counts[k]}</span>;
   const bulkBtn = "inline-flex h-8 items-center rounded-md px-3 text-[14px] font-medium text-text hover:bg-tab-hover disabled:opacity-50";
 
   return (<>
     <nav aria-label="Filter the queue" className="-mx-1 mb-3 flex gap-0.5 overflow-x-auto border-b border-line-soft px-1">
-      {(Object.keys(QUEUE_VIEWS) as QueueView[]).map((k) => {
-        const on = show === k, bad = (k === "noncompliant" || k === "rejected") && counts[k] > 0;
-        return (
-          <button key={k || "all"} type="button" aria-current={on ? "true" : undefined} onClick={() => navigate({ ...QUEUE_VIEWS[k] }, true)}
-            className={cx("inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-md px-3 text-[15px] font-medium transition-colors hover:bg-tab-hover hover:text-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/30",
-              on ? "bg-tab-hover text-text-strong shadow-[inset_0_-2px_0_var(--primary)]" : "text-muted-foreground")}>
-            {QUEUE_VIEW_LABEL[k]}
-            <span className={cx("rounded-full px-1.5 text-[13px] leading-[18px] tabular-nums", bad ? "bg-danger-soft text-danger" : "bg-panel text-text-strong")}>{counts[k]}</span>
-          </button>
-        );
-      })}
+      {QUEUE_TABS.map((k) => (
+        <button key={k || "all"} type="button" aria-current={show === k ? "true" : undefined} onClick={() => navigate({ ...QUEUE_VIEWS[k] }, true)} className={cx(tab, show === k ? tabOn : "text-muted-foreground")}>
+          {QUEUE_VIEW_LABEL[k]}{count(k)}
+        </button>
+      ))}
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<button type="button" aria-current={more ? "true" : undefined} className={cx(tab, "data-[popup-open]:bg-tab-hover", more ? tabOn : "text-muted-foreground")} />}>
+          {more ? <>{QUEUE_VIEW_LABEL[show]}{count(show)}</> : "More"}<ChevronDown size={15} aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-auto min-w-56">
+          <DropdownMenuRadioGroup value={more ? show : ""} onValueChange={(v) => navigate({ ...QUEUE_VIEWS[v as QueueView] }, true)}>
+            {QUEUE_MORE.map((k) => (
+              <DropdownMenuRadioItem key={k} value={k} closeOnClick className="justify-between gap-6 pr-9">{QUEUE_VIEW_LABEL[k]}<span className="text-[13px] tabular-nums text-muted-foreground">{counts[k]}</span></DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </nav>
     <DataTable
       columns={columns}
