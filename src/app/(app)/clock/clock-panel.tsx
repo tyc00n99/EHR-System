@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Badge, Button, Checkbox, Eyebrow, Field, FormError, Select, Textarea } from "@/components/kit";
+import { Button, Checkbox, Field, FormError, Select, Textarea } from "@/components/kit";
 import { clockIn, clockOut } from "../visits/actions";
 
 interface AgreementOption { id: string; personId: string; personName: string; label: string; unitsLeft: number | null; oriented: boolean }
@@ -65,14 +65,14 @@ function LocationReadiness() {
   };
   const good = state.kind === "ok" && (state.accuracy == null || state.accuracy <= 200);
   return (
-    <div className={`flex flex-wrap items-center gap-2 rounded-[var(--radius-app)] border px-4 py-3 text-[13.5px] ${state.kind === "ok" ? (good ? "border-ok/30 bg-ok-soft text-ok" : "border-warn/30 bg-warn-soft text-warn") : state.kind === "error" ? "border-danger/30 bg-danger-soft text-danger" : "border-line bg-card text-muted-foreground"}`}>
+    <div className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-[13px] ${state.kind === "ok" ? (good ? "border-ok/30 bg-ok-soft text-ok" : "border-warn/30 bg-warn-soft text-warn") : state.kind === "error" ? "border-danger/30 bg-danger-soft text-danger" : "border-line bg-sidebar text-muted-foreground"}`}>
       <span className="min-w-0 flex-1">
         {state.kind === "idle" && "Location is recorded for EVV. Check it before you clock in."}
         {state.kind === "checking" && "Checking your location…"}
         {state.kind === "ok" && (good ? `Location ready${state.accuracy != null ? ` · accurate to about ${Math.round(state.accuracy)} m` : ""}` : `Location found but only accurate to about ${Math.round(state.accuracy ?? 0)} m — step outside or wait a moment, then check again`)}
         {state.kind === "error" && state.message}
       </span>
-      <button type="button" onClick={check} disabled={state.kind === "checking"} className="shrink-0 rounded-full border border-current/20 px-3 py-1 font-medium disabled:opacity-60">{state.kind === "idle" ? "Check location" : "Check again"}</button>
+      <button type="button" onClick={check} disabled={state.kind === "checking"} className="shrink-0 font-medium underline disabled:opacity-60">{state.kind === "idle" ? "Check location" : "Check again"}</button>
     </div>
   );
 }
@@ -80,12 +80,12 @@ function LocationReadiness() {
 function ClientSignature({ error, reasonError }: { error?: string; reasonError?: string }) {
   const [unable, setUnable] = useState(false);
   return (
-    <div className="rounded-[var(--radius-app)] border border-line bg-card p-4 shadow-[var(--shadow-sm)]">
+    <div className="rounded-lg border border-line bg-sidebar p-4">
       <div className="font-medium text-text-strong">Client signature</div>
       <p className="mt-0.5 text-[13px] text-muted-foreground">Read the note to the person, then hand them the phone to enter their signing code.</p>
       {!unable && (
         <Field label="Client signing code" error={error} className="mt-3">
-          <input name="clientCode" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" className="h-14 w-full rounded-[var(--radius-field)] border border-input bg-page text-center text-[28px] font-semibold tracking-[0.35em] tabular-nums focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15" />
+          <input name="clientCode" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" className="h-14 w-full rounded-md border border-line bg-page text-center text-[28px] font-bold tracking-[0.35em] tabular-nums focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft" />
         </Field>
       )}
       <label className="mt-3 flex items-center gap-3 text-[13px]">
@@ -115,14 +115,14 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
   const e = state.errors ?? {};
 
   if (agreements.length === 0) {
-    return <div className="rounded-[var(--radius-app)] border border-line bg-card p-5 shadow-[var(--shadow-sm)]"><div className="font-medium text-text-strong">Nothing to clock against</div><p className="mt-1 text-[13px] text-muted-foreground">{isDsp ? "You have no assigned clients with an active service agreement today. Ask your supervisor to assign you." : "No client has an active service agreement today. A supervisor needs to add one first."}</p></div>;
+    return <div className="rounded-lg border border-line bg-card p-5"><div className="font-medium text-text-strong">Nothing to clock against</div><p className="mt-1 text-[13px] text-muted-foreground">{isDsp ? "You have no assigned clients with an active service agreement today. Ask your supervisor to assign you." : "No client has an active service agreement today. A supervisor needs to add one first."}</p></div>;
   }
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <div>
-        <p className="text-[14px] text-muted-foreground">Clock in</p>
-        <h1 className="mt-1">Start a visit</h1>
+        <p className="text-muted-foreground">Clock in</p>
+        <h1>Start a visit</h1>
       </div>
       <FormError message={gpsError ?? state.message} />
       <Field label="Client" error={e.personId}>
@@ -142,20 +142,20 @@ function ClockInPanel({ agreements, tasks, places, isDsp }: { agreements: Agreem
       </Field>
       <LocationReadiness />
       <fieldset>
-        <legend className="mb-2 block px-1 text-[13px] font-medium text-muted-foreground">Planned tasks</legend>
-        <div className="divide-y divide-line-soft overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)]">
+        <legend className="mb-1 block text-[13px] font-medium text-muted-foreground">Planned tasks</legend>
+        <div className="divide-y divide-line-soft rounded-md border border-line">
           {tasks.map((t) => (
             <Checkbox key={t.code} name="tasks[]" value={t.code} label={t.label} className="py-3" />
           ))}
         </div>
       </fieldset>
       {!oriented && (
-        <div className="rounded-[var(--radius-app)] border border-warn/30 bg-warn-soft px-4 py-3 text-[13.5px] text-warn">
+        <div className="rounded-lg border border-warn/30 bg-warn-soft px-4 py-3 text-[13px] text-warn">
           <div className="font-medium">Orientation needed first</div>
           Your supervisor has not recorded your orientation to this person&apos;s support plan and needs. 245D requires it before unsupervised contact.
         </div>
       )}
-      <Button type="submit" className="sticky bottom-0 z-10 h-12 w-full text-base shadow-[0_8px_24px_rgba(35,42,58,0.18)] md:static md:shadow-none" disabled={pending || locating || !oriented}>
+      <Button type="submit" className="h-12 w-full text-base" disabled={pending || locating || !oriented}>
         {locating ? "Getting your location…" : pending ? "Clocking in…" : "Clock in"}
       </Button>
       <p className="text-center text-[13px] text-muted-foreground">Your location is recorded at clock-in and clock-out for electronic visit verification.</p>
@@ -173,20 +173,17 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <input type="hidden" name="visitId" value={open.id} />
-      <div className="rounded-[var(--radius-app)] border border-line bg-card p-4 shadow-[var(--shadow-sm)]">
-        <div className="flex items-center justify-between gap-3">
-          <Eyebrow>Visit in progress · since {since}</Eyebrow>
-          <Badge tone="ok" dot>Live</Badge>
-        </div>
-        <h2 className="mt-2">{open.personName}</h2>
-        <p className="mt-0.5 text-[13px] text-muted-foreground">{open.serviceCode}</p>
-        <p className="figure mt-3 text-[34px] leading-none text-text-strong">{elapsed}</p>
+      <div className="rounded-lg border border-primary/30 bg-primary-soft px-4 py-3.5">
+        <p className="text-[13px] font-medium text-primary">Visit in progress</p>
+        <h2 className="mt-0.5">{open.personName}</h2>
+        <p className="mt-1 text-[13px] text-muted-foreground">{open.serviceCode} · since {since}</p>
+        <p className="figure mt-2 text-[30px] leading-none text-text-strong">{elapsed}</p>
       </div>
       <FormError message={gpsError ?? state.message} />
       {open.tasks.length > 0 && (
         <fieldset>
-          <legend className="mb-2 block px-1 text-[13px] font-medium text-muted-foreground">Tasks completed</legend>
-          <div className="divide-y divide-line-soft overflow-hidden rounded-[var(--radius-app)] border border-line bg-card shadow-[var(--shadow-sm)]">
+          <legend className="mb-1 block text-[13px] font-medium text-muted-foreground">Tasks completed</legend>
+          <div className="divide-y divide-line-soft rounded-md border border-line">
             {open.tasks.map((t) => (
               <Checkbox key={t.code} name="completedTasks[]" value={t.code} defaultChecked={t.completed} label={t.label} className="py-3" />
             ))}
@@ -198,7 +195,7 @@ function ClockOutPanel({ open }: { open: OpenVisit }) {
       </Field>
       <ClientSignature error={e.clientCode} reasonError={e.unableReason} />
       <LocationReadiness />
-      <Button type="submit" className="sticky bottom-0 z-10 h-12 w-full text-base shadow-[0_8px_24px_rgba(35,42,58,0.18)] md:static md:shadow-none" disabled={pending || locating}>
+      <Button type="submit" className="h-12 w-full text-base" disabled={pending || locating}>
         {locating ? "Getting your location…" : pending ? "Clocking out…" : "Clock out"}
       </Button>
     </form>

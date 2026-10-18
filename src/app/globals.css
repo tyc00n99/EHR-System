@@ -303,7 +303,6 @@
   --color-hint: var(--text-hint);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
-  --radius-field: var(--radius-field);
 
   --color-page: var(--page);
   --color-sidebar: var(--sidebar);
@@ -588,16 +587,6 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 }
 .tab-squig[aria-current="page"]::after { opacity: 1; }
 
-/* ---- Shape only (Oct 18, 2026) ----
-   The Oct 18 redesign's colours were reverted at the user's request ("take it back how it was");
-   only its shape stays: rounder cards, pill buttons, 10px fields, and the heading size. `--brand`
-   and `--brand-ink` are named by components written for the redesign, so they point at the
-   theme's own primary rather than introducing a second blue. */
-:root, :root[data-theme="tide"], :root[data-theme="slate"], :root[data-theme="hubble"], :root[data-theme="sage"] {
-  --brand: var(--primary);
-  --brand-ink: var(--primary);
-  --radius: 1rem;
-  --radius-btn: 9999px;
-  --radius-field: 0.625rem;
-}
-h1 { font-size: 28px; line-height: 34px; letter-spacing: -0.022em; }
+/* `--brand`/`--brand-ink` are named by the assistant and messaging components; after the Oct 18
+   redesign was reverted they point at the theme's own primary. */
+:root { --brand: var(--primary); --brand-ink: var(--primary); }
