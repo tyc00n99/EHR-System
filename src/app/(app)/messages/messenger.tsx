@@ -139,7 +139,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           <div className="mt-3 space-y-1 border-t border-line-soft pt-2">
             {own.map((t) => (
               <Link key={t.id} href={openThread(t.id)} aria-current={t.id === activeThread ? "page" : undefined}
-                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", t.id === activeThread ? "border-text-strong bg-card" : "border-transparent hover:bg-tab-hover")}>
+                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", t.id === activeThread ? "border-text-strong" : "border-transparent hover:border-line")}>
                 <ListRow
                   compact
                   face={<Face initials={t.lastSenderInitials} size={32} />}
@@ -150,7 +150,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                 />
               </Link>
             ))}
-            <button onClick={() => setDialog({ kind: "thread", channelId: c.id })} className="flex items-center gap-1.5 rounded-lg px-1 py-1.5 text-[14px] font-medium text-primary hover:bg-tab-hover">
+            <button onClick={() => setDialog({ kind: "thread", channelId: c.id })} className="flex items-center gap-1.5 rounded-lg px-1 py-1.5 text-[14px] font-medium text-text-strong hover:bg-tab-hover">
               <Plus className="size-4" /> New thread
             </button>
           </div>
@@ -172,7 +172,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   const listCount = tab === "me" ? unreadMentions : unreadConversations;
 
   return (
-    <div className="-mx-4 -mb-28 -mt-5 flex min-h-0 flex-1 flex-col bg-card-soft px-4 pb-24 pt-5 shadow-[0_0_0_100vmax_var(--card-soft)] [clip-path:inset(0_-100vmax)] md:-mx-8 md:-mt-6 md:px-8 md:pt-7">
+    <div className="-mb-28 flex min-h-0 flex-1 flex-col pb-24 md:pt-1">
       {/* ---------------- title, count line, search and New ---------------- */}
       <div className={cx("mb-5 flex-wrap items-end gap-x-6 gap-y-3", open ? "hidden md:flex" : "flex")}>
         <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
@@ -185,11 +185,11 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
         <div className="relative min-w-0 flex-1 sm:w-[340px] sm:flex-none">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setQ(""); }} placeholder="Search people, channels, threads" aria-label="Search conversations"
-            className="own-focus h-11 w-full rounded-full border border-line bg-card pl-11 pr-10 text-[15px] text-text-strong outline-none placeholder:text-muted focus:border-primary focus:ring-4 focus:ring-primary-soft" />
+            className="own-focus h-11 w-full rounded-full border border-line pl-11 pr-10 text-[15px] text-text-strong outline-none placeholder:text-muted focus:border-text-strong" />
           {q && <button aria-label="Clear search" onClick={() => setQ("")} className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-tab-hover"><X className="size-4" /></button>}
         </div>
         <DropdownMenu>
-          <DropdownMenuTrigger render={<button className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-card px-4 text-[15px] font-medium text-text-strong hover:bg-tab-hover" />}>
+          <DropdownMenuTrigger render={<button className="inline-flex h-11 items-center gap-2 rounded-full border border-line px-4 text-[15px] font-medium text-text-strong hover:bg-tab-hover" />}>
             <Plus className="size-4" strokeWidth={2} /> New <ChevronDown className="size-4 text-muted" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -204,17 +204,17 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
 
       <div className="flex min-h-0 flex-1 gap-5">
         {/* ---------------- the list ---------------- */}
-        <aside className={cx("min-h-0 w-full flex-col rounded-3xl bg-card/55 md:w-[420px] md:shrink-0", open ? "hidden md:flex" : "flex")}>
+        <aside className={cx("min-h-0 w-full flex-col rounded-2xl border border-line md:w-[420px] md:shrink-0", open ? "hidden md:flex" : "flex")}>
           <div className="flex items-center justify-between gap-3 px-5 pb-3 pt-5">
             <div className="flex items-center gap-2.5">
               <h2 className="text-[17px] font-semibold text-text-strong">{listTitle}</h2>
               {listCount > 0 && <Count n={listCount} />}
             </div>
-            <nav aria-label="Filter conversations" className="flex gap-0.5 rounded-full bg-card-soft p-1">
+            <nav aria-label="Filter conversations" className="flex gap-0.5 rounded-full border border-line p-1">
               {tabs.map((t) => (
                 <Link key={t.key} href={href({ tab: t.key === "home" ? null : t.key })} aria-current={tab === t.key ? "page" : undefined}
-                  className={cx("shrink-0 rounded-full px-3 py-1 text-[14px] font-medium", tab === t.key ? "bg-card text-text-strong shadow-sm" : "text-muted hover:text-text-strong")}>
-                  {t.label}{t.n ? <span className="ml-1 text-primary">{t.n}</span> : null}
+                  className={cx("shrink-0 rounded-full px-3 py-1 text-[14px] font-medium", tab === t.key ? "bg-text-strong text-card" : "text-muted hover:text-text-strong")}>
+                  {t.label}{t.n ? <span className="ml-1 font-semibold text-text-strong">{t.n}</span> : null}
                 </Link>
               ))}
             </nav>
@@ -240,7 +240,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                 {(otherChannels.length > 0 || canCreateChannels) && (!needle || otherChannels.some((c) => hit(c.name) || threads.some((t) => t.channelId === c.id && hit(t.title)))) && <SectionLabel icon={<Hash className="size-4" strokeWidth={1.8} />}>Channels</SectionLabel>}
                 {otherChannels.map(renderChannel)}
                 {otherChannels.length === 0 && canCreateChannels && !needle && (
-                  <button onClick={() => setDialog({ kind: "channel" })} className="flex w-full items-center gap-2 rounded-2xl border border-dashed border-line px-4 py-3 text-[14px] font-medium text-primary hover:bg-card">
+                  <button onClick={() => setDialog({ kind: "channel" })} className="flex w-full items-center gap-2 rounded-2xl border border-dashed border-line px-4 py-3 text-[14px] font-medium text-text-strong hover:border-text-strong/40">
                     <Plus className="size-4" /> Create a team channel
                   </button>
                 )}
@@ -272,7 +272,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                         <p className="mt-1 line-clamp-2 text-[15px] text-text">{m.body}</p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <Tag>{m.threadId ? `${m.channelName} › ${m.threadTitle || "Channel"}` : "Direct message"}</Tag>
-                          {m.unread && <Tag tint="primary">Unread</Tag>}
+                          {m.unread && <Tag>Unread</Tag>}
                         </div>
                       </div>
                     </div>
@@ -284,7 +284,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
         </aside>
 
         {/* ---------------- the conversation ---------------- */}
-        <section className={cx("min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-3xl bg-card", open ? "flex" : "hidden md:flex")}>
+        <section className={cx("min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-line", open ? "flex" : "hidden md:flex")}>
           {open ? (
             <ConversationPane
               key={open.kind === "dm" ? `dm:${open.contact.userId}` : `t:${open.thread.id}`}
@@ -297,7 +297,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           ) : (
             <div className="grid flex-1 place-items-center p-8 text-center">
               <div>
-                <div className="mx-auto grid size-16 place-items-center rounded-full bg-primary-soft text-primary"><MessageCircle className="size-8" strokeWidth={1.6} /></div>
+                <div className="mx-auto grid size-16 place-items-center rounded-full border border-line text-text-strong"><MessageCircle className="size-8" strokeWidth={1.6} /></div>
                 <p className="mt-4 text-[18px] font-semibold text-text-strong">Pick a conversation</p>
                 <p className="mt-1 text-[15px] text-muted">Or start one with New, above.</p>
               </div>
@@ -314,22 +314,22 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
 }
 
 /** One card in the list; the open one is white and outlined in ink, as the reference marks it. */
-const cardCls = (active: boolean) => cx("block rounded-2xl border px-4 py-3.5 transition-colors", active ? "border-text-strong bg-card" : "border-transparent bg-card/70 hover:border-line hover:bg-card");
+const cardCls = (active: boolean) => cx("block rounded-2xl border px-4 py-3.5 transition-colors", active ? "border-text-strong" : "border-line hover:border-text-strong/40");
 
 function SectionLabel({ icon, children, title }: { icon: ReactNode; children: ReactNode; title?: string }) {
   return <div title={title} className="flex items-center gap-2 px-2 pb-0.5 pt-3 text-[13px] font-medium uppercase tracking-[0.08em] text-muted first:pt-1">{icon}{children}</div>;
 }
 
 function Count({ n }: { n: number }) {
-  return <span className="grid h-6 min-w-6 place-items-center rounded-md bg-primary px-1.5 text-[13px] font-semibold text-primary-foreground">{n > 99 ? "99+" : n}</span>;
+  return <span className="grid h-6 min-w-6 place-items-center rounded-md bg-text-strong px-1.5 text-[13px] font-semibold text-card">{n > 99 ? "99+" : n}</span>;
 }
 
 const TAG_TINTS: Record<string, string> = {
-  primary: "bg-primary-soft text-primary",
+  primary: "border border-line text-text",
   ok: "bg-ok-soft text-ok",
   warn: "bg-warn-soft text-warn",
   danger: "bg-danger-soft text-danger",
-  neutral: "bg-card-soft text-text",
+  neutral: "border border-line text-text",
 };
 
 /** The small uppercase label under a card's preview (the reference's "HIGH IMPACT" chip), in the app's status tints. */

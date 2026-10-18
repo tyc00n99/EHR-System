@@ -175,7 +175,7 @@ export async function visibleChannels(me: Me): Promise<ChannelInfo[]> {
       const isMember = assigned.has(c.personId);
       if (!isMember && !office) continue;
       out.push({
-        id: c.id, name: `${firstName ?? ""} ${lastName ?? ""}`.trim() || c.name, icon: "person", tint: "primary", isPrivate: false,
+        id: c.id, name: `${firstName ?? ""} ${lastName ?? ""}`.trim() || c.name, icon: "person", tint: "neutral", isPrivate: false,
         createdBy: null, isMember, canManage: false, memberIds: [], personId: c.personId,
       });
       continue;

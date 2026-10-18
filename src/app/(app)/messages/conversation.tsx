@@ -86,7 +86,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
         {open.kind === "thread"
           ? home
             ? <span className="hidden sm:block"><ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={52} /></span>
-            : <span className="hidden size-[52px] shrink-0 place-items-center rounded-full bg-card-soft text-text-strong sm:grid"><ListTree className="size-6" strokeWidth={1.7} /></span>
+            : <span className="hidden size-[52px] shrink-0 place-items-center rounded-full border border-line text-text-strong sm:grid"><ListTree className="size-6" strokeWidth={1.7} /></span>
           : <Face initials={open.contact.initials} size={52} />}
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-[23px] font-semibold tracking-[-0.015em] text-text-strong">{open.kind === "thread" ? (home ? open.thread.channel.name : open.thread.title) : open.contact.name}</h2>
@@ -101,7 +101,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
             ) : <span className="truncate">{roleWord(open.contact)} · {msgs.length ? `Last message ${dayOf(msgs[msgs.length - 1].at)} at ${timeOf(msgs[msgs.length - 1].at)}` : "No messages yet"}</span>}
           </p>
         </div>
-        <span className="hidden shrink-0 rounded-md bg-primary-soft px-2 py-0.5 text-[13px] font-medium uppercase tracking-[0.06em] text-primary lg:inline">
+        <span className="hidden shrink-0 rounded-md border border-line px-2 py-0.5 text-[13px] font-medium uppercase tracking-[0.06em] text-text lg:inline">
           {open.kind === "dm" ? "Direct message" : home ? (open.thread.channel.personId ? "Client channel" : open.thread.channel.isPrivate ? "Private channel" : "Channel") : "Thread"}
         </span>
         <button onClick={copyLink} aria-label="Copy link" title="Copy link" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><Link2 className="size-5" /></button>
@@ -136,7 +136,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
                     {r.items.map((m) => (
                       <div key={m.id} className="max-w-[min(100%,760px)]">
                         {m.body && (
-                          <div className={cx("w-fit max-w-full whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[16.5px] leading-[1.55] text-text-strong", r.sender.userId === meId ? "bg-primary-soft" : "bg-card-soft")}>
+                          <div className={cx("w-fit max-w-full whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[16.5px] leading-[1.55] text-text-strong", r.sender.userId === meId ? "border border-text-strong/15" : "border border-line")}>
                             <MentionText body={m.body} names={m.mentions.map((x) => x.name)} meName={me} />
                           </div>
                         )}
@@ -149,7 +149,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
                               </button>
                             ) : (
                               <button key={a.id} type="button" onClick={() => setViewing(a)} className="flex max-w-[320px] items-center gap-3 rounded-xl border border-line bg-card px-3.5 py-2.5 text-left hover:bg-tab-hover">
-                                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary"><FileText className="size-5" /></span>
+                                <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-text-strong"><FileText className="size-5" /></span>
                                 <span className="min-w-0"><span className="block truncate text-[15px] font-medium text-text-strong">{a.fileName}</span><span className="text-[13px] text-muted">{fileSize(a.sizeBytes)}</span></span>
                               </button>
                             ))}
@@ -166,7 +166,7 @@ export function ConversationPane({ meId, open, backHref, onChannelSettings, onNe
       </div>
 
       {open.kind === "dm" && !open.canReply
-        ? <p className="mx-5 mb-6 shrink-0 rounded-2xl bg-card-soft px-5 py-4 text-[15px] text-muted md:mx-8">This login is no longer active, so replies are closed.</p>
+        ? <p className="mx-5 mb-6 shrink-0 rounded-2xl border border-line px-5 py-4 text-[15px] text-muted md:mx-8">This login is no longer active, so replies are closed.</p>
         : <Composer recipient={open.kind === "dm" ? { face: <Face initials={open.contact.initials} size={26} />, name: open.contact.name, note: roleWord(open.contact) } : { face: <ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={26} />, name: home ? open.thread.channel.name : `${open.thread.channel.name} › ${open.thread.title}`, note: `${audience.length + 1} ${audience.length === 0 ? "person" : "people"} can read this` }} to={open.kind === "dm" ? open.contact.userId : null} thread={open.kind === "thread" ? open.thread.id : null} audience={audience} placeholder={open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]}…` : "Message…"} onNewThread={open.kind === "thread" ? onNewThread : undefined} />}
       {viewing && <AttachmentViewer file={viewing} onClose={() => setViewing(null)} />}
     </>
@@ -205,7 +205,7 @@ function AttachmentViewer({ file, onClose }: { file: Attachment; onClose: () => 
           )}
           {!isPdf && !isImage && (
             <div className="flex size-full flex-col items-center justify-center gap-3 p-6 text-center">
-              <span className="grid size-14 place-items-center rounded-xl bg-primary-soft text-primary"><FileText className="size-7" /></span>
+              <span className="grid size-14 place-items-center rounded-xl bg-card-soft text-text-strong"><FileText className="size-7" /></span>
               <p className="text-[15px] text-text-strong">This kind of file cannot be shown here.</p>
               <a href={src} download={file.fileName} className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-btn)] bg-primary px-4 text-[14px] font-medium text-primary-foreground hover:bg-primary-hover"><Download className="size-4" /> Download {file.fileName}</a>
             </div>
