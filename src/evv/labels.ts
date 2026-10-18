@@ -25,6 +25,16 @@ export const SUBMISSION: Record<string, { label: string; tone: Tone }> = {
   blocked: { label: "Blocked · not configured", tone: "warn" },
 };
 
+/** The Submission filter's four groups. Rows still show their exact status; "resubmitted"
+ *  (an older copy a resubmission replaced) is in no group because nobody looks for it. */
+export const SUBMISSION_GROUPS = {
+  unsent: { label: "Not sent yet", statuses: ["queued", "transmitting", "retry_scheduled", "blocked"] },
+  awaiting: { label: "Awaiting answer", statuses: ["submitted"] },
+  accepted: { label: "Accepted", statuses: ["accepted", "accepted_with_warning"] },
+  fix: { label: "Needs a fix", statuses: ["rejected", "correction_required", "permanently_failed"] },
+} as const;
+export type SubmissionGroup = keyof typeof SUBMISSION_GROUPS;
+
 export const BILLING: Record<string, { label: string; tone: Tone }> = {
   not_ready: { label: "Not ready", tone: "neutral" },
   ready: { label: "Ready to bill", tone: "ok" },

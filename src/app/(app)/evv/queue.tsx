@@ -1,4 +1,4 @@
-import { COMPLIANCE, SUBMISSION } from "@/evv/labels";
+import { COMPLIANCE, SUBMISSION, SUBMISSION_GROUPS } from "@/evv/labels";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, shiftPayPeriod, type PayRule } from "@/lib/pay-period";
 import { isoDay } from "@/lib/format";
@@ -27,7 +27,7 @@ export function Queue({ queue, counts, filter, names, people, staff, payRules }:
   const options = {
     people: people.map((p) => ({ value: p.id, label: p.name })),
     staff: staff.map((p) => ({ value: p.id, label: p.name })),
-    submission: Object.entries(SUBMISSION).map(([k, v]) => ({ value: k, label: v.label })),
+    submission: Object.entries(SUBMISSION_GROUPS).map(([k, v]) => ({ value: k, label: v.label })),
   };
   const cur = currentPayPeriod(payRules), last = shiftPayPeriod(cur, -1, payRules);
   const presets = [

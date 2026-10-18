@@ -7,7 +7,7 @@ import { z } from "zod";
 import { schema } from "@/db";
 import { evvAudit } from "./audit";
 import { getPolicy, writer, type EvvCtx } from "./context";
-import { QUEUE_VIEWS, QUEUE_VIEW_KEYS, type QueueView } from "./labels";
+import { QUEUE_VIEWS, QUEUE_VIEW_KEYS, SUBMISSION_GROUPS, type QueueView } from "./labels";
 import { submissionDeadlineFor, localDate } from "./time";
 import { EvvError, requireVisit } from "./visits";
 
@@ -19,6 +19,7 @@ export const queueFilterSchema = z.object({
   serviceCode: z.string().optional(),
   complianceStatus: z.enum(["COMPLIANT", "NONCOMPLIANT", "INCOMPLETE", "EXEMPT_LIVE_IN", "PENDING_REVIEW"]).optional(),
   submissionStatus: z.enum(["queued", "transmitting", "submitted", "accepted", "accepted_with_warning", "rejected", "retry_scheduled", "correction_required", "resubmitted", "permanently_failed", "blocked"]).optional(),
+  submissionGroup: z.enum(["unsent", "awaiting", "accepted", "fix"]).optional(),
   exceptionType: z.string().optional(),
   payerId: z.uuid().optional(),
   billingId: z.string().optional(),
@@ -42,6 +43,7 @@ function queueConds(ctx: EvvCtx, f: QueueFilter) {
   if (f.serviceCode) conds.push(eq(v.serviceCode, f.serviceCode.toUpperCase()));
   if (f.complianceStatus) conds.push(eq(v.complianceStatus, f.complianceStatus));
   if (f.submissionStatus) conds.push(eq(v.submissionStatus, f.submissionStatus));
+  if (f.submissionGroup) conds.push(inArray(v.submissionStatus, [...SUBMISSION_GROUPS[f.submissionGroup].statuses]));
   if (f.payerId) conds.push(eq(v.payerId, f.payerId));
   if (f.billingId) conds.push(eq(v.billingId, f.billingId));
   if (f.manualOrCorrected) conds.push(or(eq(v.manualEntry, true), eq(v.corrected, true))!);
