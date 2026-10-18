@@ -10,6 +10,8 @@ import { ModulePanelProvider } from "@/components/module-panel";
 import { Avatar } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MessagesPill } from "@/components/messages-pill";
+import { AssistantLauncher } from "@/components/assistant/assistant-panel";
+import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { NotePreview } from "@/components/note-preview";
 import { Toaster } from "@/components/ui/sonner";
 import { gearGroups, type NavCounts } from "@/lib/nav";
@@ -54,6 +56,7 @@ export function AppShell({ user, orgName, counts, unread, palette, children }: {
           </span>
         )}
         {/* Messages are the bottom-left pill (MessagesPill); the strip carries no chat icon (user, Oct 16, 2026). */}
+        <Suspense fallback={null}><AssistantLauncher abilities={user.abilities} names={names} enabled={aiConfigured()} /></Suspense>
         {gear.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger render={<button aria-label="Agency setup and reports" title="Setup & reports" className="flex size-9 items-center justify-center rounded-lg text-text hover:bg-tab-hover hover:text-text-strong" />}><Settings className="size-[19px]" /></DropdownMenuTrigger>
