@@ -35,7 +35,7 @@ export function TeamTable({ rows, canAdd }: { rows: TeamRow[]; canAdd: boolean }
       : <Badge tone="ok">Up to date</Badge> },
   ], []);
 
-  const chip = (on: boolean) => cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[14px] transition-colors", on ? "border-transparent bg-primary-soft font-medium text-primary" : "border-line bg-card text-text hover:bg-tab-hover");
+  const chip = (on: boolean) => cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[14px] transition-colors", on ? "border-primary bg-primary font-medium text-primary-foreground" : "border-line bg-card font-medium text-text-strong hover:bg-tab-hover");
   const countPill = (n: number, on: boolean, hot?: boolean) => <span className={cx("inline-flex h-[18px] items-center rounded-full px-1.5 text-[13px] tabular-nums", on ? "bg-card text-primary" : hot && n > 0 ? "bg-danger-soft text-danger" : "bg-panel text-muted-foreground")}>{n}</span>;
   const FILTERS: { key: Filter; label: string; hot?: boolean }[] = [
     { key: "active", label: "Active" },

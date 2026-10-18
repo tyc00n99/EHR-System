@@ -38,7 +38,7 @@ export function FilterPill({ label, value, options, onApply, single, search, sum
   };
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setQ(""); }}>
-      <PopoverTrigger render={<button type="button" aria-label={`${label}: ${active ? chosen.join(", ") : "any"}`} className={cx("inline-flex h-9 max-w-[260px] items-center gap-1.5 rounded-lg border px-3 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", active || open ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-tab-hover")} />}>
+      <PopoverTrigger render={<button type="button" aria-label={`${label}: ${active ? chosen.join(", ") : "any"}`} className={cx("inline-flex h-9 max-w-[260px] items-center gap-1.5 rounded-full border px-3.5 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", active || open ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-tab-hover")} />}>
         <span className="truncate">{text}</span><ChevronDown size={14} aria-hidden className="shrink-0 opacity-70" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[300px] gap-0 p-0">
@@ -145,7 +145,7 @@ export function DateRangePill({ label, presets, current, onApply }: { label: str
     {/* The page blurs behind the picker (user, Sept 21) so the dates are the only thing in focus. */}
     {open && <div aria-hidden className="fixed inset-0 z-40 bg-white/30 backdrop-blur-[2px]" />}
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) reset(); }}>
-      <PopoverTrigger render={<button type="button" aria-label={`Dates: ${label}`} className={cx("inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", open ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-tab-hover")} />}>
+      <PopoverTrigger render={<button type="button" aria-label={`Dates: ${label}`} className={cx("inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30", open ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-tab-hover")} />}>
         <span className="truncate">{label}</span><ChevronDown size={14} aria-hidden className="shrink-0 opacity-70" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[780px] max-w-[calc(100vw-24px)] gap-0 p-0">
@@ -183,7 +183,7 @@ export function DateRangePill({ label, presets, current, onApply }: { label: str
           <span>{pending ? "Now pick the last day" : days > 0 ? <><span className="font-medium text-text-strong">{days} {days === 1 ? "day" : "days"}</span> · {shortDay.format(new Date(utc(from)))} – {shortDay.format(new Date(utc(to)))}</> : "Pick the first day"}</span>
           <span className="flex-1" />
           {presets[0] && <button type="button" onClick={() => { onApply(presets[0].param); setOpen(false); }} className="rounded-md px-2 py-1.5 text-[13.5px] font-medium text-primary hover:bg-tab-hover">Reset</button>}
-          <button type="button" disabled={pending || !from || !to} onClick={() => { onApply(`from=${from}&to=${to}`); setOpen(false); }} className="h-9 rounded-lg bg-primary px-4 text-[14px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
+          <button type="button" disabled={pending || !from || !to} onClick={() => { onApply(`from=${from}&to=${to}`); setOpen(false); }} className="h-9 rounded-full bg-primary px-4 text-[14px] font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-50">Apply</button>
         </div>
       </PopoverContent>
     </Popover>

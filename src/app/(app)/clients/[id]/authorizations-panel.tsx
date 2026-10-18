@@ -29,13 +29,14 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
   const current = items.find((a) => a.id === open);
 
   // The service column is capped so Units left sits beside it; the date column takes what is left (user, Sept 27, 2026). Each row is its own grid, so the cap must be a fixed width, not fit-content, or rows would not line up.
-  const cols = "grid grid-cols-[minmax(0,340px)_110px_250px_minmax(0,1fr)] items-center gap-x-5";
+  // On phones each row folds to two lines: service and code, then units left and the end date.
+  const cols = "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 md:grid-cols-[minmax(0,340px)_110px_250px_minmax(0,1fr)] md:gap-x-5 md:gap-y-0";
   const row = (a: AuthorizationItem) => (
     <>
       <span className="truncate text-[14px] font-medium text-text-strong">{labelForCode(a.serviceCode, a.modifiers)}</span>
-      <span className="ident text-[14px] text-muted-foreground">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
+      <span className="ident text-right text-[14px] text-muted-foreground md:text-left">{a.serviceCode}{a.modifiers.length ? " " + a.modifiers.join(" ") : ""}</span>
       <UnitsLeft used={a.unitsUsed} total={a.authorizedUnits} code={a.serviceCode} />
-      <span className="ident text-[14px] text-muted-foreground">{fmtDateNum(a.endDate)}</span>
+      <span className="ident text-right text-[14px] text-muted-foreground md:text-left">{fmtDateNum(a.endDate)}</span>
     </>
   );
   const rowCls = cx(cols, "w-full border-t border-line-soft py-2.5 text-left first:border-t-0");
@@ -47,7 +48,7 @@ export function AuthorizationsPanel({ personId, manage, defaultCounty, aiReady, 
           <p className="py-2 text-[14px] text-muted-foreground">No active authorization. Notes cannot be recorded until one exists.</p>
         ) : (
           <div>
-            <div className={cx(cols, "pb-1.5 text-[12.5px] text-muted-foreground")}><span>Service</span><span>Service code</span><span>Units left</span><span>Through</span></div>
+            <div className={cx(cols, "hidden pb-1.5 text-[13px] text-muted-foreground md:grid")}><span>Service</span><span>Service code</span><span>Units left</span><span>Through</span></div>
             {items.map((a) => manage
               ? <button key={a.id} type="button" onClick={() => setOpen(a.id)} className={cx(rowCls, "hover:bg-sidebar")}>{row(a)}</button>
               : <div key={a.id} className={rowCls}>{row(a)}</div>)}

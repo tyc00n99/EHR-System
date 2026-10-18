@@ -41,9 +41,10 @@ export interface Destination {
 export function primaryNav(abilities: readonly string[]): Destination[] {
   const has = (k: Parameters<typeof hasAbility>[1]) => hasAbility(abilities, k);
   if (!has("all_clients")) {
+    // Caregivers only (Oct 18, 2026, user: "the app is only for caregivers… we don't need to see
+    // people, teams, or clients"): no client list. A visit still links to the client it is for.
     return [
       { href: "/", label: "Today", icon: "home" },
-      { href: "/clients", label: "My clients", icon: "clients" },
       { href: "/clock", label: "Clock in", icon: "clock" },
       { href: "/visits", label: "My sessions", icon: "visits", also: ["/notes"] },
     ];

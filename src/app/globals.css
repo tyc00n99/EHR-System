@@ -301,6 +301,9 @@
   --color-text: var(--text);
   --color-text-strong: var(--text-strong);
   --color-hint: var(--text-hint);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --radius-field: var(--radius-field);
 
   --color-page: var(--page);
   --color-sidebar: var(--sidebar);
@@ -454,12 +457,12 @@ kbd { font-family: var(--font-sans); }
 * { scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent; }
 
 ::selection {
-  background: var(--blue-300);
+  background: #cfe9f2;
   color: var(--gray-900);
 }
 
 :focus-visible {
-  outline: 2px solid var(--blue-500);
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 /* For controls that draw their own focus ring (the schedule toolbar's teal border + soft blue
@@ -552,18 +555,102 @@ h1, h2 { font-weight: 500; }
 /* Identifiers: PMI numbers, HCPCS codes, dates in tables, unit counts, money. */
 .ident { font-family: var(--font-sans); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 
-/* ---- One ink (Sept 15, 2026, user's request: no gray text anywhere) ----
-   Secondary text used a muted gray for hierarchy; the user wants every word in the same black.
-   The tokens collapse here rather than in 450 class names, so the hierarchy can come back by
-   deleting this block. Placeholders stay gray: an empty field must not look filled. Unlayered so
-   it beats Tailwind's layered utilities. */
-:root, :root[data-theme="tide"], :root[data-theme="slate"], :root[data-theme="hubble"] {
-  --text-muted: var(--text);
-  --text-hint: var(--text);
-  --muted-foreground: var(--text);
+/* ---- Calm redesign (Oct 18, 2026) ----
+   Taken from the user's two reference screenshots (a caregiver "Today" and a "Schedule" phone
+   screen), with two of their notes applied: "too much blue" and "I don't want two background
+   colors". So: one white background for page and cards alike, cards set apart by a hairline and a
+   faint shadow; ink navy carries actions and selection; the brand blue survives only as the focus
+   ring and the "live" dot. Secondary text is a real muted slate again (it was collapsed to one ink
+   on Sept 15); the reference's hierarchy depends on it. See docs/design-system.md. Unlayered and
+   last, so it beats every theme block above and Tailwind's layered utilities. */
+:root, :root[data-theme="tide"], :root[data-theme="slate"], :root[data-theme="hubble"], :root[data-theme="sage"] {
+  --gray-100: #f7f8fb;
+  --gray-200: #eef0f5;
+  --gray-300: #e4e7ee;
+  --gray-400: #a3a9b6;
+  --gray-500: #7a8193;
+  --gray-600: #5b6274;
+  --gray-700: #434a5b;
+  --gray-800: #2f3a4f;
+  --gray-900: #232a3a;
+
+  --text: #2b3241;
+  --text-strong: #232a3a;
+  --text-muted: #6b7183;
+  --text-hint: #9aa0ae;
+  --muted-foreground: #6b7183;
+
+  --page: #ffffff;
+  --page-bg: #ffffff;
+  --background: #ffffff;
+  --sidebar: #ffffff;
+  --panel: #f5f6f9;
+  --card: #ffffff;
+  --card-soft: #f5f6f9;
+  --line: #e4e7ee;
+  --line-soft: #eceff4;
+  --border: #e4e7ee;
+  --input: #dfe3eb;
+  --hover: rgba(47, 58, 79, 0.045);
+  --tab-hover: #eef0f5;
+  --active: rgba(47, 58, 79, 0.08);
+
+  --nav: #ffffff;
+  --nav-border: #e4e7ee;
+  --nav-text: #5b6274;
+  --nav-text-strong: #232a3a;
+  --nav-hover: rgba(47, 58, 79, 0.05);
+  --nav-active: #eef0f5;
+  --nav-active-text: #232a3a;
+  --nav-group: #9aa0ae;
+  --nav-badge: #c0394f;
+  --nav-cta: #eef0f5;
+  --nav-cta-border: #dfe3eb;
+  --banner: #ffffff;
+  --banner-line: #e4e7ee;
+
+  --primary: #2f3a4f;
+  --primary-hover: #232c3e;
+  --primary-foreground: #ffffff;
+  --primary-soft: #eef0f5;
+  --secondary: #eef0f5;
+  --secondary-foreground: #232a3a;
+  --muted: #f5f6f9;
+  --accent: #eef0f5;
+  --accent-foreground: #232a3a;
+  --sidebar-primary: #2f3a4f;
+
+  /* The brand blue: focus, "live", and nothing louder. */
+  --brand: #0098c0;
+  /* Blue for text and small icons: #0098c0 is ~3:1 on white, too faint for 13px words. */
+  --brand-ink: #00708e;
+  --ring: #0098c0;
+  --blue-100: #eef0f5;
+  --blue-200: #e4e7ee;
+  --blue-300: #c9cfdb;
+  --blue-500: #2f3a4f;
+  --blue-600: #232c3e;
+  --blue-700: #1a2130;
+  --chart-1: #2f3a4f;
+
+  --ok: #2f7a4a;
+  --ok-soft: #e7f3eb;
+  --warn: #a2620c;
+  --warn-soft: #fcefe0;
+  --danger: #c0394f;
+  --danger-soft: #fbe8ec;
+
+  --shadow-sm: 0 1px 2px rgba(35, 42, 58, 0.04);
+  --shadow-md: 0 12px 32px rgba(35, 42, 58, 0.12), 0 2px 6px rgba(35, 42, 58, 0.06);
+
+  --radius: 1rem;
+  --radius-btn: 9999px;
+  --radius-field: 0.625rem;
 }
-.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-hint, .text-muted, .text-muted-foreground { color: var(--text); }
-input::placeholder, textarea::placeholder { color: #94a3b8; opacity: 1; }
+html { background: #ffffff; }
+h1 { font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.022em; }
+h2 { font-weight: 600; }
+input::placeholder, textarea::placeholder { color: var(--text-hint); opacity: 1; }
 
 /* Number fields have no spinner arrows (user, Sept 22, 2026): units and rates are typed, not nudged. */
 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -577,7 +664,7 @@ input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
   inset-inline: 8px;
   bottom: -2px;
   height: 12px;
-  background: var(--primary);
+  background: var(--brand, var(--primary));
   -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 16' preserveAspectRatio='none'%3E%3Cpath d='M3 4 H38 C44 4 46 12.5 50 12.5 C54 12.5 56 4 62 4 H97' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 16' preserveAspectRatio='none'%3E%3Cpath d='M3 4 H38 C44 4 46 12.5 50 12.5 C54 12.5 56 4 62 4 H97' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   opacity: 0;

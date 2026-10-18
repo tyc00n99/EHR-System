@@ -8,7 +8,8 @@ import { X } from "lucide-react";
 import { INTERACTION_LEVELS } from "@/lib/templates";
 import type { ActionState } from "@/lib/validation";
 import { AssistantChat } from "@/components/assistant/assistant-chat";
-import { acceptNote, draftProgressReview, recordMedAdmin, returnNote, saveDocumentation, signVisitWithCode } from "../record-actions";
+import { Dictation } from "@/components/assistant/dictation";
+import { acceptNote, cleanDictation, draftProgressReview, recordMedAdmin, returnNote, saveDocumentation, signVisitWithCode } from "../record-actions";
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
@@ -73,7 +74,7 @@ export function RecordForm({ visitId, personFirst, locked, aiReady = false, skil
         </section>
 
         <section>
-          <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-semibold text-text-strong">Daily activities</span><span className="text-[13px] text-muted-foreground">Pick each activity you did with {personFirst}</span></div>
+          <div className="mb-2 flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between"><span className="text-[13px] font-semibold text-text-strong">Daily activities</span><span className="text-[13px] text-muted-foreground">Pick each activity you did with {personFirst}</span></div>
           <Select value="" onChange={(ev) => { const a = ev.target.value; if (a && !activities.includes(a)) setActivities((cur) => [...cur, a]); }} className="h-9">
             <option value="">Add an activity…</option>
             {activityOptions.filter((a) => !activities.includes(a)).map((a) => <option key={a} value={a}>{a}</option>)}
@@ -92,7 +93,7 @@ export function RecordForm({ visitId, personFirst, locked, aiReady = false, skil
 
         {goals.length > 0 && (
           <section>
-            <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-semibold text-text-strong">Outcomes this visit addressed</span><span className="text-[13px] text-muted-foreground">Optional · tick any you worked on</span></div>
+            <div className="mb-2 flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between"><span className="text-[13px] font-semibold text-text-strong">Outcomes this visit addressed</span><span className="text-[13px] text-muted-foreground">Optional · tick any you worked on</span></div>
             <div className="flex flex-wrap gap-1.5">
               {goals.map((g) => <button key={g.id} type="button" onClick={() => toggleGoal(g.id)} className={cx("inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-left text-[13px] font-medium", g.id in addressed ? "border-primary bg-primary-soft text-primary" : "border-line bg-card text-text hover:bg-hover")}>{g.id in addressed && <Check className="size-3.5" />}{g.title}</button>)}
             </div>
@@ -124,7 +125,7 @@ export function RecordForm({ visitId, personFirst, locked, aiReady = false, skil
         )}
 
         <section>
-          <div className="mb-2 flex items-center justify-between"><div className="text-[13px] font-semibold text-text-strong">Progress review</div><Button type="button" variant="secondary" onClick={draft} disabled={drafting} className="h-7 gap-1.5 text-[13px]">{drafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}{drafting ? "Drafting…" : "Draft from what I marked"}</Button></div>
+          <div className="mb-2 flex flex-wrap items-center gap-2"><div className="mr-auto text-[13px] font-semibold text-text-strong">Progress review</div>{!locked && <Dictation onText={(t) => setNote((cur) => (cur.trim() ? `${cur.trimEnd()} ${t}` : t))} clean={aiReady ? (spoken) => cleanDictation(visitId, spoken) : undefined} />}<Button type="button" variant="secondary" onClick={draft} disabled={drafting} className="h-7 gap-1.5 text-[13px]">{drafting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}{drafting ? "Drafting…" : "Draft from what I marked"}</Button></div>
           <Field label="" error={e.shiftNote} hint={`What ${personFirst} did, the support provided, and progress toward goals. Objective, past tense.`}>
             <Textarea name="shiftNote" value={note} onChange={(ev) => setNote(ev.target.value)} className="min-h-32" placeholder={`${personFirst} …`} />
           </Field>
@@ -159,7 +160,7 @@ export function RecordForm({ visitId, personFirst, locked, aiReady = false, skil
         <div className="flex flex-wrap items-center gap-2 border-t border-line-soft pt-4">
           <Button type="submit" variant="outline" disabled={pending}>{pending ? "Saving…" : "Save draft"}</Button>
           <Button type="submit" name="staffSign" value="true" disabled={pending || !note.trim()} className="gap-1.5"><Check className="size-4" />{defaults.staffSigned ? "Re-sign and save" : "Sign and save"}</Button>
-          {defaults.staffSigned && <Badge tone="ok">signed by staff</Badge>}
+          {defaults.staffSigned && <Badge tone="ok">Signed by caregiver</Badge>}
         </div>
       </fieldset>
     </form>
@@ -179,7 +180,7 @@ export function SignaturePanel({ visitId, status, clientSignedAt, unsignedReason
         <li className="flex flex-wrap items-center gap-2">
           <Step done={Boolean(clientSignedAt)} /><span className="font-medium">Client</span>
           {clientSignedAt ? <span className="text-muted-foreground">signed with code {clientSignedAt}</span> : status === "completed" ? (
-            <span className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">{unsignedReason ? `not signed: ${unsignedReason}.` : "not signed."} Hand the phone to the person:</span><Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="6-digit code" className="h-8 w-32 text-center tabular-nums tracking-[0.2em]" /><Button variant="outline" className="h-8" disabled={pending || code.length !== 6} onClick={() => run(() => signVisitWithCode(visitId, code))}>Sign</Button></span>
+            <span className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">{unsignedReason ? `Not signed: ${unsignedReason}.` : "Not signed."} Hand the phone to the person:</span><Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" placeholder="6-digit code" className="h-8 w-32 text-center tabular-nums tracking-[0.2em]" /><Button variant="outline" className="h-8" disabled={pending || code.length !== 6} onClick={() => run(() => signVisitWithCode(visitId, code))}>Sign</Button></span>
           ) : <span className="text-muted-foreground">signs at clock-out.</span>}
         </li>
         <li className="flex flex-wrap items-center gap-2">
@@ -224,7 +225,7 @@ export function MedsDue({ visitId, personId, date, meds, admins, readOnly }: { v
         {slots.map(({ m, t, a }) => (
           <li key={`${m.id}-${t}`} className="flex flex-wrap items-center gap-2 px-4 py-2 text-[13px]">
             <span className="w-12 shrink-0 tabular-nums text-muted-foreground">{t}</span><span className="min-w-0 flex-1"><span className="block truncate font-medium text-text-strong">{m.name}</span><span className="block text-[13px] text-muted-foreground">{m.dose}</span></span>
-            {a ? <Badge tone={a.status === "given" ? "ok" : a.status === "missed" ? "danger" : "warn"}>{a.status}</Badge> : null}
+            {a ? <Badge tone={a.status === "given" ? "ok" : a.status === "missed" ? "danger" : "warn"}>{a.status[0].toUpperCase() + a.status.slice(1)}</Badge> : null}
             {!readOnly && (<span className="flex gap-1">{(["given", "refused", "held"] as const).map((s) => <button key={s} disabled={pending} onClick={() => record(m.id, t, s)} className={cx("h-7 rounded-md border px-2 text-[13px] font-medium disabled:opacity-50", a?.status === s ? "border-primary bg-primary-soft text-primary" : "border-line bg-page text-muted-foreground hover:bg-hover")}>{s[0].toUpperCase() + s.slice(1)}</button>)}</span>)}
           </li>
         ))}
