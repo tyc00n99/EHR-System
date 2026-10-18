@@ -26,6 +26,7 @@ export const queueFilterSchema = z.object({
   rejected: z.coerce.boolean().optional(),
   approachingDeadline: z.coerce.boolean().optional(),
   openExceptionsOnly: z.coerce.boolean().optional(),
+  needsAttention: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -49,6 +50,11 @@ function queueConds(ctx: EvvCtx, f: QueueFilter) {
     const e = schema.evvExceptions;
     const sub = ctx.db.select({ id: e.evvVisitId }).from(e).where(and(eq(e.organizationId, ctx.orgId), inArray(e.status, ["open", "acknowledged"]), ...(f.exceptionType ? [eq(e.type, f.exceptionType)] : [])));
     conds.push(inArray(v.id, sub));
+  }
+  if (f.needsAttention) {
+    const e = schema.evvExceptions;
+    const open = ctx.db.select({ id: e.evvVisitId }).from(e).where(and(eq(e.organizationId, ctx.orgId), inArray(e.status, ["open", "acknowledged"])));
+    conds.push(or(inArray(v.complianceStatus, ["NONCOMPLIANT", "PENDING_REVIEW"]), inArray(v.id, open))!);
   }
   return conds;
 }
@@ -74,10 +80,10 @@ export async function queueCounts(ctx: EvvCtx, raw: unknown): Promise<Record<Que
       return r.evvRequired && due && due <= windowEnd && !["accepted", "accepted_with_warning"].includes(r.submissionStatus ?? "");
     }).length;
   };
-  const [all, exceptions, noncompliant, review, manual, rejected, dl] = await Promise.all([
-    n({}), n(QUEUE_VIEWS.exceptions), n(QUEUE_VIEWS.noncompliant), n(QUEUE_VIEWS.review), n(QUEUE_VIEWS.manual), n(QUEUE_VIEWS.rejected), deadline(),
+  const [all, attention, manual, rejected, dl] = await Promise.all([
+    n({}), n(QUEUE_VIEWS.attention), n(QUEUE_VIEWS.manual), n(QUEUE_VIEWS.rejected), deadline(),
   ]);
-  return { "": all, exceptions, noncompliant, review, manual, rejected, deadline: dl };
+  return { "": all, attention, rejected, deadline: dl, manual };
 }
 
 export async function reviewQueue(ctx: EvvCtx, raw: unknown) {
