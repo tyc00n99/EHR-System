@@ -1,5 +1,5 @@
 import { Badge, Button, Card, StatTile, Table, Td, Th, Thead, Tr } from "@/components/kit";
-import { EvvViewTitle } from "./view-title";
+import { EvvHeader } from "./header";
 import { QuarterlyCheckIn } from "./check-in";
 import { SUBMISSION } from "@/evv/labels";
 import type { ComplianceSummary } from "@/evv/reporting";
@@ -13,7 +13,7 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
   void names;
   return (
     <div>
-      <EvvViewTitle current="compliance" meta={<span>{s.label}. DHS measures compliance from what the aggregator holds, across every NPI and UMPI on your tax ID.</span>} />
+      <EvvHeader crumbs={["Compliance"]} title="Compliance" lead={<>{s.label}. DHS measures compliance from what the aggregator holds, across every NPI and UMPI on your tax ID.</>} />
       <form action="/evv" className="mb-4 flex flex-wrap items-end gap-2">
         <input type="hidden" name="tab" value="compliance" />
         <label className="text-[13px] text-muted-foreground">From<DateInput name="from" defaultValue={s.range.from} className="mt-1 block" /></label>

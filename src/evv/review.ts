@@ -7,7 +7,7 @@ import { z } from "zod";
 import { schema } from "@/db";
 import { evvAudit } from "./audit";
 import { getPolicy, writer, type EvvCtx } from "./context";
-import { QUEUE_VIEWS, QUEUE_VIEW_KEYS, SUBMISSION_GROUPS, type QueueView } from "./labels";
+import { QUEUE_VIEWS, QUEUE_VIEW_KEYS, SUBMISSION_GROUPS, type QueueView, type SubmissionGroup } from "./labels";
 import { submissionDeadlineFor, localDate } from "./time";
 import { EvvError, requireVisit } from "./visits";
 
@@ -86,6 +86,19 @@ export async function queueCounts(ctx: EvvCtx, raw: unknown): Promise<Record<Que
     n({}), n(QUEUE_VIEWS.attention), n(QUEUE_VIEWS.manual), n(QUEUE_VIEWS.rejected), deadline(),
   ]);
   return { "": all, attention, rejected, deadline: dl, manual };
+}
+
+/** How many visits each Submission group holds under the rest of the filter, so the sidebar's
+ *  numbers are what clicking a group shows. */
+export async function submissionGroupCounts(ctx: EvvCtx, raw: unknown): Promise<Record<SubmissionGroup, number>> {
+  const base = queueFilterSchema.parse(raw);
+  delete base.submissionGroup; delete base.submissionStatus;
+  const v = schema.evvVisits;
+  const entries = await Promise.all((Object.keys(SUBMISSION_GROUPS) as SubmissionGroup[]).map(async (g) => {
+    const [r] = await ctx.db.select({ n: count() }).from(v).where(and(...queueConds(ctx, { ...base, submissionGroup: g })));
+    return [g, Number(r?.n ?? 0)] as const;
+  }));
+  return Object.fromEntries(entries) as Record<SubmissionGroup, number>;
 }
 
 export async function reviewQueue(ctx: EvvCtx, raw: unknown) {
