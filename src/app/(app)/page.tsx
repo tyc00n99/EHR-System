@@ -170,10 +170,7 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
             </div>
           </div>
           <p className="mt-3 text-[14px] text-muted-foreground">GPS is checked when you clock in and again when you clock out.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {next.personId ? <LinkButton href={`/clients/${next.personId}`} variant="secondary" className="h-11">Client record</LinkButton> : <span />}
-            <LinkButton href="/clock" variant="primary" className="h-11">Start visit</LinkButton>
-          </div>
+          <LinkButton href="/clock" variant="primary" className="mt-4 h-11 w-full">Start visit</LinkButton>
         </section>
       ) : (
         <section className="mb-6 rounded-[var(--radius-app)] border border-line bg-card p-4 shadow-[var(--shadow-sm)]">

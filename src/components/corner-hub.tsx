@@ -236,7 +236,7 @@ export function PhoneTabBar({ abilities, counts, unread }: { abilities: readonly
           return (
             <Link key={d.href} href={d.href} onClick={() => setOpen(false)} aria-current={on ? "page" : undefined} className={cx(tab, on ? "bg-brand/10 text-brand-ink" : "text-muted-foreground hover:text-text-strong")}>
               <Ic size={20} />
-              <span className="max-w-full truncate">{d.label.replace(/^My /, "")}</span>
+              <span className="max-w-full truncate">{d.label.replace(/^My (.)/, (_m, c: string) => c.toUpperCase())}</span>
               {badge > 0 && <span className="absolute right-[18%] top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[13px] font-semibold leading-none text-white">{badge}</span>}
             </Link>
           );
