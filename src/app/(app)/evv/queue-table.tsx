@@ -31,7 +31,7 @@ export function QueueTable({ rows, filter, counts, options, presets, rangeLabel 
     const q = new URLSearchParams(next);
     router.push(`/evv${q.toString() ? `?${q}` : ""}`);
   };
-  const filtered = Boolean(filter.personId || filter.staffId || filter.submissionStatus || show || filter.from || filter.to);
+  const filtered = Boolean(filter.personId || filter.staffId || filter.submissionGroup || filter.submissionStatus || show || filter.from || filter.to);
   // The drawer is server-rendered from ?visit=, so this must be a real navigation, not pushState.
   const visitHref = (id: string) => `/evv?${new URLSearchParams({ ...filter, visit: id })}`;
   const run = (label: string, ids: string[], fn: (id: string) => Promise<{ message?: string; errors?: unknown }>, clear: () => void) => start(async () => {
@@ -89,7 +89,7 @@ export function QueueTable({ rows, filter, counts, options, presets, rangeLabel 
         <DateRangePill label={rangeLabel} presets={presets} current={{ param: filter.from && filter.to ? `from=${filter.from}&to=${filter.to}` : "", from: filter.from ?? "", to: filter.to ?? "" }} onApply={(param) => { const p = new URLSearchParams(param); navigate({ from: p.get("from") ?? undefined, to: p.get("to") ?? undefined }); }} />
         <FilterPill label="Client" value={filter.personId ? [filter.personId] : []} options={[{ value: "", label: "Any client" }, ...options.people]} single onApply={(v) => navigate({ personId: v[0] })} />
         <FilterPill label="Caregiver" value={filter.staffId ? [filter.staffId] : []} options={[{ value: "", label: "Any caregiver" }, ...options.staff]} single onApply={(v) => navigate({ staffId: v[0] })} />
-        <FilterPill label="Submission" value={filter.submissionStatus ? [filter.submissionStatus] : []} options={[{ value: "", label: "Any status" }, ...options.submission]} single onApply={(v) => navigate({ submissionStatus: v[0] })} />
+        <FilterPill label="Submission" value={filter.submissionGroup ? [filter.submissionGroup] : []} options={[{ value: "", label: "Any status" }, ...options.submission]} single onApply={(v) => navigate({ submissionGroup: v[0], submissionStatus: undefined })} />
         {filtered && <button type="button" onClick={() => router.push("/evv")} className="text-[14px] font-medium text-primary hover:underline">Clear</button>}
       </>}
       rowHref={(r) => visitHref(r.id)}
