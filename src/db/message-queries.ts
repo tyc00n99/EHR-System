@@ -1,11 +1,12 @@
 import "server-only";
-import { and, asc, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { abilitiesFor } from "@/lib/auth";
+import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { hasAbility } from "@/lib/abilities";
 import { audited } from "./audited";
 import { getDb, schema } from "./index";
 
-const { messages, users, staff, people, assignments, chatChannels, chatChannelMembers, chatThreads, chatReads, messageMentions, messageAttachments } = schema;
+const { messages, users, staff, people, assignments, shifts, visits, chatChannels, chatChannelMembers, chatThreads, chatReads, messageMentions, messageAttachments, messageReactions, shiftSwaps } = schema;
 
 /** A user someone can message, with the name the roster knows them by. */
 export interface MessageContact {
@@ -175,7 +176,7 @@ export async function visibleChannels(me: Me): Promise<ChannelInfo[]> {
       const isMember = assigned.has(c.personId);
       if (!isMember && !office) continue;
       out.push({
-        id: c.id, name: `${firstName ?? ""} ${lastName ?? ""}`.trim() || c.name, icon: "person", tint: "primary", isPrivate: false,
+        id: c.id, name: `${firstName ?? ""} ${lastName ?? ""}`.trim() || c.name, icon: "person", tint: "neutral", isPrivate: false,
         createdBy: null, isMember, canManage: false, memberIds: [], personId: c.personId,
       });
       continue;
@@ -283,7 +284,7 @@ export async function threadFor(me: Me, threadId: string) {
   const channel = await channelFor(me, t.channelId);
   if (!channel) return null;
   const starter = t.startedBy ? (await namedUsers([t.startedBy])).get(t.startedBy) ?? FORMER : FORMER;
-  return { id: t.id, title: t.title, createdAt: t.createdAt.toISOString(), startedBy: starter.name, channel };
+  return { id: t.id, title: t.title, createdAt: t.createdAt.toISOString(), startedBy: starter.name, parentMessageId: t.parentMessageId, channel };
 }
 
 /**
@@ -320,52 +321,221 @@ export async function channelMemberIds(channelId: string): Promise<string[]> {
   return rows.map((r) => r.userId);
 }
 
+export interface SwapCard {
+  id: string;
+  status: "pending" | "approved" | "declined" | "withdrawn";
+  shiftId: string;
+  startAt: string;
+  endAt: string;
+  clientName: string;
+  fromName: string;
+  toName: string;
+  /** The colleague is assigned to the client and oriented to them, so the swap can be approved. */
+  toOriented: boolean;
+  decidedBy: string | null;
+}
+
 export interface ChatMessage {
   id: string;
+  kind: "text" | "voice" | "swap";
   sender: MessageContact;
   body: string;
   at: string;
   mentions: { userId: string; name: string }[];
   attachments: { id: string; fileName: string; contentType: string; sizeBytes: number }[];
+  reactions: { emoji: string; count: number; mine: boolean; names: string[] }[];
+  swap: SwapCard | null;
+  /** The thread started from this message with "Reply in thread", if there is one. */
+  replies: { threadId: string; count: number; lastAt: string; faces: string[] } | null;
 }
 
-async function enrich(rows: { id: string; senderId: string; body: string; createdAt: Date }[]): Promise<ChatMessage[]> {
+const KINDS = new Set(["text", "voice", "swap"]);
+
+async function enrich(rows: { id: string; senderId: string; body: string; kind: string; createdAt: Date }[], meId: string): Promise<ChatMessage[]> {
   if (rows.length === 0) return [];
   const db = await getDb();
   const ids = rows.map((r) => r.id);
-  const [ments, files] = await Promise.all([
+  const [ments, files, reacts, swaps, children] = await Promise.all([
     db.select({ messageId: messageMentions.messageId, userId: messageMentions.userId }).from(messageMentions).where(inArray(messageMentions.messageId, ids)),
     db.select({ id: messageAttachments.id, messageId: messageAttachments.messageId, fileName: messageAttachments.fileName, contentType: messageAttachments.contentType, sizeBytes: messageAttachments.sizeBytes })
       .from(messageAttachments).where(inArray(messageAttachments.messageId, ids)).orderBy(asc(messageAttachments.createdAt)),
+    db.select({ messageId: messageReactions.messageId, userId: messageReactions.userId, emoji: messageReactions.emoji }).from(messageReactions).where(inArray(messageReactions.messageId, ids)).orderBy(asc(messageReactions.createdAt)),
+    rows.some((r) => r.kind === "swap") ? listSwaps(ids) : Promise.resolve(new Map<string, SwapCard>()),
+    db.select({ id: chatThreads.id, parent: chatThreads.parentMessageId, lastAt: chatThreads.lastMessageAt }).from(chatThreads).where(inArray(chatThreads.parentMessageId, ids)),
   ]);
-  const people = await namedUsers([...rows.map((r) => r.senderId), ...ments.map((m) => m.userId)]);
-  return rows.map((r) => ({
-    id: r.id,
-    sender: people.get(r.senderId) ?? { ...FORMER, userId: r.senderId },
-    body: r.body,
-    at: r.createdAt.toISOString(),
-    mentions: ments.filter((m) => m.messageId === r.id).map((m) => ({ userId: m.userId, name: people.get(m.userId)?.name ?? "Former login" })),
-    attachments: files.filter((f) => f.messageId === r.id).map((f) => ({ id: f.id, fileName: f.fileName, contentType: f.contentType, sizeBytes: f.sizeBytes })),
-  }));
+  const childIds = children.map((c) => c.id);
+  const childPosts = childIds.length
+    ? await db.select({ threadId: messages.threadId, senderId: messages.senderId }).from(messages).where(inArray(messages.threadId, childIds)).orderBy(asc(messages.createdAt))
+    : [];
+  const people = await namedUsers([...rows.map((r) => r.senderId), ...ments.map((m) => m.userId), ...reacts.map((r) => r.userId), ...childPosts.map((c) => c.senderId)]);
+  return rows.map((r) => {
+    const mine = reacts.filter((x) => x.messageId === r.id);
+    const byEmoji = new Map<string, { emoji: string; count: number; mine: boolean; names: string[] }>();
+    for (const x of mine) {
+      const e = byEmoji.get(x.emoji) ?? { emoji: x.emoji, count: 0, mine: false, names: [] };
+      e.count += 1;
+      if (x.userId === meId) e.mine = true;
+      e.names.push(x.userId === meId ? "You" : people.get(x.userId)?.name.split(" ")[0] ?? "Former login");
+      byEmoji.set(x.emoji, e);
+    }
+    const child = children.find((c) => c.parent === r.id);
+    const posts = child ? childPosts.filter((c) => c.threadId === child.id) : [];
+    return {
+      id: r.id,
+      kind: (KINDS.has(r.kind) ? r.kind : "text") as ChatMessage["kind"],
+      sender: people.get(r.senderId) ?? { ...FORMER, userId: r.senderId },
+      body: r.body,
+      at: r.createdAt.toISOString(),
+      mentions: ments.filter((m) => m.messageId === r.id).map((m) => ({ userId: m.userId, name: people.get(m.userId)?.name ?? "Former login" })),
+      attachments: files.filter((f) => f.messageId === r.id).map((f) => ({ id: f.id, fileName: f.fileName, contentType: f.contentType, sizeBytes: f.sizeBytes })),
+      reactions: [...byEmoji.values()],
+      swap: swaps.get(r.id) ?? null,
+      replies: child && posts.length ? { threadId: child.id, count: posts.length, lastAt: child.lastAt.toISOString(), faces: [...new Set(posts.map((p) => people.get(p.senderId)?.initials ?? "–"))].slice(0, 3) } : null,
+    };
+  });
 }
 
-export async function listThreadMessages(threadId: string, limit = 500): Promise<ChatMessage[]> {
+/** Swap requests behind these messages, with the names and the oriented check the card shows. */
+async function listSwaps(messageIds: string[]): Promise<Map<string, SwapCard>> {
   const db = await getDb();
-  const rows = await db.select({ id: messages.id, senderId: messages.senderId, body: messages.body, createdAt: messages.createdAt })
-    .from(messages).where(eq(messages.threadId, threadId)).orderBy(desc(messages.createdAt)).limit(limit);
-  return enrich(rows.reverse());
+  const rows = await db.select({ w: shiftSwaps, s: shifts, firstName: people.firstName, lastName: people.lastName })
+    .from(shiftSwaps).innerJoin(shifts, eq(shiftSwaps.shiftId, shifts.id)).innerJoin(people, eq(shifts.personId, people.id))
+    .where(inArray(shiftSwaps.messageId, messageIds));
+  if (rows.length === 0) return new Map();
+  const staffIds = [...new Set(rows.flatMap((r) => [r.w.fromStaffId, r.w.toStaffId]))];
+  const [names, oriented, deciders] = await Promise.all([
+    db.select({ id: staff.id, firstName: staff.firstName, lastName: staff.lastName }).from(staff).where(inArray(staff.id, staffIds)),
+    db.select({ staffId: assignments.staffId, personId: assignments.personId, orientedOn: assignments.orientedOn }).from(assignments).where(and(inArray(assignments.staffId, staffIds), eq(assignments.active, true))),
+    namedUsers(rows.map((r) => r.w.decidedBy).filter((x): x is string => Boolean(x))),
+  ]);
+  const nameOf = new Map(names.map((n) => [n.id, `${n.firstName} ${n.lastName}`.trim()]));
+  return new Map(rows.map(({ w, s, firstName, lastName }) => [w.messageId, {
+    id: w.id,
+    status: (["pending", "approved", "declined", "withdrawn"].includes(w.status) ? w.status : "pending") as SwapCard["status"],
+    shiftId: s.id,
+    startAt: s.startAt.toISOString(),
+    endAt: s.endAt.toISOString(),
+    clientName: `${firstName} ${lastName}`.trim(),
+    fromName: nameOf.get(w.fromStaffId) ?? "Former staff",
+    toName: nameOf.get(w.toStaffId) ?? "Former staff",
+    toOriented: oriented.some((o) => o.staffId === w.toStaffId && o.personId === s.personId && Boolean(o.orientedOn)),
+    decidedBy: w.decidedBy ? deciders.get(w.decidedBy)?.name ?? "Former login" : null,
+  }]));
+}
+
+const MSG_COLS = { id: messages.id, senderId: messages.senderId, body: messages.body, kind: messages.kind, createdAt: messages.createdAt };
+
+export async function listThreadMessages(threadId: string, meId: string, limit = 500): Promise<ChatMessage[]> {
+  const db = await getDb();
+  const rows = await db.select(MSG_COLS).from(messages).where(eq(messages.threadId, threadId)).orderBy(desc(messages.createdAt)).limit(limit);
+  return enrich(rows.reverse(), meId);
+}
+
+/** One message, enriched; the caller has already checked it may be read (it is a reply thread's parent). */
+export async function messageById(id: string, meId: string): Promise<ChatMessage | null> {
+  const db = await getDb();
+  const rows = await db.select(MSG_COLS).from(messages).where(eq(messages.id, id)).limit(1);
+  return (await enrich(rows, meId))[0] ?? null;
 }
 
 export async function listDmMessages(meId: string, otherId: string, limit = 500): Promise<ChatMessage[]> {
   const db = await getDb();
-  const rows = await db.select({ id: messages.id, senderId: messages.senderId, body: messages.body, createdAt: messages.createdAt })
+  const rows = await db.select(MSG_COLS)
     .from(messages)
     .where(and(isNull(messages.threadId), or(
       and(eq(messages.senderId, meId), eq(messages.recipientId, otherId)),
       and(eq(messages.senderId, otherId), eq(messages.recipientId, meId)),
     )))
     .orderBy(desc(messages.createdAt)).limit(limit);
-  return enrich(rows.reverse());
+  return enrich(rows.reverse(), meId);
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * On shift now (Oct 18, 2026): the ring of faces at the top of Messages.
+ * ------------------------------------------------------------------------------------------- */
+
+export interface OnShift {
+  staffId: string;
+  /** The caregiver's login, when they have one: the face opens a direct message. */
+  userId: string | null;
+  name: string;
+  initials: string;
+  /** on: clocked in now. late: a shift has started with no clock-in. later: their next shift today. */
+  state: "on" | "late" | "later";
+  clientName: string;
+  at: string;
+}
+
+/**
+ * Who is working today, for office staff: everyone clocked in now (green), anyone whose shift has
+ * started without a clock-in (amber, "Late"), then whoever is still due later today (grey, with the
+ * time). One face per caregiver, in that order.
+ */
+export async function listOnShift(now = new Date()): Promise<OnShift[]> {
+  const db = await getDb();
+  const day = toLocalInput(now).slice(0, 10);
+  const start = fromLocalInput(`${day}T00:00`);
+  const end = new Date(start.getTime() + 24 * 3600_000);
+  const [open, today] = await Promise.all([
+    db.select({ staffId: visits.staffId, at: visits.clockInAt, shiftId: visits.shiftId, pf: people.firstName, pl: people.lastName })
+      .from(visits).innerJoin(people, eq(visits.personId, people.id))
+      .where(and(eq(visits.status, "in_progress"), isNull(visits.clockOutAt), gt(visits.clockInAt, new Date(now.getTime() - 24 * 3600_000))))
+      .orderBy(asc(visits.clockInAt)),
+    db.select({ id: shifts.id, staffId: shifts.staffId, startAt: shifts.startAt, endAt: shifts.endAt, status: shifts.status, pf: people.firstName, pl: people.lastName })
+      .from(shifts).innerJoin(people, eq(shifts.personId, people.id))
+      .where(and(gte(shifts.startAt, start), lt(shifts.startAt, end), inArray(shifts.status, ["scheduled", "in_progress"])))
+      .orderBy(asc(shifts.startAt)),
+  ]);
+  const seen = new Map<string, Omit<OnShift, "userId" | "name" | "initials">>();
+  for (const v of open) if (!seen.has(v.staffId)) seen.set(v.staffId, { staffId: v.staffId, state: "on", clientName: `${v.pf} ${v.pl}`.trim(), at: v.at.toISOString() });
+  for (const s of today) {
+    if (seen.has(s.staffId) || s.status !== "scheduled" || s.endAt <= now) continue;
+    seen.set(s.staffId, { staffId: s.staffId, state: s.startAt <= now ? "late" : "later", clientName: `${s.pf} ${s.pl}`.trim(), at: s.startAt.toISOString() });
+  }
+  if (seen.size === 0) return [];
+  const ids = [...seen.keys()];
+  const who = await db.select({ id: staff.id, firstName: staff.firstName, lastName: staff.lastName, active: staff.active, userId: users.id, userActive: users.active })
+    .from(staff).leftJoin(users, eq(users.staffId, staff.id)).where(inArray(staff.id, ids));
+  const rank = { on: 0, late: 1, later: 2 } as const;
+  return [...seen.values()]
+    .map((x) => {
+      const w = who.find((r) => r.id === x.staffId);
+      return { ...x, userId: w?.userActive ? w.userId : null, name: w ? `${w.firstName} ${w.lastName}`.trim() : "Former staff", initials: w ? `${w.firstName[0] ?? ""}${w.lastName[0] ?? ""}`.toUpperCase() : "–" };
+    })
+    .sort((a, b) => rank[a.state] - rank[b.state] || a.at.localeCompare(b.at));
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Shift swaps: which shifts a caregiver can offer, and to whom.
+ * ------------------------------------------------------------------------------------------- */
+
+export interface SwapOption {
+  shiftId: string;
+  personId: string;
+  clientName: string;
+  startAt: string;
+  endAt: string;
+  /** Colleagues assigned to this client and oriented to them: the only people a shift can move to. */
+  takers: { staffId: string; name: string }[];
+}
+
+/** This caregiver's upcoming scheduled shifts (next 30 days), each with who could take it. */
+export async function listSwapOptions(staffId: string, personId?: string | null): Promise<SwapOption[]> {
+  const db = await getDb();
+  const now = new Date();
+  const rows = await db.select({ id: shifts.id, personId: shifts.personId, startAt: shifts.startAt, endAt: shifts.endAt, pf: people.firstName, pl: people.lastName })
+    .from(shifts).innerJoin(people, eq(shifts.personId, people.id))
+    .where(and(eq(shifts.staffId, staffId), eq(shifts.status, "scheduled"), gt(shifts.startAt, now), lt(shifts.startAt, new Date(now.getTime() + 30 * 86_400_000)), ...(personId ? [eq(shifts.personId, personId)] : [])))
+    .orderBy(asc(shifts.startAt)).limit(40);
+  if (rows.length === 0) return [];
+  const personIds = [...new Set(rows.map((r) => r.personId))];
+  const team = await db.select({ personId: assignments.personId, staffId: staff.id, firstName: staff.firstName, lastName: staff.lastName })
+    .from(assignments).innerJoin(staff, eq(assignments.staffId, staff.id))
+    .where(and(inArray(assignments.personId, personIds), eq(assignments.active, true), sql`${assignments.orientedOn} is not null`, eq(staff.active, true), ne(staff.id, staffId)));
+  return rows.map((r) => ({
+    shiftId: r.id, personId: r.personId, clientName: `${r.pf} ${r.pl}`.trim(), startAt: r.startAt.toISOString(), endAt: r.endAt.toISOString(),
+    takers: team.filter((t) => t.personId === r.personId).map((t) => ({ staffId: t.staffId, name: `${t.firstName} ${t.lastName}`.trim() })).sort((a, b) => a.name.localeCompare(b.name)),
+  }));
 }
 
 export interface MentionItem {

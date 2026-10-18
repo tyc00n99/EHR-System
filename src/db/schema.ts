@@ -1648,6 +1648,11 @@ export const messages = pgTable(
     /** Set when the message is posted in a channel thread (Oct 16, 2026); null for a direct message. */
     threadId: uuid("thread_id").references((): AnyPgColumn => chatThreads.id),
     body: text("body").notNull(),
+    /**
+     * What the message is (Oct 18, 2026): "text"; "voice", a recorded note whose body is the written
+     * transcript and whose audio is its attachment; or "swap", a shift swap request (`shift_swaps`).
+     */
+    kind: text("kind").notNull().default("text"),
     readAt: timestamp("read_at", { withTimezone: true }),
     ...timestamps,
   },
@@ -1705,10 +1710,12 @@ export const chatThreads = pgTable(
     channelId: uuid("channel_id").notNull().references(() => chatChannels.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     startedBy: uuid("started_by").references(() => users.id),
+    /** Set when the thread is a reply to one message ("Reply in thread", Oct 18, 2026): one thread per message. */
+    parentMessageId: uuid("parent_message_id").references((): AnyPgColumn => messages.id, { onDelete: "set null" }),
     lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
     ...timestamps,
   },
-  (t) => [index("chat_threads_channel_idx").on(t.channelId, t.lastMessageAt)],
+  (t) => [index("chat_threads_channel_idx").on(t.channelId, t.lastMessageAt), uniqueIndex("chat_threads_parent_idx").on(t.parentMessageId)],
 );
 export type ChatThread = typeof chatThreads.$inferSelect;
 
@@ -1749,4 +1756,41 @@ export const messageAttachments = pgTable(
     ...timestamps,
   },
   (t) => [index("message_attachments_message_idx").on(t.messageId)],
+);
+
+/** An emoji reaction on a message, one per person per emoji (Oct 18, 2026). */
+export const messageReactions = pgTable(
+  "message_reactions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    messageId: uuid("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    emoji: text("emoji").notNull(),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("message_reactions_idx").on(t.messageId, t.userId, t.emoji)],
+);
+
+/**
+ * A caregiver asking to hand a shift to a colleague (Oct 18, 2026). It is posted as a message
+ * (`messages.kind = "swap"`) and someone who manages the schedule approves or declines it in the
+ * chat; approving moves the shift to the colleague after the same assigned-and-oriented check the
+ * scheduler uses.
+ */
+export const shiftSwaps = pgTable(
+  "shift_swaps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    messageId: uuid("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+    shiftId: uuid("shift_id").notNull().references(() => shifts.id),
+    fromStaffId: uuid("from_staff_id").notNull().references(() => staff.id),
+    toStaffId: uuid("to_staff_id").notNull().references(() => staff.id),
+    requestedBy: uuid("requested_by").notNull().references(() => users.id),
+    /** pending | approved | declined | withdrawn */
+    status: text("status").notNull().default("pending"),
+    decidedBy: uuid("decided_by").references(() => users.id),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("shift_swaps_message_idx").on(t.messageId), index("shift_swaps_shift_idx").on(t.shiftId)],
 );

@@ -5,31 +5,13 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { getAgreement, listAllCredentials, listAssignmentsForStaff, getStaff } from "@/db/queries";
+import { getAgreement } from "@/db/queries";
 import { requireAbility } from "@/lib/auth";
-import { complianceSummary, evaluateCompliance } from "@/lib/credentials";
+import { checkEligibility } from "@/lib/shift-eligibility";
 import { fromLocalInput } from "@/lib/format";
 import { fieldErrors, formToObject, shiftSchema, type ActionState } from "@/lib/validation";
 
 const { shifts } = schema;
-
-/**
- * Eligibility per 245D. Two things stop a shift being made at all: the caregiver must be assigned
- * to the person and must have been oriented to them (245D.09 subd. 4a — the statute is explicit).
- * Overdue compliance items do not block scheduling; they come back as a warning, because the
- * training can be caught up before the shift and refusing to book it only pushed the work into
- * someone's spreadsheet.
- */
-async function checkEligibility(staffId: string, personId: string): Promise<{ problem?: string; warning?: string }> {
-  const s = await getStaff(staffId);
-  if (!s || !s.active) return { problem: "That staff member is inactive." };
-  const a = (await listAssignmentsForStaff(staffId)).find((x) => x.assignment.active && x.person.id === personId);
-  if (!a) return { problem: "That caregiver is not assigned to this client." };
-  if (!a.assignment.orientedOn) return { problem: "That caregiver has not been oriented to this client." };
-  const creds = (await listAllCredentials()).get(staffId) ?? [];
-  const overdue = complianceSummary(evaluateCompliance(s.hireDate, creds)).overdue;
-  return overdue > 0 ? { warning: `${s.firstName} ${s.lastName} has ${overdue} overdue compliance item${overdue === 1 ? "" : "s"} — see Compliance before the first shift.` } : {};
-}
 
 export async function createShifts(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireAbility("schedule");

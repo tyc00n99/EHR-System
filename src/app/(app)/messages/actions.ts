@@ -5,9 +5,12 @@ import { and, asc, eq, inArray, isNull, like } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
-import { canCreateChannels, channelAudience, channelFor, channelMemberIds, threadFor, type Me } from "@/db/message-queries";
+import { canCreateChannels, channelAudience, channelFor, channelMemberIds, listSwapOptions, threadFor, type Me, type SwapOption } from "@/db/message-queries";
+import { hasAbility } from "@/lib/abilities";
+import { checkEligibility, hasClash } from "@/lib/shift-eligibility";
 import { putFile } from "@/lib/storage";
 import { requireUser, type CurrentUser } from "@/lib/auth";
+import { REACTIONS } from "./reactions";
 import { MAX_FILE_BYTES, MAX_FILES, pendingPrefix } from "./upload/shared";
 
 const MAX_BODY = 4000;
@@ -65,6 +68,10 @@ export async function postMessage(form: FormData): Promise<Result> {
   const big = files.find((f) => f.size > MAX_FILE_BYTES);
   if (big) return { error: `${big.name} is over 10 MB.` };
   if (Boolean(to) === Boolean(threadId)) return { error: "Choose a person or a thread." };
+  // A voice note is its recording plus the transcript as the body (the transcript may be empty
+  // when the browser cannot transcribe); it must carry exactly one audio file.
+  const kind = form.get("kind") === "voice" ? "voice" : "text";
+  if (kind === "voice" && (files.length !== 1 || !files[0].type.startsWith("audio/"))) return { error: "The voice note did not record. Try again." };
 
   // Who may be mentioned: the person on the other end, or whoever can read the thread.
   let allowed: Set<string>;
@@ -98,7 +105,7 @@ export async function postMessage(form: FormData): Promise<Result> {
   }
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
-    const msg = await w.insert(schema.messages, { senderId: user.id, recipientId: to, threadId, body: text });
+    const msg = await w.insert(schema.messages, { senderId: user.id, recipientId: to, threadId, body: text, kind });
     for (const id of mentionIds) await w.insert(schema.messageMentions, { messageId: msg.id, userId: id });
     for (let i = 0; i < files.length; i++) {
       const f = files[i];
@@ -265,4 +272,155 @@ export async function joinChannel(channelId: string): Promise<Result> {
   await audited(db, { userId: user.id }).insert(schema.chatChannelMembers, { channelId, userId: user.id, addedBy: user.id });
   revalidatePath("/messages");
   return { ok: true };
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * Reactions, reply threads and shift swaps (Oct 18, 2026).
+ * ------------------------------------------------------------------------------------------- */
+
+/** The message, if this person can read it: either end of a direct message, or anyone who can open its thread. */
+async function readable(user: CurrentUser, messageId: string) {
+  const db = await getDb();
+  const [m] = await db.select().from(schema.messages).where(eq(schema.messages.id, messageId)).limit(1);
+  if (!m) return null;
+  if (m.threadId) {
+    const t = await threadFor(meOf(user), m.threadId);
+    return t ? { message: m, thread: t } : null;
+  }
+  return m.senderId === user.id || m.recipientId === user.id ? { message: m, thread: null } : null;
+}
+
+type Tx = Parameters<Parameters<Awaited<ReturnType<typeof getDb>>["transaction"]>[0]>[0];
+
+async function touch(tx: Tx, threadId: string, userId: string, at: Date) {
+  await audited(tx, { userId }).update(schema.chatThreads, threadId, { lastMessageAt: at });
+  await tx.insert(schema.chatReads).values({ threadId, userId, lastReadAt: at })
+    .onConflictDoUpdate({ target: [schema.chatReads.threadId, schema.chatReads.userId], set: { lastReadAt: at } });
+}
+
+/** Add my reaction, or take it back if I already gave that one. */
+export async function toggleReaction(messageId: string, emoji: string): Promise<Result> {
+  const user = await requireUser();
+  if (!(REACTIONS as readonly string[]).includes(emoji)) return { error: "That reaction is not offered." };
+  if (!(await readable(user, messageId))) return { error: "That message is not open to you." };
+  const db = await getDb();
+  const [row] = await db.select({ id: schema.messageReactions.id }).from(schema.messageReactions)
+    .where(and(eq(schema.messageReactions.messageId, messageId), eq(schema.messageReactions.userId, user.id), eq(schema.messageReactions.emoji, emoji)));
+  const w = audited(db, { userId: user.id });
+  if (row) await w.delete(schema.messageReactions, row.id);
+  else await w.insert(schema.messageReactions, { messageId, userId: user.id, emoji });
+  revalidatePath("/messages");
+  return { ok: true };
+}
+
+/**
+ * "Reply in thread" on a message in a channel: opens the thread hanging off that message, starting
+ * it the first time. Its name is the start of the message, so it reads sensibly in the channel's
+ * thread list. A direct message has no channel, so it has no threads.
+ */
+export async function replyInThread(messageId: string): Promise<Result<{ threadId: string }>> {
+  const user = await requireUser();
+  const r = await readable(user, messageId);
+  if (!r) return { error: "That message is not open to you." };
+  if (!r.thread) return { error: "Threads live in channels. Reply here instead." };
+  const db = await getDb();
+  const [existing] = await db.select({ id: schema.chatThreads.id }).from(schema.chatThreads).where(eq(schema.chatThreads.parentMessageId, messageId)).limit(1);
+  if (existing) return { ok: true, threadId: existing.id };
+  const words = r.message.body.replace(/\s+/g, " ").trim();
+  const title = words ? (words.length > 60 ? `${words.slice(0, 57).trimEnd()}…` : words) : r.message.kind === "voice" ? "Voice note" : "Attachment";
+  const t = await audited(db, { userId: user.id }).insert(schema.chatThreads, { channelId: r.thread.channel.id, title, startedBy: user.id, parentMessageId: messageId, lastMessageAt: r.message.createdAt })
+    .catch(() => null); // somebody started it a moment ago (unique on parent_message_id)
+  if (t) { revalidatePath("/messages"); return { ok: true, threadId: t.id }; }
+  const [again] = await db.select({ id: schema.chatThreads.id }).from(schema.chatThreads).where(eq(schema.chatThreads.parentMessageId, messageId)).limit(1);
+  return again ? { ok: true, threadId: again.id } : { error: "The thread could not be started. Try again." };
+}
+
+const fmtShift = (start: Date, end: Date) => {
+  const day = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", weekday: "short", month: "short", day: "numeric" }).format(start);
+  const t = (d: Date) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }).format(d);
+  return `${day} · ${t(start)} to ${t(end)}`;
+};
+
+/**
+ * A caregiver offers one of their upcoming shifts to a colleague, as a card in the conversation.
+ * The colleague must already be assigned to the client and oriented to them; someone who manages
+ * the schedule approves it in the chat.
+ */
+export async function requestSwap(input: { shiftId: string; toStaffId: string; to?: string | null; thread?: string | null; note?: string }): Promise<Result> {
+  const user = await requireUser();
+  if (!user.staffId) return { error: "Only a caregiver with shifts can ask to swap one." };
+  if (Boolean(input.to) === Boolean(input.thread)) return { error: "Choose a person or a thread." };
+  if (input.to) { const problem = await dmProblem(user, input.to); if (problem) return { error: problem }; }
+  else if (!(await threadFor(meOf(user), input.thread!))) return { error: "That thread is not open to you." };
+  const db = await getDb();
+  const [s] = await db.select().from(schema.shifts).where(eq(schema.shifts.id, input.shiftId)).limit(1);
+  if (!s || s.staffId !== user.staffId) return { error: "That shift is not yours to offer." };
+  if (s.status !== "scheduled" || s.startAt <= new Date()) return { error: "Only an upcoming scheduled shift can be swapped." };
+  if (input.toStaffId === user.staffId) return { error: "Choose a colleague." };
+  const ok = await checkEligibility(input.toStaffId, s.personId);
+  if (ok.problem) return { error: ok.problem };
+  const [pending] = await db.select({ id: schema.shiftSwaps.id }).from(schema.shiftSwaps).where(and(eq(schema.shiftSwaps.shiftId, s.id), eq(schema.shiftSwaps.status, "pending"))).limit(1);
+  if (pending) return { error: "There is already a swap request open for that shift." };
+  const [taker] = await db.select({ firstName: schema.staff.firstName, lastName: schema.staff.lastName }).from(schema.staff).where(eq(schema.staff.id, input.toStaffId));
+  const note = (input.note ?? "").trim().slice(0, 500);
+  const body = `Asked to swap ${fmtShift(s.startAt, s.endAt)} to ${taker?.firstName ?? ""} ${taker?.lastName ?? ""}`.trim() + (note ? `\n${note}` : "");
+  await db.transaction(async (tx) => {
+    const w = audited(tx, { userId: user.id });
+    const msg = await w.insert(schema.messages, { senderId: user.id, recipientId: input.to ?? null, threadId: input.thread ?? null, body, kind: "swap" });
+    await w.insert(schema.shiftSwaps, { messageId: msg.id, shiftId: s.id, fromStaffId: user.staffId!, toStaffId: input.toStaffId, requestedBy: user.id });
+    if (input.thread) await touch(tx, input.thread, user.id, msg.createdAt);
+  });
+  revalidatePath("/messages");
+  return { ok: true };
+}
+
+/**
+ * Approve or decline a swap from the card. Approving re-checks that the shift is still the
+ * requester's and still upcoming, that the colleague is assigned and oriented, and that they are
+ * not already booked then, and moves the shift in the same transaction.
+ */
+export async function decideSwap(swapId: string, approve: boolean): Promise<Result<{ warning?: string }>> {
+  const user = await requireUser();
+  if (!hasAbility(user.abilities, "schedule")) return { error: "Only someone who manages the schedule can approve swaps." };
+  const db = await getDb();
+  const [w] = await db.select().from(schema.shiftSwaps).where(eq(schema.shiftSwaps.id, swapId)).limit(1);
+  if (!w || !(await readable(user, w.messageId))) return { error: "That request is not open to you." };
+  if (w.status !== "pending") return { error: "That request has already been answered." };
+  const [s] = await db.select().from(schema.shifts).where(eq(schema.shifts.id, w.shiftId)).limit(1);
+  let warning: string | undefined;
+  if (approve) {
+    if (!s || s.staffId !== w.fromStaffId || s.status !== "scheduled" || s.startAt <= new Date()) return { error: "The shift has changed since this was asked. Check the schedule." };
+    const ok = await checkEligibility(w.toStaffId, s.personId);
+    if (ok.problem) return { error: ok.problem };
+    if (await hasClash(w.toStaffId, s.startAt, s.endAt, s.id)) return { error: "They already have a shift at that time." };
+    warning = ok.warning;
+  }
+  await db.transaction(async (tx) => {
+    const a = audited(tx, { userId: user.id });
+    if (approve && s) await a.update(schema.shifts, s.id, { staffId: w.toStaffId });
+    await a.update(schema.shiftSwaps, w.id, { status: approve ? "approved" : "declined", decidedBy: user.id, decidedAt: new Date() });
+  });
+  revalidatePath("/messages");
+  revalidatePath("/scheduling");
+  revalidatePath("/");
+  return { ok: true, warning };
+}
+
+/** Whoever asked can take a pending request back. */
+export async function withdrawSwap(swapId: string): Promise<Result> {
+  const user = await requireUser();
+  const db = await getDb();
+  const [w] = await db.select().from(schema.shiftSwaps).where(eq(schema.shiftSwaps.id, swapId)).limit(1);
+  if (!w || w.requestedBy !== user.id) return { error: "Only whoever asked can withdraw it." };
+  if (w.status !== "pending") return { error: "That request has already been answered." };
+  await audited(db, { userId: user.id }).update(schema.shiftSwaps, w.id, { status: "withdrawn", decidedBy: user.id, decidedAt: new Date() });
+  revalidatePath("/messages");
+  return { ok: true };
+}
+
+/** The shifts I can offer in this conversation, and who could take each (for the swap window). */
+export async function swapOptions(personId: string | null): Promise<Result<{ options: SwapOption[] }>> {
+  const user = await requireUser();
+  if (!user.staffId) return { error: "Only a caregiver with shifts can ask to swap one." };
+  return { ok: true, options: await listSwapOptions(user.staffId, personId) };
 }
