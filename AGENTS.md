@@ -447,6 +447,14 @@ The paper that enters the agency is now read, not only stored. `src/lib/ai/read-
 
 <!-- BEGIN:nextjs-agent-rules -->
 
+## AI assistant (October 18, 2026)
+A grounded assistant for writing notes, drafting reports and analysis, on the Claude API (Anthropic SDK, `claude-opus-5-5`, adaptive thinking, streamed).
+- **Where it lives:** an "Assistant" button in the top strip (or ⌘J) opens a right-hand panel on any screen (`components/assistant/assistant-panel.tsx`); it reads the client or staff record from the URL and changes its suggestions. Inside the service record, a collapsible "Assistant · improve, organize, or check this note" sits under Progress review (`record-form.tsx`) and sees the unsaved form (marked facts + text). Any screen can call `openAssistant("question")`.
+- **Grounding:** the model only knows what its tools return. `src/lib/ai/assistant/tools.ts` holds every lookup (clients, notes, outcomes, MAR, documentation gaps, review queue, staff file, schedule) and each one re-checks the signed-in person's abilities and `canViewPerson`; a caregiver is never offered agency tools and can open only the note in front of them, never a past one. Every record returned carries a short ref (`[note:3f2a91bc]`) the answer cites and the panel draws as a link, plus a "Based on N records" list. The system prompt (`run.ts`) forbids invented facts: missing details become `[placeholders]` and a "missing" list, or a question.
+- **Review before save:** the assistant writes nothing. Drafts come back through `propose_draft` as an editable card. "Use in progress review" fills the form field (the person still signs and saves the note as usual); "Save to client documents" needs a ticked "I reviewed this draft" and `manage_people`, and files a PDF with an approval line under Other file (`assistant/actions.ts`, audited). Each conversation logs an audit `reveal` event (`ai_assistant`) with the tools used, not the text.
+- Conversations live only in the browser tab's memory (PHI: no localStorage). `/assistant/chat` streams NDJSON events. Gated on `aiConfigured()`; tests in `src/evv/__tests__/assistant-tools.test.ts`.
+- Real client data needs a BAA with Anthropic before `ANTHROPIC_API_KEY` is set in production.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.

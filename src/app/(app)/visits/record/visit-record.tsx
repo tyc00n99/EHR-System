@@ -3,6 +3,7 @@ import { CheckCircle2, ExternalLink, FileDown, MapPin, X } from "lucide-react";
 import { Badge } from "@/components/kit";
 import { getVisitRecord } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
+import { aiConfigured } from "@/lib/ai/extract-agreement";
 import { fmtDateTime, fullName } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { minutesBetween } from "@/lib/units";
@@ -59,6 +60,7 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           visitId={v.id}
           personFirst={person.firstName}
           locked={locked}
+          aiReady={aiConfigured() && (user.abilities.includes("edit_visits") || v.staffId === user.staffId)}
           skillsOptions={skillsFor(serviceTypeId)}
           activityOptions={activitiesFor(person.firstName, person.activityLibrary)}
           defaults={{ interactionLevel: v.interactionLevel ?? "", skills: v.skills, activities: v.activities, shiftNote: v.shiftNote ?? "", staffSigned: Boolean(v.staffSignedAt) }}
