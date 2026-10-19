@@ -20,7 +20,7 @@ export function EvvSidebar({ screen, filter, counts, groupCounts }: { screen: "q
     delete next.offset; delete next.visit; delete next.tab;
     if (resetView) for (const k of QUEUE_VIEW_KEYS) delete next[k];
     for (const [k, v] of Object.entries(patch)) { if (v) next[k] = v; else delete next[k]; }
-    const s = new URLSearchParams(next).toString();
+    const s = new URLSearchParams({ tab: "queue", ...next }).toString();
     return `/evv${s ? `?${s}` : ""}`;
   };
   const views = Object.keys(QUEUE_VIEW_LABEL) as QueueView[];
@@ -29,6 +29,9 @@ export function EvvSidebar({ screen, filter, counts, groupCounts }: { screen: "q
   return (
     <aside aria-label="EVV menu" className="flex flex-col gap-4">
       <div className="grid gap-3.5 [&>*+*]:border-t [&>*+*]:border-line [&>*+*]:pt-3.5">
+      <Group label="Reports">
+        <Row href="/evv?tab=compliance" icon={ShieldCheck} current={screen === "compliance"} label="Compliance" />
+      </Group>
       <Group label="Queue">
         {views.map((k) => {
           const Icon = VIEW_ICON[k], n = counts?.[k];
@@ -41,9 +44,6 @@ export function EvvSidebar({ screen, filter, counts, groupCounts }: { screen: "q
           <Row key={k} href={href({ submissionGroup: k, submissionStatus: undefined }, true)} icon={GROUP_ICON[k]}
             current={screen === "queue" && filter.submissionGroup === k} label={SUBMISSION_GROUPS[k].label} count={groupCounts?.[k]} />
         ))}
-      </Group>
-      <Group label="Reports">
-        <Row href="/evv?tab=compliance" icon={ShieldCheck} current={screen === "compliance"} label="Compliance" />
       </Group>
       </div>
     </aside>

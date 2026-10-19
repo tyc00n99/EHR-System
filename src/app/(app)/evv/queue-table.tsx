@@ -23,13 +23,13 @@ export function QueueTable({ rows, filter, options, presets, rangeLabel }: { row
     const next: Record<string, string> = { ...filter };
     delete next.offset; delete next.visit;
     for (const [k, v] of Object.entries(patch)) { if (v) next[k] = v; else delete next[k]; }
-    const q = new URLSearchParams(next);
+    const q = new URLSearchParams({ tab: "queue", ...next });
     router.push(`/evv${q.toString() ? `?${q}` : ""}`);
   };
   // The view and the submission group live in the sidebar; Clear only empties the table's own pills.
   const filtered = Boolean(filter.personId || filter.staffId || filter.from || filter.to);
   // The drawer is server-rendered from ?visit=, so this must be a real navigation, not pushState.
-  const visitHref = (id: string) => `/evv?${new URLSearchParams({ ...filter, visit: id })}`;
+  const visitHref = (id: string) => `/evv?${new URLSearchParams({ tab: "queue", ...filter, visit: id })}`;
   const run = (label: string, ids: string[], fn: (id: string) => Promise<{ message?: string; errors?: unknown }>, clear: () => void) => start(async () => {
     let ok = 0; for (const id of ids) { const r = await fn(id); if (!r.errors) ok++; }
     toast[ok === ids.length ? "success" : "error"](`${label}: ${ok} of ${ids.length} done.`); clear(); router.refresh();
