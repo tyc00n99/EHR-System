@@ -1,3 +1,4 @@
+import { InfoTip } from "./info-tip";
 import { ChevronRight } from "lucide-react";
 import { Fragment } from "react";
 
@@ -6,7 +7,7 @@ import { Fragment } from "react";
  * (Oct 18, 2026, the user's pick "A"). The breadcrumb's last crumb is the title; the sidebar is
  * how you move between screens.
  */
-export function EvvHeader({ crumbs, title, lead }: { crumbs: string[]; title: string; lead?: React.ReactNode }) {
+export function EvvHeader({ crumbs, title, lead, info }: { crumbs: string[]; title: string; lead?: React.ReactNode; info?: string }) {
   return (
     <header className="mb-5">
       <nav aria-label="Breadcrumb" className="-mx-1 mb-5 flex flex-wrap items-center gap-2 border-b border-line px-1 pb-3.5 text-[15px] text-muted-foreground">
@@ -17,7 +18,7 @@ export function EvvHeader({ crumbs, title, lead }: { crumbs: string[]; title: st
           </Fragment>
         ))}
       </nav>
-      <h1>{title}</h1>
+      <div className="flex items-center gap-2"><h1>{title}</h1>{info && <InfoTip text={info} />}</div>
       {lead && <p className="mt-1 text-[15px] text-muted-foreground">{lead}</p>}
     </header>
   );

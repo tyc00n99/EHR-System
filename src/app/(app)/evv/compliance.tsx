@@ -13,7 +13,7 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
   void names;
   return (
     <div>
-      <EvvHeader crumbs={["Compliance"]} title="Compliance" lead={<>{s.label}. DHS measures compliance from what the aggregator holds, across every NPI and UMPI on your tax ID.</>} />
+      <EvvHeader crumbs={["Compliance"]} title="Compliance" info={`${s.label}. DHS measures compliance from what the aggregator holds, across every NPI and UMPI on your tax ID.`} />
       <form action="/evv" className="mb-4 flex flex-wrap items-end gap-2">
         <input type="hidden" name="tab" value="compliance" />
         <label className="text-[13px] text-muted-foreground">From<DateInput name="from" defaultValue={s.range.from} className="mt-1 block" /></label>
@@ -36,28 +36,11 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
         <StatTile label="Needs review" value={s.totals.pendingReview} tone={s.totals.pendingReview ? "warn" : undefined} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="By caregiver">
+      <Card title="By caregiver">
           {s.byCaregiver.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No completed EVV visits in this range.</p> : (
             <div className="overflow-x-auto"><Table><Thead><Th>Caregiver</Th><Th align="right">Visits</Th><Th align="right">Compliant</Th><Th align="right">Rate</Th></Thead><tbody>{[...s.byCaregiver].sort((a, b) => (a.percent ?? 0) - (b.percent ?? 0)).map((r) => <Tr key={r.staffId}><Td strong>{r.name}</Td><Td align="right">{r.required}</Td><Td align="right">{r.compliant}</Td><Td align="right"><Badge tone={(r.percent ?? 0) >= 90 ? "ok" : (r.percent ?? 0) >= 75 ? "warn" : "danger"}>{pct(r.percent)}</Badge></Td></Tr>)}</tbody></Table></div>
           )}
         </Card>
-        <Card title="By service">
-          {s.byService.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No completed EVV visits in this range.</p> : (
-            <div className="overflow-x-auto"><Table><Thead><Th>Service</Th><Th align="right">Visits</Th><Th align="right">Compliant</Th><Th align="right">Rate</Th></Thead><tbody>{s.byService.map((r) => <Tr key={`${r.serviceCode} ${r.modifiers}`}><Td strong>{r.serviceCode} {r.modifiers}</Td><Td align="right">{r.required}</Td><Td align="right">{r.compliant}</Td><Td align="right">{pct(r.percent)}</Td></Tr>)}</tbody></Table></div>
-          )}
-        </Card>
-        <Card title="By billing identifier" description="DHS evaluates every NPI and UMPI associated with the tax ID">
-          {s.byBillingId.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">Nothing yet.</p> : (
-            <div className="overflow-x-auto"><Table><Thead><Th>Identifier</Th><Th align="right">Visits</Th><Th align="right">Compliant</Th><Th align="right">Rate</Th></Thead><tbody>{s.byBillingId.map((r) => <Tr key={`${r.billingIdType}:${r.billingId}`}><Td strong>{r.billingIdType?.toUpperCase() ?? "—"} {r.billingId ?? "not set"}</Td><Td align="right">{r.required}</Td><Td align="right">{r.compliant}</Td><Td align="right">{pct(r.percent)}</Td></Tr>)}</tbody></Table></div>
-          )}
-        </Card>
-        <Card title="Top reasons">
-          {s.topExceptionReasons.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No reasons recorded in this range.</p> : (
-            <ul className="divide-y divide-line-soft">{s.topExceptionReasons.map((r) => <li key={r.type} className="flex items-center justify-between px-5 py-2.5"><span className="text-text">{r.label}</span><span className="figure text-text-strong">{r.count}</span></li>)}</ul>
-          )}
-        </Card>
-      </div>
 
       <Card title={`Approaching the monthly deadline · ${s.approachingDeadline.count}`} description={`Minnesota requires visits and corrections by the ${s.approachingDeadline.deadlineDay}th of the following month; flagged ${s.approachingDeadline.warningDays} days ahead.`} className="mt-4">
         {s.approachingDeadline.visits.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">Nothing is close to its deadline.</p> : (
