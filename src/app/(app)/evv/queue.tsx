@@ -1,5 +1,4 @@
 import { COMPLIANCE, currentView, QUEUE_VIEW_LABEL, SUBMISSION, SUBMISSION_GROUPS, type QueueView, type SubmissionGroup } from "@/evv/labels";
-import { Info } from "lucide-react";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, shiftPayPeriod, type PayRule } from "@/lib/pay-period";
 import { isoDay } from "@/lib/format";
@@ -44,12 +43,8 @@ export function Queue({ queue, counts, filter, names, people, staff, payRules }:
 
   return (
     <div>
-      <EvvHeader crumbs={crumbs} title={crumbs[crumbs.length - 1]} lead={group && SUBMISSION_GROUPS[group] ? groupLead(group, n) : lead(view, n, filter.from && filter.to ? rangeLabel : "")} />
+      <EvvHeader crumbs={crumbs} title={crumbs[crumbs.length - 1]} lead={group && SUBMISSION_GROUPS[group] ? groupLead(group, n) : lead(view, n, filter.from && filter.to ? rangeLabel : "")} info="Noncompliant is not unsent. Every completed visit still goes to the aggregator. Compliance is our rule check; submission is what the aggregator said back." />
       <QueueTable rows={rows} filter={filter} options={options} presets={presets} rangeLabel={rangeLabel} />
-      <p className="mt-5 flex items-start gap-2.5 rounded-xl border border-line bg-panel px-4 py-3.5 text-[14px] text-muted-foreground">
-        <Info size={18} aria-hidden className="mt-px shrink-0" />
-        <span><b className="font-medium text-text-strong">Noncompliant is not unsent.</b> Every completed visit still goes to the aggregator. Compliance is our rule check; submission is what the aggregator said back.</span>
-      </p>
     </div>
   );
 }
