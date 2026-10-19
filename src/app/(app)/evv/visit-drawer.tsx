@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -16,6 +18,9 @@ import { DateTimeInput } from "@/components/time-input";
 
 type Detail = Awaited<ReturnType<typeof visitDetail>>;
 type Names = { person: Record<string, string>; staff: Record<string, string> };
+
+const OPERATION: Record<string, string> = { create: "Sent as a new visit", update: "Sent as an update", void: "Sent as a void" };
+const CAUSE: Record<string, string> = { create: "Visit started", clock_in: "Clocked in", clock_out: "Clocked out", correction: "Corrected", edit: "Edited", review: "Reviewed", void: "Voided", unvoid: "Restored", imported: "Imported" };
 
 const Section = ({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) => (
   <section className="border-t border-line-soft px-5 py-4">
@@ -119,15 +124,32 @@ export function VisitDrawer({ detail, names, reviewers, canCorrect, canResubmit,
           </Section>
         )}
 
-        <Section title="Submissions">
+        {/* History is folded (Oct 19, 2026, user): it is the audit trail, needed when the aggregator rejects a visit, so it opens itself only then. Cards match Events. */}
+        <details open={detail.submissions.some((x) => !!x.rejectionMessage)} className="group border-t border-line-soft px-5 py-4">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-text-strong [&::-webkit-details-marker]:hidden">
+            <ChevronRight size={14} aria-hidden className="transition-transform group-open:rotate-90" />History
+          </summary>
+          <div className="mb-2 mt-4 text-[13px] font-medium text-text-strong">Sent to the aggregator</div>
           {detail.submissions.length === 0 ? <p className="text-[13px] text-muted-foreground">{v.evvRequired ? "Not queued yet." : "Not required for this service."}</p> : (
-            <ul className="space-y-1.5 text-[13.5px]">{detail.submissions.map((sub) => <li key={sub.id} className="flex flex-wrap items-center gap-2"><span className="text-muted-foreground">v{sub.visitVersion} · {sub.operation}</span><Badge tone={SUBMISSION[sub.status].tone}>{SUBMISSION[sub.status].label}</Badge><span className="text-muted-foreground">{sub.attemptCount} attempt{sub.attemptCount === 1 ? "" : "s"}{sub.externalReferenceId ? ` · ref ${sub.externalReferenceId}` : ""}{sub.nextAttemptAt && sub.status === "retry_scheduled" ? ` · next ${fmtDateTime(sub.nextAttemptAt)}` : ""}</span>{sub.rejectionMessage && <span className="text-danger">{sub.rejectionMessage}</span>}</li>)}</ul>
+            <ul className="space-y-2">
+              {detail.submissions.map((sub) => (
+                <li key={sub.id} className="rounded-lg border border-line-soft px-3 py-2 text-[13.5px]">
+                  <div className="flex flex-wrap items-center gap-2"><span className="font-medium text-text-strong">{OPERATION[sub.operation] ?? sub.operation} · version {sub.visitVersion}</span><span>{fmtDateTime(sub.lastAttemptAt ?? sub.requestedAt)}</span><Badge tone={SUBMISSION[sub.status].tone}>{SUBMISSION[sub.status].label}</Badge></div>
+                  <div className="mt-0.5 text-muted-foreground">{sub.attemptCount} attempt{sub.attemptCount === 1 ? "" : "s"}{sub.externalReferenceId ? ` · reference ${sub.externalReferenceId}` : ""}{sub.nextAttemptAt && sub.status === "retry_scheduled" ? ` · next try ${fmtDateTime(sub.nextAttemptAt)}` : ""}</div>
+                  {sub.rejectionMessage && <div className="mt-0.5 text-danger">{sub.rejectionMessage}</div>}
+                </li>
+              ))}
+            </ul>
           )}
-        </Section>
-
-        <Section title="Versions">
-          <p className="text-[13px] text-muted-foreground">{detail.versions.map((x) => `v${x.version} ${x.cause}`).join(" · ")}</p>
-        </Section>
+          <div className="mb-2 mt-4 text-[13px] font-medium text-text-strong">Versions</div>
+          <ul className="space-y-2">
+            {detail.versions.map((x) => (
+              <li key={x.version} className="flex flex-wrap items-center gap-2 rounded-lg border border-line-soft px-3 py-2 text-[13.5px]">
+                <span className="font-medium text-text-strong">Version {x.version}</span><span>{CAUSE[x.cause] ?? x.cause.replaceAll("_", " ")}</span><span className="text-muted-foreground">{fmtDateTime(x.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
 
         <Section title="Internal comments">
           {detail.comments.length > 0 && <ul className="mb-3 space-y-1.5 text-[13.5px]">{detail.comments.map((k) => <li key={k.id}><span className="text-muted-foreground">{fmtDateTime(k.createdAt)} · </span>{k.body}</li>)}</ul>}
