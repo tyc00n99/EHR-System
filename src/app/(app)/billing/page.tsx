@@ -3,12 +3,12 @@ import { Badge, Card, cx, Empty, PageHeader, Table, Td, Th, Thead, Tr, type Tone
 import { getDb } from "@/db";
 import { defaultOrganizationId } from "@/evv/context";
 import { centsToDollars } from "@/billing/money";
-import { authorizationSummaries, billableLines, billingSetup, ensureBillingDefaults, sentClaims, type BillableLine } from "@/billing/claims";
+import { billableLines, billingSetup, ensureBillingDefaults, sentClaims, type BillableLine } from "@/billing/claims";
 import { evvLabel } from "@/billing/labels";
 import { RULES, SOURCE_LABEL, type Check, type RuleId } from "@/billing/rules";
 import { clearinghouseFromEnv } from "@/billing/clearinghouse";
 import { requireAbility } from "@/lib/auth";
-import { fmtDate, fmtDateNum, fmtMoney, isoDay } from "@/lib/format";
+import { fmtDate, fmtDateNum, fmtMoney } from "@/lib/format";
 import { labelForCode } from "@/lib/hcpcs";
 import { currentPayPeriod, payPeriodFromParam, shiftPayPeriod } from "@/lib/pay-period";
 import { getPayRules } from "@/db/pay-queries";
@@ -50,7 +50,6 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   const readyIds = ready.map((l) => l.visitId);
   const name = adapter.key === "mock" ? "the mock clearinghouse" : "Waystar";
   const flagged = ready.filter((l) => l.warnings.length);
-  const auths = await authorizationSummaries(db, orgId, lines, isoDay(0));
   // A fix that is only a query string (`?visit=…`) opens over this page, keeping the period and filter.
   const fixHref = (f: string) => (f.startsWith("?") ? `${q(period)}&${f.slice(1)}` : f);
   const groups = attentionGroups(lines);
@@ -159,28 +158,6 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
             </details>
           );
         })}
-      </Card>
-      <Card title="Authorizations" description="Units on the authorizations these notes draw on. Ready units are counted before they are sent." className="mt-4" actions={<Badge tone={auths.some((a) => a.flags.some((f) => f.tone === "danger")) ? "danger" : auths.some((a) => a.flags.length) ? "warn" : "neutral"}>{auths.length}</Badge>}>
-        {auths.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No notes in this period.</p> : (
-          <Table>
-            <Thead><Th>Client</Th><Th>Authorization</Th><Th>Service</Th><Th>Dates</Th><Th align="right">Authorized</Th><Th align="right">Billed</Th><Th align="right">Reserved</Th><Th align="right">Ready</Th><Th align="right">Held</Th><Th align="right">Left</Th><Th>{""}</Th></Thead>
-            <tbody>{auths.map((a) => (
-              <Tr key={a.agreementId}>
-                <Td><Link href={`/clients/${a.personId}`} className="font-medium hover:underline">{a.personName}</Link></Td>
-                <Td><Link href={`/clients/${a.personId}?tab=overview`} className="tabular-nums hover:underline">{a.agreementNumber}</Link></Td>
-                <Td className="tabular-nums">{[a.serviceCode, ...a.modifiers].join(" ")}</Td>
-                <Td className="tabular-nums">{fmtDateNum(a.startDate)} – {fmtDateNum(a.endDate)}</Td>
-                <Td align="right">{a.authorized.toLocaleString()}</Td>
-                <Td align="right">{a.billed.toLocaleString()}</Td>
-                <Td align="right">{a.reserved.toLocaleString()}</Td>
-                <Td align="right">{a.readyInView.toLocaleString()}</Td>
-                <Td align="right">{a.heldInView.toLocaleString()}</Td>
-                <Td align="right" strong>{a.left.toLocaleString()}</Td>
-                <Td><span className="flex flex-wrap gap-1">{a.flags.map((f) => <Badge key={f.message} tone={f.tone}>{f.message}</Badge>)}</span></Td>
-              </Tr>
-            ))}</tbody>
-          </Table>
-        )}
       </Card>
       <Card title="Sent claims" description={`Claims with service dates in this pay period, sent to ${name} or downloaded for upload.`} className="mt-4" actions={<Badge tone="neutral">{sent.length}</Badge>}>
         {sent.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No claims sent for this period yet.</p> : (
