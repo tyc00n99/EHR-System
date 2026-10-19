@@ -10,19 +10,20 @@
  * organisation; the host's clinical tables are one organisation per database.
  */
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte, inArray, isNull, lte, max, ne, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNull, lt, lte, max, ne, notInArray, sql } from "drizzle-orm";
 import type { Db } from "@/db";
 import { audited, type Actor, type Executor } from "@/db/audited";
 import {
   authorizationUnits, billingProviders, claimBatches, claimLines, claimVersions, claims, clientDiagnoses, clientFundingSources,
-  organizations, payers, people, serviceAgreements, staff, visits,
+  evvExceptions, evvPolicies, evvServiceRules, evvVisits, organizations, payers, people, serviceAgreements, staff, visits,
 } from "@/db/schema";
+import { ruleFor } from "@/evv/rules";
 import { build837P, claimProblems, fileProblems, type BillingProvider, type ClaimInput, type Payer } from "./x12-837p";
 import type { ClaimStatusUpdate, ClearinghouseAdapter } from "./clearinghouse";
 import { centsToDecimal, lineCents, sumCents, toCents, type Cents } from "./money";
 import { canonical, LIVE_CLAIM, lockNotes, sha256, unlockNotes } from "./notes";
 import { DEFAULT_PROFILE, payerProfile } from "./profiles";
-import { blocking, coverageFor, readiness, resolvePayer, type Check, type Coverage } from "./readiness";
+import { blocking, coverageFor, findOverlaps, readiness, resolvePayer, setupReadiness, warnings, type Check, type Coverage, type EvvFacts, type Overlap } from "./readiness";
 
 export type LineState = "ready" | "hold" | "claimed";
 
@@ -42,6 +43,10 @@ export interface BillableLine {
   state: LineState;
   /** Why it is held, when it is, as sentences. */
   holds: string[];
+  /** Checks that flag the line without holding it. */
+  warnings: Check[];
+  /** What the EVV record says, for the billing screen's EVV column. */
+  evv: EvvFacts;
   /** The rules behind `holds`, with their source and where to fix them. */
   checks: Check[];
   payerId: string | null;
@@ -58,6 +63,7 @@ class Refusal extends Error { constructor(public problems: string[]) { super(pro
 interface Row {
   visitId: string; personId: string; personFirst: string; personLast: string; dob: string; sex: string | null; pmi: string;
   address1: string | null; address2: string | null; city: string | null; state: string | null; zip: string | null;
+  staffId: string; returnedAt: Date | null; clockOutAt: Date | null;
   agreementId: string; agreementNumber: string; agStatus: string; agStart: string; agEnd: string; agCode: string; agModifiers: string[]; agUnits: number; agArchivedAt: Date | null; unitRate: string;
   serviceCode: string; modifiers: string[]; units: number;
   placeOfService: string; renderingIdType: "npi" | "umpi"; renderingId: string; staffFirst: string; staffLast: string;
@@ -71,7 +77,7 @@ async function loadRows(db: Executor, where: { from?: Date; to?: Date; visitIds?
   if (where.visitIds) conds.push(inArray(visits.id, where.visitIds.length ? where.visitIds : [randomUUID()]));
   return db
     .select({
-      visitId: visits.id, personId: people.id, personFirst: people.firstName, personLast: people.lastName, dob: people.dob, sex: people.sexAtBirth, pmi: visits.pmi,
+      visitId: visits.id, staffId: visits.staffId, returnedAt: visits.returnedAt, clockOutAt: visits.clockOutAt, personId: people.id, personFirst: people.firstName, personLast: people.lastName, dob: people.dob, sex: people.sexAtBirth, pmi: visits.pmi,
       address1: people.address1, address2: people.address2, city: people.city, state: people.state, zip: people.zip,
       agreementId: serviceAgreements.id, agreementNumber: serviceAgreements.agreementNumber, agStatus: serviceAgreements.status, agStart: serviceAgreements.startDate, agEnd: serviceAgreements.endDate,
       agCode: serviceAgreements.serviceCode, agModifiers: serviceAgreements.modifiers, agUnits: serviceAgreements.authorizedUnits, agArchivedAt: serviceAgreements.archivedAt, unitRate: serviceAgreements.unitRate,
@@ -101,6 +107,15 @@ export async function ensureBillingDefaults(db: Executor, orgId: string, actor: 
       organizationId: orgId, legalName: org.name, taxId: org.taxId, npi: org.npi, umpi: org.umpi,
       address1: org.address1, address2: org.address2, city: org.city, state: org.state, zip: org.zip, phone: org.phone,
     });
+  } else {
+    // Fill only what the billing provider is missing from the organisation (Settings), so fixing a
+    // gap in Settings reaches billing, while nothing billing already holds is overwritten.
+    const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId));
+    const gaps: Record<string, string> = {};
+    if (org) for (const [k, v] of [["taxId", org.taxId], ["npi", org.npi], ["umpi", org.umpi], ["address1", org.address1], ["city", org.city], ["state", org.state], ["zip", org.zip], ["phone", org.phone]] as const) {
+      if (v && !provider[k]) gaps[k] = v;
+    }
+    if (Object.keys(gaps).length) provider = await a.update(billingProviders, provider.id, gaps);
   }
   let [payer] = await db.select().from(payers).where(and(eq(payers.organizationId, orgId), eq(payers.key, DEFAULT_PROFILE.key)));
   if (!payer) {
@@ -108,6 +123,9 @@ export async function ensureBillingDefaults(db: Executor, orgId: string, actor: 
       organizationId: orgId, key: DEFAULT_PROFILE.key, name: DEFAULT_PROFILE.name, kind: DEFAULT_PROFILE.kind,
       profileKey: DEFAULT_PROFILE.key, profileVersion: DEFAULT_PROFILE.version, isDefault: true,
     });
+  } else if (payer.profileKey === DEFAULT_PROFILE.key && payer.profileVersion !== DEFAULT_PROFILE.version) {
+    // The payer follows the latest reviewed profile; claim versions keep the one they were built with.
+    payer = await a.update(payers, payer.id, { profileVersion: DEFAULT_PROFILE.version });
   }
   return { provider, defaultPayer: payer };
 }
@@ -118,22 +136,44 @@ interface Context {
   used: Map<string, number>;
   live: Map<string, { id: string; status: string }>;
   defaultPayerId: string | null;
+  /** payer id → what a missing or unaccepted EVV record does on that payer. */
+  evvAggregator: Map<string, "block" | "warn" | "off">;
+  holdNoncompliant: boolean;
+  evv: Map<string, EvvFacts>;
+  overlaps: Map<string, { caregiver: Overlap[]; service: Overlap[] }>;
 }
+
+const NO_EVV: EvvFacts = { required: false, recorded: false, compliance: null, submission: null, openExceptions: 0, evvVisitId: null };
 
 async function loadContext(db: Executor, orgId: string, rows: Row[]): Promise<Context> {
   const personIds = [...new Set(rows.map((r) => r.personId))];
   const agreementIds = [...new Set(rows.map((r) => r.agreementId))];
   const visitIds = rows.map((r) => r.visitId);
   const none = [randomUUID()];
-  const [dxRows, covRows, usedRows, liveRows, [defaultPayer]] = await Promise.all([
-    db.select().from(clientDiagnoses).where(and(inArray(clientDiagnoses.personId, personIds.length ? personIds : none), isNull(clientDiagnoses.archivedAt))),
-    db.select().from(clientFundingSources).where(inArray(clientFundingSources.personId, personIds.length ? personIds : none)),
+  const ids = (xs: string[]) => (xs.length ? xs : none);
+  const times = rows.flatMap((r) => [+r.clockInAt, +(r.clockOutAt ?? r.clockInAt)]);
+  const lo = new Date(times.length ? Math.min(...times) : 0);
+  const hi = new Date(times.length ? Math.max(...times) : 0);
+  const [dxRows, covRows, usedRows, liveRows, payerRows, [policy], ruleRows, evvRows, spanRows] = await Promise.all([
+    db.select().from(clientDiagnoses).where(and(inArray(clientDiagnoses.personId, ids(personIds)), isNull(clientDiagnoses.archivedAt))),
+    db.select().from(clientFundingSources).where(inArray(clientFundingSources.personId, ids(personIds))),
     db.select({ agreementId: authorizationUnits.serviceAgreementId, units: sql<number>`coalesce(sum(${authorizationUnits.units}), 0)::int` }).from(authorizationUnits)
-      .where(and(eq(authorizationUnits.organizationId, orgId), inArray(authorizationUnits.serviceAgreementId, agreementIds.length ? agreementIds : none), ne(authorizationUnits.state, "released")))
+      .where(and(eq(authorizationUnits.organizationId, orgId), inArray(authorizationUnits.serviceAgreementId, ids(agreementIds)), ne(authorizationUnits.state, "released")))
       .groupBy(authorizationUnits.serviceAgreementId),
     db.select({ visitId: claimLines.visitId, id: claims.id, status: claims.status }).from(claimLines).innerJoin(claims, eq(claimLines.claimId, claims.id))
-      .where(and(eq(claims.organizationId, orgId), inArray(claimLines.visitId, visitIds.length ? visitIds : none), inArray(claims.status, [...LIVE_CLAIM]))),
-    db.select({ id: payers.id }).from(payers).where(and(eq(payers.organizationId, orgId), eq(payers.isDefault, true), eq(payers.active, true))),
+      .where(and(eq(claims.organizationId, orgId), inArray(claimLines.visitId, ids(visitIds)), inArray(claims.status, [...LIVE_CLAIM]))),
+    db.select({ id: payers.id, isDefault: payers.isDefault, profileKey: payers.profileKey, profileVersion: payers.profileVersion }).from(payers).where(and(eq(payers.organizationId, orgId), eq(payers.active, true))),
+    db.select({ hold: evvPolicies.billingHoldOnNoncompliant }).from(evvPolicies).where(and(eq(evvPolicies.organizationId, orgId), eq(evvPolicies.state, "MN"))),
+    db.select().from(evvServiceRules).where(eq(evvServiceRules.organizationId, orgId)),
+    db.select({
+      id: evvVisits.id, visitId: evvVisits.visitId, evvRequired: evvVisits.evvRequired, compliance: evvVisits.complianceStatus, submission: evvVisits.submissionStatus, sharedCare: evvVisits.sharedCare,
+      open: sql<number>`(select count(*)::int from ${evvExceptions} where ${evvExceptions.evvVisitId} = ${evvVisits.id} and ${evvExceptions.status} = 'open')`,
+    }).from(evvVisits).where(and(eq(evvVisits.organizationId, orgId), ne(evvVisits.status, "voided"), inArray(evvVisits.visitId, ids(visitIds)))),
+    // Every completed note that shares minutes with the window, to find overlaps across clients.
+    db.select({ visitId: visits.id, personId: visits.personId, first: people.firstName, last: people.lastName, staffId: visits.staffId, serviceCode: visits.serviceCode, start: visits.clockInAt, end: visits.clockOutAt,
+      sharedCare: sql<boolean>`coalesce((select bool_or(${evvVisits.sharedCare}) from ${evvVisits} where ${evvVisits.visitId} = ${visits.id} and ${evvVisits.status} <> 'voided'), false)` })
+      .from(visits).innerJoin(people, eq(visits.personId, people.id))
+      .where(and(eq(visits.status, "completed"), lt(visits.clockInAt, hi), gt(visits.clockOutAt, lo))),
   ]);
   dxRows.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
   const dx = new Map<string, string[]>();
@@ -144,52 +184,101 @@ async function loadContext(db: Executor, orgId: string, rows: Row[]): Promise<Co
       id: c.id, payerId: c.payerId, payerName: c.payer, waiver: c.waiver, memberId: c.memberId, priority: c.priority, startDate: c.startDate, endDate: c.endDate, relationshipToSubscriber: c.relationshipToSubscriber,
     });
   }
+
+  const evvByVisit = new Map(evvRows.filter((e) => e.visitId).map((e) => [e.visitId!, e]));
+  const evv = new Map<string, EvvFacts>();
+  for (const r of rows) {
+    const e = evvByVisit.get(r.visitId);
+    // The EVV visit's own flag decides; with no EVV visit, the DHS rule for the code does.
+    const required = e ? e.evvRequired : !!ruleFor(ruleRows, r.serviceCode, r.modifiers, centralDate(r.clockInAt))?.requiresEvv;
+    evv.set(r.visitId, e
+      ? { required, recorded: true, compliance: e.compliance, submission: e.submission, openExceptions: Number(e.open), evvVisitId: e.id }
+      : { ...NO_EVV, required });
+  }
+  const overlaps = findOverlaps(spanRows.map((v) => ({ visitId: v.visitId, personId: v.personId, personName: `${v.first} ${v.last}`, staffId: v.staffId, serviceCode: v.serviceCode, start: v.start, end: v.end, sharedCare: Boolean(v.sharedCare) })));
+
   return {
-    dx, coverage,
+    dx, coverage, evv, overlaps,
     used: new Map(usedRows.map((r) => [r.agreementId, Number(r.units)])),
     live: new Map(liveRows.map((r) => [r.visitId, { id: r.id, status: r.status }])),
-    defaultPayerId: defaultPayer?.id ?? null,
+    defaultPayerId: payerRows.find((p) => p.isDefault)?.id ?? null,
+    evvAggregator: new Map(payerRows.map((p) => [p.id, profileOrNull(p.profileKey, p.profileVersion)?.evvAggregatorRecord ?? "warn"])),
+    holdNoncompliant: policy?.hold ?? false,
   };
 }
+
+const profileOrNull = (key: string, version: string) => { try { return payerProfile(key, version); } catch { return null; } };
 
 interface Evaluated { row: Row; date: string; checks: Check[]; coverage: Coverage | null; payerId: string | null; claim: { id: string; status: string } | null }
 
 /**
- * Runs the readiness rules over rows in date order. Units are counted cumulatively per
- * authorization, so of two notes that together overrun it, the later one is held.
+ * Adds, ahead of `rows`, every earlier note on the same authorizations that holds no units yet, so
+ * units are counted in date order whether the screen shows one pay period or a biller approves a
+ * handful of notes. The added rows are evaluated but never returned or approved.
  */
-function evaluate(rows: Row[], ctx: Context): Evaluated[] {
+async function withEarlier(db: Executor, rows: Row[]): Promise<{ all: Row[]; earlier: Set<string> }> {
+  if (!rows.length) return { all: rows, earlier: new Set() };
+  const latest = new Date(Math.max(...rows.map((r) => +r.clockInAt)));
+  const found = await db.select({ id: visits.id }).from(visits).where(and(
+    eq(visits.status, "completed"),
+    inArray(visits.serviceAgreementId, [...new Set(rows.map((r) => r.agreementId))]),
+    notInArray(visits.id, rows.map((r) => r.visitId)),
+    lt(visits.clockInAt, latest),
+    sql`not exists (select 1 from ${authorizationUnits} au where au.visit_id = ${visits.id} and au.state <> 'released')`,
+  ));
+  if (!found.length) return { all: rows, earlier: new Set() };
+  const extra = await loadRows(db, { visitIds: found.map((f) => f.id) });
+  return { all: [...extra, ...rows].sort((a, b) => +a.clockInAt - +b.clockInAt), earlier: new Set(extra.map((r) => r.visitId)) };
+}
+
+/**
+ * Runs the readiness rules over rows in date order. Units are counted cumulatively per
+ * authorization: billed and reserved units first, then each earlier note that is itself ready.
+ * A held note consumes nothing, so of two notes that together overrun it, the later one is held.
+ * Rows in `earlier` take part in the count and are dropped from the result.
+ */
+function evaluate(rows: Row[], ctx: Context, earlier: Set<string> = new Set()): Evaluated[] {
   const used = new Map(ctx.used);
-  return rows.map((r) => {
+  const fromEarlier = new Map<string, number>();
+  const out: Evaluated[] = [];
+  for (const r of rows) {
     const date = centralDate(r.clockInAt);
     const claim = ctx.live.get(r.visitId) ?? null;
     const coverage = coverageFor(date, ctx.coverage.get(r.personId) ?? []);
     const payerId = resolvePayer(coverage, ctx.defaultPayerId);
-    if (claim) return { row: r, date, checks: [], coverage, payerId, claim };
+    if (claim) { if (!earlier.has(r.visitId)) out.push({ row: r, date, checks: [], coverage, payerId, claim }); continue; }
     const checks = readiness({
-      date, personId: r.personId, units: r.units, staffSignedAt: r.staffSignedAt, clientSignedAt: r.clientSignedAt, manualEntry: r.manualEntry, manualEvidenceAt: r.manualEvidenceAt,
+      date, personId: r.personId, visitId: r.visitId, staffId: r.staffId, renderingId: r.renderingId, returnedAt: r.returnedAt,
+      units: r.units, staffSignedAt: r.staffSignedAt, clientSignedAt: r.clientSignedAt, manualEntry: r.manualEntry, manualEvidenceAt: r.manualEvidenceAt,
       pmi: r.pmi, address: { address1: r.address1, city: r.city, zip: r.zip }, diagnoses: ctx.dx.get(r.personId) ?? [], coverage, payerId,
       serviceCode: r.serviceCode, modifiers: r.modifiers,
       agreement: { status: r.agStatus, startDate: r.agStart, endDate: r.agEnd, serviceCode: r.agCode, modifiers: r.agModifiers, authorizedUnits: r.agUnits, archivedAt: r.agArchivedAt },
-      unitsUsed: used.get(r.agreementId) ?? 0,
+      unitsUsed: used.get(r.agreementId) ?? 0, unitsPendingEarlier: fromEarlier.get(r.agreementId) ?? 0,
+      evv: ctx.evv.get(r.visitId) ?? NO_EVV,
+      evvPolicy: { aggregator: (payerId && ctx.evvAggregator.get(payerId)) || "warn", holdNoncompliant: ctx.holdNoncompliant },
+      overlaps: ctx.overlaps.get(r.visitId) ?? { caregiver: [], service: [] },
     });
-    if (!blocking(checks).length) used.set(r.agreementId, (used.get(r.agreementId) ?? 0) + r.units);
-    return { row: r, date, checks, coverage, payerId, claim };
-  });
+    if (!blocking(checks).length) {
+      used.set(r.agreementId, (used.get(r.agreementId) ?? 0) + r.units);
+      if (earlier.has(r.visitId)) fromEarlier.set(r.agreementId, (fromEarlier.get(r.agreementId) ?? 0) + r.units);
+    }
+    if (!earlier.has(r.visitId)) out.push({ row: r, date, checks, coverage, payerId, claim });
+  }
+  return out;
 }
 
 /** Every completed note in the range with its billing state. */
 export async function billableLines(db: Executor, orgId: string, from: Date, to: Date): Promise<BillableLine[]> {
-  const rows = await loadRows(db, { from, to });
-  const ctx = await loadContext(db, orgId, rows);
-  return evaluate(rows, ctx).map(({ row: r, date, checks, payerId, claim }) => {
+  const { all, earlier } = await withEarlier(db, await loadRows(db, { from, to }));
+  const ctx = await loadContext(db, orgId, all);
+  return evaluate(all, ctx, earlier).map(({ row: r, date, checks, payerId, claim }) => {
     const rate = toCents(r.unitRate);
     const holds = blocking(checks).map((c) => c.message);
     return {
       visitId: r.visitId, personId: r.personId, personName: `${r.personFirst} ${r.personLast}`, agreementId: r.agreementId,
       serviceCode: r.serviceCode, modifiers: r.modifiers, units: r.units, rateCents: rate, amountCents: lineCents(r.units, rate),
       date, staffName: `${r.staffFirst} ${r.staffLast}`, payerId, locked: !!r.lockedAt,
-      state: claim ? "claimed" : holds.length ? "hold" : "ready", holds, checks, claim,
+      state: claim ? "claimed" : holds.length ? "hold" : "ready", holds, warnings: warnings(checks), checks, claim, evv: ctx.evv.get(r.visitId) ?? NO_EVV,
     };
   });
 }
@@ -262,8 +351,9 @@ export async function runClaims(db: Db, opts: { orgId: string; actor: Actor; ada
       const agreementIds = [...new Set(rows.map((r) => r.agreementId))];
       if (agreementIds.length) await tx.select({ id: serviceAgreements.id }).from(serviceAgreements).where(inArray(serviceAgreements.id, agreementIds)).for("update");
       rows = await loadRows(tx, { visitIds: ids });
-      const ctx = await loadContext(tx, opts.orgId, rows);
-      const eligible = evaluate(rows, ctx).filter((e) => !e.claim && !blocking(e.checks).length);
+      const { all, earlier } = await withEarlier(tx, rows);
+      const ctx = await loadContext(tx, opts.orgId, all);
+      const eligible = evaluate(all, ctx, earlier).filter((e) => !e.claim && !blocking(e.checks).length);
       if (!eligible.length) throw new Refusal(["None of the chosen notes are ready to bill."]);
 
       const [providerRow] = await tx.select().from(billingProviders).where(eq(billingProviders.organizationId, opts.orgId));
@@ -465,4 +555,74 @@ export async function sentClaims(db: Executor, orgId: string, fromDate: string, 
     out.set(r.id, { id: r.id, batchId: r.batchId, personId: r.personId, personName: `${r.first} ${r.last}`, totalCents: toCents(r.total), status: r.status, statusMessage: r.statusMessage, statusAt: r.statusAt, method: r.method, clearinghouse: r.clearinghouse, controlNumber: r.controlNumber, sentAt: r.sentAt, lines: 1, firstDate: r.serviceDate, lastDate: r.serviceDate });
   }
   return [...out.values()];
+}
+
+export interface AuthorizationSummary {
+  agreementId: string;
+  agreementNumber: string;
+  personId: string;
+  personName: string;
+  serviceCode: string;
+  modifiers: string[];
+  status: string;
+  startDate: string;
+  endDate: string;
+  authorized: number;
+  billed: number;
+  reserved: number;
+  /** Units on notes in view that are ready, and that are held. */
+  readyInView: number;
+  heldInView: number;
+  /** Authorized minus billed and reserved. */
+  left: number;
+  flags: { tone: "danger" | "warn"; message: string }[];
+}
+
+/**
+ * Units on each authorization the lines in view draw on: billed, reserved, ready and held, what is
+ * left, and whether it is ending or nearly used. `today` is a Central date (YYYY-MM-DD).
+ */
+export async function authorizationSummaries(db: Executor, orgId: string, lines: BillableLine[], today: string): Promise<AuthorizationSummary[]> {
+  const ids = [...new Set(lines.map((l) => l.agreementId))];
+  if (!ids.length) return [];
+  const [ags, units] = await Promise.all([
+    db.select({ ag: serviceAgreements, first: people.firstName, last: people.lastName }).from(serviceAgreements).innerJoin(people, eq(serviceAgreements.personId, people.id)).where(inArray(serviceAgreements.id, ids)),
+    db.select({ agreementId: authorizationUnits.serviceAgreementId, state: authorizationUnits.state, units: sql<number>`coalesce(sum(${authorizationUnits.units}), 0)::int` }).from(authorizationUnits)
+      .where(and(eq(authorizationUnits.organizationId, orgId), inArray(authorizationUnits.serviceAgreementId, ids), ne(authorizationUnits.state, "released")))
+      .groupBy(authorizationUnits.serviceAgreementId, authorizationUnits.state),
+  ]);
+  const plus30 = new Date(`${today}T12:00:00Z`);
+  plus30.setUTCDate(plus30.getUTCDate() + 30);
+  const soon = plus30.toISOString().slice(0, 10);
+  return ags.map(({ ag, first, last }) => {
+    const sumState = (st: string) => units.filter((u) => u.agreementId === ag.id && u.state === st).reduce((n, u) => n + Number(u.units), 0);
+    const mine = lines.filter((l) => l.agreementId === ag.id);
+    const billed = sumState("billed"), reserved = sumState("reserved");
+    const left = ag.authorizedUnits - billed - reserved;
+    const readyInView = mine.filter((l) => l.state === "ready").reduce((n, l) => n + l.units, 0);
+    const heldInView = mine.filter((l) => l.state === "hold").reduce((n, l) => n + l.units, 0);
+    const flags: AuthorizationSummary["flags"] = [];
+    if (ag.archivedAt || ag.status !== "active") flags.push({ tone: "danger", message: `Authorization is ${ag.archivedAt ? "archived" : ag.status}` });
+    else if (ag.endDate < today) flags.push({ tone: "danger", message: `Ended ${ag.endDate}` });
+    else if (ag.endDate <= soon) flags.push({ tone: "warn", message: `Ends ${ag.endDate}` });
+    if (left <= 0) flags.push({ tone: "danger", message: "No units left" });
+    else if (readyInView > left) flags.push({ tone: "danger", message: `Ready notes need ${readyInView} units; ${left} left` });
+    else if ((billed + reserved + readyInView) / ag.authorizedUnits >= 0.75) flags.push({ tone: "warn", message: `${Math.round(((billed + reserved + readyInView) / ag.authorizedUnits) * 100)}% used with the ready notes` });
+    return {
+      agreementId: ag.id, agreementNumber: ag.agreementNumber, personId: ag.personId, personName: `${first} ${last}`, serviceCode: ag.serviceCode, modifiers: ag.modifiers,
+      status: ag.archivedAt ? "archived" : ag.status, startDate: ag.startDate, endDate: ag.endDate, authorized: ag.authorizedUnits, billed, reserved, readyInView, heldInView, left, flags,
+    };
+  }).sort((a, b) => b.flags.length - a.flags.length || a.endDate.localeCompare(b.endDate));
+}
+
+/** Agency-level readiness for the billing screen: provider identifiers and the payer's routing. */
+export async function billingSetup(db: Executor, orgId: string): Promise<Check[]> {
+  const [[provider], [payer]] = await Promise.all([
+    db.select().from(billingProviders).where(eq(billingProviders.organizationId, orgId)),
+    db.select().from(payers).where(and(eq(payers.organizationId, orgId), eq(payers.isDefault, true), eq(payers.active, true))),
+  ]);
+  return setupReadiness({
+    provider: provider ?? null,
+    payer: payer ? { name: payer.name, clearinghousePayerId: payer.clearinghousePayerId, profileVerified: profileOrNull(payer.profileKey, payer.profileVersion)?.verified ?? false } : null,
+  });
 }

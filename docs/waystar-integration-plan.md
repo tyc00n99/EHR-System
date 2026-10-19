@@ -328,3 +328,26 @@ Tests (`src/evv/__tests__/claims.test.ts`, 15 cases; whole suite 73/73): money; 
 
 These validate our workflow against our own reading of the 837P. They do not establish Waystar or MHCP interoperability.
 
+
+## 13. Phase 2 status (2026-10-19): readiness rules, EVV and authorizations
+
+No migration. Everything reads tables that already exist.
+
+| Requirement | Where | Notes |
+|---|---|---|
+| One catalog of rules | `src/billing/rules.ts` | 29 rules, each with an id, a source (agency policy, 837P, authorization, coverage, EVV, conflict, setup), the basis in plain words, whether that basis is checked against a document we hold, and the fix label. Every check the engine returns names its id, source and a fix link. |
+| Block vs warn | `readiness()` in `src/billing/readiness.ts` | Blocks hold the note: it cannot be selected or approved. Warnings show beside the line and never stop a send. |
+| Authorizations | `withEarlier()` + `evaluate()` in `src/billing/claims.ts` | Status, dates, code and modifiers, then units counted **in date order**: billed and reserved units, then earlier unbilled notes on the same agreement (even outside the pay period being viewed), then this note. Only notes that are ready consume units, so a held earlier note does not starve a later one. The billing screen and approval use the same counting. |
+| Overlaps | `findOverlaps()` | Same caregiver in overlapping minutes (unless both visits are recorded as shared care in EVV) and same client + service code overlapping both block. Back-to-back visits are not overlaps. |
+| EVV as an input | `EvvFacts` from `evv_visits` / `evv_exceptions` / `evv_service_rules` | No record, not accepted, rejected → per the payer profile (`evvAggregatorRecord`: block, warn, off). Noncompliant → block only when Settings → EVV "hold noncompliant" is on, otherwise warn. Under review and open exceptions → warn. A service DHS does not list for EVV gets no EVV check. |
+| Payer profile v2 | `mhcp-ffs@2026-10-19.2` | Same mapping as v1 plus `evvAggregatorRecord: "warn"`. v1 stays loadable (claim versions point at it). Existing payers move to v2 on the next billing load; the move is audited. |
+| Agency setup | `setupReadiness()`, "Billing setup" card | Billing provider TIN, NPI/UMPI and address block; missing gaps are filled from Settings (organisation row) without overwriting anything. Waystar payer ID unknown and unverified payer rules warn. |
+| Screen | `src/app/(app)/billing/page.tsx` | EVV column, warning badges, "Needs attention" grouped by rule (label, holds/warning, source, "not yet verified", basis, rule id, rows with fix links), and an Authorizations table: authorized, billed, reserved, ready in view, held, left, with flags for inactive, ended or ending within 30 days, no units left, ready units over what is left, ≥75% used. |
+
+**Choices made, open to change:**
+- EVV defaults to **warn**, not block. DHS announced prepayment validation for Q4 2026 (no aggregator record, no payment) but has not published how claims are matched to aggregator records. Blocking now would hold every note until the HHAeXchange connection is live. Changing it is one line in a new profile version.
+- A missing client co-signature blocks (your answer). Signatures are not an EVV requirement per DHS's Fall 2026 notice, so this is recorded as agency policy, not a state rule.
+
+**Not in Phase 2:** payer enrollment readiness (ERA/EFT, Waystar enrollment per payer) moves to Phase 4 with the enrollment matrix, because nothing records enrollment yet and inventing its states now would be guesswork. Eligibility (270/271) stays Phase 9.
+
+Tests (`src/evv/__tests__/billing-readiness.test.ts`, 17 cases; whole suite 90/90): clean note; every check catalogued with source and fix; expired, archived, out-of-dates, wrong code, exhausted and earlier-notes authorizations; unsigned (caregiver, client), returned, no rendering ID; EVV block/warn/off by profile, rejected, not accepted, noncompliant by policy, under review, exceptions; overlap rules incl. shared care and back-to-back; setup rules; profile versions; and through the database: EVV warnings that still bill, a noncompliant hold refused at approval, a duplicate service held until voided, a caregiver on two clients held unless shared care, unit counting across pay periods matching approval, authorization summary flags before and after billing, setup gap filling and audited profile move, and another agency's EVV record ignored.

@@ -23,6 +23,12 @@ export interface PayerProfile {
   maxDiagnosisPointers: number;
   /** CLM05-3 values this payer accepts: 1 original, 7 replacement, 8 void. */
   frequencyCodes: ("1" | "7" | "8")[];
+  /**
+   * What a missing or unaccepted EVV aggregator record does to a note on this payer: hold it,
+   * flag it, or ignore it. DHS announced prepayment validation ("no HHAX record, no payment")
+   * for Q4 2026; until its match rules are published this stays a warning.
+   */
+  evvAggregatorRecord: "block" | "warn" | "off";
   /** Questions that must be answered before `verified` can become true. */
   openQuestions: string[];
 }
