@@ -153,7 +153,7 @@ The product deliberately removed note locking (Sept 2026). Your requirement need
 - **Responses**: `inbound_files` (raw bytes in restricted storage, hash for dedupe, source, retrieved-at, checkpoint) and `response_events` (type 999 / 277CA / 835 / 277RFAI, level clearinghouse vs payer, matched claim version or `unmatched`, codes).
 - **Financial ledger**: append-only `ledger_entries` (claim/line/provider-level; payment, adjustment with CARC/RARC group, patient responsibility, reversal, recoupment, unapplied) with an idempotency key from the 835 (TRN + CLP + line identity); `deposits` for EFT/check reconciliation, separate from ERA posting.
 - **Work items**: `billing_work_items` (claim or response, kind, owner, due, status, link to correction screen).
-- **Enrollment**: `enrollments` (payer × provider × route × transaction × kind: participation / EDI claims / ERA / EFT; status incl. `not_required` and `unknown`; effective dates).
+- **Enrollment**: not modelled. Dropped 2026-10-19 (Tycoon): the provider enrolls with DHS and sets up EFT directly; EVVora does not track it. The only effect on EVVora is whether 835s arrive through Waystar (automatic posting) or are read in MN-ITS (manual posting).
 - **Note versions**: `note_versions` (hash + snapshot when locked) and `note_addenda`, depending on Q1.
 - All new tables carry `organization_id`; every write via `audited`.
 
@@ -206,9 +206,9 @@ Mock activity carries a visible "Mock — not sent to Waystar" badge everywhere 
 | Phase | Delivers | Depends on | Acceptance (summary) |
 | --- | --- | --- | --- |
 | 1 Foundation | money in cents, payer + profile, coverage link, billing provider, claim versions with immutable snapshots, unit ledger, note locking/addenda (per Q1) | Q1–Q4 answers | Editing a rate, demographic or note after approval does not change a stored claim version; two concurrent approvals of the same visit → exactly one succeeds |
-| 2 Readiness | rule engine with traceable block/warn rules; EVV as input; enrollment readiness | 1 | Each failing rule names its id, source and fix link; tests for expired/exhausted authorization, unsigned note, overlap, EVV exception |
+| 2 Readiness | rule engine with traceable block/warn rules; EVV as input | 1 | Each failing rule names its id, source and fix link; tests for expired/exhausted authorization, unsigned note, overlap, EVV exception |
 | 3 UI + first mock workflow | four workspaces, claim drawer, approval, local-folder mock adapter, synthetic 999/277CA/835 fixtures, ledger posting | 1–2 | Authorized visit → signed note → ready → approve → mock deliver → synthetic acks → synthetic ERA posted → reconciled; all screens labelled mock |
-| 4 Lifecycle and enrollment | separate tracks, replacement (7) and void (8) claims, enrollment matrix | 3 | Replacement links to original; void releases units; missing ERA enrollment does not block submission |
+| 4 Lifecycle | separate tracks, replacement (7) and void (8) claims | 3 | Replacement links to original; void releases units; missing ERA enrollment does not block submission |
 | 5 X12 hardening | control numbers, profile-driven mapping, structural + profile validation, PWK only if confirmed | Waystar guide, MHCP guide | Validation levels stated; fixtures reviewed against guides |
 | 6 Transport | durable jobs, idempotency, uncertain delivery, retrieval checkpoints, SFTP/API adapters | Waystar channel docs | "Remote received, local timeout" test does not duplicate an original |
 | 7 Inbound and reconciliation | 999/277CA/835 parsing, matching, exceptions queue, idempotent posting, deposits | 6, TR3 access or guide | Re-processing an ERA posts nothing twice; ambiguous matches go to exceptions |
@@ -250,7 +250,7 @@ Raw 837/999/277/835 files stored in a restricted table (encrypted at the field l
 2. Transaction versions supported inbound and outbound (837P 005010X222A1; 999 X231A1; 277CA X214; 835 X221A1; 276/277 X212; 275/277 RFAI 006020 plans).
 3. Submitter ID, receiver ID and ISA/GS qualifiers to use; whether EVVora is a separate submitter from Sonder.
 4. Payer ID and routing for Minnesota DHS (MHCP) fee-for-service, and for Minnesota MCOs (UCare, Medica, HealthPartners, Blue Plus) if needed later.
-5. Enrollment requirements per payer: EDI claims, ERA, EFT; which require payer sign-off; turnaround.
+5. **Ask when signing up (Tycoon, 2026-10-19):** will Minnesota DHS (MHCP) payment files (835 ERA) come back through Waystar, or only to MN-ITS? Through Waystar → EVVora posts payments automatically (Phase 7). MN-ITS only → payments are recorded by hand. The provider handles payer enrollment and EFT with DHS directly; EVVora does not track them.
 6. Acknowledgment sources: does Waystar return its own 999 and/or 277CA, pass through payer 277CAs, or both? File naming and delivery location for each.
 7. Duplicate detection rules (what makes two claims duplicates; how replacements bypass it).
 8. Test/certification process, test environment, and test payer.
@@ -328,3 +328,26 @@ Tests (`src/evv/__tests__/claims.test.ts`, 15 cases; whole suite 73/73): money; 
 
 These validate our workflow against our own reading of the 837P. They do not establish Waystar or MHCP interoperability.
 
+
+## 13. Phase 2 status (2026-10-19): readiness rules, EVV and authorizations
+
+No migration. Everything reads tables that already exist.
+
+| Requirement | Where | Notes |
+|---|---|---|
+| One catalog of rules | `src/billing/rules.ts` | 29 rules, each with an id, a source (agency policy, 837P, authorization, coverage, EVV, conflict, setup), the basis in plain words, whether that basis is checked against a document we hold, and the fix label. Every check the engine returns names its id, source and a fix link. |
+| Block vs warn | `readiness()` in `src/billing/readiness.ts` | Blocks hold the note: it cannot be selected or approved. Warnings show beside the line and never stop a send. |
+| Authorizations | `withEarlier()` + `evaluate()` in `src/billing/claims.ts` | Status, dates, code and modifiers, then units counted **in date order**: billed and reserved units, then earlier unbilled notes on the same agreement (even outside the pay period being viewed), then this note. Only notes that are ready consume units, so a held earlier note does not starve a later one. The billing screen and approval use the same counting. |
+| Overlaps | `findOverlaps()` | Same caregiver in overlapping minutes (unless both visits are recorded as shared care in EVV) and same client + service code overlapping both block. Back-to-back visits are not overlaps. |
+| EVV as an input | `EvvFacts` from `evv_visits` / `evv_exceptions` / `evv_service_rules` | No record, not accepted, rejected → per the payer profile (`evvAggregatorRecord`: block, warn, off). Noncompliant → block only when Settings → EVV "hold noncompliant" is on, otherwise warn. Under review and open exceptions → warn. A service DHS does not list for EVV gets no EVV check. |
+| Payer profile v2 | `mhcp-ffs@2026-10-19.2` | Same mapping as v1 plus `evvAggregatorRecord: "warn"`. v1 stays loadable (claim versions point at it). Existing payers move to v2 on the next billing load; the move is audited. |
+| Agency setup | `setupReadiness()`, "Billing setup" card | Billing provider TIN, NPI/UMPI and address block; missing gaps are filled from Settings (organisation row) without overwriting anything. Waystar payer ID unknown and unverified payer rules warn. |
+| Screen | `src/app/(app)/billing/page.tsx` | EVV column, warning badges, "Needs attention" grouped by rule (label, holds/warning, source, "not yet verified", basis, rule id, rows with fix links), and an Authorizations table: authorized, billed, reserved, ready in view, held, left, with flags for inactive, ended or ending within 30 days, no units left, ready units over what is left, ≥75% used. |
+
+**Choices made, open to change:**
+- EVV defaults to **warn**, not block. DHS announced prepayment validation for Q4 2026 (no aggregator record, no payment) but has not published how claims are matched to aggregator records. Blocking now would hold every note until the HHAeXchange connection is live. Changing it is one line in a new profile version.
+- A missing client co-signature blocks (your answer). Signatures are not an EVV requirement per DHS's Fall 2026 notice, so this is recorded as agency policy, not a state rule.
+
+**Not built:** payer enrollment and EFT. The provider handles both with DHS directly (Tycoon, 2026-10-19), so EVVora does not track them. Eligibility (270/271) stays Phase 9.
+
+Tests (`src/evv/__tests__/billing-readiness.test.ts`, 17 cases; whole suite 90/90): clean note; every check catalogued with source and fix; expired, archived, out-of-dates, wrong code, exhausted and earlier-notes authorizations; unsigned (caregiver, client), returned, no rendering ID; EVV block/warn/off by profile, rejected, not accepted, noncompliant by policy, under review, exceptions; overlap rules incl. shared care and back-to-back; setup rules; profile versions; and through the database: EVV warnings that still bill, a noncompliant hold refused at approval, a duplicate service held until voided, a caregiver on two clients held unless shared care, unit counting across pay periods matching approval, authorization summary flags before and after billing, setup gap filling and audited profile move, and another agency's EVV record ignored.

@@ -458,6 +458,14 @@ A grounded assistant for writing notes, drafting reports and analysis, on the Cl
 
 <!-- BEGIN:nextjs-agent-rules -->
 
+## Billing (October 19, 2026)
+Claims go to Waystar (a clearinghouse) as 837P. `docs/waystar-integration-plan.md` is the plan, the phase status and the list of unknowns; read it before touching `src/billing/`.
+- Money is integer cents (`src/billing/money.ts`). Payer rules are versioned code profiles in `src/billing/profiles/` (`mhcp-ffs@2026-10-19.2` is current); never edit a released version, add a new one, because claim versions point at them.
+- Every reason a note is held or flagged is a rule in `src/billing/rules.ts` (id, source, basis, verified, fix label). Add new rules there, check them in `readiness()`, and give each a fix link. Blocks hold the note; warnings never stop a send.
+- Units are counted in date order across pay periods (`withEarlier` + `evaluate` in `claims.ts`); the screen and approval must keep using the same path.
+- EVV is an input, not a gate by default: the payer profile's `evvAggregatorRecord` decides block/warn/off, and the EVV policy's "hold noncompliant" decides that one rule.
+- Notes lock at biller approval (`visits_guard_locked` trigger); later changes are addenda. Nothing is sent automatically; the mock clearinghouse is labelled on screen and Waystar fails closed until its guide arrives.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.

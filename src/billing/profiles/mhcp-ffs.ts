@@ -26,10 +26,27 @@ export const MHCP_FFS_V1: PayerProfile = {
   includePriorAuthorization: true,
   maxDiagnosisPointers: 4,
   frequencyCodes: ["1", "7", "8"],
+  evvAggregatorRecord: "off",
   openQuestions: [
     "Atypical providers: the MN guide puts the TIN first and the UMPI in REF*G2; confirm the loop (2010BB vs 2010AA) for a provider with no NPI.",
     "Whether DHS wants the service agreement number in REF*G1 on every claim.",
     "Waystar's payer ID for Minnesota DHS.",
     "Whether rendering provider loop 2310B is required when it equals the billing provider.",
+  ],
+};
+
+/**
+ * v2 (Oct 19, 2026, Phase 2): readiness reads the EVV record. A missing, unsent or rejected
+ * aggregator record is a warning, not a hold, until DHS publishes how prepayment validation
+ * matches a claim to an EVV visit. Claim mapping is unchanged from v1.
+ */
+export const MHCP_FFS_V2: PayerProfile = {
+  ...MHCP_FFS_V1,
+  version: "2026-10-19.2",
+  sources: [...MHCP_FFS_V1.sources, "Minnesota DHS Fall 2026 EVV Provider Notice (summarised in AGENTS.md, Oct 16, 2026)"],
+  evvAggregatorRecord: "warn",
+  openQuestions: [
+    ...MHCP_FFS_V1.openQuestions,
+    "How DHS prepayment validation (Q4 2026) matches a claim line to an HHAeXchange visit, and from which date of service it applies. When published, set evvAggregatorRecord to \"block\" in a new version.",
   ],
 };
