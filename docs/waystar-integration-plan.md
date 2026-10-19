@@ -250,7 +250,7 @@ Raw 837/999/277/835 files stored in a restricted table (encrypted at the field l
 2. Transaction versions supported inbound and outbound (837P 005010X222A1; 999 X231A1; 277CA X214; 835 X221A1; 276/277 X212; 275/277 RFAI 006020 plans).
 3. Submitter ID, receiver ID and ISA/GS qualifiers to use; whether EVVora is a separate submitter from Sonder.
 4. Payer ID and routing for Minnesota DHS (MHCP) fee-for-service, and for Minnesota MCOs (UCare, Medica, HealthPartners, Blue Plus) if needed later.
-5. Enrollment requirements per payer: EDI claims, ERA, EFT; which require payer sign-off; turnaround.
+5. **Ask when signing up (Tycoon, 2026-10-19):** will Minnesota DHS (MHCP) payment files (835 ERA) come back through Waystar, or only to MN-ITS? Through Waystar → EVVora posts payments automatically (Phase 7). MN-ITS only → payments are recorded by hand. The provider handles payer enrollment and EFT with DHS directly; EVVora does not track them.
 6. Acknowledgment sources: does Waystar return its own 999 and/or 277CA, pass through payer 277CAs, or both? File naming and delivery location for each.
 7. Duplicate detection rules (what makes two claims duplicates; how replacements bypass it).
 8. Test/certification process, test environment, and test payer.
