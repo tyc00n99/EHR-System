@@ -22,7 +22,7 @@ export function QuarterlyCheckIn({ s }: { s: ComplianceSummary }) {
       title: "Visits and authorizations",
       reading: `${t.incomplete} incomplete visit${t.incomplete === 1 ? "" : "s"} · ${authIssues} authorization problem${authIssues === 1 ? "" : "s"}`,
       tone: t.incomplete || authIssues ? "warn" : "ok",
-      href: "/evv", linkLabel: "Review queue",
+      href: "/evv?tab=queue", linkLabel: "Review queue",
     },
     {
       title: `Compliance percentage against ${DHS_THRESHOLD}%`,
