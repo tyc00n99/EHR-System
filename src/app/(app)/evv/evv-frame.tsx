@@ -22,10 +22,14 @@ export function EvvFrame({ side, children }: { side: React.ReactNode; children: 
           {open && side}
         </div>
       </div>
+      {/* The divider is the control: the whole line turns blue on hover and press, not just the circle. */}
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
         aria-label={open ? "Hide the EVV menu" : "Show the EVV menu"} title={open ? "Hide menu" : "Show menu"}
-        className={cx("fixed top-1/2 z-20 hidden size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground lg:flex", open ? "left-[264px]" : "left-[64px]")}>
-        <ChevronLeft size={15} aria-hidden className={open ? "" : "rotate-180"} />
+        className={cx("group fixed bottom-0 top-14 z-20 hidden w-5 -translate-x-1/2 justify-center lg:flex", open ? "left-[263.5px]" : "left-[63.5px]")}>
+        <span className="h-full w-px bg-line transition-colors group-hover:bg-primary group-active:bg-primary" />
+        <span className="absolute top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-card text-muted-foreground shadow-sm transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground group-active:border-primary group-active:bg-primary group-active:text-primary-foreground">
+          <ChevronLeft size={15} aria-hidden className={open ? "" : "rotate-180"} />
+        </span>
       </button>
       <details className="mb-4 rounded-xl border border-line px-3 py-2 lg:hidden">
         <summary className="cursor-pointer text-[15px] font-medium text-text-strong">EVV menu</summary>
