@@ -422,7 +422,10 @@ export async function getVisitRecord(id: string) {
     db.select({ id: goals.id, title: goals.title }).from(goals).where(and(eq(goals.personId, base.person.id), eq(goals.status, "active"))).orderBy(goals.createdAt),
     db.select().from(schema.goalEntries).where(eq(schema.goalEntries.visitId, id)),
   ]);
-  return { ...base, questions, responses, meds, admins, program, approverEmail: approver, returnedByName, activeGoals, entries };
+  const addenda = await db.select({ id: schema.noteAddenda.id, body: schema.noteAddenda.body, createdAt: schema.noteAddenda.createdAt, name: sql<string>`coalesce(${staff.firstName} || ' ' || ${staff.lastName}, ${users.email})` })
+    .from(schema.noteAddenda).innerJoin(users, eq(schema.noteAddenda.authorId, users.id)).leftJoin(staff, eq(users.staffId, staff.id))
+    .where(eq(schema.noteAddenda.visitId, id)).orderBy(schema.noteAddenda.createdAt);
+  return { ...base, questions, responses, meds, admins, program, approverEmail: approver, returnedByName, activeGoals, entries, addenda };
 }
 
 /* ---------- life plan ---------- */

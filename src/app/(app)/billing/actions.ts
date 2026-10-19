@@ -17,7 +17,7 @@ async function run(visitIds: string[], method: "clearinghouse" | "download"): Pr
   if (!r.ok) return r;
   revalidatePath("/billing");
   const what = `${r.claims} claim${r.claims === 1 ? "" : "s"} (${r.lines} line${r.lines === 1 ? "" : "s"})`;
-  return { ok: true, batchId: r.batchId, message: method === "download" ? `${what} saved as an 837P file. Upload it to Waystar.` : `${what} sent to ${adapter.label}.` };
+  return { ok: true, batchId: r.batchId, message: method === "download" ? `${what} saved as an 837P file. Upload it to Waystar.` : adapter.key === "mock" ? `${what} kept by the mock clearinghouse. Nothing was sent to Waystar.` : `${what} sent to ${adapter.label}.` };
 }
 
 /** Sends the chosen notes to the clearinghouse as one 837P. */
@@ -33,7 +33,8 @@ export async function downloadClaims(visitIds: string[]): Promise<ClaimActionRes
 /** Takes a file back: its claims are voided and its notes return to Ready to send. */
 export async function takeBackBatch(batchId: string): Promise<ClaimActionResult> {
   const user = await requireAbility("billing");
-  const r = await voidBatch(await getDb(), { userId: user.id }, batchId);
+  const db = await getDb();
+  const r = await voidBatch(db, await defaultOrganizationId(db), { userId: user.id }, batchId);
   if (!r.ok) return { ok: false, problems: [r.message ?? "Could not take this file back."] };
   revalidatePath("/billing");
   return { ok: true, message: "Taken back. Those notes are ready to send again." };

@@ -7,6 +7,7 @@ import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { findShiftForClockIn, getAgreement, getOrganization, getPerson, getStaff, listAssignmentsForStaff } from "@/db/queries";
 import { requireAbility, requireUser, type CurrentUser } from "@/lib/auth";
+import { lockedMessage } from "@/billing/notes";
 import { fromLocalInput, toLocalInput } from "@/lib/format";
 import { computeUnits } from "@/lib/units";
 import { mirrorClockIn, mirrorClockOut, mirrorEdit, mirrorManualVisit, mirrorVoid } from "@/evv/bridge";
@@ -333,6 +334,7 @@ export async function editVisit(_prev: ActionState, fd: FormData): Promise<Actio
   const [v] = await db.select().from(visits).where(eq(visits.id, d.visitId)).limit(1);
   if (!v) return { message: "Note not found." };
   if (v.status === "void") return { message: "Voided notes cannot be edited." };
+  if (v.lockedAt) return { message: lockedMessage(v)! };
   const agreement = await getAgreement(v.serviceAgreementId);
   // datetime-local inputs carry minute precision. Keep the original timestamp
   // (with seconds) when the minute the user saw is unchanged.
@@ -370,6 +372,7 @@ export async function voidVisit(visitId: string, reason: string): Promise<Action
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
   if (!v) return { message: "Note not found." };
   if (v.status === "void") return { message: "Already void." };
+  if (v.lockedAt) return { message: `${lockedMessage(v)} A note on a claim is withdrawn by voiding the claim, not the note.` };
   await recordEdit(user, v.id, reason, { status: { from: v.status, to: "void" } }, { status: "void", manualEntryReason: v.manualEntryReason ?? reason });
   await mirrorVoid(v.id, user, reason);
   revalidatePath(`/visits/${v.id}`);

@@ -29,7 +29,7 @@ export async function bulkRecordUnableToSign(ids: string[], reason: string): Pro
   if (text.length < 3) return { message: "Say why the client could not sign." };
   const db = await getDb();
   const rows = await db.select().from(visits).where(inArray(visits.id, list));
-  const open = rows.filter((v) => !v.clientSignedAt);
+  const open = rows.filter((v) => !v.clientSignedAt && !v.lockedAt);
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
     for (const v of open) await w.update(visits, v.id, { clientUnsignedReason: text.slice(0, 200), updatedBy: user.id });
@@ -45,7 +45,7 @@ export async function bulkConfirmManualEvidence(ids: string[]): Promise<BulkResu
   const list = clean(ids);
   if (!list.length) return { message: "Nothing selected." };
   const db = await getDb();
-  const rows = (await db.select().from(visits).where(inArray(visits.id, list))).filter((v) => v.manualEntry && !v.manualEvidenceAt);
+  const rows = (await db.select().from(visits).where(inArray(visits.id, list))).filter((v) => v.manualEntry && !v.manualEvidenceAt && !v.lockedAt);
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
     for (const v of rows) await w.update(visits, v.id, { manualEvidenceAt: new Date(), manualEvidenceBy: user.id, updatedBy: user.id });
@@ -77,6 +77,11 @@ export async function undoBulk(undo: NonNullable<BulkResult["undo"]>): Promise<A
   const list = clean(undo.ids);
   if (!list.length) return { message: "Nothing to undo." };
   const db = await getDb();
+  if (undo.kind !== "missed_shift") {
+    // A note approved for billing since the bulk action is locked; its change stays, said plainly.
+    const locked = (await db.select({ id: visits.id, lockedAt: visits.lockedAt }).from(visits).where(inArray(visits.id, list))).filter((v) => v.lockedAt);
+    if (locked.length) return { message: `${locked.length} of these notes ${locked.length === 1 ? "was" : "were"} approved for billing since, so nothing was undone. Add an addendum instead.` };
+  }
   await db.transaction(async (tx) => {
     const w = audited(tx, { userId: user.id });
     if (undo.kind === "unsigned") for (const id of list) await w.update(visits, id, { clientUnsignedReason: null, updatedBy: user.id });

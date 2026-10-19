@@ -1,11 +1,12 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { audited } from "@/db/audited";
 import { getVisitRecord } from "@/db/queries";
+import { addAddendum, lockedMessage } from "@/billing/notes";
 import { aiConfigured, explainAiError } from "@/lib/ai/extract-agreement";
 import { requireAbility, requireUser } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
@@ -31,6 +32,8 @@ export async function saveDocumentation(_prev: ActionState, fd: FormData): Promi
   const v = record.visit;
   if (!user.abilities.includes("edit_visits") && v.staffId !== user.staffId) return { message: "This is not your visit." };
   if (v.status === "void") return { message: "Voided notes cannot be documented." };
+  const locked = lockedMessage(v);
+  if (locked) return { message: locked };
 
   const db = await getDb();
   await db.transaction(async (tx) => {
@@ -86,6 +89,7 @@ export async function signVisitWithCode(visitId: string, code: string): Promise<
   if (!v) return { message: "Note not found." };
   if (!user.abilities.includes("edit_visits") && v.staffId !== user.staffId) return { message: "This is not your visit." };
   if (v.clientSignedAt) return { message: "Already signed." };
+  if (v.lockedAt) return { message: lockedMessage(v)! };
   const [person] = await db.select().from(people).where(eq(people.id, v.personId)).limit(1);
   if (!person?.signatureCodeHash) return { message: "This client has no signing code yet." };
   if (!/^\d{6}$/.test(code) || !(await verifyPassword(code, person.signatureCodeHash))) return { message: "That code is not correct." };
@@ -105,6 +109,7 @@ export async function returnNote(visitId: string, reason: string): Promise<Actio
   const db = await getDb();
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
   if (!v) return { message: "Note not found." };
+  if (v.lockedAt) return { message: lockedMessage(v)! };
   await audited(db, { userId: user.id }).update(visits, v.id, { approvedAt: null, approvedBy: null, returnedAt: new Date(), returnedBy: user.id, returnReason: text.slice(0, 400), updatedBy: user.id });
   revalidateVisit(v.id, v.personId);
   return { message: "Returned to the caregiver." };
@@ -117,6 +122,7 @@ export async function acceptNote(visitId: string): Promise<ActionState> {
   const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
   if (!v) return { message: "Note not found." };
   if (!v.shiftNote) return { message: "Add a progress review first." };
+  if (v.lockedAt) return { message: lockedMessage(v)! };
   await audited(db, { userId: user.id }).update(visits, v.id, { approvedAt: new Date(), approvedBy: user.id, returnedAt: null, returnedBy: null, returnReason: null, updatedBy: user.id });
   revalidateVisit(v.id, v.personId);
   return { message: "Accepted." };
@@ -163,6 +169,12 @@ export async function recordMedAdmin(_prev: ActionState, fd: FormData): Promise<
   const d = parsed.data;
   const db = await getDb();
   const [existing] = await db.select().from(medicationAdministrations).where(and(eq(medicationAdministrations.medicationId, d.medicationId), eq(medicationAdministrations.scheduledDate, d.scheduledDate), eq(medicationAdministrations.scheduledTime, d.scheduledTime))).limit(1);
+  const touched = [d.visitId, existing?.visitId].filter((x): x is string => !!x);
+  if (touched.length) {
+    const lockedRows = await db.select({ lockedAt: visits.lockedAt }).from(visits).where(inArray(visits.id, touched));
+    const hit = lockedRows.find((r) => r.lockedAt);
+    if (hit) return { message: lockedMessage(hit)! };
+  }
   const w = audited(db, { userId: user.id });
   const values = { status: d.status, note: d.note ?? null, givenAt: d.status === "given" ? new Date() : null, recordedBy: user.id, staffId: user.staffId, visitId: d.visitId ?? null };
   if (existing) await w.update(medicationAdministrations, existing.id, values);
@@ -198,4 +210,20 @@ export async function cleanDictation(visitId: string, spoken: string): Promise<{
   } catch (e) {
     return { message: explainAiError(e) };
   }
+}
+
+/**
+ * Adds an addendum to a note (Oct 19, 2026). The only way to add to a note once it is approved for
+ * billing; allowed on any note the person may document.
+ */
+export async function addNoteAddendum(visitId: string, body: string): Promise<ActionState> {
+  const user = await requireUser();
+  const db = await getDb();
+  const [v] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1);
+  if (!v) return { message: "Note not found." };
+  if (!user.abilities.includes("edit_visits") && v.staffId !== user.staffId) return { message: "This is not your visit." };
+  const r = await addAddendum(db, { userId: user.id }, v.id, body);
+  if (!r.ok) return { message: r.message };
+  revalidateVisit(v.id, v.personId);
+  return { message: "Addendum added." };
 }

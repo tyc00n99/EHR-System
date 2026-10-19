@@ -13,7 +13,7 @@ import { acceptNote, cleanDictation, draftProgressReview, recordMedAdmin, return
 
 interface Question { id: string; prompt: string; goal: string; response: string; note: string }
 
-export function RecordForm({ visitId, personFirst, locked, aiReady = false, skillsOptions, activityOptions, defaults, tasks, questions, goals, addressed: addressed0 }: { visitId: string; personFirst: string; locked: boolean; aiReady?: boolean; skillsOptions: string[]; activityOptions: string[]; goals: { id: string; title: string; questions: string[] }[]; addressed: Record<string, string>; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
+export function RecordForm({ visitId, personFirst, locked, lockedLabel, aiReady = false, skillsOptions, activityOptions, defaults, tasks, questions, goals, addressed: addressed0 }: { visitId: string; personFirst: string; locked: boolean; lockedLabel?: string | null; aiReady?: boolean; skillsOptions: string[]; activityOptions: string[]; goals: { id: string; title: string; questions: string[] }[]; addressed: Record<string, string>; defaults: { interactionLevel: string; skills: string[]; activities: string[]; shiftNote: string; staffSigned: boolean }; tasks: { code: string; label: string; completed: boolean }[]; questions: Question[] }) {
   const [state, submit, pending] = useActionState(async (prev: ActionState, fd: FormData) => {
     // Best-effort device location for the note history; never blocks the save.
     const fix = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
@@ -51,7 +51,7 @@ export function RecordForm({ visitId, personFirst, locked, aiReady = false, skil
       {skills.map((s) => <input key={s} type="hidden" name="skills[]" value={s} />)}
       {activities.map((a) => <input key={a} type="hidden" name="activities[]" value={a} />)}
       <FormError message={state.errors ? state.message : undefined} />
-      {locked && <div className="flex items-center gap-2 rounded-md bg-ok-soft px-3 py-2 text-[13px] text-ok"><Lock className="size-3.5" /> Approved by a supervisor. Read only.</div>}
+      {locked && lockedLabel && <div className="flex items-center gap-2 rounded-md bg-ok-soft px-3 py-2 text-[13px] text-ok"><Lock className="size-3.5" /> {lockedLabel}</div>}
 
       <fieldset disabled={locked} className="space-y-5">
         <section>

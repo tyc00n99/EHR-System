@@ -458,14 +458,6 @@ A grounded assistant for writing notes, drafting reports and analysis, on the Cl
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-## Billing through Waystar (October 19, 2026)
-The user bills through **Waystar**, not straight to MN-ITS: EVVora builds the claims and sends them to Waystar, which forwards them to MN-ITS. The old "837P generation and MN-ITS submission are the next milestone" placeholder is gone.
-- **837P is the format, Waystar is the destination.** `src/billing/x12-837p.ts` (pure) builds an 005010X222A1 file: billing provider by NPI, or by name with the UMPI as REF*G2 in 2010BB when the agency has no NPI; the client as subscriber by PMI; one claim (CLM) per client × service agreement with REF*G1 = the agreement number and HI from the client's diagnoses (primary first); one SV1 line per note (HCPCS + modifiers, units, DTP*472 Central date, REF*6R = visit id) with the rendering caregiver per line. The CMS-1500 the user asked about is the paper version of the same claim; Waystar accepts the 837P directly.
-- **Ready vs held** (`billableLines` in `src/billing/claims.ts`): a completed note is held when the caregiver or the client has not signed, a manual entry has no `manualEvidenceAt`, it has no units, the client has no active diagnosis, or the client's address is incomplete. A note on a claim that is sent/accepted/paid is "claimed" and never billed twice; rejected, denied or void claims release it.
-- **Tables** (migration `0040_claims`): `claim_batches` (one file; `file_text` is PHI, served only by `/billing/batches/[id]/837` with an audited reveal), `claims` (`patient_control_number` = CLM01, which 277CA/835 echo back), `claim_lines` (one per note). All writes through `audited`.
-- **Clearinghouse adapters** (`src/billing/clearinghouse.ts`): `mock` accepts everything and is the default only outside production; `waystar` fails closed (`blocked`) until the account's transfer details and the companion guide are in hand — the transport is deliberately not written, and no host or code is invented. Env vars are in `.env.example`. Until it is connected, "Download 837P" records the lines as billed and downloads the file for Waystar's portal; "Take back" voids a whole file and returns its notes to Ready (refused once a claim is paid).
-- `/api/cron/claims` (daily, `vercel.json`) sends every ready note from the last 90 days when `CLAIMS_AUTO_SEND=1`, then reads claim status back. Tests: `src/evv/__tests__/claims.test.ts`.
-
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.

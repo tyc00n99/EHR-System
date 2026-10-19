@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Badge, Card, cx, Empty, PageHeader, Table, Td, Th, Thead, Tr, type Tone } from "@/components/kit";
 import { getDb } from "@/db";
-import { billableLines, sentClaims, type BillableLine } from "@/billing/claims";
+import { defaultOrganizationId } from "@/evv/context";
+import { centsToDollars } from "@/billing/money";
+import { billableLines, ensureBillingDefaults, sentClaims, type BillableLine } from "@/billing/claims";
 import { clearinghouseFromEnv } from "@/billing/clearinghouse";
 import { requireAbility } from "@/lib/auth";
 import { fmtDate, fmtDateNum, fmtMoney } from "@/lib/format";
@@ -21,7 +23,7 @@ const CLAIM: Record<string, { label: string; tone: Tone }> = {
 };
 
 export default async function BillingPage({ searchParams }: PageProps<"/billing">) {
-  await requireAbility("billing");
+  const user = await requireAbility("billing");
   const sp = await searchParams;
   const rules = await getPayRules();
   const period = payPeriodFromParam(typeof sp.period === "string" ? sp.period : undefined, rules);
@@ -29,7 +31,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   const db = await getDb();
   const adapter = clearinghouseFromEnv();
   const health = adapter.health();
-  const [all, sent] = await Promise.all([billableLines(db, period.start, period.end), sentClaims(db, period.startDate, period.endDate)]);
+  const orgId = await defaultOrganizationId(db);
+  // The billing provider and the DHS payer exist from the first visit to Billing on (idempotent).
+  await ensureBillingDefaults(db, orgId, { userId: user.id }).catch(() => ensureBillingDefaults(db, orgId, { userId: user.id }));
+  const [all, sent] = await Promise.all([billableLines(db, orgId, period.start, period.end), sentClaims(db, orgId, period.startDate, period.endDate)]);
   const code = typeof sp.code === "string" ? sp.code : "";
   const codes = [...new Set(all.map((l) => l.serviceCode))].sort();
   const lines = code ? all.filter((l) => l.serviceCode === code) : all;
@@ -37,11 +42,11 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
   const hold = lines.filter((l) => l.state === "hold");
   const claimed = lines.filter((l) => l.state === "claimed");
   const byClient = Object.values(ready.reduce<Record<string, { personId: string; name: string; lines: BillableLine[] }>>((acc, l) => { (acc[l.personId] ??= { personId: l.personId, name: l.personName, lines: [] }).lines.push(l); return acc; }, {}));
-  const total = (ls: BillableLine[]) => ls.reduce((n, l) => n + l.amount, 0);
+  const total = (ls: BillableLine[]) => centsToDollars(ls.reduce((n, l) => n + l.amountCents, 0));
   const q = (p: { startDate: string }) => `/billing?period=${p.startDate}${code ? `&code=${code}` : ""}`;
   const codeHref = (c: string) => `/billing?period=${period.startDate}${c ? `&code=${c}` : ""}`;
   const readyIds = ready.map((l) => l.visitId);
-  const name = adapter.key === "mock" ? "the test clearinghouse" : "Waystar";
+  const name = adapter.key === "mock" ? "the mock clearinghouse" : "Waystar";
 
   return (
     <div>
@@ -68,21 +73,21 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
         {code && <span className="ml-auto text-[13px] text-muted-foreground">{labelForCode(code, [])} · {fmtMoney(total(lines))} of {fmtMoney(total(all))}</span>}
       </div>
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Card title="Ready to send" description="One claim per client and authorization; each note is one service line." actions={<><Badge tone="ok">{ready.length} lines</Badge><SendButton visitIds={readyIds} label={adapter.key === "mock" ? "test clearinghouse" : "Waystar"} connected={health.ok} /></>}>
+        <Card title="Ready to send" description="One claim per client and authorization; each note is one service line." actions={<><Badge tone="ok">{ready.length} lines</Badge><SendButton visitIds={readyIds} label={adapter.key === "mock" ? "mock clearinghouse" : "Waystar"} connected={health.ok} /></>}>
           {byClient.length === 0 ? <Empty icon="money" title="Nothing ready in this period" /> : byClient.map((c) => (
             <div key={c.personId} className="border-b border-line-soft last:border-b-0">
               <div className="flex items-center justify-between bg-sidebar px-5 py-1.5 text-[13px]"><Link href={`/clients/${c.personId}`} className="font-semibold text-text-strong hover:underline">{c.name}</Link><span className="tabular-nums text-muted-foreground">{c.lines.length} line{c.lines.length === 1 ? "" : "s"} · {fmtMoney(total(c.lines))}</span></div>
               <Table>
                 <Thead><Th>Date</Th><Th>Service</Th><Th>Code</Th><Th align="right">Units</Th><Th align="right">Rate</Th><Th align="right">Amount</Th><Th>Rendered by</Th></Thead>
-                <tbody>{c.lines.map((l) => <Tr key={l.visitId}><Td className="tabular-nums">{fmtDateNum(l.date)}</Td><Td><Link href={`/visits/${l.visitId}`} className="hover:underline">{labelForCode(l.serviceCode, [])}</Link></Td><Td className="tabular-nums">{[l.serviceCode, ...l.modifiers].join(" ")}</Td><Td align="right">{l.units}</Td><Td align="right">{fmtMoney(l.unitRate)}</Td><Td align="right" strong>{fmtMoney(l.amount)}</Td><Td className="text-muted-foreground">{l.staffName}</Td></Tr>)}</tbody>
+                <tbody>{c.lines.map((l) => <Tr key={l.visitId}><Td className="tabular-nums">{fmtDateNum(l.date)}</Td><Td><Link href={`/visits/${l.visitId}`} className="hover:underline">{labelForCode(l.serviceCode, l.modifiers)}</Link></Td><Td className="tabular-nums">{[l.serviceCode, ...l.modifiers].join(" ")}</Td><Td align="right">{l.units}</Td><Td align="right">{fmtMoney(centsToDollars(l.rateCents))}</Td><Td align="right" strong>{fmtMoney(centsToDollars(l.amountCents))}</Td><Td className="text-muted-foreground">{l.staffName}</Td></Tr>)}</tbody>
               </Table>
             </div>
           ))}
         </Card>
         <div className="space-y-4">
-          <Card title="Waystar" padded actions={<Badge tone={health.ok ? "ok" : "warn"}>{adapter.key === "mock" ? "test mode" : health.ok ? "connected" : "not connected"}</Badge>}>
+          <Card title="Waystar" padded actions={<Badge tone={health.ok ? "ok" : "warn"}>{adapter.key === "mock" ? "Mock — not sent to Waystar" : health.ok ? "connected" : "not connected"}</Badge>}>
             {adapter.key === "mock" ? (
-              <p className="text-[13px] text-muted-foreground">Claims go to a test clearinghouse that accepts everything. Nothing reaches Waystar or MN-ITS.</p>
+              <p className="text-[13px] text-muted-foreground">This is a mock clearinghouse for testing. Claims are kept here, nothing reaches Waystar or MN-ITS, and no acknowledgment or payment comes back on its own.</p>
             ) : health.ok ? (
               <p className="text-[13px] text-muted-foreground">Ready lines are sent to Waystar as an 837P, and Waystar forwards them to MN-ITS. Acceptances, rejections and payments come back onto each claim.</p>
             ) : (
@@ -95,7 +100,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
           </Card>
           <Card title="On hold" description="Fix these before they can be sent" actions={<Badge tone={hold.length ? "warn" : "ok"}>{hold.length}</Badge>}>
             {hold.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">Nothing held.</p> : (
-              <ul className="divide-y divide-line-soft">{hold.map((l) => <li key={l.visitId}><Link href={`/visits/${l.visitId}`} className="flex items-center justify-between gap-3 px-5 py-2.5 hover:bg-hover"><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{l.personName}</span><span className="block text-[13px] text-muted-foreground">{fmtDateNum(l.date)} · {l.holds.join(" · ")} · {fmtMoney(l.amount)}</span></span></Link></li>)}</ul>
+              <ul className="divide-y divide-line-soft">{hold.map((l) => <li key={l.visitId}><Link href={`/visits/${l.visitId}`} className="flex items-center justify-between gap-3 px-5 py-2.5 hover:bg-hover"><span className="min-w-0"><span className="block truncate font-medium text-text-strong">{l.personName}</span><span className="block text-[13px] text-muted-foreground">{fmtDateNum(l.date)} · {l.holds.join(" · ")} · {fmtMoney(centsToDollars(l.amountCents))}</span></span></Link></li>)}</ul>
             )}
           </Card>
         </div>
@@ -112,9 +117,9 @@ export default async function BillingPage({ searchParams }: PageProps<"/billing"
                   <Td><Link href={`/clients/${c.personId}`} className="font-medium hover:underline">{c.personName}</Link></Td>
                   <Td className="tabular-nums">{fmtDateNum(c.firstDate)}{c.lastDate !== c.firstDate ? ` – ${fmtDateNum(c.lastDate)}` : ""}</Td>
                   <Td align="right">{c.lines}</Td>
-                  <Td align="right" strong>{fmtMoney(c.total)}</Td>
+                  <Td align="right" strong>{fmtMoney(centsToDollars(c.totalCents))}</Td>
                   <Td><span title={c.statusMessage ?? undefined}><Badge tone={s.tone}>{s.label}</Badge></span></Td>
-                  <Td className="text-muted-foreground">{fmtDate(c.sentAt)} · {c.method === "download" ? "downloaded" : c.clearinghouse === "mock" ? "test" : "Waystar"}</Td>
+                  <Td className="text-muted-foreground">{fmtDate(c.sentAt)} · {c.method === "download" ? "downloaded" : c.clearinghouse === "mock" ? "mock, not sent" : "Waystar"}</Td>
                   <Td><a href={`/billing/batches/${c.batchId}/837`} className="text-[13px] font-medium text-primary hover:underline">837P #{c.controlNumber}</a></Td>
                   <Td align="right">{firstOfBatch && c.status !== "paid" && <TakeBack batchId={c.batchId} />}</Td>
                 </Tr>

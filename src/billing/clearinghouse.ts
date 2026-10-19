@@ -6,8 +6,9 @@
  * details and Waystar's 837P companion guide are configured, `submit` returns `blocked` and nothing
  * is recorded as sent. No endpoint, host or response code is invented here.
  *
- * The mock adapter accepts every file and reports every claim accepted. It is the default only
- * outside production, so a hosted deploy can never show a fake "accepted" claim.
+ * The mock adapter takes every file and reports nothing back on its own: no acknowledgment, no
+ * acceptance, no payment. Tests stage synthetic responses with `stage()`. It is the default only
+ * outside production, and the Billing page labels it "Mock — not sent to Waystar".
  */
 
 export interface ClearinghouseConfig {
@@ -29,7 +30,8 @@ export interface ClaimStatusUpdate {
   status: "accepted" | "rejected" | "paid" | "denied";
   message?: string;
   payerClaimNumber?: string;
-  paidAmount?: number;
+  /** Integer cents. */
+  paidCents?: number;
 }
 
 export interface Health { ok: boolean; problems: string[] }
@@ -46,14 +48,20 @@ export interface ClearinghouseAdapter {
 
 export class MockClearinghouse implements ClearinghouseAdapter {
   key = "mock" as const;
-  label = "Test clearinghouse";
+  label = "Mock clearinghouse";
   constructor(public config: ClearinghouseConfig) {}
   health(): Health { return { ok: true, problems: [] }; }
+  private staged: ClaimStatusUpdate[] = [];
   async submit(_file: string, meta: { controlNumber: number }): Promise<SubmitOutcome> {
-    return { status: "sent", externalId: `MOCK-${meta.controlNumber}`, message: "Accepted by the test clearinghouse." };
+    return { status: "sent", externalId: `MOCK-${meta.controlNumber}`, message: "Kept by the mock clearinghouse. Not sent to Waystar." };
   }
+  /** Synthetic responses for tests and demos; handed out once by the next poll. */
+  stage(...updates: ClaimStatusUpdate[]) { this.staged.push(...updates); }
   async statusUpdates(open: { patientControlNumber: string }[]): Promise<ClaimStatusUpdate[]> {
-    return open.map((c) => ({ patientControlNumber: c.patientControlNumber, status: "accepted", message: "Accepted by the test clearinghouse." }));
+    const known = new Set(open.map((c) => c.patientControlNumber));
+    const out = this.staged.filter((u) => known.has(u.patientControlNumber));
+    this.staged = this.staged.filter((u) => !known.has(u.patientControlNumber));
+    return out;
   }
 }
 

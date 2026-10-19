@@ -239,8 +239,8 @@ Raw 837/999/277/835 files stored in a restricted table (encrypted at the field l
 ## 6a. Answers received (2026-10-19, Tycoon)
 1. **Note locking: yes.** Notes lock when a biller approves the claim; later changes are addenda that never overwrite the original. (Supersedes the Sept 2026 "nothing locks" decision for billed notes.)
 2. **Nothing is billed today** through any other route, so there is no current duplicate-submission risk. Re-check before go-live.
-3. **Some clients are on Elderly Waiver.** Still open: whether each is EW fee-for-service (billed to DHS) or EW through a managed care plan (MSHO/MSC+, billed to the plan). This decides the payer per client.
-4. Roles: explained in thread; awaiting choice.
+3. **Some clients are on Elderly Waiver, billed through DHS directly, not a health plan.** EW coverage therefore resolves to the MHCP fee-for-service payer, like the other waivers.
+4. **One "billing" permission covers prepare, approve and post** for now; it can be split later in Settings → Roles.
 5. **Missing client co-signature blocks billing** (Policy, blocking rule).
 6. **Retention: 7 years** for raw claim and payment files (Policy). No automatic deletion is built until a deletion process is approved.
 7. **PR #26 stays unmerged** until Phase 1 is approved; Phase 1 continues on that branch.
@@ -283,8 +283,8 @@ Raw 837/999/277/835 files stored in a restricted table (encrypted at the field l
 2. No confirmed MHCP payer ID at Waystar; enrollment status unknown.
 3. 837P mapping unverified against TR3, MUCG and MHCP rules (§4.3).
 4. No inbound parsing, matching or ledger.
-5. Money uses floating point in PR #26 (fixable in Phase 1).
-6. Notes are editable after billing (Q1).
+5. ~~Money uses floating point in PR #26~~ Fixed in Phase 1 (integer cents).
+6. ~~Notes are editable after billing~~ Fixed in Phase 1 (lock at approval, database-enforced, addenda).
 7. Retention policy for raw transaction files undefined.
 8. BAA with Waystar; security review of storage and transport; SFTP host-key verification.
 9. Trading-partner testing and Waystar certification.
@@ -301,3 +301,30 @@ Controls in this plan support HIPAA obligations; they do not by themselves make 
 - CMS, claims attachments final rule fact sheet: https://www.cms.gov/files/document/nsg-attachments-final-rule-fact-sheet.pdf
 - Federal Register 2026-05676: https://www.govinfo.gov/content/pkg/FR-2026-03-24/pdf/2026-05676.pdf
 - npm registry metadata for the libraries in §3.1 (queried 2026-10-19).
+
+---
+
+## 12. Phase 1 status (2026-10-19): billing foundation and immutable records
+
+Built on PR #26, migration `0041_billing_foundation` (additive; 0040 untouched).
+
+| Requirement | Where | Notes |
+|---|---|---|
+| Exact money arithmetic | `src/billing/money.ts` | Integer cents; numeric strings parsed digit by digit; floats refused unless already whole cents. The 837P, claims, lines and versions all use it. |
+| Payers and routing IDs | `payers`, `src/billing/profiles/` | Payer rows are per org; mapping/validation rules are **versioned code profiles** (`mhcp-ffs@2026-10-19.1`), not a JSON table, so rule changes are reviewed in code. `verified: false`, open questions listed in the profile. `clearinghouse_payer_id` stays null until Waystar supplies it. |
+| Coverage, member ID, relationship | `client_funding_sources.payer_id`, `relationship_to_subscriber` | Primary coverage in force on the date of service is required. Waiver coverage without a link (EW included) resolves to the MHCP FFS payer. Member ID comes from the PMI per the profile. Dependent (non-self) subscribers are blocked, not modelled: MHCP members are their own subscriber. |
+| Billing provider, TIN, NPI/UMPI, taxonomy, pay-to | `billing_providers` | One per org, seeded from `organizations`. Taxonomy and pay-to columns exist; the 837P does not emit them yet (unverified whether MHCP wants PRV/2010AB). Service facility (2310C) not modelled yet. |
+| Authorizations (code, modifiers, dates, units, rate) | `service_agreements` + `authorization_units` | Units reserved at approval, billed at delivery, released on take-back, failed send, rejection or denial. Partial unique index stops a visit holding two live reservations. Rate history table **not built**: the rate in force is frozen in each claim version instead, so later changes never alter a submitted claim. |
+| Visits, diagnoses and pointers, lines, units, charges, POS, dates | existing `visits`, `client_diagnoses`, `claim_lines` | Pointers recorded in the version snapshot (principal = 1). SV1 still points every line at diagnosis 1. |
+| Claims, versions, batches | `claims`, `claim_versions`, `claim_batches`, `claim_lines.claim_version_id` | Every version is an insert-only snapshot of all inputs plus a sha256; `claims.current_version_id` points at the latest. |
+| Notes locked before billing; addenda | `visits.locked_at/by`, `note_versions`, `note_addenda`, trigger `visits_guard_locked` | Lock happens at biller approval (your answer Q1). The trigger refuses any change to a locked note except the lock columns, and any delete. Actions check first and return a sentence. |
+| Snapshot of source documentation | `note_versions` + claim snapshot `notes[]` | Each claim version cites the note version id and hash it was built from. |
+| Corrected / replacement and void claims | `prepareCorrection`, `claim_versions.frequency_code/replaces_version_id`, 837P CLM05-3 + REF*F8 | Recorded, not sent. Requires the payer's claim number. Sending them is Phase 4. |
+| Transmission attempts, response events, attachments, work items, financial entries | — | **Not built in Phase 1.** They belong to Phases 3–8 and are modelled when their workflow is built, so the tables match the behaviour they support. The batch row keeps a failed send's message for now. |
+| Agency isolation | all billing queries take `orgId` | Tested: another org cannot see, take back, poll or correct a claim. The clinical tables remain one organisation per database. |
+| No automatic submission or posting | cron, mock | Auto-send removed; the mock returns no responses unless a test stages them; the page labels the mock. |
+
+Tests (`src/evv/__tests__/claims.test.ts`, 15 cases; whole suite 73/73): money; payer resolution incl. EW; coverage and diagnosis holds; signature and manual-evidence holds; approval snapshot, lock and units; immutability after rate, name and note changes (trigger); addenda; mock silence and staged responses; replacement version and REF*F8; take-back and cross-agency refusal; failed send undone; authorization dates, status and cumulative units; simultaneous approvals; Waystar fail-closed.
+
+These validate our workflow against our own reading of the 837P. They do not establish Waystar or MHCP interoperability.
+

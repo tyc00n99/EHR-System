@@ -11,6 +11,7 @@
  *  - 2400 one service line per note: SV1 with HCPCS + modifiers, units (UN), date of service.
  *  - 2420A rendering provider per line, NPI or UMPI, because different caregivers render lines.
  */
+import { centsToDecimal, sumCents } from "./money";
 
 export interface BillingProvider {
   name: string;
@@ -43,7 +44,8 @@ export interface ClaimLineInput {
   serviceCode: string;
   modifiers: string[];
   units: number;
-  amount: number;
+  /** Integer cents. */
+  amountCents: number;
   /** YYYY-MM-DD, Central date of service. */
   date: string;
   rendering: { type: "npi" | "umpi"; id: string; firstName: string; lastName: string };
@@ -58,6 +60,12 @@ export interface ClaimInput {
   diagnoses: string[];
   placeOfService: string;
   lines: ClaimLineInput[];
+  /** CLM05-3: 1 original, 7 replacement, 8 void. Defaults to 1. */
+  frequencyCode?: "1" | "7" | "8";
+  /** REF*F8, the payer's claim number for the claim being replaced or voided. Required for 7 and 8. */
+  originalClaimNumber?: string | null;
+  /** SBR09, from the payer profile. Defaults to MC (Medicaid). */
+  claimFilingIndicator?: string;
 }
 
 /** Why a claim cannot go out yet, in words the office can act on. Empty means it can. */
@@ -68,6 +76,7 @@ export function claimProblems(c: ClaimInput): string[] {
   if (!c.patient.address1 || !c.patient.city || !c.patient.zip) p.push("Client's address is incomplete");
   if (!c.priorAuth) p.push("No authorization number");
   if (c.lines.length === 0) p.push("No service lines");
+  if ((c.frequencyCode === "7" || c.frequencyCode === "8") && !c.originalClaimNumber) p.push("A replacement or void needs the payer's claim number for the original claim");
   for (const l of c.lines) {
     if (l.units <= 0) p.push(`A line on ${l.date} has no units`);
     if (!l.rendering.id) p.push(`No rendering NPI or UMPI on ${l.date}`);
@@ -90,7 +99,7 @@ export function fileProblems(provider: BillingProvider, payer: Payer, env: Pick<
 const clean = (s: string | null | undefined, max = 60) => (s ?? "").toUpperCase().replace(/[~*:^\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 const digits = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
 const pad = (s: string, n: number) => s.slice(0, n).padEnd(n, " ");
-const money = (n: number) => (Math.round(n * 100) / 100).toFixed(2);
+const money = (c: number) => centsToDecimal(c);
 const sexCode = (s: string | null) => (s === "female" ? "F" : s === "male" ? "M" : "U");
 
 function stamp(d: Date) {
@@ -132,7 +141,7 @@ export function build837P(provider: BillingProvider, payer: Payer, env: Envelope
     hl += 1;
     // 2000B subscriber = the client (MA is primary for waiver services; the client is the subscriber).
     seg("HL", hl, "1", "22", "0");
-    seg("SBR", "P", "18", "", "", "", "", "", "", "MC");
+    seg("SBR", "P", "18", "", "", "", "", "", "", c.claimFilingIndicator ?? "MC");
     seg("NM1", "IL", "1", clean(c.patient.lastName, 60), clean(c.patient.firstName, 35), "", "", "", "MI", c.patient.pmi);
     seg("N3", clean(c.patient.address1, 55), ...(c.patient.address2 ? [clean(c.patient.address2, 55)] : []));
     seg("N4", clean(c.patient.city, 30), clean(c.patient.state || "MN", 2), digits(c.patient.zip));
@@ -141,13 +150,14 @@ export function build837P(provider: BillingProvider, payer: Payer, env: Envelope
     seg("NM1", "PR", "2", clean(payer.name), "", "", "", "", "PI", payer.id);
     if (provider.umpi) seg("REF", "G2", provider.umpi);
     // 2300 claim
-    const total = c.lines.reduce((n, l) => n + l.amount, 0);
-    seg("CLM", c.patientControlNumber, money(total), "", "", `${c.placeOfService}:B:1`, "Y", "A", "Y", "Y");
+    const total = sumCents(c.lines.map((l) => l.amountCents));
+    seg("CLM", c.patientControlNumber, money(total), "", "", `${c.placeOfService}:B:${c.frequencyCode ?? "1"}`, "Y", "A", "Y", "Y");
     seg("REF", "G1", clean(c.priorAuth, 50));
+    if (c.originalClaimNumber && c.frequencyCode && c.frequencyCode !== "1") seg("REF", "F8", clean(c.originalClaimNumber, 50));
     seg("HI", ...c.diagnoses.slice(0, 12).map((d, i) => `${i === 0 ? "ABK" : "ABF"}:${d.replace(/\./g, "").toUpperCase()}`));
     c.lines.forEach((l, i) => {
       seg("LX", i + 1);
-      seg("SV1", ["HC", l.serviceCode, ...l.modifiers.slice(0, 4)].join(":"), money(l.amount), "UN", l.units, "", "", "1");
+      seg("SV1", ["HC", l.serviceCode, ...l.modifiers.slice(0, 4)].join(":"), money(l.amountCents), "UN", l.units, "", "", "1");
       seg("DTP", "472", "D8", l.date.replace(/-/g, ""));
       seg("REF", "6R", l.ref.slice(0, 50));
       if (l.rendering.type === "npi") seg("NM1", "82", "1", clean(l.rendering.lastName, 60), clean(l.rendering.firstName, 35), "", "", "", "XX", digits(l.rendering.id));
