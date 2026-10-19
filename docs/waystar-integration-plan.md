@@ -236,6 +236,15 @@ Raw 837/999/277/835 files stored in a restricted table (encrypted at the field l
 7. **PR #26.** Keep it open and unmerged until Phase 1 is approved, then continue on it? (Recommended.)
 8. Does Sonder have, or plan to buy, access to the X12 TR3s (X12 Glass licence)?
 
+## 6a. Answers received (2026-10-19, Tycoon)
+1. **Note locking: yes.** Notes lock when a biller approves the claim; later changes are addenda that never overwrite the original. (Supersedes the Sept 2026 "nothing locks" decision for billed notes.)
+2. **Nothing is billed today** through any other route, so there is no current duplicate-submission risk. Re-check before go-live.
+3. **Some clients are on Elderly Waiver.** Still open: whether each is EW fee-for-service (billed to DHS) or EW through a managed care plan (MSHO/MSC+, billed to the plan). This decides the payer per client.
+4. Roles: explained in thread; awaiting choice.
+5. **Missing client co-signature blocks billing** (Policy, blocking rule).
+6. **Retention: 7 years** for raw claim and payment files (Policy). No automatic deletion is built until a deletion process is approved.
+7. **PR #26 stays unmerged** until Phase 1 is approved; Phase 1 continues on that branch.
+
 ## 7. Questions for Waystar
 1. Supported submission channels for our volume (SFTP, API, portal upload); recommended one for a software vendor submitting on behalf of one provider.
 2. Transaction versions supported inbound and outbound (837P 005010X222A1; 999 X231A1; 277CA X214; 835 X221A1; 276/277 X212; 275/277 RFAI 006020 plans).
