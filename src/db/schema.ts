@@ -503,6 +503,13 @@ export const visits = pgTable(
     clientUnsignedReason: text("client_unsigned_reason"),
     /** What happened, when something did (Sept 29, 2026). Null prints "None reported". */
     incidentNote: text("incident_note"),
+    /**
+     * Billing lock (Oct 19, 2026): set when a biller approves a claim holding this note. A locked
+     * note is never overwritten; later changes are `note_addenda`. The snapshot taken at the lock
+     * is in `note_versions`. Cleared only when the claim is taken back before it left EVVora.
+     */
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    lockedBy: uuid("locked_by").references(() => users.id),
     /** For a manual note: the address a supervisor chose or typed for each end of the visit, beside the point it resolved to. */
     clockInAddress: text("clock_in_address"),
     clockOutAddress: text("clock_out_address"),
@@ -975,6 +982,10 @@ export const clientFundingSources = pgTable(
     payer: text("payer").notNull(),
     waiver: waiverProgram("waiver"),
     memberId: text("member_id"),
+    /** The billing payer this coverage routes to (Oct 19, 2026). Null: waiver coverage defaults to the agency's Medicaid FFS payer. */
+    payerId: uuid("payer_id"),
+    /** X12 individual relationship code of the client to the subscriber; 18 = self. */
+    relationshipToSubscriber: text("relationship_to_subscriber").notNull().default("18"),
     priority: fundingPriority("priority").notNull().default("primary"),
     startDate: date("start_date").notNull(),
     endDate: date("end_date"),
@@ -1080,6 +1091,183 @@ export const clientDiagnoses = pgTable(
   },
   (t) => [index("client_diagnoses_person_idx").on(t.personId)],
 );
+
+// ---------- claims (Oct 19, 2026) ----------
+
+/**
+ * Claims go out as 837P files through the clearinghouse (Waystar), which forwards them to MN-ITS.
+ * A batch is one file; a claim is one client × service agreement inside it; a claim line is one
+ * note. A note is billed once: it stays out of "Ready to send" while any claim line holding it
+ * belongs to a claim that is not void, rejected or denied.
+ */
+export const claimBatchMethod = pgEnum("claim_batch_method", ["clearinghouse", "download"]);
+export const claimStatus = pgEnum("claim_status", ["sent", "accepted", "rejected", "paid", "denied", "void"]);
+
+export const claimBatches = pgTable("claim_batches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  method: claimBatchMethod("method").notNull(),
+  /** mock or waystar; for a download, the clearinghouse the file was built for. */
+  clearinghouse: text("clearinghouse").notNull(),
+  /** ISA13 / GS06. Unique per organisation. */
+  controlNumber: integer("control_number").notNull(),
+  usage: text("usage").notNull(),
+  /** The 837P exactly as sent or downloaded. PHI: served only by the batch file route. */
+  fileText: text("file_text").notNull(),
+  claimCount: integer("claim_count").notNull(),
+  lineCount: integer("line_count").notNull(),
+  total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+  externalId: text("external_id"),
+  message: text("message"),
+  sentBy: uuid("sent_by").references(() => users.id),
+  voidedAt: timestamp("voided_at", { withTimezone: true }),
+  voidedBy: uuid("voided_by").references(() => users.id),
+  ...timestamps,
+}, (t) => [uniqueIndex("claim_batches_control_idx").on(t.organizationId, t.controlNumber)]);
+
+export const claims = pgTable("claims", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  batchId: uuid("batch_id").notNull().references(() => claimBatches.id),
+  personId: uuid("person_id").notNull().references(() => people.id),
+  serviceAgreementId: uuid("service_agreement_id").notNull().references(() => serviceAgreements.id),
+  /** CLM01: comes back on the 277CA and the 835, so status updates find the claim by it. */
+  patientControlNumber: text("patient_control_number").notNull(),
+  total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+  currentVersionId: uuid("current_version_id"),
+  payerId: uuid("payer_id"),
+  status: claimStatus("status").notNull().default("sent"),
+  statusMessage: text("status_message"),
+  statusAt: timestamp("status_at", { withTimezone: true }),
+  payerClaimNumber: text("payer_claim_number"),
+  paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }),
+  ...timestamps,
+}, (t) => [uniqueIndex("claims_pcn_idx").on(t.patientControlNumber), index("claims_batch_idx").on(t.batchId), index("claims_person_idx").on(t.personId)]);
+
+export const claimLines = pgTable("claim_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  claimId: uuid("claim_id").notNull().references(() => claims.id, { onDelete: "cascade" }),
+  claimVersionId: uuid("claim_version_id"),
+  visitId: uuid("visit_id").notNull().references(() => visits.id),
+  lineNumber: integer("line_number").notNull(),
+  serviceCode: text("service_code").notNull(),
+  modifiers: text("modifiers").array().notNull().default(sql`'{}'::text[]`),
+  units: integer("units").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  serviceDate: date("service_date").notNull(),
+  ...timestamps,
+}, (t) => [index("claim_lines_claim_idx").on(t.claimId), index("claim_lines_visit_idx").on(t.visitId)]);
+
+// ---------- billing foundation (Oct 19, 2026, Phase 1) ----------
+
+/**
+ * A payer the agency bills. Routing and claim rules do not live here: `profileKey`/`profileVersion`
+ * name a versioned payer profile in `src/billing/profiles`, reviewed in code. The clearinghouse's
+ * payer ID stays null until Waystar supplies it; a null ID blocks submission, it is never guessed.
+ */
+export const payers = pgTable("payers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  key: text("key").notNull(),
+  name: text("name").notNull(),
+  /** medicaid_ffs | mco | other */
+  kind: text("kind").notNull(),
+  profileKey: text("profile_key").notNull(),
+  profileVersion: text("profile_version").notNull(),
+  clearinghousePayerId: text("clearinghouse_payer_id"),
+  isDefault: boolean("is_default").notNull().default(false),
+  active: boolean("active").notNull().default(true),
+  ...timestamps,
+}, (t) => [uniqueIndex("payers_org_key_idx").on(t.organizationId, t.key)]);
+
+/** The agency as a billing provider. One row per organisation; seeded from `organizations`. */
+export const billingProviders = pgTable("billing_providers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  legalName: text("legal_name").notNull(),
+  taxId: text("tax_id").notNull(),
+  npi: text("npi"),
+  umpi: text("umpi"),
+  taxonomy: text("taxonomy"),
+  address1: text("address1"),
+  address2: text("address2"),
+  city: text("city"),
+  state: text("state"),
+  zip: text("zip"),
+  phone: text("phone"),
+  /** Pay-to address, when payments go somewhere other than the billing address. */
+  payToAddress1: text("pay_to_address1"),
+  payToCity: text("pay_to_city"),
+  payToState: text("pay_to_state"),
+  payToZip: text("pay_to_zip"),
+  ...timestamps,
+}, (t) => [uniqueIndex("billing_providers_org_idx").on(t.organizationId)]);
+
+/** What a note said at the moment it was locked. Insert-only. */
+export const noteVersions = pgTable("note_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  visitId: uuid("visit_id").notNull().references(() => visits.id),
+  versionNo: integer("version_no").notNull(),
+  reason: text("reason").notNull(),
+  snapshot: jsonb("snapshot").notNull(),
+  /** sha256 of the canonical snapshot; claim versions cite it. */
+  hash: text("hash").notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("note_versions_visit_no_idx").on(t.visitId, t.versionNo)]);
+
+/** A change to a locked note, recorded beside it rather than over it. Insert-only. */
+export const noteAddenda = pgTable("note_addenda", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  visitId: uuid("visit_id").notNull().references(() => visits.id),
+  body: text("body").notNull(),
+  authorId: uuid("author_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("note_addenda_visit_idx").on(t.visitId)]);
+
+/**
+ * Every version of a claim, frozen. `snapshot` holds every input the 837P was built from
+ * (provider, payer, client, coverage, diagnoses, lines in cents, note version hashes), so a later
+ * change to a rate, a name or a note never changes what was sent. Insert-only.
+ */
+export const claimVersions = pgTable("claim_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  claimId: uuid("claim_id").notNull().references(() => claims.id),
+  versionNo: integer("version_no").notNull(),
+  /** CLM05-3: 1 original, 7 replacement, 8 void. */
+  frequencyCode: text("frequency_code").notNull().default("1"),
+  replacesVersionId: uuid("replaces_version_id"),
+  payerId: uuid("payer_id").references(() => payers.id),
+  profileKey: text("profile_key").notNull(),
+  profileVersion: text("profile_version").notNull(),
+  snapshot: jsonb("snapshot").notNull(),
+  snapshotHash: text("snapshot_hash").notNull(),
+  totalCents: integer("total_cents").notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [uniqueIndex("claim_versions_claim_no_idx").on(t.claimId, t.versionNo)]);
+
+export const unitState = pgEnum("authorization_unit_state", ["reserved", "billed", "released"]);
+
+/**
+ * Units drawn against an authorization. Reserved at biller approval, billed once the claim is
+ * delivered, released when it is taken back, voided or rejected. A visit can hold only one live
+ * row (the partial unique index), which is what stops two approvals billing the same note.
+ */
+export const authorizationUnits = pgTable("authorization_units", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  serviceAgreementId: uuid("service_agreement_id").notNull().references(() => serviceAgreements.id),
+  visitId: uuid("visit_id").notNull().references(() => visits.id),
+  claimVersionId: uuid("claim_version_id").references(() => claimVersions.id),
+  units: integer("units").notNull(),
+  state: unitState("state").notNull().default("reserved"),
+  ...timestamps,
+}, (t) => [
+  index("authorization_units_agreement_idx").on(t.serviceAgreementId),
+  uniqueIndex("authorization_units_live_visit_idx").on(t.visitId).where(sql`${t.state} <> 'released'`),
+]);
 
 // ---------- inferred types ----------
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, ExternalLink, FileDown, MapPin, X } from "lucide-react";
-import { Badge } from "@/components/kit";
+import { Badge, Notice } from "@/components/kit";
 import { getVisitRecord } from "@/db/queries";
 import { requireUser } from "@/lib/auth";
 import { aiConfigured } from "@/lib/ai/extract-agreement";
@@ -10,6 +10,7 @@ import { minutesBetween } from "@/lib/units";
 import { activitiesFor, skillsFor } from "@/lib/templates";
 import { RecordForm, SignaturePanel, MedsDue } from "./record-form";
 import { CloseSheetButton } from "./close-button";
+import { Addenda } from "./addenda";
 
 const time = new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/Chicago" });
 const day = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "America/Chicago" });
@@ -24,7 +25,8 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
   const minutes = v.clockOutAt ? minutesBetween(v.clockInAt, v.clockOutAt) : null;
   const serviceTypeId = r.program?.serviceTypeId ?? null;
   const office = user.abilities.includes("edit_visits");
-  const locked = v.status === "void";
+  const billingLocked = Boolean(v.lockedAt);
+  const locked = v.status === "void" || billingLocked;
   const docState = v.returnedAt ? "returned" : v.approvedAt ? "accepted" : v.shiftNote ? "draft" : "empty";
 
   return (
@@ -45,10 +47,12 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           <Badge tone={docState === "accepted" ? "ok" : docState === "returned" ? "warn" : docState === "draft" ? "warn" : "neutral"}>{docState === "accepted" ? "accepted" : docState === "returned" ? "returned" : docState === "draft" ? "draft" : "no note"}</Badge>
           {v.status === "completed" && (v.clientSignedAt ? <Badge tone="ok">client signed</Badge> : <Badge tone="danger">unsigned</Badge>)}
           {v.manualEntry && <Badge tone="warn">manual</Badge>}
+          {billingLocked && <Badge tone="neutral">locked</Badge>}
         </span>
       </div>
 
       <div className="grid gap-5 px-5 py-5">
+        {billingLocked && <div className="-mb-6"><Notice tone="warn"><span className="text-[13px]"><span className="font-medium text-text-strong">Approved for billing {fmtDateTime(v.lockedAt)}.</span> This note can no longer be changed. Anything to add or correct goes in an addendum below, beside the original.</span></Notice></div>}
         <section className="grid gap-2 text-[13px] sm:grid-cols-2">
           <div className="rounded-md border border-line bg-card px-3 py-2"><div className="text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Clock in</div><div className="mt-0.5 font-medium text-text-strong">{fmtDateTime(v.clockInAt)}</div>{v.clockInLat != null && <a href={`https://www.google.com/maps?q=${v.clockInLat},${v.clockInLng}`} target="_blank" rel="noreferrer" className="mt-0.5 flex items-center gap-1 text-[13px] text-primary hover:underline"><MapPin className="size-3" />{v.clockInLat.toFixed(4)}, {v.clockInLng.toFixed(4)}</a>}</div>
           <div className="rounded-md border border-line bg-card px-3 py-2"><div className="text-[13px] font-medium uppercase tracking-[0.06em] text-muted-foreground">Clock out</div><div className="mt-0.5 font-medium text-text-strong">{v.clockOutAt ? fmtDateTime(v.clockOutAt) : "Still in progress"}</div>{v.clockOutLat != null && v.clockOutLng != null && <a href={`https://www.google.com/maps?q=${v.clockOutLat},${v.clockOutLng}`} target="_blank" rel="noreferrer" className="mt-0.5 flex items-center gap-1 text-[13px] text-primary hover:underline"><MapPin className="size-3" />{v.clockOutLat.toFixed(4)}, {v.clockOutLng.toFixed(4)}</a>}</div>
@@ -60,6 +64,7 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           visitId={v.id}
           personFirst={person.firstName}
           locked={locked}
+          lockedLabel={billingLocked ? null : "Voided. Read only."}
           aiReady={aiConfigured() && (user.abilities.includes("edit_visits") || v.staffId === user.staffId)}
           skillsOptions={skillsFor(serviceTypeId)}
           activityOptions={activitiesFor(person.firstName, person.activityLibrary)}
@@ -70,7 +75,9 @@ export async function VisitRecord({ id, inSheet }: { id: string; inSheet?: boole
           questions={r.questions.map(({ q, goal }) => ({ id: q.id, prompt: q.prompt, goal: goal.title, response: r.responses.find((x) => x.questionId === q.id)?.response ?? "", note: r.responses.find((x) => x.questionId === q.id)?.note ?? "" }))}
         />
 
-        <SignaturePanel visitId={v.id} status={v.status} clientSignedAt={v.clientSignedAt ? fmtDateTime(v.clientSignedAt) : null} unsignedReason={v.clientUnsignedReason} staffSignedAt={v.staffSignedAt ? fmtDateTime(v.staffSignedAt) : null} approvedAt={v.approvedAt ? fmtDateTime(v.approvedAt) : null} approverEmail={r.approverEmail} canApprove={office} hasNote={Boolean(v.shiftNote)} returnedAt={v.returnedAt ? fmtDateTime(v.returnedAt) : null} returnedBy={r.returnedByName} returnReason={v.returnReason} />
+        <SignaturePanel visitId={v.id} status={v.status} clientSignedAt={v.clientSignedAt ? fmtDateTime(v.clientSignedAt) : null} unsignedReason={v.clientUnsignedReason} staffSignedAt={v.staffSignedAt ? fmtDateTime(v.staffSignedAt) : null} approvedAt={v.approvedAt ? fmtDateTime(v.approvedAt) : null} approverEmail={r.approverEmail} canApprove={office && !billingLocked} hasNote={Boolean(v.shiftNote)} returnedAt={v.returnedAt ? fmtDateTime(v.returnedAt) : null} returnedBy={r.returnedByName} returnReason={v.returnReason} />
+
+        <Addenda visitId={v.id} canAdd={v.status !== "void" && (office || v.staffId === user.staffId)} items={r.addenda.map((a) => ({ id: a.id, body: a.body, author: a.name, at: fmtDateTime(a.createdAt) }))} />
 
         <section className="text-[13px] text-muted-foreground">
           <div className="flex flex-wrap gap-x-4 gap-y-1"><span>Authorization {agreement.agreementNumber}</span><span>PMI {v.pmi}</span><span>{v.renderingIdType.toUpperCase()} {v.renderingId}</span><span>POS {v.placeOfService}</span>{edits.length > 0 && <span>{edits.length} edit{edits.length === 1 ? "" : "s"}</span>}</div>
