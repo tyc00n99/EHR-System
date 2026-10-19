@@ -1081,6 +1081,69 @@ export const clientDiagnoses = pgTable(
   (t) => [index("client_diagnoses_person_idx").on(t.personId)],
 );
 
+// ---------- claims (Oct 19, 2026) ----------
+
+/**
+ * Claims go out as 837P files through the clearinghouse (Waystar), which forwards them to MN-ITS.
+ * A batch is one file; a claim is one client × service agreement inside it; a claim line is one
+ * note. A note is billed once: it stays out of "Ready to send" while any claim line holding it
+ * belongs to a claim that is not void, rejected or denied.
+ */
+export const claimBatchMethod = pgEnum("claim_batch_method", ["clearinghouse", "download"]);
+export const claimStatus = pgEnum("claim_status", ["sent", "accepted", "rejected", "paid", "denied", "void"]);
+
+export const claimBatches = pgTable("claim_batches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  method: claimBatchMethod("method").notNull(),
+  /** mock or waystar; for a download, the clearinghouse the file was built for. */
+  clearinghouse: text("clearinghouse").notNull(),
+  /** ISA13 / GS06. Unique per organisation. */
+  controlNumber: integer("control_number").notNull(),
+  usage: text("usage").notNull(),
+  /** The 837P exactly as sent or downloaded. PHI: served only by the batch file route. */
+  fileText: text("file_text").notNull(),
+  claimCount: integer("claim_count").notNull(),
+  lineCount: integer("line_count").notNull(),
+  total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+  externalId: text("external_id"),
+  message: text("message"),
+  sentBy: uuid("sent_by").references(() => users.id),
+  voidedAt: timestamp("voided_at", { withTimezone: true }),
+  voidedBy: uuid("voided_by").references(() => users.id),
+  ...timestamps,
+}, (t) => [uniqueIndex("claim_batches_control_idx").on(t.organizationId, t.controlNumber)]);
+
+export const claims = pgTable("claims", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  batchId: uuid("batch_id").notNull().references(() => claimBatches.id),
+  personId: uuid("person_id").notNull().references(() => people.id),
+  serviceAgreementId: uuid("service_agreement_id").notNull().references(() => serviceAgreements.id),
+  /** CLM01: comes back on the 277CA and the 835, so status updates find the claim by it. */
+  patientControlNumber: text("patient_control_number").notNull(),
+  total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+  status: claimStatus("status").notNull().default("sent"),
+  statusMessage: text("status_message"),
+  statusAt: timestamp("status_at", { withTimezone: true }),
+  payerClaimNumber: text("payer_claim_number"),
+  paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }),
+  ...timestamps,
+}, (t) => [uniqueIndex("claims_pcn_idx").on(t.patientControlNumber), index("claims_batch_idx").on(t.batchId), index("claims_person_idx").on(t.personId)]);
+
+export const claimLines = pgTable("claim_lines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  claimId: uuid("claim_id").notNull().references(() => claims.id, { onDelete: "cascade" }),
+  visitId: uuid("visit_id").notNull().references(() => visits.id),
+  lineNumber: integer("line_number").notNull(),
+  serviceCode: text("service_code").notNull(),
+  modifiers: text("modifiers").array().notNull().default(sql`'{}'::text[]`),
+  units: integer("units").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  serviceDate: date("service_date").notNull(),
+  ...timestamps,
+}, (t) => [index("claim_lines_claim_idx").on(t.claimId), index("claim_lines_visit_idx").on(t.visitId)]);
+
 // ---------- inferred types ----------
 
 export type Organization = typeof organizations.$inferSelect;

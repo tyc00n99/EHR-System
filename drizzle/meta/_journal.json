@@ -281,6 +281,13 @@
       "when": 1792318300379,
       "tag": "0039_messages_extras",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1792372149656,
+      "tag": "0040_claims",
+      "breakpoints": true
     }
   ]
 }
