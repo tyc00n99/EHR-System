@@ -22,7 +22,7 @@ export const TINTS: Record<string, string> = {
   ok: "bg-ok-soft text-ok",
   warn: "bg-warn-soft text-warn",
   danger: "bg-danger-soft text-danger",
-  neutral: "text-text-strong ring-1 ring-inset ring-line",
+  neutral: "bg-card-soft text-text-strong",
 };
 export const TINT_KEYS = Object.keys(TINTS);
 
@@ -35,10 +35,22 @@ export function ChannelTile({ icon, tint, size = 32 }: { icon: string; tint: str
   );
 }
 
+/**
+ * A person's initials on a soft filled circle (user, Oct 20, 2026: the outlined ring read as
+ * unfinished). The tone comes from the initials, so a person keeps one colour everywhere, and
+ * every tone is one of the theme's own tints.
+ */
+const FACE_TONES = [
+  "bg-primary-soft text-primary-hover",
+  "bg-ok-soft text-ok",
+  "bg-card-soft text-text-strong",
+];
+
 export function Face({ initials, size = 52, badge }: { initials: string; size?: number; badge?: ReactNode }) {
+  const tone = FACE_TONES[[...initials].reduce((n, ch) => n + ch.charCodeAt(0), 0) % FACE_TONES.length];
   return (
     <span className="relative shrink-0" style={{ width: size, height: size }}>
-      <span className="grid size-full place-items-center rounded-full font-semibold text-text-strong ring-1 ring-inset ring-line" style={{ fontSize: Math.max(13, size * 0.36) }}>{initials}</span>
+      <span className={cx("grid size-full place-items-center rounded-full font-semibold tracking-[0.02em]", tone)} style={{ fontSize: Math.max(12, Math.round(size * 0.36)) }}>{initials}</span>
       {badge && <span className="absolute -bottom-1 -right-1 rounded-lg ring-2 ring-card">{badge}</span>}
     </span>
   );

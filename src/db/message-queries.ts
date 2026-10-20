@@ -147,12 +147,15 @@ export interface ChannelInfo {
   personId: string | null;
 }
 
+/** Team channels are hidden (see below); flip to bring them back. */
+const SHOW_TEAM_CHANNELS = false;
+
 /**
  * Channels this person can see.
  * - A client's channel: anyone with an active assignment to that client, plus every office login.
  *   Membership is read live from `assignments`, so an unassigned caregiver loses it immediately.
  *   Channels of discharged clients leave the list (their threads are kept).
- * - Any other channel: its members, plus every office login when it is not private.
+ * - Any other channel: its members, plus every office login when it is not private (hidden since Oct 20, 2026).
  */
 export async function visibleChannels(me: Me): Promise<ChannelInfo[]> {
   const db = await getDb();
@@ -181,6 +184,9 @@ export async function visibleChannels(me: Me): Promise<ChannelInfo[]> {
       });
       continue;
     }
+    // Team channels were removed from Messages (user, Oct 20, 2026): only client channels and
+    // direct messages remain. Their rows and messages are kept; they are simply no longer shown.
+    if (!SHOW_TEAM_CHANNELS) continue;
     if (!memberOf.has(c.id) && (c.isPrivate || !office)) continue;
     out.push({
       id: c.id, name: c.name, icon: c.icon, tint: c.tint, isPrivate: c.isPrivate, createdBy: c.createdBy, personId: null,

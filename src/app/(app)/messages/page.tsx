@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import {
-  canCreateChannels, channelAudience, ensureChannelHome, ensureClientChannels, isOffice, listConversations, listDmMessages, listMentions,
+  channelAudience, ensureChannelHome, ensureClientChannels, isOffice, listConversations, listDmMessages, listMentions,
   listMessageContacts, listOnShift, listThreadMessages, messageById, listThreadSummaries, threadFor, visibleChannels, type Me, type MessageContact,
 } from "@/db/message-queries";
 import { hasAbility } from "@/lib/abilities";
@@ -62,7 +62,6 @@ export default async function MessagesPage({ searchParams }: { searchParams: Pro
       meId={user.id}
       now={nowMs()}
       tab={tab}
-      canCreateChannels={canCreateChannels(me)}
       dms={conversations.map((c) => ({ ...c, lastAt: c.lastAt.toISOString() }))}
       contacts={contacts}
       channels={channels}

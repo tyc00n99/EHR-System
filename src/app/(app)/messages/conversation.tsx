@@ -11,10 +11,10 @@
  * voice notes play with their transcript beneath; typing "/" offers shortcuts. The same pane, in
  * its "side" form, shows a reply thread beside the conversation.
  */
-import { ArrowLeft, AtSign, Download, FileText, Link2, ListTree, Loader2, MessageSquareReply, Mic, MoreHorizontal, Plus, SendHorizontal, Smile, X } from "lucide-react";
+import { ArrowLeft, AtSign, Download, FileText, ListTree, Loader2, MessageSquareReply, Mic, MoreHorizontal, Plus, SendHorizontal, Smile, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useImperativeHandle, useRef, useState, useTransition, type KeyboardEvent, type ReactNode, type Ref } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, useTransition, type KeyboardEvent, type Ref } from "react";
 import { toast } from "sonner";
 import { cx } from "@/components/kit";
 import { PdfPages } from "@/components/pdf-pages";
@@ -96,10 +96,6 @@ export function ConversationPane({ meId, now, open, backHref, canSchedule, canSw
     else d.runs.push({ sender: m.sender, at: m.at, items: [m] });
   }
 
-  function copyLink() {
-    void navigator.clipboard?.writeText(window.location.href).then(() => toast.success("Link copied. It opens only for people who can read this."));
-  }
-
   function rename() {
     if (open.kind !== "thread") return;
     const name = window.prompt("Rename this thread", open.thread.title);
@@ -142,10 +138,6 @@ export function ConversationPane({ meId, now, open, backHref, canSchedule, canSw
             ) : <span className="truncate">{roleWord(open.contact)} · {msgs.length ? `Last message ${dayOf(msgs[msgs.length - 1].at)} at ${timeOf(msgs[msgs.length - 1].at)}` : "No messages yet"}</span>}
           </p>
         </div>
-        <span className="hidden shrink-0 rounded-md border border-line px-2 py-0.5 text-[13px] font-medium uppercase tracking-[0.06em] text-text lg:inline">
-          {open.kind === "dm" ? "Direct message" : home ? (open.thread.channel.personId ? "Client channel" : open.thread.channel.isPrivate ? "Private channel" : "Channel") : "Thread"}
-        </span>
-        <button onClick={copyLink} aria-label="Copy link" title="Copy link" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover"><Link2 className="size-5" /></button>
         {open.kind === "thread" && (
           <DropdownMenu>
             <DropdownMenuTrigger render={<button aria-label="Thread options" className="grid size-10 place-items-center rounded-full text-text-strong hover:bg-tab-hover" />}><MoreHorizontal className="size-5" /></DropdownMenuTrigger>
@@ -160,7 +152,7 @@ export function ConversationPane({ meId, now, open, backHref, canSchedule, canSw
       </header>
       )}
 
-      <div ref={scroller} className={cx("min-h-0 flex-1 overflow-y-auto py-4", side ? "px-5" : "px-5 md:px-8")}>
+      <div ref={scroller} data-scroller className={cx("min-h-0 flex-1 overflow-y-auto py-4", side ? "px-5" : "px-5 md:px-8")}>
         {msgs.length === 0 && <p className="py-10 text-center text-[15px] text-muted">{home ? `This is the start of ${open.kind === "thread" ? open.thread.channel.name : ""}. Say hello.` : "No messages yet. Say hello."}</p>}
         {days.map((d) => (
           <div key={d.day}>
@@ -172,7 +164,6 @@ export function ConversationPane({ meId, now, open, backHref, canSchedule, canSw
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex flex-wrap items-baseline gap-x-2">
                       <span className="text-[16px] font-semibold text-text-strong">{r.sender.userId === meId ? "You" : r.sender.name}</span>
-                      {r.sender.userId !== meId && !side && <span className="text-[14px] text-muted">{roleWord(r.sender)} ·</span>}
                       <span className="text-[14px] text-muted">{timeOf(r.at)}</span>
                     </div>
                     <div className="space-y-1">
@@ -198,13 +189,12 @@ export function ConversationPane({ meId, now, open, backHref, canSchedule, canSw
         : <Composer
             api={composer}
             compact={side}
-            recipient={open.kind === "dm" ? { face: <Face initials={open.contact.initials} size={26} />, name: open.contact.name, note: roleWord(open.contact) } : { face: <ChannelTile icon={open.thread.channel.icon} tint={open.thread.channel.tint} size={26} />, name: home ? open.thread.channel.name : `${open.thread.channel.name} › ${open.thread.title}`, note: `${audience.length + 1} ${audience.length === 0 ? "person" : "people"} can read this` }}
             to={open.kind === "dm" ? open.contact.userId : null}
             thread={open.kind === "thread" ? open.thread.id : null}
             personId={open.kind === "thread" ? open.thread.channel.personId : null}
             audience={audience}
             canSwap={canSwap && !side}
-            placeholder={side ? "Reply in thread…" : open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]} · type / for shortcuts` : "Message · type / for shortcuts"}
+            placeholder={side ? "Reply in thread…" : open.kind === "dm" ? `Message ${open.contact.name.split(" ")[0]}` : home ? `Message ${open.thread.channel.name}'s care team` : `Reply in ${open.thread.title}`}
             onNewThread={open.kind === "thread" && !side ? onNewThread : undefined}
           />}
       {viewing && <AttachmentViewer file={viewing} onClose={() => setViewing(null)} />}
@@ -246,16 +236,24 @@ function MessageItem({ m, meId, meName, now, canSchedule, canThread, showReplies
       ) : null}
       {files.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {files.map((a) => IMAGE.test(a.contentType) ? (
-            <button key={a.id} type="button" onClick={() => onView(a)} title={a.fileName} className="block overflow-hidden rounded-xl border border-line">
-              {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file; not for next/image's optimizer */}
-              <img src={`/messages/files/${a.id}`} alt={a.fileName} className="max-h-56 max-w-[280px] object-cover" />
-            </button>
-          ) : (
-            <button key={a.id} type="button" onClick={() => onView(a)} className="flex max-w-[320px] items-center gap-3 rounded-xl border border-line bg-card px-3.5 py-2.5 text-left hover:bg-tab-hover">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-text-strong"><FileText className="size-5" /></span>
-              <span className="min-w-0"><span className="block truncate text-[15px] font-medium text-text-strong">{a.fileName}</span><span className="text-[13px] text-muted">{fileSize(a.sizeBytes)}</span></span>
-            </button>
+          {/* Each file opens in place; a download button shows on hover (and to the keyboard) instead of a title bar in the viewer. */}
+          {files.map((a) => (
+            <div key={a.id} className="group/att relative">
+              {IMAGE.test(a.contentType) ? (
+                <button type="button" onClick={() => onView(a)} aria-label={`Open ${a.fileName}`} className="block overflow-hidden rounded-xl border border-line">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file; not for next/image's optimizer */}
+                  <img src={`/messages/files/${a.id}`} alt={a.fileName} className="max-h-56 max-w-[280px] object-cover"
+                    // A picture arriving after the scroll-to-bottom would otherwise leave the newest message half hidden.
+                    onLoad={(e) => { const sc = e.currentTarget.closest("[data-scroller]"); if (sc && sc.scrollHeight - sc.scrollTop - sc.clientHeight < 400) sc.scrollTop = sc.scrollHeight; }} />
+                </button>
+              ) : (
+                <button type="button" onClick={() => onView(a)} className="flex max-w-[320px] items-center gap-3 rounded-xl border border-line bg-card py-2.5 pl-3.5 pr-12 text-left hover:bg-hover">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-card-soft text-text-strong"><FileText className="size-5" /></span>
+                  <span className="min-w-0"><span className="block truncate text-[15px] font-medium text-text-strong">{a.fileName}</span><span className="text-[13px] text-muted">{fileSize(a.sizeBytes)}</span></span>
+                </button>
+              )}
+              <DownloadLink file={a} className={cx("absolute right-2 opacity-0 transition-opacity focus-visible:opacity-100 group-hover/att:opacity-100", IMAGE.test(a.contentType) ? "top-2" : "top-1/2 -translate-y-1/2")} />
+            </div>
           ))}
         </div>
       )}
@@ -301,44 +299,55 @@ function MessageItem({ m, meId, meName, now, canSchedule, canThread, showReplies
 }
 
 
+/** Saves a file from a message without leaving the screen (the files route names it). */
+function DownloadLink({ file, className }: { file: Attachment; className?: string }) {
+  return (
+    <a href={`/messages/files/${file.id}`} download={file.fileName} aria-label={`Download ${file.fileName}`} title={`Download · ${fileSize(file.sizeBytes)}`}
+      className={cx("grid size-8 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/75", className)}>
+      <Download className="size-4" strokeWidth={2} />
+    </a>
+  );
+}
+
 /**
  * A file from a message, shown in place: pictures and PDFs are drawn in a window over the
- * conversation; anything else is offered as a download, since the browser cannot draw it. The
- * Download button saves the file without leaving the screen (the route already names it).
+ * conversation with no title bar (user, Oct 20, 2026: the file name across the top was noise),
+ * just a download and a close button floating in the corner. Anything else is offered as a download.
  */
 function AttachmentViewer({ file, onClose }: { file: Attachment; onClose: () => void }) {
   const src = `/messages/files/${file.id}`;
   const isImage = IMAGE.test(file.contentType);
   const isPdf = file.contentType === PDF;
   const [ready, setReady] = useState(false);
+  const corner = "grid size-9 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/75";
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       {/* A picture gets a window its own size (user, Oct 16: "why is there so much extra space?"); a PDF needs the tall one. */}
-      <DialogContent className={cx("flex max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none", isImage ? "h-auto w-auto max-h-[92vh] max-w-[min(96vw,1600px)]" : "h-[90vh] w-[min(96vw,1060px)]")}>
-        <DialogTitle className="flex h-12 shrink-0 items-center gap-3 whitespace-nowrap border-b border-line-soft bg-page pl-4 pr-14 text-[13.5px] font-medium">
-          <span className="min-w-0 flex-1 truncate">{file.fileName}</span>
-          <span className="shrink-0 text-muted">{fileSize(file.sizeBytes)}</span>
-          <a href={src} download={file.fileName} className="inline-flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-[var(--radius-btn)] border border-line px-2.5 text-[13px] font-medium hover:bg-hover"><Download className="size-3.5" /> Download</a>
-        </DialogTitle>
-        <div className={cx("relative min-h-0 flex-1", isImage ? "bg-card" : "bg-panel")}>
-          {isPdf && (
-            <>
-              {!ready && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted"><Loader2 className="size-4 animate-spin" aria-hidden /> Opening…</div>}
-              <PdfPages src={src} fit="width" onFirstPage={() => setReady(true)} />
-            </>
-          )}
-          {isImage && (
-            // eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file
-            <img src={src} alt={file.fileName} className="block max-h-[calc(92vh-3rem)] max-w-[min(96vw,1600px)] object-contain" />
-          )}
-          {!isPdf && !isImage && (
-            <div className="flex size-full flex-col items-center justify-center gap-3 p-6 text-center">
-              <span className="grid size-14 place-items-center rounded-xl bg-card-soft text-text-strong"><FileText className="size-7" /></span>
-              <p className="text-[15px] text-text-strong">This kind of file cannot be shown here.</p>
-              <a href={src} download={file.fileName} className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-btn)] bg-primary px-4 text-[14px] font-medium text-primary-foreground hover:bg-primary-hover"><Download className="size-4" /> Download {file.fileName}</a>
-            </div>
-          )}
+      <DialogContent showCloseButton={false} overlayClassName="bg-black/60"
+        className={cx("block max-w-none gap-0 overflow-hidden p-0 ring-0 sm:max-w-none", isImage ? "h-auto w-auto max-h-[92vh] max-w-[min(96vw,1600px)] bg-transparent" : isPdf ? "h-[90vh] w-[min(96vw,1060px)] bg-panel" : "w-[min(92vw,420px)] bg-card")}>
+        <DialogTitle className="sr-only">{file.fileName}</DialogTitle>
+        <div className="absolute right-3 top-3 z-10 flex gap-2">
+          <DownloadLink file={file} className={corner} />
+          <button type="button" onClick={onClose} aria-label="Close" className={corner}><X className="size-4" strokeWidth={2} /></button>
         </div>
+        {isPdf && (
+          <div className="relative size-full">
+            {!ready && <div className="absolute inset-0 flex items-center justify-center gap-2 text-[14px] text-muted"><Loader2 className="size-4 animate-spin" aria-hidden /> Opening…</div>}
+            <PdfPages src={src} fit="width" onFirstPage={() => setReady(true)} />
+          </div>
+        )}
+        {isImage && (
+          // eslint-disable-next-line @next/next/no-img-element -- private, auth-gated file
+          <img src={src} alt={file.fileName} className="block max-h-[92vh] max-w-[min(96vw,1600px)] rounded-xl object-contain" />
+        )}
+        {!isPdf && !isImage && (
+          <div className="flex flex-col items-center gap-3 px-6 pb-7 pt-12 text-center">
+            <span className="grid size-14 place-items-center rounded-xl bg-card-soft text-text-strong"><FileText className="size-7" /></span>
+            <p className="max-w-full truncate text-[15px] font-medium text-text-strong">{file.fileName}</p>
+            <p className="text-[14px] text-muted">This kind of file cannot be shown here.</p>
+            <a href={src} download={file.fileName} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-[14px] font-medium text-primary-foreground hover:bg-primary-hover"><Download className="size-4" /> Download · {fileSize(file.sizeBytes)}</a>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -368,10 +377,9 @@ const SHORTCUTS: Shortcut[] = [
   { cmd: "call", label: "Ask for a call back", run: { text: "Please call me when you have a minute." } },
 ];
 
-function Composer({ api, compact, recipient, to, thread, personId, audience, canSwap, placeholder, onNewThread }: {
+function Composer({ api, compact, to, thread, personId, audience, canSwap, placeholder, onNewThread }: {
   api: Ref<ComposerApi | null>;
   compact: boolean;
-  recipient: { face: ReactNode; name: string; note: string };
   to: string | null;
   thread: string | null;
   /** The client behind a client channel, so /swap offers only that client's shifts. */
@@ -392,6 +400,14 @@ function Composer({ api, compact, recipient, to, thread, personId, audience, can
   const [pending, startTransition] = useTransition();
   const box = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // The box grows with what is typed, up to a few lines, and shrinks back once it is sent.
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [draft]);
 
   const matches = query ? audience.filter((p) => p.name.toLowerCase().includes(query.text.toLowerCase())).slice(0, 8) : [];
   // The shortcut list shows while the whole draft is "/" and a word.
@@ -535,35 +551,29 @@ function Composer({ api, compact, recipient, to, thread, personId, audience, can
   }
 
   const ready = (draft.trim().length > 0 || files.length > 0) && !uploading && !slash;
-  const iconBtn = "grid size-9 place-items-center rounded-full text-text-strong hover:bg-tab-hover";
+  const iconBtn = "grid size-9 shrink-0 place-items-center rounded-full text-muted hover:bg-hover hover:text-text-strong";
+  const pad = compact ? "px-4 pb-4" : "px-4 pb-4 md:px-8 md:pb-6";
 
   if (recording) {
     return (
-      <div className={cx("shrink-0", compact ? "px-4 pb-4" : "px-4 pb-5 md:px-8 md:pb-7")}>
+      <div className={cx("shrink-0", pad)}>
         <VoiceRecorder sending={pending} onSend={sendVoice} onCancel={() => setRecording(false)} />
       </div>
     );
   }
 
+  // One slim row (user, Oct 20, 2026: the framed box with a "To" line and a hint underneath was too
+  // bulky): attach and mention on the left, the text in the middle growing with what is typed, send on the right.
   return (
-    <div className={cx("shrink-0", compact ? "px-4 pb-4" : "px-4 pb-5 md:px-8 md:pb-7")}>
-      <div className="relative rounded-2xl border border-line bg-card focus-within:border-text-strong">
-        {/* The reference's "To …" line: who this lands with, before a word is typed. */}
-        {!compact && (
-          <div className="mx-4 flex min-w-0 items-center gap-2.5 border-b border-line-soft py-2.5 md:mx-5">
-            <span className="text-[14px] text-muted">To</span>
-            {recipient.face}
-            <span className="truncate text-[15px] font-medium text-text-strong">{recipient.name}</span>
-            <span className="hidden truncate text-[14px] text-muted sm:inline">{recipient.note}</span>
-          </div>
-        )}
+    <div className={cx("shrink-0", pad)}>
+      <div className="relative rounded-[22px] border border-line bg-card transition-colors focus-within:border-primary">
         {shortcuts.length > 0 && (
           <div role="listbox" aria-label="Shortcuts" className="absolute bottom-full left-3 z-20 mb-2 w-[min(380px,calc(100%-1.5rem))] overflow-hidden rounded-xl border border-line bg-card p-1 shadow-lg">
             <p className="px-3 pb-1 pt-1.5 text-[13px] text-muted">Shortcuts</p>
             {shortcuts.map((s, i) => (
               <button key={s.cmd} role="option" aria-selected={i === hi % shortcuts.length} onMouseDown={(e) => { e.preventDefault(); runShortcut(s); }}
-                className={cx("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left", i === hi % shortcuts.length ? "bg-[color-mix(in_srgb,var(--brand,#0098c0)_10%,transparent)]" : "hover:bg-tab-hover")}>
-                <span className={cx("w-20 shrink-0 text-[15px] font-semibold", i === hi % shortcuts.length ? "text-[var(--brand-ink,#00708e)]" : "text-text-strong")}>/{s.cmd}</span>
+                className={cx("flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left", i === hi % shortcuts.length ? "bg-primary-soft" : "hover:bg-hover")}>
+                <span className="w-20 shrink-0 text-[15px] font-semibold text-text-strong">/{s.cmd}</span>
                 <span className="truncate text-[14.5px] text-text-strong">{s.label}</span>
               </button>
             ))}
@@ -575,7 +585,7 @@ function Composer({ api, compact, recipient, to, thread, personId, audience, can
               ? <p className="px-3 py-2 text-[14px] text-muted">Nobody here by that name.</p>
               : matches.map((p, i) => (
                 <button key={p.userId} role="option" aria-selected={i === hi % matches.length} onMouseDown={(e) => { e.preventDefault(); choose(p); }}
-                  className={cx("flex w-full items-center gap-2.5 px-3 py-2 text-left", i === hi % matches.length ? "bg-tab-hover" : "hover:bg-tab-hover")}>
+                  className={cx("flex w-full items-center gap-2.5 px-3 py-2 text-left", i === hi % matches.length ? "bg-primary-soft" : "hover:bg-hover")}>
                   <Face initials={p.initials} size={28} />
                   <span className="min-w-0"><span className="block truncate text-[15px] font-medium text-text-strong">{p.name}</span><span className="block truncate text-[13px] text-muted">{roleWord(p)}</span></span>
                 </button>
@@ -583,7 +593,7 @@ function Composer({ api, compact, recipient, to, thread, personId, audience, can
           </div>
         )}
         {files.length > 0 && (
-          <div className="flex flex-wrap gap-2 px-4 pt-3">
+          <div className="flex flex-wrap gap-2 px-3 pt-3">
             {files.map((p) => {
               const parts = partsOf(p.file);
               const busy = !p.error && p.sent < parts;
@@ -592,46 +602,40 @@ function Composer({ api, compact, recipient, to, thread, personId, audience, can
                   {busy ? <Loader2 className="size-4 shrink-0 animate-spin text-primary" aria-label="Uploading" /> : <FileText className={cx("size-4 shrink-0", p.error ? "text-danger" : "text-primary")} />}
                   <span className="truncate font-medium text-text-strong">{p.file.name}</span>
                   <span className={cx("shrink-0", p.error ? "text-danger" : "text-muted")}>{p.error ?? (busy ? `${Math.round((p.sent / parts) * 100)}%` : fileSize(p.file.size))}</span>
-                  <button aria-label={`Remove ${p.file.name}`} onClick={() => remove(p)} className="grid size-6 place-items-center rounded hover:bg-tab-hover"><X className="size-3.5" /></button>
+                  <button aria-label={`Remove ${p.file.name}`} onClick={() => remove(p)} className="grid size-6 place-items-center rounded hover:bg-hover"><X className="size-3.5" /></button>
                   {busy && <span aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 bg-primary transition-[width]" style={{ width: `${(p.sent / parts) * 100}%` }} />}
                 </span>
               );
             })}
           </div>
         )}
-        <textarea
-          ref={box}
-          rows={compact ? 1 : 2}
-          value={draft}
-          placeholder={placeholder}
-          aria-label="Message"
-          onChange={(e) => { setDraft(e.target.value); readQuery(e.target.value, e.target.selectionStart); }}
-          onClick={(e) => readQuery(draft, e.currentTarget.selectionStart)}
-          onKeyDown={onKey}
-          className={cx("own-focus block max-h-48 w-full resize-none bg-transparent px-4 pt-3 text-[16.5px] leading-[1.55] text-text-strong outline-none placeholder:text-muted md:px-5", compact ? "min-h-[48px]" : "min-h-[72px]")}
-        />
-        <div className="flex items-center gap-0.5 px-2.5 pb-2 md:px-3">
+        <div className="flex items-end gap-0.5 p-1.5">
           <input ref={fileInput} type="file" multiple hidden onChange={(e) => { pick(Array.from(e.target.files ?? [])); e.target.value = ""; }} />
           <button type="button" onClick={() => fileInput.current?.click()} aria-label="Attach files" title={`Attach files (up to ${MAX_FILES}, 10 MB each)`} className={iconBtn}><Plus className="size-5" strokeWidth={1.8} /></button>
-          <button type="button" onClick={startMention} aria-label="Mention someone" title="Mention someone" className={iconBtn}><AtSign className="size-5" strokeWidth={1.8} /></button>
-          <button type="button" onClick={() => setRecording(true)} aria-label="Record a voice note" title="Record a voice note" className={iconBtn}><Mic className="size-5" strokeWidth={1.8} /></button>
-          {onNewThread && <button type="button" onClick={onNewThread} aria-label="Start a new thread in this channel" title="New thread in this channel" className={iconBtn}><ListTree className="size-5" strokeWidth={1.8} /></button>}
-          {compact && (
-            <button type="button" onClick={send} disabled={!ready || pending} aria-label="Send" className="ml-auto grid size-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-45">
-              {pending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" />}
-            </button>
+          <button type="button" onClick={startMention} aria-label="Mention someone" title="Mention someone" className={iconBtn}><AtSign className="size-[19px]" strokeWidth={1.8} /></button>
+          <textarea
+            ref={box}
+            rows={1}
+            value={draft}
+            placeholder={placeholder}
+            aria-label="Message"
+            onChange={(e) => { setDraft(e.target.value); readQuery(e.target.value, e.target.selectionStart); }}
+            onClick={(e) => readQuery(draft, e.currentTarget.selectionStart)}
+            onKeyDown={onKey}
+            className="own-focus block max-h-40 min-h-9 min-w-0 flex-1 resize-none bg-transparent px-2 py-[7px] text-[16px] leading-[22px] text-text-strong outline-none placeholder:text-muted"
+          />
+          {!draft.trim() && files.length === 0 && (
+            <>
+              <button type="button" onClick={() => setRecording(true)} aria-label="Record a voice note" title="Record a voice note" className={iconBtn}><Mic className="size-[19px]" strokeWidth={1.8} /></button>
+              {onNewThread && <button type="button" onClick={onNewThread} aria-label="Start a new thread in this channel" title="New thread in this channel" className={iconBtn}><ListTree className="size-[19px]" strokeWidth={1.8} /></button>}
+            </>
           )}
-        </div>
-      </div>
-      {!compact && (
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="hidden text-[14px] text-muted sm:block">Enter sends · Shift + Enter starts a new line · / for shortcuts</p>
-          <button type="button" onClick={send} disabled={!ready || pending} title={uploading ? "Waiting for the upload to finish" : "Send (Enter)"}
-            className="ml-auto inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-[15px] font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-45">
-            {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}Send <SendHorizontal className="size-4" strokeWidth={2} />
+          <button type="button" onClick={send} disabled={!ready || pending} aria-label="Send" title={uploading ? "Waiting for the upload to finish" : "Send"}
+            className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-opacity hover:bg-primary-hover disabled:opacity-35">
+            {pending ? <Loader2 className="size-4 animate-spin" /> : <SendHorizontal className="size-4" strokeWidth={2} />}
           </button>
         </div>
-      )}
+      </div>
       {swapping && <SwapDialog personId={personId} to={to} thread={thread} onClose={() => setSwapping(false)} />}
     </div>
   );
