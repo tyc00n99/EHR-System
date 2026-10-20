@@ -458,14 +458,6 @@ A grounded assistant for writing notes, drafting reports and analysis, on the Cl
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-## Billing (October 19, 2026)
-Claims go to Waystar (a clearinghouse) as 837P. `docs/waystar-integration-plan.md` is the plan, the phase status and the list of unknowns; read it before touching `src/billing/`.
-- Money is integer cents (`src/billing/money.ts`). Payer rules are versioned code profiles in `src/billing/profiles/` (`mhcp-ffs@2026-10-19.2` is current); never edit a released version, add a new one, because claim versions point at them.
-- Every reason a note is held or flagged is a rule in `src/billing/rules.ts` (id, source, basis, verified, fix label). Add new rules there, check them in `readiness()`, and give each a fix link. Blocks hold the note; warnings never stop a send.
-- Units are counted in date order across pay periods (`withEarlier` + `evaluate` in `claims.ts`); the screen and approval must keep using the same path.
-- EVV is an input, not a gate by default: the payer profile's `evvAggregatorRecord` decides block/warn/off, and the EVV policy's "hold noncompliant" decides that one rule.
-- Notes lock at biller approval (`visits_guard_locked` trigger); later changes are addenda. Nothing is sent automatically; the mock clearinghouse is labelled on screen and Waystar fails closed until its guide arrives.
-
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
@@ -647,4 +639,5 @@ From the user's two reference phone screenshots (caregiver "Today", "Schedule") 
 - **EVV Compliance trimmed (Oct 19, 2026, user).** The "estimated, not the DHS determination" sentence is no longer a visible lead: it sits behind a circled ⓘ beside the Compliance title (`EvvHeader` takes `info`, drawn by `evv/info-tip.tsx`, hover or focus). The By service, By billing identifier and Top reasons cards are gone; By caregiver stays. `byService`, `byBillingId` and `topExceptionReasons` are still computed in `src/evv/reporting.ts`.
 - The EVV queue's "Noncompliant is not unsent" bar is gone from under the table (Oct 19, 2026, user); the sentence is the ⓘ beside every queue title (`EvvHeader info`).
 - The EVV visit drawer folds Submissions and Versions under one closed **History** line (Oct 19, 2026, user), drawn as bordered cards like Events with plain labels (`OPERATION`, `CAUSE` in `visit-drawer.tsx`); it opens itself when a submission carries a rejection message.
+- EVV Compliance order (Oct 20, 2026, user): the two rows of stat tiles come first, then the Quarterly check-in, then By caregiver and the deadline list.
 - **Record tabs lost the squiggle (Oct 18, 2026, user).** `Tabs` in kit.tsx uses `.tab-line`: the selected tab is the tan `--tab-hover` fill with a straight 2px primary line along its bottom, the same treatment as the EVV queue's filter tabs. Supersedes the Oct 8 `.tab-squig` note.
