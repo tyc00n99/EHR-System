@@ -4,10 +4,11 @@
  * Messages. Oct 16, 2026: Slack-style content (Home / Recent / Unread / @me; direct messages, then
  * each channel with its threads). Oct 18, 2026: laid out on the user's "Retainr" reference: a title
  * and count line over two panes on a grey page, the list as a soft panel of cards (the open one
- * outlined in ink), the conversation in a white card with a framed "To …" composer. Selection lives in the URL. The page re-reads itself
+ * outlined in ink), the conversation in a white card. Oct 20, 2026: team channels removed (direct
+ * messages and client channels remain), theme colours only, filled avatars. Selection lives in the URL. The page re-reads itself
  * every 25 seconds while visible, so new messages arrive without a reload.
  */
-import { ChevronDown, ChevronRight, Hash, ListTree, Lock, MessageCircle, MoreHorizontal, PenSquare, Plus, Search, Users, X } from "lucide-react";
+import { ChevronDown, ChevronRight, ListTree, MessageCircle, MoreHorizontal, PenSquare, Plus, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -15,7 +16,7 @@ import { cx } from "@/components/kit";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ChannelInfo, ChatMessage, Conversation, MentionItem, MessageContact, OnShift, ThreadSummary } from "@/db/message-queries";
-import { ago, ChannelTile, Face, isChannelHome, MentionText, roleWord } from "./chat-bits";
+import { ago, ChannelTile, Face, isChannelHome, MentionText } from "./chat-bits";
 import { ConversationPane } from "./conversation";
 import { ChannelDialog, NewMessageDialog, NewThreadDialog } from "./dialogs";
 
@@ -33,12 +34,11 @@ type Dialog =
   | { kind: "channel"; channel?: ChannelInfo; group?: boolean }
   | null;
 
-export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, channels, threads, mentions, onShift, canSchedule, canSwap, open, side }: {
+export function Messenger({ meId, now, tab, dms, contacts, channels, threads, mentions, onShift, canSchedule, canSwap, open, side }: {
   meId: string;
   /** Server time of this render, for relative times; refreshed with every poll. */
   now: number;
   tab: Tab;
-  canCreateChannels: boolean;
   dms: DmRow[];
   contacts: MessageContact[];
   channels: ChannelInfo[];
@@ -93,14 +93,14 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
     const rows: { key: string; at: string; unread: number; node: (active: boolean) => ReactNode; active: boolean; href: string }[] = [];
     for (const d of dms) rows.push({
       key: `dm:${d.contact.userId}`, at: d.lastAt, unread: d.unread, active: d.contact.userId === activeDm, href: openDm(d.contact.userId),
-      node: () => <ListRow face={<Face initials={d.contact.initials} size={40} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody || "Sent an attachment"}`} when={ago(d.lastAt, now)} unread={d.unread} tag={<Tag>{roleWord(d.contact)}</Tag>} />,
+      node: () => <ListRow face={<Face initials={d.contact.initials} size={40} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody || "Sent an attachment"}`} when={ago(d.lastAt, now)} unread={d.unread} />,
     });
     for (const t of threads) {
       const ch = channelById.get(t.channelId);
       if (isChannelHome(t.title) && !t.lastBody) continue; // an untouched channel chat is not "recent"
       rows.push({
         key: `t:${t.id}`, at: t.lastAt, unread: t.unread, active: t.id === activeThread, href: isChannelHome(t.title) && ch ? openChannel(ch.id) : openThread(t.id),
-        node: () => <ListRow face={ch ? <ChannelTile icon={ch.icon} tint="neutral" size={40} /> : <Face initials={t.lastSenderInitials} size={40} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastSender || t.lastFromMe ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody || "Sent an attachment"}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} tag={ch && <Tag>{isChannelHome(t.title) ? (ch.personId ? "Client channel" : "Channel") : ch.name}</Tag>} />,
+        node: () => <ListRow face={ch ? <ChannelTile icon={ch.icon} tint="neutral" size={40} /> : <Face initials={t.lastSenderInitials} size={40} />} title={isChannelHome(t.title) && ch ? ch.name : t.title} preview={t.lastSender || t.lastFromMe ? `${t.lastFromMe ? "You" : t.lastSender}: ${t.lastBody || "Sent an attachment"}` : "No messages yet"} when={ago(t.lastAt, now)} unread={t.unread} tag={ch && !isChannelHome(t.title) && <Tag>{ch.name}</Tag>} />,
       });
     }
     return rows.filter((r) => { if (r.key.startsWith("dm:")) return hit(dms.find((d) => `dm:${d.contact.userId}` === r.key)?.contact.name); const t = threads.find((x) => `t:${x.id}` === r.key); return hit(t && isChannelHome(t.title) ? channelById.get(t.channelId)?.name : t?.title); }).sort((a, b) => b.at.localeCompare(a.at));
@@ -119,14 +119,8 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           <Link href={openChannel(c.id)} aria-current={channelActive ? "page" : undefined} className="flex min-w-0 flex-1 items-center gap-3 py-0.5 text-left">
             <ChannelTile icon={c.icon} tint="neutral" size={40} />
             <span className="min-w-0">
-              <span className="flex items-center gap-1.5">
-                <span className={cx("truncate text-[16.5px] text-text-strong", unread ? "font-semibold" : "font-medium")}>{c.name}</span>
-                {c.isPrivate && <Lock className="size-3.5 shrink-0 text-text" aria-label="Private channel" />}
-              </span>
-              <span className="mt-1 flex flex-wrap gap-1.5">
-                <Tag>{c.personId ? "Client channel" : c.isPrivate ? "Private channel" : "Channel"}</Tag>
-                {own.length > 0 && <Tag>{own.length} {own.length === 1 ? "thread" : "threads"}</Tag>}
-              </span>
+              <span className={cx("block truncate text-[16.5px] text-text-strong", unread ? "font-semibold" : "font-medium")}>{c.name}</span>
+              <span className="mt-0.5 block truncate text-[14px] text-muted">{own.length > 0 ? `${own.length} ${own.length === 1 ? "thread" : "threads"}` : "Everyone on the care team"}</span>
             </span>
           </Link>
           {unread > 0 && !channelActive && <Count n={unread} />}
@@ -148,7 +142,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           <div className="mt-3 space-y-1 border-t border-line-soft pt-2">
             {own.map((t) => (
               <Link key={t.id} href={openThread(t.id)} aria-current={t.id === activeThread ? "page" : undefined}
-                className={cx("-mx-1.5 flex rounded-xl border px-2.5 py-2", "border-transparent", t.id === activeThread ? "bg-[color-mix(in_srgb,var(--warn)_20%,var(--card))]" : "hover:bg-[color-mix(in_srgb,var(--warn)_20%,var(--card))]")}>
+                className={cx("-mx-1.5 flex rounded-xl px-2.5 py-2", t.id === activeThread ? "bg-card" : "hover:bg-card")}>
                 <ListRow
                   compact
                   face={<Face initials={t.lastSenderInitials} size={32} />}
@@ -167,8 +161,8 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
       </div>
     );
   };
+  // Only client channels remain; team channels were removed (user, Oct 20, 2026).
   const clientChannels = channels.filter((c) => c.personId);
-  const otherChannels = channels.filter((c) => !c.personId);
 
   const tabs: { key: Tab; label: string; n?: number }[] = [
     { key: "home", label: "Home" },
@@ -195,7 +189,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
         </div>
         <div className="relative min-w-0 flex-1 sm:w-[340px] sm:flex-none">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setQ(""); }} placeholder="Search people, channels, threads" aria-label="Search conversations"
+          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") setQ(""); }} placeholder="Search people and clients" aria-label="Search conversations"
             className="own-focus h-11 w-full rounded-full border border-line pl-11 pr-10 text-[15px] text-text-strong outline-none placeholder:text-muted focus:border-text-strong" />
           {q && <button aria-label="Clear search" onClick={() => setQ("")} className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-tab-hover"><X className="size-4" /></button>}
         </div>
@@ -207,8 +201,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
           <PopoverContent align="end" className="w-[300px] p-2">
             <p className="px-3 pb-1 pt-1.5 text-[13px] text-muted">Start something new</p>
             <NewOption icon={<MessageCircle className="size-5" strokeWidth={1.8} />} title="Chat" note="Message one person" onClick={() => { setNewOpen(false); setDialog({ kind: "dm" }); }} />
-            {canCreateChannels && <NewOption icon={<Users className="size-5" strokeWidth={1.8} />} title="Group" note="A few people, with a name" onClick={() => { setNewOpen(false); setDialog({ kind: "channel", group: true }); }} />}
-            {channels.length > 0 && <NewOption icon={<ListTree className="size-5" strokeWidth={1.8} />} title="Thread" note="A topic inside a channel" onClick={() => { setNewOpen(false); setDialog({ kind: "thread", channelId: open?.kind === "thread" ? open.thread.channel.id : undefined }); }} />}
+            {channels.length > 0 && <NewOption icon={<ListTree className="size-5" strokeWidth={1.8} />} title="Thread" note="A topic in a client\'s channel" onClick={() => { setNewOpen(false); setDialog({ kind: "thread", channelId: open?.kind === "thread" ? open.thread.channel.id : undefined }); }} />}
           </PopoverContent>
         </Popover>
       </div>
@@ -225,7 +218,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
             <nav aria-label="Filter conversations" className="flex gap-0.5 rounded-full border border-line p-1">
               {tabs.map((t) => (
                 <Link key={t.key} href={href({ tab: t.key === "home" ? null : t.key })} aria-current={tab === t.key ? "page" : undefined}
-                  className={cx("shrink-0 rounded-full px-3 py-1 text-[14px] font-medium", tab === t.key ? "bg-[var(--brand-ink,#00708e)] text-white" : "text-muted hover:text-text-strong")}>
+                  className={cx("shrink-0 rounded-full px-3 py-1 text-[14px] font-medium", tab === t.key ? "bg-primary text-primary-foreground" : "text-muted hover:text-text-strong")}>
                   {t.label}{t.n ? <span className="ml-1 font-semibold">{t.n}</span> : null}
                 </Link>
               ))}
@@ -239,7 +232,7 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                 {dms.length === 0 && !needle && <p className="px-2 pb-1 text-[14px] text-muted">No direct messages yet. Press New to start one.</p>}
                 {dms.filter((d) => hit(d.contact.name, d.lastBody)).map((d) => (
                   <Link key={d.contact.userId} href={openDm(d.contact.userId)} aria-current={d.contact.userId === activeDm ? "page" : undefined} className={cardCls(d.contact.userId === activeDm)}>
-                    <ListRow face={<Face initials={d.contact.initials} size={40} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody || "Sent an attachment"}`} when={ago(d.lastAt, now)} unread={d.unread} tag={<Tag>{roleWord(d.contact)}</Tag>} />
+                    <ListRow face={<Face initials={d.contact.initials} size={40} />} title={d.contact.name} preview={`${d.lastFromMe ? "You: " : ""}${d.lastBody || "Sent an attachment"}`} when={ago(d.lastAt, now)} unread={d.unread} />
                   </Link>
                 ))}
 
@@ -248,13 +241,6 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                     <SectionLabel icon={<Users className="size-4" strokeWidth={1.8} />} title="Each client's channel holds everyone assigned to them.">Clients</SectionLabel>
                     {clientChannels.map(renderChannel)}
                   </>
-                )}
-                {(otherChannels.length > 0 || canCreateChannels) && (!needle || otherChannels.some((c) => hit(c.name) || threads.some((t) => t.channelId === c.id && hit(t.title)))) && <SectionLabel icon={<Hash className="size-4" strokeWidth={1.8} />}>Channels</SectionLabel>}
-                {otherChannels.map(renderChannel)}
-                {otherChannels.length === 0 && canCreateChannels && !needle && (
-                  <button onClick={() => setDialog({ kind: "channel" })} className="flex w-full items-center gap-2 rounded-2xl border border-dashed border-line px-4 py-3 text-[14px] font-medium text-text-strong hover:border-text-strong/40">
-                    <Plus className="size-4" /> Create a team channel
-                  </button>
                 )}
               </>
             )}
@@ -282,9 +268,9 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
                           <span className="shrink-0 text-[14px] text-muted">{ago(m.at, now)}</span>
                         </div>
                         <p className="mt-1 line-clamp-2 text-[15px] text-text">{m.body}</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
+                        <div className="mt-1 flex flex-wrap gap-x-2">
                           <Tag>{m.threadId ? `${m.channelName} › ${m.threadTitle || "Channel"}` : "Direct message"}</Tag>
-                          {m.unread && <Tag>Unread</Tag>}
+                          {m.unread && <Tag>· Unread</Tag>}
                         </div>
                       </div>
                     </div>
@@ -348,9 +334,11 @@ export function Messenger({ meId, now, tab, canCreateChannels, dms, contacts, ch
   );
 }
 
-/** One card in the list: a hairline at rest, a light orange fill on hover and while open (user, Oct 18: no blue border). */
-
-const cardCls = (active: boolean) => cx("block rounded-2xl border border-line px-4 py-3.5 transition-colors", active ? "bg-[color-mix(in_srgb,var(--warn)_12%,var(--card))]" : "hover:bg-[color-mix(in_srgb,var(--warn)_12%,var(--card))]");
+/**
+ * One card in the list: a hairline at rest, the theme's neutral hover, and the theme's soft tint
+ * while open (user, Oct 20, 2026: the orange did not belong to the rest of the app).
+ */
+const cardCls = (active: boolean) => cx("block rounded-2xl border px-4 py-3 transition-colors", active ? "border-transparent bg-primary-soft" : "border-line hover:bg-hover");
 
 function SectionLabel({ icon, children, title }: { icon: ReactNode; children: ReactNode; title?: string }) {
   return <div title={title} className="flex items-center gap-2 px-2 pb-0.5 pt-3 text-[13px] font-medium uppercase tracking-[0.08em] text-[var(--brand-ink,#00708e)] first:pt-1">{icon}{children}</div>;
@@ -360,9 +348,9 @@ function Count({ n }: { n: number }) {
   return <span className="grid h-6 min-w-6 place-items-center rounded-md bg-text-strong px-1.5 text-[13px] font-semibold text-card">{n > 99 ? "99+" : n}</span>;
 }
 
-/** The small uppercase label under a card's preview: one neutral look on every tab (user, Oct 18). */
+/** A quiet line of context under a card's preview (where a thread lives, an unread mark). */
 function Tag({ children }: { children: ReactNode }) {
-  return <span className="inline-flex max-w-full items-center truncate rounded-md border border-line px-2 py-0.5 text-[13px] font-medium uppercase tracking-[0.06em] text-text">{children}</span>;
+  return <span className="max-w-full truncate text-[13px] text-muted">{children}</span>;
 }
 
 function ListRow({ face, title, preview, when, unread, tag, compact }: { face: ReactNode; title: string; preview: string; when: string; unread: number; tag?: ReactNode; compact?: boolean }) {
@@ -378,7 +366,7 @@ function ListRow({ face, title, preview, when, unread, tag, compact }: { face: R
           <span className={cx("truncate text-text", compact ? "text-[14px]" : "text-[15px]")}><MentionText body={preview} names={[]} /></span>
           {unread > 0 && <Count n={unread} />}
         </div>
-        {tag && <div className="mt-2 flex">{tag}</div>}
+        {tag && <div className="mt-1 flex">{tag}</div>}
       </div>
     </div>
   );
