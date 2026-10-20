@@ -113,7 +113,7 @@ export function OvertimeForm({ rules }: { rules: OvertimeRules }) {
 
 export function PaySettings({ schedules, overtime }: { schedules: ScheduleRow[]; overtime: OvertimeRules }) {
   return (
-    <div className="grid max-w-5xl items-start gap-5 lg:grid-cols-2">
+    <div className="grid items-start gap-5 lg:grid-cols-2">
       <Card padded title="Pay schedule" description="How pay periods are cut. Notes, billing, reports and the Pay tab all follow it.">
         <PayScheduleEditor schedules={schedules} />
       </Card>

@@ -55,7 +55,7 @@ export function ProfileHistory({ rows }: { rows: HistoryRow[] }) {
   };
 
   return (
-    <div className="max-w-[820px]">
+    <div>
       <div className="overflow-x-auto rounded-lg border border-line">
         <table className="w-full min-w-[520px] border-collapse text-[13px]">
           <thead className="bg-panel">

@@ -11,7 +11,7 @@ export default async function EditStaffPage({ params }: PageProps<"/staff/[id]/e
   const s = await getStaff(id);
   if (!s) notFound();
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <div className="w-full">
       <PageHeader eyebrow={<><Crumb href="/staff">Team</Crumb><CrumbSep /><Crumb href={`/staff/${id}`}>{s.firstName} {s.lastName}</Crumb><CrumbSep /><Crumb>Edit</Crumb></>} title={`${s.firstName} ${s.lastName}`} meta={<span>{s.title}</span>} />
       <StaffForm action={updateStaff.bind(null, id)} defaults={s} cancelHref={`/staff/${id}`} />
     </div>

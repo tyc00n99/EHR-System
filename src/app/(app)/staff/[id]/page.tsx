@@ -115,7 +115,7 @@ export default async function StaffPage({ params, searchParams }: PageProps<"/st
       )}
 
       {tab === "login" && user.abilities.includes("manage_staff") && (
-        <div className="max-w-3xl">
+        <div className="max-w-5xl">
           {login ? (<>
             <Plain title="Login">
               <Rows rows={[

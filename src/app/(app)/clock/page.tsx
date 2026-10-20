@@ -10,7 +10,7 @@ export default async function ClockPage() {
   const user = await requireUser();
   if (!user.staffId) {
     return (
-      <div className="mx-auto max-w-md rounded-lg border border-line bg-card p-5">
+      <div className="mx-auto max-w-2xl rounded-lg border border-line bg-card p-5">
         <h2>Clock in / out</h2>
         <p className="mt-2 text-[13px] text-muted-foreground">Your login is not linked to a staff record, so you cannot record visits. Ask an administrator to link it.</p>
       </div>
@@ -18,7 +18,7 @@ export default async function ClockPage() {
   }
   const [open, agreements] = await Promise.all([getOpenVisitForStaff(user.staffId), listClockableAgreements(user.abilities.includes("edit_visits") ? undefined : user.staffId)]);
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-2xl">
       <ClockPanel
         open={open ? { id: open.visit.id, personName: `${open.person.firstName} ${open.person.lastName}`, clockInAt: open.visit.clockInAt.toISOString(), tasks: open.visit.tasks, serviceCode: open.visit.serviceCode } : null}
         agreements={agreements.map((a) => ({

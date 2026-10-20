@@ -458,6 +458,8 @@ A grounded assistant for writing notes, drafting reports and analysis, on the Cl
 
 <!-- BEGIN:nextjs-agent-rules -->
 
+- **No page width cap (Oct 20, 2026, user: "why is there so much open space on the left and right", then "fix that on all platforms and screens").** The shell's `max-w-[1440px]` wrapper is gone, so every page runs gutter to gutter; the page-level caps on the client/staff forms, search, settings, sites, Create event and profile history went with it, and profile entity cards widened 680 → 960px. Caregiver Today and My sessions are `max-w-4xl` and the clock `max-w-2xl` so a tablet is not half empty. The Overview's authorization rows stack on a phone (service on its own line) and show Through only at `xl`. Checked for horizontal overflow on 15 screens at 390, 1024 and 1920. Do not add a page-wide max width back; cap a block only where long lines would hurt reading.
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
