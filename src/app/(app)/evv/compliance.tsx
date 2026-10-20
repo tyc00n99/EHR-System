@@ -21,8 +21,6 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
         <Button type="submit" variant="secondary">Update</Button>
       </form>
 
-      <QuarterlyCheckIn s={s} />
-
       <div className="mb-5 grid grid-cols-2 gap-2 md:grid-cols-4">
         <StatTile label="Estimated compliance" value={pct(s.estimatedCompliancePercent)} note="Compliant + exempt of completed EVV-required visits · DHS requires 80%" tone={s.estimatedCompliancePercent == null ? undefined : s.estimatedCompliancePercent >= 80 ? "ok" : s.estimatedCompliancePercent >= 70 ? "warn" : "danger"} />
         <StatTile label="EVV-required visits" value={s.totals.evvRequired} note={`${s.totals.complete} completed`} />
@@ -35,6 +33,8 @@ export function ComplianceTab({ summary: s, names }: { summary: ComplianceSummar
         <StatTile label="Exempt · live-in" value={s.totals.exemptLiveIn} />
         <StatTile label="Needs review" value={s.totals.pendingReview} tone={s.totals.pendingReview ? "warn" : undefined} />
       </div>
+
+      <QuarterlyCheckIn s={s} />
 
       <Card title="By caregiver">
           {s.byCaregiver.length === 0 ? <p className="px-5 py-4 text-[13px] text-muted-foreground">No completed EVV visits in this range.</p> : (
