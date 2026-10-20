@@ -51,7 +51,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       <PageHeader title="Settings" meta={<span>{org.name}</span>} />
       <Tabs tabs={[{ key: "organization", label: "Organization" }, { key: "documents", label: "Client documents" }, { key: "roles", label: "Roles" }, { key: "pay", label: "Pay and overtime" }, { key: "evv", label: "EVV" }, { key: "integrations", label: "Integrations" }]} current={tab} base="/settings" />
       {tab === "organization" && (
-        <div className="grid max-w-4xl gap-4 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           <Card title="Organization" description="License holder details" padded><OrgForm org={org} /></Card>
           <div className="space-y-4">
             <Card title="Pay periods" padded>

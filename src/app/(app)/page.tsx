@@ -122,7 +122,7 @@ async function CaregiverHome({ staffId, userId, name, day }: { staffId: string; 
   const needsAction = recentVisits.filter(({ visit: v }) => v.status === "in_progress" || v.returnedAt != null || (v.status === "completed" && !v.clientSignedAt));
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-4xl">
       <header className="mb-5">
         <p className="text-[13px] text-muted-foreground">{today()}</p>
         <h1>{name ? `Hi, ${name.split(" ")[0]}` : "My day"}</h1>

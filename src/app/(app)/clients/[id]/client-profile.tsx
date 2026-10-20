@@ -161,7 +161,7 @@ export function ClientProfile({ personId, manage, general, sections, entities, b
           blanks[openKey] === "" ? null : <p className="text-[14.5px] italic text-hint">{blanks[openKey] ?? "Nothing recorded yet."}</p>
         ) : (
           rows.map((e) => (
-            <article key={e.id} className="mb-3 flex max-w-[680px] items-start gap-4 rounded-xl border border-line px-5 py-4 transition-colors last:mb-0 hover:border-primary hover:bg-primary-soft">
+            <article key={e.id} className="mb-3 flex max-w-[960px] items-start gap-4 rounded-xl border border-line px-5 py-4 transition-colors last:mb-0 hover:border-primary hover:bg-primary-soft">
               <div className="grid min-w-0 flex-1 gap-3">
                 {e.fields.map((f, i) => (
                   <div key={i} className="flex min-w-0 gap-2.5">

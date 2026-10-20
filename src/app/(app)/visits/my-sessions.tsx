@@ -21,7 +21,7 @@ export async function MySessions({ staffId, openVisit }: { staffId: string; open
     v.status === "in_progress" || v.returnedAt != null || (v.status === "completed" && !v.clientSignedAt),
   );
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-4xl">
       {openVisit && <VisitSheet id={openVisit} />}
       <PageHeader title="My sessions" meta={<span className="text-[13.5px] text-muted-foreground">{period.label}</span>} />
       <div className="mb-6 grid grid-cols-3 gap-2">

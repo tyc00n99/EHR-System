@@ -10,7 +10,7 @@ export function SiteForm({ action }: { action: (p: ActionState, fd: FormData) =>
   const [state, submit, pending] = useActionState(action, {});
   const e = state.errors ?? {};
   return (
-    <form action={submit} className="max-w-4xl">
+    <form action={submit} className="w-full">
       <FormError message={state.message} />
       <FormSection title="Site" description="A licensed location or, for in-home services, the service line itself.">
         <Field label="Name" error={e.name} className="col-span-2 md:col-span-4"><Input name="name" required /></Field>

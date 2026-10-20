@@ -458,13 +458,7 @@ A grounded assistant for writing notes, drafting reports and analysis, on the Cl
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-## Billing (October 19, 2026)
-Claims go to Waystar (a clearinghouse) as 837P. `docs/waystar-integration-plan.md` is the plan, the phase status and the list of unknowns; read it before touching `src/billing/`.
-- Money is integer cents (`src/billing/money.ts`). Payer rules are versioned code profiles in `src/billing/profiles/` (`mhcp-ffs@2026-10-19.2` is current); never edit a released version, add a new one, because claim versions point at them.
-- Every reason a note is held or flagged is a rule in `src/billing/rules.ts` (id, source, basis, verified, fix label). Add new rules there, check them in `readiness()`, and give each a fix link. Blocks hold the note; warnings never stop a send.
-- Units are counted in date order across pay periods (`withEarlier` + `evaluate` in `claims.ts`); the screen and approval must keep using the same path.
-- EVV is an input, not a gate by default: the payer profile's `evvAggregatorRecord` decides block/warn/off, and the EVV policy's "hold noncompliant" decides that one rule.
-- Notes lock at biller approval (`visits_guard_locked` trigger); later changes are addenda. Nothing is sent automatically; the mock clearinghouse is labelled on screen and Waystar fails closed until its guide arrives.
+- **No page width cap (Oct 20, 2026, user: "why is there so much open space on the left and right", then "fix that on all platforms and screens").** The shell's `max-w-[1440px]` wrapper is gone, so every page runs gutter to gutter; the page-level caps on the client/staff forms, search, settings, sites, Create event and profile history went with it, and profile entity cards widened 680 → 960px. Caregiver Today and My sessions are `max-w-4xl` and the clock `max-w-2xl` so a tablet is not half empty. The Overview's authorization rows stack on a phone (service on its own line) and show Through only at `xl`. Checked for horizontal overflow on 15 screens at 390, 1024 and 1920. Do not add a page-wide max width back; cap a block only where long lines would hurt reading.
 
 # This is NOT the Next.js you know
 

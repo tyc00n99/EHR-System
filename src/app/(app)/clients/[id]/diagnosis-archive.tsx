@@ -31,7 +31,7 @@ export function ArchivedDiagnoses({ personId, items, manage }: { personId: strin
   const [pending, start] = useTransition();
   if (items.length === 0) return null;
   return (
-    <div className="max-w-[680px]">
+    <div className="max-w-[960px]">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-[13.5px] font-medium text-text-strong hover:underline">
         <Icon.chevronRight size={15} className={open ? "rotate-90 transition-transform" : "transition-transform"} />
         {items.length} archived diagnos{items.length === 1 ? "is" : "es"}
