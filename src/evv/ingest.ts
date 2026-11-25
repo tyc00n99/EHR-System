@@ -4,6 +4,7 @@
  * noncompliant. Hard rejections are reserved for events that are not authentic for this visit
  * (wrong caregiver, wrong tenant, malformed) or that cannot be applied (already clocked in).
  */
+import { DHS_EDIT_ACTION_CODES, DHS_EDIT_REASON_CODES } from "./dhs-codes";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { schema } from "@/db";
@@ -37,6 +38,9 @@ export const clockEventSchema = z.object({
   metadata: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
   /** Why a manual entry was made. Required when verificationMethod is "manual". */
   manualReason: z.string().max(500).optional(),
+  /** DHS Visit Edit Reason / Action (Appendix B) for a manual entry; inferred from manualReason when absent. */
+  dhsReasonCode: z.enum(DHS_EDIT_REASON_CODES).optional(),
+  dhsActionCode: z.enum(DHS_EDIT_ACTION_CODES).optional(),
 }).refine((e) => e.verificationMethod !== "manual" || Boolean(e.manualReason?.trim()), { message: "A manual entry needs a reason", path: ["manualReason"] });
 export type ClockEventInput = z.infer<typeof clockEventSchema>;
 
@@ -104,7 +108,7 @@ async function storeEvent(ctx: EvvCtx, visit: EvvVisit, type: "clock_in" | "cloc
     locationSource: input.locationSource ?? (coords ? "gps" : input.locationPermissionDenied ? "none" : "none"), locationType, locationState: loc.state, distanceFromHomeMeters: loc.distanceFromHomeMeters,
     registeredLocationRef: input.registeredLocationRef ?? null, verificationMethod: input.verificationMethod, deviceId: input.deviceId ?? null,
     offline: Boolean(input.offline), delayed: t.delayed, actorUserId: actor.userId, actorStaffId: actor.staffId,
-    metadata: { ...(input.metadata ?? {}), ...(input.manualReason ? { manualReason: input.manualReason } : {}), delayMinutes: t.delayMinutes },
+    metadata: { ...(input.metadata ?? {}), ...(input.manualReason ? { manualReason: input.manualReason } : {}), ...(input.dhsReasonCode ? { dhsReasonCode: input.dhsReasonCode } : {}), ...(input.dhsActionCode ? { dhsActionCode: input.dhsActionCode } : {}), delayMinutes: t.delayMinutes },
   };
   const integrityHash = eventIntegrityHash({ eventId: base.eventId, type, deviceCapturedAt: base.deviceCapturedAt, serverReceivedAt: received, effectiveAt: t.effectiveAt, locationEncrypted: base.locationEncrypted, verificationMethod: input.verificationMethod, actorStaffId: actor.staffId, evvVisitId: visit.id });
   // Direct insert: the events table is append-only by design and is its own record.

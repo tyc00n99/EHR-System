@@ -5,7 +5,7 @@
  */
 import { createHash } from "node:crypto";
 import type { EvvEvent, EvvVisit } from "@/db/schema";
-import { toOutbound, validateOutbound, type AcknowledgmentResult, type EvvAggregatorAdapter, type ExternalRecord, type HealthResult, type NormalizedRejection, type Operation, type OutboundVisit, type SubmissionOutcome } from "./types";
+import { toOutbound, validateOutbound, type AcknowledgmentResult, type EvvAggregatorAdapter, type ExternalRecord, type HealthResult, type NormalizedRejection, type Operation, type OutboundProvider, type OutboundVisit, type SubmissionOutcome } from "./types";
 
 export type MockScript = (payload: OutboundVisit, attempt: number) => SubmissionOutcome;
 
@@ -18,7 +18,7 @@ export class MockAggregatorAdapter implements EvvAggregatorAdapter {
 
   constructor(private script: MockScript = () => ({ kind: "accepted", externalReferenceId: "", warnings: [], transport: "mock 200" })) {}
 
-  transform(visit: EvvVisit, events: { clockIn: EvvEvent | null; clockOut: EvvEvent | null }, provider: { aggregatorProviderId: string | null; caregiver: { npi: string | null; umpi: string | null } }, operation: Operation) {
+  transform(visit: EvvVisit, events: { clockIn: EvvEvent | null; clockOut: EvvEvent | null }, provider: OutboundProvider, operation: Operation) {
     return toOutbound(visit, events, provider, operation);
   }
   validate(payload: OutboundVisit) { return validateOutbound(payload); }

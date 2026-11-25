@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { BILLING, COMPLIANCE, LIFECYCLE, LOCATION_STATE, METHOD, SUBMISSION, reasonLabel } from "@/evv/labels";
 import type { visitDetail } from "@/evv/review";
 import { CORRECTION_REASONS } from "@/evv/types";
+import { DHS_EDIT_ACTIONS, DHS_EDIT_REASONS } from "@/evv/dhs-codes";
 import { fmtDate, fmtDateTime, toLocalInput } from "@/lib/format";
 import type { ActionState } from "@/lib/validation";
 import { acknowledgeAction, commentAction, correctVisitAction, exceptionAction, resubmitAction, reviewVisitAction, voidVisitAction } from "./actions";
@@ -195,6 +196,8 @@ function CorrectForm({ visitId, clockInAt, clockOutAt, locationType, serviceCode
         <Field label="Location type"><Select name="locationType" defaultValue={locationType ?? ""}><option value="">Unchanged</option><option value="home">Home</option><option value="community">Community</option><option value="alternate">Alternate</option><option value="protected">Protected address</option></Select></Field>
         <Field label="Service code · modifiers"><div className="flex gap-2"><Input name="serviceCode" defaultValue={serviceCode} className="w-28" /><Input name="modifiers" defaultValue={modifiers.join(" ")} placeholder="UC U3" /></div></Field>
         <Field label="Reason" error={e.reasonCode}><Select name="reasonCode" defaultValue="SUPERVISOR_REVIEW">{CORRECTION_REASONS.map((r) => <option key={r} value={r}>{r.replaceAll("_", " ").toLowerCase()}</option>)}</Select></Field>
+        <Field label="DHS edit reason" error={e.dhsReasonCode}><Select name="dhsReasonCode" defaultValue=""><option value="">Match the reason above</option>{Object.entries(DHS_EDIT_REASONS).map(([c, l]) => <option key={c} value={c}>{c} · {l}</option>)}</Select></Field>
+        <Field label="DHS action taken" error={e.dhsActionCode}><Select name="dhsActionCode" defaultValue="123">{Object.entries(DHS_EDIT_ACTIONS).map(([c, l]) => <option key={c} value={c}>{c} · {l}</option>)}</Select></Field>
         <Field label="Explanation" error={e.explanation} className="sm:col-span-2"><Textarea name="explanation" required minLength={10} className="min-h-16" placeholder="What was wrong, how you confirmed the right value" /></Field>
       </div>
       <div className="mt-3 flex gap-2"><Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save correction"}</Button><Button type="button" variant="ghost" onClick={onDone}>Cancel</Button></div>

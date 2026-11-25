@@ -13,6 +13,7 @@ import { reconcile } from "@/evv/reconciliation";
 import { acknowledgeException, addComment, assignException, markAcknowledged, markReviewed } from "@/evv/review";
 import { processQueue, resubmitVisit } from "@/evv/submission";
 import { EvvError } from "@/evv/visits";
+import { sendSoon } from "@/evv/realtime";
 import { requireAbility } from "@/lib/auth";
 import { fromLocalInput } from "@/lib/format";
 import { formToObject, type ActionState } from "@/lib/validation";
@@ -40,17 +41,19 @@ export async function correctVisitAction(visitId: string, _prev: ActionState, fd
     if (d.locationType) changes.locationType = d.locationType;
     if (d.serviceCode) changes.serviceCode = d.serviceCode;
     if (d.modifiers) changes.modifiers = d.modifiers.split(/[\s,]+/).filter(Boolean);
-    await correctVisit(await office("evv.correct"), visitId, { reasonCode: d.reasonCode, explanation: d.explanation, changes });
+    const cctx = await office("evv.correct");
+    await correctVisit(cctx, visitId, { reasonCode: d.reasonCode, dhsReasonCode: d.dhsReasonCode || undefined, dhsActionCode: d.dhsActionCode || undefined, explanation: d.explanation, changes });
+    sendSoon(cctx, visitId);
     return done("Correction saved. The visit is a new version and will be resubmitted.");
   } catch (e) { return failed(e); }
 }
 
 export async function voidVisitAction(visitId: string, reason: string, undo = false): Promise<ActionState> {
-  try { const ctx = await office("evv.correct"); if (undo) await unvoidVisit(ctx, visitId, reason); else await voidVisit(ctx, visitId, reason); return done(undo ? "Void reversed." : "Visit voided. Everything is retained."); } catch (e) { return failed(e); }
+  try { const ctx = await office("evv.correct"); if (undo) await unvoidVisit(ctx, visitId, reason); else await voidVisit(ctx, visitId, reason); sendSoon(ctx, visitId); return done(undo ? "Void reversed." : "Visit voided. Everything is retained."); } catch (e) { return failed(e); }
 }
 
 export async function resubmitAction(visitId: string): Promise<ActionState> {
-  try { await resubmitVisit(await office("evv.resubmit"), visitId); return done("Queued for resubmission."); } catch (e) { return failed(e); }
+  try { const rctx = await office("evv.resubmit"); await resubmitVisit(rctx, visitId); sendSoon(rctx, visitId); return done("Queued for resubmission."); } catch (e) { return failed(e); }
 }
 
 export async function acknowledgeAction(visitId: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
@@ -78,7 +81,7 @@ export async function saveProviderAction(_prev: ActionState, fd: FormData): Prom
     const d = formToObject(fd) as Record<string, string | undefined>;
     const { profile } = await getProfile(ctx);
     if (!d.legalName || !d.federalTaxId) return { errors: { ...(d.legalName ? {} : { legalName: "Required" }), ...(d.federalTaxId ? {} : { federalTaxId: "Required" }) } };
-    await writer(ctx).update(schema.evvProviderProfiles, profile.id, { legalName: d.legalName, federalTaxId: d.federalTaxId, medicaidProviderId: d.medicaidProviderId ?? null, hhaxProviderId: d.hhaxProviderId ?? null, evvSystem: d.evvSystem === "hhax_direct" ? "hhax_direct" : "third_party", productionEnabled: fd.get("productionEnabled") === "true" });
+    await writer(ctx).update(schema.evvProviderProfiles, profile.id, { legalName: d.legalName, federalTaxId: d.federalTaxId, medicaidProviderId: d.medicaidProviderId ?? null, officeQualifier: d.officeQualifier === "NPI" || d.officeQualifier === "UMPI" ? d.officeQualifier : "FederalTaxID", officeIdentifier: d.officeIdentifier?.trim() || null, evvSystem: d.evvSystem === "hhax_direct" ? "hhax_direct" : "third_party", productionEnabled: fd.get("productionEnabled") === "true" });
     await evvAudit(ctx, "provider.configure", null, { profile: true });
     return done("Provider details saved.");
   } catch (e) { return failed(e); }

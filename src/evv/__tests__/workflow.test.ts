@@ -135,13 +135,10 @@ test("fail closed: the Minnesota HHAX adapter without configuration blocks and c
   const v = await completed("2026-08-07");
   const adapter = new MinnesotaHhaxAdapter(hhaxConfigFromEnv({ HHAX_ENVIRONMENT: "production", EVV_SUBMISSION_ENABLED: "1" } as unknown as NodeJS.ProcessEnv));
   const health = await adapter.health();
-  assert.equal(health.ok, false); assert.ok(health.problems.some((p) => p.includes("HHAX_BASE_URL")));
+  assert.equal(health.ok, false); assert.ok(health.problems.some((p) => p.includes("HHAX_CLIENT_ID")));
   const s = await processSubmission(w.ctx(w.a), adapter, (await latestSubmission(v.id)).id);
   assert.equal(s.status, "blocked"); assert.equal(s.externalReferenceId, null);
   assert.equal((await loadVisit(w.ctx(w.a), v.id))!.submissionStatus, "blocked");
-  const full = new MinnesotaHhaxAdapter(hhaxConfigFromEnv({ HHAX_ENVIRONMENT: "sandbox", EVV_SUBMISSION_ENABLED: "1", HHAX_BASE_URL: "https://example.invalid", HHAX_VISIT_PATH: "/x", HHAX_CLIENT_ID: "c", HHAX_PROVIDER_ID: "p", HHAX_CLIENT_SECRET: "s" } as unknown as NodeJS.ProcessEnv), { post: async () => { throw new Error("must not be called"); }, get: async () => { throw new Error("must not be called"); } });
-  const out = await full.submit(adapter.transform((await loadVisit(w.ctx(w.a), v.id))!, { clockIn: null, clockOut: null }, { aggregatorProviderId: null, caregiver: { npi: null, umpi: null } }, "create"));
-  assert.equal(out.kind, "blocked", "even fully configured, the unmapped schema never transmits");
 });
 
 test("reconciliation: pending submissions get acknowledged, and the monthly deadline raises alerts", async () => {

@@ -58,7 +58,7 @@ export async function ensureEvvDefaults(db: Db, orgId: string, actorUserId: stri
   }
 
   const [payer] = await db.select({ id: schema.evvPayers.id }).from(schema.evvPayers).where(eq(schema.evvPayers.organizationId, orgId)).limit(1);
-  if (!payer) await w.insert(schema.evvPayers, { organizationId: orgId, name: "Minnesota Medicaid (MHCP fee-for-service)", kind: "medicaid_ffs", isDefault: true });
+  if (!payer) await w.insert(schema.evvPayers, { organizationId: orgId, name: "Minnesota Medicaid (MHCP fee-for-service)", kind: "medicaid_ffs", externalPayerId: "MIWS", isDefault: true });
 
   const [rule] = await db.select({ id: schema.evvServiceRules.id }).from(schema.evvServiceRules).where(eq(schema.evvServiceRules.organizationId, orgId)).limit(1);
   if (!rule) {

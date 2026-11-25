@@ -32,9 +32,9 @@ async function IntegrationsSection({ userId }: { userId: string }) {
   const db = await getDb();
   const ctx = makeCtx(db, await defaultOrganizationId(db), userId);
   const adapter = adapterFromEnv();
-  const [health, { profile, identifiers }, submissions, people, staff] = await Promise.all([adapter.health(), getProfile(ctx), recentSubmissions(ctx), listPeople(), listStaff()]);
+  const [health, { profile, identifiers }, submissions, people, staff, payers, syncs] = await Promise.all([adapter.health(), getProfile(ctx), recentSubmissions(ctx), listPeople(), listStaff(), db.select().from(schema.evvPayers).where(eq(schema.evvPayers.organizationId, ctx.orgId)), db.select().from(schema.evvCaregiverSyncs).where(eq(schema.evvCaregiverSyncs.organizationId, ctx.orgId))]);
   const names = { person: Object.fromEntries(people.map((p) => [p.id, fullName(p)])), staff: Object.fromEntries(staff.map((s) => [s.id, `${s.firstName} ${s.lastName}`])) };
-  return <IntegrationTab adapterKey={adapter.key} health={health} profile={profile} identifierCount={identifiers.length} submissions={submissions} names={names} />;
+  return <IntegrationTab adapterKey={adapter.key} health={health} profile={profile} identifierCount={identifiers.length} submissions={submissions} names={names} payers={payers.filter((p) => p.active).map((p) => ({ name: p.name, externalPayerId: p.externalPayerId }))} caregiverSyncs={syncs.map((s) => ({ staffId: s.staffId, status: s.status, message: s.message, syncedAt: s.syncedAt }))} />;
 }
 
 export const metadata = { title: "Settings" };

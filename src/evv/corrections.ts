@@ -14,10 +14,15 @@ import { localDate, minutesBetween } from "./time";
 import { CORRECTABLE_FIELDS, CORRECTION_REASONS, REASON } from "./types";
 import { unitsFor } from "./units";
 import { applyVersion, evaluateVisit, EvvError, requireVisit } from "./visits";
+import { DEFAULT_EDIT_ACTION, DHS_EDIT_ACTION_CODES, DHS_EDIT_REASON_CODES, DHS_REASON_FOR_CORRECTION } from "./dhs-codes";
 
 export const correctionSchema = z.object({
   reasonCode: z.enum(CORRECTION_REASONS),
   explanation: z.string().min(10, "Explain the correction in at least a sentence").max(2000),
+  /** The DHS Visit Edit Reason (Appendix B). Defaults from reasonCode; business requirement 8. */
+  dhsReasonCode: z.enum(DHS_EDIT_REASON_CODES).optional(),
+  /** The DHS Visit Edit Action Taken. Defaults to 123, supervisor approved change. */
+  dhsActionCode: z.enum(DHS_EDIT_ACTION_CODES).optional(),
   changes: z.object({
     clockInAt: z.string().datetime({ offset: true }).optional(),
     clockOutAt: z.string().datetime({ offset: true }).optional(),
@@ -67,13 +72,18 @@ export async function correctVisit(ctx: EvvCtx, visitId: string, raw: unknown): 
   patch.corrected = true;
   patch.resubmissionRequired = visit.evvRequired;
   if (patch.verificationMethod === "manual") patch.manualEntry = true;
+  const dhsReason = input.dhsReasonCode ?? DHS_REASON_FOR_CORRECTION[input.reasonCode];
+  const dhsAction = input.dhsActionCode ?? DEFAULT_EDIT_ACTION;
+  patch.editReasonCode = dhsReason;
+  patch.editActionCode = dhsAction;
+  patch.editNote = input.explanation.slice(0, 256);
 
   const next = await applyVersion(ctx, visit, patch, "correction", null);
   const correction = await writer(ctx).insert(schema.evvCorrections, {
     organizationId: ctx.orgId, evvVisitId: visit.id, priorVersion: visit.version, resultingVersion: next.version, changes,
-    reasonCode: input.reasonCode, explanation: input.explanation, correctedBy: ctx.actorUserId, makesNoncompliant: !visit.liveIn, resubmissionRequired: visit.evvRequired,
+    reasonCode: input.reasonCode, dhsReasonCode: dhsReason, dhsActionCode: dhsAction, explanation: input.explanation, correctedBy: ctx.actorUserId, makesNoncompliant: !visit.liveIn, resubmissionRequired: visit.evvRequired,
   });
-  await evvAudit(ctx, "visit.correct", visit.id, { fields: Object.keys(changes), reasonCode: input.reasonCode, priorVersion: visit.version, resultingVersion: next.version });
+  await evvAudit(ctx, "visit.correct", visit.id, { fields: Object.keys(changes), reasonCode: input.reasonCode, dhsReasonCode: dhsReason, dhsActionCode: dhsAction, priorVersion: visit.version, resultingVersion: next.version });
   const evaluated = await evaluateVisit(ctx, visit.id);
   if (evaluated.evvRequired && evaluated.status === "completed") {
     const { enqueueSubmission } = await import("./submission");
