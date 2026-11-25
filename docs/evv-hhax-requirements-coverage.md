@@ -14,7 +14,7 @@ Legend: **Built** = in code and tested · **Config** = built, switched on by con
 | # | Requirement | Status | Where |
 | --- | --- | --- | --- |
 | 1 | One EVV system per provider number | Built | `evvSystem` on the provider profile; `hhax_direct` blocks EVVora from sending (`processSubmission`) |
-| 2 | Third-party attestation (Cognito form) | Needs Tycoon | Checklist step 4 |
+| 2 | Third-party attestation (Cognito form) | Submitted Nov 25, 2026; waiting on HHAX | Checklist step 4 |
 | 3 | HHAX contacts the provider within 2 business days | Needs Tycoon | — |
 | 4 | Test plan, sandbox sign-off, then production credentials | Needs Tycoon | `HHAX_ENVIRONMENT=sandbox` first; production blocked until `productionEnabled` |
 | 5 | A vendor already tested can be noted on later attestations | N/A for now | — |
@@ -25,7 +25,7 @@ Legend: **Built** = in code and tested · **Config** = built, switched on by con
 | 10 | Keep complying as the spec changes | Ongoing | Code tables in `dhs-codes.ts` carry the spec revision |
 | 11 | Retain records 7 years from payment | Built | nothing in EVV is deleted; void is reversible; versions and attempts kept |
 | 12 | HHAX distributes visits to payers | N/A (HHAX) | payer ID sent per visit (`MIWS` for Waiver Services FFS) |
-| 13 | DDI FFS visits billed through HHAX | Needs Tycoon (decision) | billing block built, off by default (`HHAX_SEND_BILLING`) |
+| 13 | DDI FFS visits billed through HHAX | Decided Nov 25, 2026: claims go through Waystar | billing block built and stays off (`HHAX_SEND_BILLING=0`); confirm with HHAX during onboarding that this provider is not in a DDI FFS program that must bill through them |
 
 ## Specification
 
@@ -58,7 +58,7 @@ Legend: **Built** = in code and tested · **Config** = built, switched on by con
 - Do not cache or store data accessed through the API: EVVora stores only its own submissions and
   HHAX's transaction id and status, not records pulled from HHAX.
 - HHAX may audit API use; liability capped at $2,500; HHAX acts as claim submitter for billed visits.
-  **Accepting the agreement is Tycoon's call.**
+  **Accepted by Tycoon, Nov 25, 2026.**
 
 ## NJ-only
 

@@ -467,6 +467,7 @@ Built to the HHAX *MN DHS EVV Data Aggregator Specification* (rev. 10/28/2024) a
 - DHS codes live in `src/evv/dhs-codes.ts`. Corrections take `dhsReasonCode`/`dhsActionCode` (defaults from the EVVora reason and 123) and store them on `evv_corrections` and the visit's `edit_*` columns; manual-entry reasons map by text.
 - Real-time sending (requirement 6): `sendSoon` in `src/evv/realtime.ts` drains a visit's queue in Next's `after()` following clock-out, manual entry, correction, void and resubmit. The 15-minute cron is the retry path. `EVV_REALTIME_SUBMIT=0` turns it off.
 - Settings → EVV identifies the office by federal tax ID (default), NPI or UMPI; the HHAX provider identifier field is gone. Every active payer needs an HHAX payer ID (`MIWS` for Waiver Services FFS; migration `0042_hhax_mn` back-fills it).
+- Tycoon submitted the HHAX attestation and accepted the Integration Agreement on Nov 25, 2026, and chose to bill claims through Waystar, so `HHAX_SEND_BILLING` stays 0.
 - Billing block (`HHAX_SEND_BILLING`) and waiver duty codes (`HHAX_SEND_TASKS`) are off by default; missed visits are not sent on purpose. Tests: `src/evv/__tests__/hhax.test.ts` with a fake transport.
 
 # This is NOT the Next.js you know
