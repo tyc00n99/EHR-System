@@ -1341,6 +1341,13 @@ export const evvProviderProfiles = pgTable(
     evvSystem: text("evv_system").notNull().default("third_party"),
     /** Production submission is enabled only when this is true AND the environment is configured. */
     productionEnabled: boolean("production_enabled").notNull().default(false),
+    /**
+     * HHAX `office.qualifier`: "FederalTaxID" for a single-office agency (the tax ID again), or the
+     * office-level "NPI" / "UMPI" when the agency has several locations or auto-placement.
+     */
+    officeQualifier: text("office_qualifier").notNull().default("FederalTaxID"),
+    /** HHAX `office.identifier` when the qualifier is NPI or UMPI. Ignored for FederalTaxID. */
+    officeIdentifier: text("office_identifier"),
     timeZone: text("time_zone").notNull().default("America/Chicago"),
     state: text("state").notNull().default("MN"),
     ...timestamps,
@@ -1574,6 +1581,15 @@ export const evvVisits = pgTable(
     externalReferenceId: text("external_reference_id"),
     /** Whether the aggregator still needs to hear about the latest version. */
     resubmissionRequired: boolean("resubmission_required").notNull().default(false),
+    /** The EVVMSID HHAX assigned (returned on the transaction status). We send our own "~"-prefixed one too. */
+    aggregatorVisitId: text("aggregator_visit_id"),
+    /**
+     * The DHS reason and action for the latest manual entry or edit (Appendix B, 200–222 / 101–126).
+     * Sent as `editVisit` on every submission of a manual or corrected visit; null on a clean visit.
+     */
+    editReasonCode: text("edit_reason_code"),
+    editActionCode: text("edit_action_code"),
+    editNote: text("edit_note"),
 
     voidedAt: timestamp("voided_at", { withTimezone: true }),
     voidedBy: uuid("voided_by").references(() => users.id),
@@ -1692,6 +1708,9 @@ export const evvCorrections = pgTable(
     makesNoncompliant: boolean("makes_noncompliant").notNull().default(true),
     resubmissionRequired: boolean("resubmission_required").notNull().default(true),
     eventId: uuid("event_id"),
+    /** The DHS edit reason and action recorded with this correction (Appendix B). */
+    dhsReasonCode: text("dhs_reason_code"),
+    dhsActionCode: text("dhs_action_code"),
   },
   (t) => [index("evv_corrections_visit_idx").on(t.evvVisitId), index("evv_corrections_org_idx").on(t.organizationId)],
 );
@@ -1764,6 +1783,8 @@ export const evvSubmissions = pgTable(
     resubmissionOf: uuid("resubmission_of").references((): AnyPgColumn => evvSubmissions.id),
     /** "create" | "update" | "void" */
     operation: text("operation").notNull().default("create"),
+    /** HHAX transaction id from the POST/PUT/DELETE; the status is read from it later. */
+    transactionId: text("transaction_id"),
     ...timestamps,
   },
   (t) => [
@@ -1796,6 +1817,37 @@ export const evvSubmissionAttempts = pgTable(
   },
   (t) => [index("evv_submission_attempts_submission_idx").on(t.submissionId)],
 );
+
+/**
+ * The caregiver record at the aggregator. HHAX rejects a visit whose caregiver it has never been sent
+ * (101017), so a caregiver is posted before their first visit and again whenever the fields HHAX
+ * holds change — never when they have not ("data that is unchanged should not be resent").
+ */
+export const evvCaregiverSyncs = pgTable(
+  "evv_caregiver_syncs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    staffId: uuid("staff_id").notNull().references(() => staff.id),
+    aggregator: text("aggregator").notNull(),
+    environment: text("environment").notNull(),
+    /** The external id we sent (≤ 20 characters). */
+    externalId: text("external_id").notNull(),
+    /** SHA-256 of the last payload HHAX accepted; a different hash means it must be sent again. */
+    payloadHash: text("payload_hash"),
+    /** "synced" | "rejected" | "blocked" */
+    status: text("status").notNull(),
+    transactionId: text("transaction_id"),
+    vendorCode: text("vendor_code"),
+    message: text("message"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    syncedAt: timestamp("synced_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("evv_caregiver_syncs_unique").on(t.organizationId, t.staffId, t.aggregator, t.environment)],
+);
+export type EvvCaregiverSync = typeof evvCaregiverSyncs.$inferSelect;
 
 /**
  * Append-only EVV audit trail, hash-chained per visit: each row's hash covers the previous row's

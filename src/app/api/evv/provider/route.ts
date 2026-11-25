@@ -15,14 +15,15 @@ export async function GET(req: Request) {
     const problems: string[] = [];
     if (!profile.medicaidProviderId) problems.push("Minnesota Medicaid provider ID missing");
     if (!identifiers.length) problems.push("No NPI or UMPI recorded");
-    if (!profile.hhaxProviderId) problems.push("HHAeXchange provider identifier missing (assigned at onboarding)");
+    if (profile.officeQualifier !== "FederalTaxID" && !profile.officeIdentifier) problems.push(`Office identifier (${profile.officeQualifier}) missing`);
     if (!payers.some((p) => p.active)) problems.push("No active payer");
+    for (const p of payers) if (p.active && !p.externalPayerId) problems.push(`Payer ${p.name} has no HHAeXchange payer ID`);
     return ok({ profile, identifiers, payers, policy, problems, ready: problems.length === 0 });
   } catch (e) { return fail(e); }
 }
 
 const putSchema = z.object({
-  profile: z.object({ legalName: z.string().min(1).max(200).optional(), federalTaxId: z.string().regex(/^\d{2}-?\d{7}$/).optional(), medicaidProviderId: z.string().max(50).optional(), hhaxProviderId: z.string().max(100).optional(), evvSystem: z.enum(["third_party", "hhax_direct"]).optional(), productionEnabled: z.boolean().optional() }).optional(),
+  profile: z.object({ legalName: z.string().min(1).max(200).optional(), federalTaxId: z.string().regex(/^\d{2}-?\d{7}$/).optional(), medicaidProviderId: z.string().max(50).optional(), hhaxProviderId: z.string().max(100).optional(), officeQualifier: z.enum(["FederalTaxID", "NPI", "UMPI"]).optional(), officeIdentifier: z.string().max(20).optional(), evvSystem: z.enum(["third_party", "hhax_direct"]).optional(), productionEnabled: z.boolean().optional() }).optional(),
   identifiers: z.array(z.object({ type: z.enum(["npi", "umpi"]), value: z.string().min(5).max(20), label: z.string().max(100).optional(), effectiveFrom: z.string().optional(), effectiveTo: z.string().optional(), active: z.boolean().optional() })).optional(),
   payers: z.array(z.object({ id: z.uuid().optional(), name: z.string().min(1).max(200), kind: z.enum(["medicaid_ffs", "mco", "other"]).default("medicaid_ffs"), externalPayerId: z.string().max(100).optional(), isDefault: z.boolean().optional(), active: z.boolean().optional() })).optional(),
   policy: z.object({ geofenceMeters: z.number().int().min(50).max(10_000).optional(), maxAccuracyMeters: z.number().int().min(10).max(5000).optional(), realTimeToleranceMinutes: z.number().int().min(0).max(24 * 60).optional(), maxFutureSkewMinutes: z.number().int().min(0).max(120).optional(), maxVisitMinutes: z.number().int().min(60).max(48 * 60).optional(), minVisitMinutes: z.number().int().min(0).max(60).optional(), submissionDeadlineDay: z.number().int().min(1).max(28).optional(), deadlineWarningDays: z.number().int().min(1).max(28).optional(), liveInNonRealTimeAllowed: z.boolean().optional(), billingHoldOnNoncompliant: z.boolean().optional(), maxSubmissionAttempts: z.number().int().min(1).max(50).optional(), ackTimeoutHours: z.number().int().min(1).max(720).optional() }).optional(),

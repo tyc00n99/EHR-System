@@ -103,7 +103,7 @@ address with `state` and `zipcode` required; `email`/`phoneNumber` optional and 
   101042/101043 schedule times, 101046/101048 visit times, 101084 billing fields incomplete, 101086 already billed,
   101088 date error. Appendix E (caregiver) 102001–1020xx mirror these for the caregiver record.
 
-## Adapter build list (`src/evv/adapters/hhax-minnesota.ts`)
+## Adapter build list (`src/evv/adapters/hhax-minnesota.ts`) — built Nov 25, 2026, except billing/tasks (behind flags) and missed visits (not built)
 1. Token cache (30 min, re-auth on 401); 5 req/s throttle; both base URLs behind `EVV_HHAX_ENV`.
 2. Caregiver sync: on staff create/edit and before the first visit for that caregiver; SSN literal default.
 3. Visit transform from `evv_visits` + clock-in/out events + policy: UTC, schedule copy, `Mobile` + GPS,

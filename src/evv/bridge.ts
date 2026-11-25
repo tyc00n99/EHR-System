@@ -13,6 +13,7 @@ import { clockIn, clockOut, type ClockEventInput } from "./ingest";
 import { derivedEventId } from "./shared-care";
 import { utcOffsetMinutes } from "./time";
 import { loadVisit } from "./visits";
+import { sendSoon } from "./realtime";
 
 async function ctxFor(user: CurrentUser) {
   const db = await getDb();
@@ -49,6 +50,7 @@ export function mirrorClockOut(row: Visit, user: CurrentUser) {
     const ctx = await ctxFor(user);
     if (!(await loadVisit(ctx, row.id))) await mirrorClockIn(row, user);
     await clockOut(ctx, row.id, event(row.id, "clock_out", row.clockOutAt, { lat: row.clockOutLat, lng: row.clockOutLng, accuracy: row.clockOutAccuracyM }, row.placeOfService, "mobile"), { userId: user.id, staffId: row.staffId, role: user.role });
+    sendSoon(ctx, row.id);
   });
 }
 
@@ -60,6 +62,7 @@ export function mirrorManualVisit(row: Visit, user: CurrentUser) {
     const actor = { userId: user.id, staffId: row.staffId, role: user.role };
     await clockIn(ctx, row.id, event(row.id, "clock_in", row.clockInAt, { lat: row.clockInLat, lng: row.clockInLng, accuracy: row.clockInAccuracyM }, row.placeOfService, "manual", reason), actor, { personId: row.personId, serviceAgreementId: row.serviceAgreementId, visitId: row.id, staffId: row.staffId });
     if (row.clockOutAt) await clockOut(ctx, row.id, event(row.id, "clock_out", row.clockOutAt, { lat: row.clockOutLat, lng: row.clockOutLng, accuracy: row.clockOutAccuracyM }, row.placeOfService, "manual", reason), actor);
+    sendSoon(ctx, row.id);
   });
 }
 
@@ -75,12 +78,13 @@ export function mirrorEdit(visitId: string, user: CurrentUser, reason: string, c
     if (changes.placeOfService) patch.locationType = locationTypeFor(String(changes.placeOfService.to));
     if (!Object.keys(patch).length) return;
     await correctVisit(ctx, visitId, { reasonCode: "SUPERVISOR_REVIEW", explanation: reason.length >= 10 ? reason : `${reason} (edited on the 245D note)`, changes: patch });
+    sendSoon(ctx, visitId);
   });
 }
 
 export function mirrorVoid(visitId: string, user: CurrentUser, reason: string) {
   return safely("void", async () => {
     const ctx = await ctxFor(user);
-    if (await loadVisit(ctx, visitId)) await voidVisit(ctx, visitId, reason);
+    if (await loadVisit(ctx, visitId)) { await voidVisit(ctx, visitId, reason); sendSoon(ctx, visitId); }
   });
 }

@@ -39,7 +39,7 @@ export async function reconcile(ctx: EvvCtx, adapter: EvvAggregatorAdapter): Pro
     const ack = await adapter.checkAcknowledgment(s.externalReferenceId);
     if (ack.kind === "accepted") {
       await writer(ctx).update(schema.evvSubmissions, s.id, { status: ack.warnings.length ? "accepted_with_warning" : "accepted", acknowledgedAt: now, lastSuccessAt: now, warnings: ack.warnings });
-      await writer(ctx).update(schema.evvVisits, s.evvVisitId, { submissionStatus: ack.warnings.length ? "accepted_with_warning" : "accepted", resubmissionRequired: false });
+      await writer(ctx).update(schema.evvVisits, s.evvVisitId, { submissionStatus: ack.warnings.length ? "accepted_with_warning" : "accepted", resubmissionRequired: false, ...(ack.aggregatorVisitId ? { aggregatorVisitId: ack.aggregatorVisitId } : {}) });
       await evvAudit(ctx, "submission.acknowledged", s.evvVisitId, { submissionId: s.id }); summary.acknowledged++;
       await evaluateVisit(ctx, s.evvVisitId);
     } else if (ack.kind === "rejected") {
