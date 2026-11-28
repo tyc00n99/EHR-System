@@ -269,3 +269,31 @@ footer .f2base { display: flex; justify-content: space-between; gap: 16px; flex-
 .m-close .sub { margin-top: 36px; text-align: center; font: 700 12.5px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); }
 .m-close .sub a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 560px) { .m-ring { padding: 9px; } section { padding: 80px 0; } }
+
+/* Real product screens (Nov 28, 2026): a plain window frame around a screenshot of the app.
+   Everything in the pictures is the local sample data; no agency or client names from a real account. */
+.appwin { margin: 0; position: relative; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px rgba(15,12,10,.08), 0 18px 40px -18px rgba(15,12,10,.28), 0 2px 6px rgba(15,12,10,.06); }
+.appwin .appbar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; background: #f7f5f3; border-bottom: 1px solid rgba(15,12,10,.07); }
+.appwin .appbar i { width: 10px; height: 10px; border-radius: 50%; background: #dcd6d2; }
+.appwin .appbar span { margin: 0 auto; transform: translateX(-24px); font: 500 12px/1 var(--mono); letter-spacing: .02em; color: var(--ink3, #6e6966); padding: 5px 14px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px rgba(15,12,10,.06); }
+.appwin img { display: block; width: 100%; height: auto; }
+.m-frame { padding-bottom: 28px; }
+.m-frame .appwin.lead-shot { border-radius: 16px; }
+.m-cap { margin: 14px 4px 0; font: 600 11.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink3, #6e6966); text-align: center; }
+@media (max-width: 760px) { .m-frame { display: block; width: calc(100% - 24px); margin-top: 48px; padding: 10px 10px 16px; border-radius: 18px; } .appwin .appbar { height: 24px; padding: 0 10px; } .appwin .appbar i { width: 7px; height: 7px; } .appwin .appbar span { display: none; } }
+
+/* Selling points: the number is a small label now, not a statistic. */
+.m-stat.sp b.no { margin-left: auto; font: 700 13px/1 var(--mono); letter-spacing: .08em; color: var(--ink3, #6e6966); }
+.m-stat.sp h3 { margin-top: 22px; font-size: 21px; letter-spacing: -0.02em; line-height: 1.15; }
+.m-stat.rv:nth-child(4) { transition-delay: 0s; } .m-stat.rv:nth-child(5) { transition-delay: .08s; } .m-stat.rv:nth-child(6) { transition-delay: .16s; }
+@media (max-width: 1000px) and (min-width: 761px) { .m-stats { grid-template-columns: 1fr 1fr; } }
+
+/* Product cards: a real screen at a readable size, cropped to its top-left corner. */
+.m-shot { height: 270px; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px rgba(15,12,10,.08); }
+.m-shot img { display: block; width: 900px; max-width: none; height: auto; }
+.m-c:nth-child(1) .m-shot img { width: 760px; }
+
+/* Steps: the screen sits on its coloured block. */
+.m-card.shot .appwin { position: relative; }
+.m-side .appwin { margin-top: 24px; }
+.m-shot.mid { display: grid; align-content: center; }
