@@ -20,19 +20,19 @@
 </nav>
 <div class="mnav"><a href="/clinical">Clinical</a><a href="/practice">Practice management</a><a href="/pricing">Pricing</a><a href="/questions">Questions</a><a href="/login">Log in</a></div>
 
-<header class="x-hero">
+<header class="m-hero" id="hero">
+  <div class="m-bars l" aria-hidden="true"><i style="--w:150px;background:var(--s)"></i><i style="--w:118px;background:var(--p)"></i><i style="--w:136px;background:var(--b)"></i><i style="--w:122px;background:var(--y)"></i><i style="--w:142px;background:var(--o)"></i></div>
+  <div class="m-bars r" aria-hidden="true"><i style="--w:136px;background:var(--o)"></i><i style="--w:122px;background:var(--y)"></i><i style="--w:144px;background:var(--b)"></i><i style="--w:126px;background:var(--p)"></i><i style="--w:150px;background:var(--s)"></i></div>
   <div class="wrap">
-    <div class="x-pill rv"><i>245D</i>Built for Minnesota home and community-based services</div>
-    <h1 class="rv d1">Unsigned notes cost you claims. EVVora closes them out.</h1>
-    <p class="lead rv d2">Caregivers clock in, write the note and get the client's signature on one phone. You review one queue, and every visit leaves verified and ready to bill.</p>
-    <form class="x-ask rv d3" data-ask>
-      <input name="em" type="email" placeholder="you@youragency.com" aria-label="Work email" autocomplete="email">
-      <button type="submit">Book a demo <span aria-hidden="true">&rarr;</span></button>
-    </form>
-    <div class="x-trust rv d3">Built around the systems <b>Minnesota 245D agencies</b> already answer to</div>
-    <div class="x-marks rv d3" aria-label="Works with"><span>HHAeXchange</span><span>MNITS</span><span>Waystar</span><span>MN DHS service codes</span><span>MN Chapter 245D</span></div>
+    <div class="m-badge rv"><i>245D</i>Built for Minnesota home and community-based services</div>
+    <h1 class="rv">Every visit verified.<br>Every note audit-ready.</h1>
+    <p class="lead rv">Caregivers clock in, write the note and collect the client's signature on one phone. Your office reviews one queue, and every visit leaves ready to bill.</p>
+    <div class="m-ctas rv">
+      <a class="tb" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo <span class="ar" aria-hidden="true"></span></a>
+      <a class="tb w" href="#how">See how it works</a>
+    </div>
   </div>
-  <div class="x-frame rv d2">
+  <div class="m-frame rv">
     <div class="shot" aria-label="Reviewing a note in EVVora, shown with fictional sample data">
       <div class="capbar"><span class="back">&larr;</span><span class="crumb">Notes &rsaquo; <b>Kevin Nguyen</b> &rsaquo; Sep 30 &middot; Individualized home supports <i class="created">submitted by Emma Johnson &middot; 12:17 PM</i></span><span class="capbtns"><span class="cb ghost">Return note</span><span class="cb pri">&#10003; Accept note</span></span></div>
       <div class="capbody">
@@ -73,119 +73,106 @@
       </div>
       <div class="hub" aria-hidden><span class="hubc">&#9998;</span><em>4</em></div>
     </div>
+    <div class="m-chap" aria-hidden="true"><span class="on">Clock in</span><span>GPS check</span><span>Note</span><span>Signatures</span><span>Review</span><span>Claim line</span></div>
   </div>
 </header>
 
-<section class="x-how" id="how">
-  <div class="wrap grid">
-    <div class="left">
-      <h2 class="rv">How a visit becomes a clean claim.</h2>
-      <div class="x-steps" id="steps">
-        <div class="x-step on" data-i="0"><small>Step 1</small><h3>They clock in.</h3><p>The caregiver taps clock in at the door. GPS is checked against the address on file and the visit starts against the right authorization.</p></div>
-        <div class="x-step" data-i="1"><small>Step 2</small><h3>The note writes up.</h3><p>Supports, outcomes, activities and medications are marked as they happen. The progress note drafts itself from only what was marked.</p></div>
-        <div class="x-step" data-i="2"><small>Step 3</small><h3>Both sign. You bill.</h3><p>The client co-signs with a code only they know. The visit lands in your queue verified, and its claim line is ready to send.</p></div>
-      </div>
+<section id="results">
+  <div class="wrap">
+    <div class="m-head center">
+      <span class="mk rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>What changes</span>
+      <h2 class="rv">Every visit leaves the house finished.</h2>
     </div>
-    <div class="x-stages">
-      <div class="x-stage" data-i="0"><span class="stag">Caregiver's phone &middot; 8:02 AM</span>
-        <div class="ui"><div class="ui-h"><span class="mark">E</span>On shift with Kevin<span class="st">Clocked in</span></div>
+    <div class="m-stats">
+      <div class="m-stat rv"><div class="top"><span class="m-ico" style="background:var(--o)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/></svg></span><b class="n" data-count="15">15</b></div><h3>Minute units, never rounded by hand</h3><p>Units are worked out from clock-in and clock-out, then checked against the authorization.</p></div>
+      <div class="m-stat rv"><div class="top"><span class="m-ico" style="background:var(--y)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg></span><b class="n" data-count="13">13</b></div><h3>Personnel file items, tracked</h3><p>The licensor's checklist, in the licensor's order, with the paper attached to each line.</p></div>
+      <div class="m-stat rv"><div class="top"><span class="m-ico" style="background:var(--b)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><b class="n" data-count="87">87</b></div><h3>Minnesota counties, one way of working</h3><p>County, case manager and authorization live on every client record, wherever they are served.</p></div>
+    </div>
+    <p class="m-big" id="big">Live in days, not months.</p>
+  </div>
+</section>
+
+<section class="m-field o" id="handles">
+  <div class="wrap">
+    <div class="m-head">
+      <span class="mk rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M12 4v16"/></svg>What EVVora handles</span>
+      <h2 class="rv">From clock-in to claim, in one record</h2>
+    </div>
+    <div class="m-cards">
+      <div class="m-c rv"><div class="m-st" style="--c:var(--o)"><i class="ln"></i><div class="bb"><span>Clock in with Kevin at 8:02 AM</span><b class="av">EJ</b></div><span class="ch"><em>&#128205;</em>38 ft from the address on file</span><span class="ch"><em>&#10003;</em>Location matched &middot; EVV</span></div>
+        <h3>Visit verification</h3><p>GPS at clock-in and clock-out, checked against the client's address, and shaped for the HHAeXchange aggregator.</p></div>
+      <div class="m-c t1 rv"><div class="m-st" style="--c:var(--b)"><i class="ln"></i><div class="bb lt"><span>Draft Kevin's note from what I marked</span><b class="av" style="--c2:#cfe6fb">EJ</b></div><span class="ch"><em>&#10022;</em>Drafted from 6 marked facts</span><span class="ch"><em>&#9997;</em>Signed by Kevin and Emma</span></div>
+        <h3>Daily service notes</h3><p>Supports, outcomes and activities are marked as they happen. The client co-signs with a code only they know.</p></div>
+      <div class="m-c t1 rv"><div class="m-st" style="--c:var(--y)"><i class="ln"></i><div class="bb"><span>Lisinopril 10 mg is due at 8:30</span><b class="av" style="--c2:#fde3bd">EJ</b></div><span class="ch"><em>G</em>Given 8:30 AM &middot; EJ</span><span class="ch"><em>&#128203;</em>Medication record updated</span></div>
+        <h3>Medication record</h3><p>A paper MAR kept live: given, refused, held or missed, with who recorded it and nothing ever erased.</p></div>
+      <div class="m-c rv"><div class="m-st" style="--c:var(--p)"><i class="ln"></i><div class="bb lt"><span>Kevin's authorization is at 78%</span><b class="av" style="--c2:#e4d0fc">E</b></div><span class="ch"><em>#</em>3,276 of 4,200 units used</span><span class="ch"><em>&#8599;</em>Time to ask the county for more</span></div>
+        <h3>Authorizations</h3><p>Every note draws down its units. You hear about an authorization at 75%, not at billing.</p></div>
+      <div class="m-c t2 rv"><div class="m-st" style="--c:var(--b)"><i class="ln"></i><div class="bb lt"><span>Is Marcus cleared to work with Kevin?</span><b class="av" style="--c2:#cfe6fb">MT</b></div><span class="ch"><em>&#128193;</em>13 of 13 items on file</span><span class="ch"><em>&#10003;</em>Assigned and oriented</span></div>
+        <h3>Personnel file</h3><p>Orientation, training and background study tracked per person, and nobody clocks in with a client they aren't cleared for.</p></div>
+      <div class="m-c t3 rv"><div class="m-st" style="--c:var(--ink)"><i class="ln"></i><div class="bb lt"><span>Send this week's clean claim lines</span><b class="av" style="--c2:#ffd9cc">E</b></div><span class="ch"><em>&#10003;</em>Checked against every authorization</span><span class="ch"><em>&#8594;</em>Through Waystar to MNITS</span></div>
+        <h3>Billing</h3><p>A signed note already carries its claim line. Send it through Waystar, or export and bill it yourself.</p></div>
+      <div class="m-plus rv"><div class="art"><img src="/site/icon-192.png" alt=""></div>
+        <div><h3>Plus everything else 245D asks of you</h3><p style="margin:8px 0 0;color:var(--ink2)">One record for the office and the caregiver's phone, so nothing gets typed twice.</p>
+          <div class="m-tags"><span>Scheduling</span><span>Support plan outcomes</span><span>Review queue</span><span>Messages</span><span>Hours for payroll</span><span>Client documents</span><span>Reports</span><span>Audit log</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="m-diff" id="how">
+  <div class="m-rails" aria-hidden="true"><i style="background:var(--o)"></i><i style="background:var(--y)"></i><i style="background:var(--b)"></i><i style="background:var(--p)"></i><i style="background:var(--s)"></i></div>
+  <div class="wrap">
+    <div class="m-head">
+      <span class="mk rv">How EVVora is different</span>
+      <h2 class="rv">Less paperwork for the office.<br>More time with clients.</h2>
+    </div>
+    <div class="m-rows">
+      <div class="m-row rv">
+        <div><div class="m-num"><b style="background:var(--o)">01</b><span>The visit</span></div><h3>Starts at the door.</h3><p>The caregiver taps clock in. GPS is checked against the address on file, and the visit starts against the right authorization.</p></div>
+        <div class="m-card" style="--c:var(--o)"><div class="ui"><div class="ui-h"><img src="/site/icon-192.png" alt="">On shift with Kevin<span class="st">Live</span></div>
           <div class="ui-r"><span class="dot">&#128205;</span><div><b>Location matched</b><small>44.9992, -93.2983 &middot; 38 ft from home address</small></div><span class="chipx g">EVV</span></div>
           <div class="ui-r"><span class="dot">&#128203;</span><div><b>Individualized home supports</b><small>S5135 UC &middot; 2,680 of 4,200 units left</small></div></div>
           <div class="ui-r"><span class="dot">&#9201;</span><div><b>Running</b><small>Started 8:02 AM</small></div><span class="t">00:14:32</span></div>
         </div></div>
-      <div class="x-stage" data-i="1"><span class="stag">Service record &middot; 11:58 AM</span>
-        <div class="ui"><div class="ui-h"><span class="mark">E</span>Progress review<span class="st">Drafting</span></div>
+      </div>
+      <div class="m-row rv" id="row-note">
+        <div><div class="m-num"><b style="background:var(--y)">02</b><span>The note</span></div><h3>Writes up as care happens.</h3><p>Medications, supports and outcomes are marked during the visit. The progress note drafts itself from only what was marked.</p></div>
+        <div class="m-card" style="--c:var(--y)"><div class="ui"><div class="ui-h"><img src="/site/icon-192.png" alt="">Progress review<span class="st">Drafting</span></div>
           <div class="ui-r"><span class="dot">&#128138;</span><div><b>Lisinopril 10 mg</b><small>Given 8:30 AM &middot; EJ</small></div><span class="chipx g">G</span></div>
           <div class="ui-r"><span class="dot">&#9989;</span><div><b>Morning routine with cueing</b><small>Outcome worked on</small></div><span class="chipx k">Yes</span></div>
           <div class="ui-note" id="typed"></div>
         </div></div>
-      <div class="x-stage" data-i="2"><span class="stag">Review queue &middot; 12:17 PM</span>
-        <div class="ui"><div class="ui-h"><span class="mark">E</span>Kevin signs the note</div>
+      </div>
+      <div class="m-row rv">
+        <div><div class="m-num"><b style="background:var(--b)">03</b><span>The review</span></div><h3>Signed by both. Ready to bill.</h3><p>The client co-signs with a code only they know. The visit lands in your queue verified, and its claim line is ready to send.</p></div>
+        <div class="m-card" style="--c:var(--b)"><div class="ui"><div class="ui-h"><img src="/site/icon-192.png" alt="">Kevin signs the note</div>
           <div class="ui-sign"><span>&bull;</span><span>&bull;</span><span>&bull;</span><span>&bull;</span><span>&bull;</span><span>&bull;</span></div>
           <div class="ui-r"><span class="dot">&#9997;</span><div><b>Signed by Kevin and Emma</b><small>Note accepted at 12:17 PM</small></div><span class="chipx g">Signed</span></div>
           <div class="ui-r"><span class="dot">&#128228;</span><div><b>Claim line ready</b><small>17 units &times; $5.95 &middot; inside the authorization</small></div><span class="chipx k">Ready</span></div>
           <div class="ui-foot"><span>Sent to the state aggregator after your review</span><b>$101.15</b></div>
         </div></div>
-    </div>
-  </div>
-</section>
-
-<section class="x-cost">
-  <div class="wrap">
-    <div class="x-head"><h2 class="rv">What loose paperwork actually costs you.</h2></div>
-    <div class="cards">
-      <div class="x-card tall rv">
-        <h3>Claims you can't send.</h3>
-        <p>A visit without a verified clock-out or a client signature is a visit you can't bill. On paper, you find out at month end.</p>
-        <div class="x-phone"><div class="scr"><div class="time">9:41</div><div class="day">Friday, November 27</div>
-          <div class="x-ntf"><span class="ic">E</span><div><b>Unsigned note</b>Kevin N. &middot; Individualized home supports. Client hasn't signed.</div><em>now</em></div>
-          <div class="x-ntf"><span class="ic">E</span><div><b>Clock-out didn't match</b>Ruth C. &middot; 410 ft from the address on file</div><em>2m</em></div>
-          <div class="x-ntf"><span class="ic">E</span><div><b>Authorization at 78%</b>Kevin N. &middot; time to ask the county for more units</div><em>1h</em></div>
-        </div></div>
-      </div>
-      <div class="x-card side rv">
-        <div><h3>Your license takes the hit.</h3><p>A reinspection asks for training records, signed notes and plans. Missing paper becomes a correction order.</p></div>
-        <div class="ui"><div class="ui-h">Personnel file &middot; Marcus T.</div>
-          <div class="ui-r"><div><b>Orientation</b><small>Signed record on file</small></div><span class="chipx g">On file</span></div>
-          <div class="ui-r"><div><b>Background study</b><small>Results received</small></div><span class="chipx g">On file</span></div>
-          <div class="ui-r"><div><b>Annual training</b><small>Due Dec 14</small></div><span class="chipx a">Due soon</span></div>
-        </div>
-      </div>
-      <div class="x-card side rv">
-        <div><h3>Your office pays twice.</h3><p>Typing notes into one system, visits into another and hours into payroll. Every retype is a chance to get it wrong.</p></div>
-        <div class="ui"><div class="ui-h">Hours for payroll</div>
-          <div class="ui-r"><div><b>Emma Johnson</b><small>Regular 72.5 h &middot; overtime 0 h</small></div><span class="chipx g">Ready</span></div>
-          <div class="ui-r"><div><b>Sam Nguyen</b><small>1 note awaiting signature</small></div><span class="chipx a">On hold</span></div>
-        </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="x-orbit">
+<section class="m-field p" id="paper">
   <div class="wrap">
-    <div class="x-head center"><h2 class="rv">One record for everything 245D asks of you.</h2><p class="lead rv d1">Notes, visit verification, medications, authorizations, scheduling, staff files and billing, all reading from the same visit.</p></div>
-  </div>
-  <div class="orb rv d1" aria-hidden="true">
-    <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
-    <div class="spin" data-r="140" data-items="Daily notes|EVV|MAR|Signatures"></div>
-    <div class="spin rev" data-r="240" data-items="Authorizations|Scheduling|Messages|Outcomes|Documents"></div>
-    <div class="spin n3" data-r="340" data-items="Personnel file|Billing|Payroll hours|Review queue|Reports|Audit log"></div>
-    <div class="core"><img src="/site/icon-192.png" alt=""></div>
-  </div>
-</section>
-
-<section class="x-stats">
-  <div class="wrap">
-    <div class="grid">
-      <div><h2 class="rv">The rules don't sleep. Neither does EVVora.</h2><p class="lead rv d1" style="margin-top:18px">Every visit is checked against Minnesota's rules while it happens, not when the reviewer shows up.</p></div>
-      <div class="x-nums rv d1">
-        <div class="x-num"><b data-count="15">0</b><span>minute units, never rounded by hand</span></div>
-        <div class="x-num"><b data-count="13">0</b><span>items in the licensor's personnel checklist, tracked</span></div>
-        <div class="x-num"><b data-count="87">0</b><span>Minnesota counties, one way of working</span></div>
-      </div>
+    <div class="m-head">
+      <span class="mk rv">Paper vs EVVora</span>
+      <h2 class="rv">Can't we keep doing it on paper?</h2>
+      <p class="lead rv">The licensor doesn't read your spreadsheet. They read the record, and on paper it gets rebuilt the week before a review.</p>
     </div>
-    <div class="x-mn rv">
-      <canvas id="dots" aria-label="Visits across Minnesota, drawn as dots" role="img"></canvas>
-      <div class="legend"><span><i style="background:#e8743b"></i>Needs review</span><span><i style="background:#3b6fe8"></i>Signed</span><span><i style="background:#22a06b"></i>Verified and sent</span><span style="margin-left:auto;color:var(--ink3)">Illustration, not live data</span></div>
-    </div>
-  </div>
-</section>
-
-<section class="x-vs">
-  <div class="wrap">
-    <div class="x-head center"><h2 class="rv">Can't we keep doing it on paper?</h2></div>
-    <div class="pair">
-      <div class="x-side rv"><h3>Paper and spreadsheets</h3><div class="sub">Rebuilt the week before a review</div>
-        <div class="x-mess">
+    <div class="m-pair">
+      <div class="m-side rv"><span class="mk">Paper and spreadsheets</span><h3>Rebuilt the week before a review</h3>
+        <div class="m-mess">
           <div class="m1"><b>timesheets_NOV_final(3).xlsx</b><table><tr><td>Kevin N.</td><td>17 units?</td><td>no signature</td></tr><tr><td>Ruth C.</td><td>12 units</td><td>who has this?</td></tr><tr><td>Sam N.</td><td>&mdash;</td><td>to do</td></tr></table></div>
           <div class="m2"><b>Re: still need Kevin's sign-off</b><small>Can you swing by Monday? The county asked again.</small></div>
           <div class="m3"><b>Binder &middot; personnel files</b><small>Marcus's orientation sheet is&hellip; somewhere</small></div>
           <div class="m4"><b>Billing</b><small><s>Fri</s> moved to Mon, again</small></div>
         </div>
       </div>
-      <div class="x-side us rv d1"><h3>EVVora</h3><div class="sub">Kept the moment care happens</div>
-        <div class="ui"><div class="ui-h"><span class="mark">E</span>This pay period<span class="st">Up to date</span></div>
+      <div class="m-side rv"><span class="mk">EVVora</span><h3>Kept the moment care happens</h3>
+        <div class="ui"><div class="ui-h"><img src="/site/icon-192.png" alt="">This pay period<span class="st">Up to date</span></div>
           <div class="ui-r"><span class="dot">&#9989;</span><div><b>42 notes signed</b><small>Both signatures, GPS at both ends</small></div><span class="chipx g">Clean</span></div>
           <div class="ui-r"><span class="dot">&#128228;</span><div><b>38 claim lines ready</b><small>Checked against every authorization</small></div><span class="chipx k">Ready</span></div>
           <div class="ui-r"><span class="dot">&#128269;</span><div><b>2 in your review queue</b><small>A manual entry and one late signature</small></div><span class="chipx a">Review</span></div>
@@ -193,14 +180,45 @@
         </div>
       </div>
     </div>
-    <p class="foot rv">An unsigned note is <b>a claim you can't send</b>.</p>
   </div>
 </section>
 
-<section class="x-faq">
+<section id="with">
+  <div class="wrap m-with">
+    <div class="m-head">
+      <span class="mk rv">Connects to</span>
+      <h2 class="rv">Built around the systems you already answer to</h2>
+      <p class="lead rv">Visits are shaped for the HHAeXchange aggregator, claim lines go out through Waystar to MNITS, and service codes come straight from the DHS list.</p>
+    </div>
+    <div class="m-tiles rv" aria-label="Systems EVVora works with">
+      <div class="m-tile c1"><span><b>HHAX</b>HHAeXchange</span></div>
+      <div class="m-tile fill"><span><b>245D</b>Chapter 245D</span></div>
+      <div class="m-tile c3"><span><b>MNITS</b>MN DHS</span></div>
+      <div class="m-tile c4"><span><b>WS</b>Waystar</span></div>
+      <div class="m-tile c2"><span><b>DHS</b>Service codes</span></div>
+      <div class="m-tile c3"><span><b>G</b>Google sign-in</span></div>
+      <div class="m-tile c4"><span><b>MS</b>Microsoft sign-in</span></div>
+      <div class="m-tile c1"><span><b>PDF</b>Printed notes</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="trust" style="padding-top:20px">
+  <div class="wrap m-trust">
+    <div class="m-head">
+      <span class="mk rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>Trust &amp; security</span>
+      <h2 class="rv">Your clients' records, kept like they matter.</h2>
+      <p class="lead rv">Nobody signs for anyone, and everything anyone changes leaves a trail you can read back.</p>
+      <div class="m-pills rv"><span><i>&#10003;</i>SSNs and signing codes encrypted</span><span><i>&#10003;</i>Every change in the audit log</span><span><i>&#10003;</i>Access set by role</span><span><i>&#10003;</i>Sign-in locks after repeated failures</span><span><i>&#10003;</i>Files never stored in a shared cache</span></div>
+    </div>
+    <div class="m-dots rv" id="dots" aria-hidden="true"></div>
+  </div>
+</section>
+
+<section class="m-faq" id="faq">
   <div class="wrap grid">
-    <div><h2 class="rv">What agencies ask before they switch.</h2><p class="lead rv d1" style="margin-top:18px">Anything else, ask us on your demo.</p><a class="more rv d1" href="/questions">All questions &rsaquo;</a></div>
-    <div class="rv d1">
+    <div><span class="mk rv">Questions</span><h2 class="rv" style="margin-top:18px">What agencies ask before they switch.</h2><a class="tb w more rv" href="/questions">All questions <span class="ar" aria-hidden="true"></span></a></div>
+    <div class="rv">
       <details><summary>We run on paper and spreadsheets today. Why change?</summary><p>Because the licensor does not read your spreadsheet, they read the record. On paper, the week before a review means rebuilding notes, chasing signatures and hunting training certificates. In EVVora the record is kept the moment care happens: the note writes itself during the visit, both signatures are collected on the spot, and the personnel file tells you what is missing months before anyone asks for it.</p></details>
       <details><summary>Is EVVora actually built for 245D, or adapted from some other state's software?</summary><p>Built for 245D from the first line of code. Clients are identified by PMI, units are 15 minutes, service codes and modifiers come straight from the DHS list, outcomes follow the coordinated service and support plan, and the personnel file tracks the thirteen items a Minnesota licensor checks, in the licensor's own order. Nothing had to be bent into shape, because it never fit another shape first.</p></details>
       <details><summary>How does the EVV part work?</summary><p>The caregiver clocks in and out on their phone, and EVVora records GPS at both ends and checks it against the address on file. Every visit is checked against the state's EVV rules as it happens, not at month end, and visits are shaped for the HHAeXchange aggregator. Submission turns on once your agency's aggregator connection is set up, and until then nothing is sent without you knowing.</p></details>
@@ -210,14 +228,11 @@
   </div>
 </section>
 
-<section class="x-close">
+<section class="m-close">
   <div class="wrap">
-    <h2 class="rv">Every visit verified. Every note ready for the county.</h2>
-    <form class="x-ask rv d1" data-ask>
-      <input name="em" type="email" placeholder="you@youragency.com" aria-label="Work email" autocomplete="email">
-      <button type="submit">Book a demo <span aria-hidden="true">&rarr;</span></button>
-    </form>
-    <div class="x-trust rv d2">$0 implementation &middot; live in days &middot; <a href="/login" style="text-decoration:underline">already a customer? Log in</a></div>
+    <h2 class="rv">Every visit verified.<br>Every note ready for the county.</h2>
+    <div class="m-rings rv" id="rings"><div class="m-ring s"><div class="m-ring p"><div class="m-ring b"><div class="m-ring y"><div class="m-ring o"><a class="m-big-btn" href="mailto:demo@evvora.com?subject=EVVora%20demo">Book a demo</a></div></div></div></div></div></div>
+    <p class="sub rv">$0 implementation &middot; live in days &middot; <a href="/login">Already a customer? Log in</a></p>
   </div>
 </section>
 
@@ -244,7 +259,6 @@
   </div>
 </footer>
 
-
 <script>
 // Opened straight from disk (file://) the /site/ paths point at the root of the drive; rewrite them only then.
 if (location.protocol === "file:") {
@@ -260,97 +274,74 @@ var q = new URLSearchParams(location.search);
 var still = q.has("static") || matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (q.has("static")) document.documentElement.classList.add("static");
 
-// Mobile menu
+// Mobile menu and the header's hairline once scrolled.
 (function () {
   var mb = document.querySelector(".menubtn"), mn = document.querySelector(".mnav");
-  if (!mb || !mn) return;
-  mb.addEventListener("click", function () { var open = mn.classList.toggle("open"); mb.setAttribute("aria-expanded", String(open)); });
-  mn.addEventListener("click", function (e) { if (e.target.tagName === "A") { mn.classList.remove("open"); mb.setAttribute("aria-expanded", "false"); } });
-})();
-addEventListener("scroll", function () { document.getElementById("top").classList.toggle("scrolled", scrollY > 8); }, { passive: true });
-
-// Email bars open the booking popup with the address filled in.
-document.querySelectorAll("[data-ask]").forEach(function (f) {
-  f.addEventListener("submit", function (e) {
-    e.preventDefault();
-    var a = document.createElement("a"); a.href = "mailto:demo@evvora.com?subject=EVVora%20demo"; a.style.display = "none";
-    document.body.appendChild(a); a.click(); a.remove();
-    var v = f.em.value.trim();
-    setTimeout(function () { var i = document.getElementById("bk-email"); if (i && v) i.value = v; }, 30);
-  });
-});
-
-// Blur-up entrances.
-if (still || !("IntersectionObserver" in window)) document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
-else { var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }); }, { rootMargin: "0px 0px -10% 0px" }); document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); }); }
-
-// How it works: the step whose stage is nearest the middle of the screen is lit.
-(function () {
-  var steps = document.querySelectorAll(".x-step"), stages = document.querySelectorAll(".x-stage");
-  var typed = document.getElementById("typed"), text = "Kevin followed his morning routine with one verbal prompt, finished breakfast and fluids, and took his 8:30 Lisinopril. No incidents.", ti = 0, tt = null, cur = -1;
-  function type() { if (still) { typed.textContent = text; return; } clearTimeout(tt); ti = 0; (function go() { ti++; typed.innerHTML = text.slice(0, ti) + '<span class="caret"></span>'; if (ti < text.length) tt = setTimeout(go, 22); })(); }
-  function set(i) {
-    if (i === cur) return; cur = i;
-    steps.forEach(function (s, k) { s.classList.toggle("on", k === i); });
-    stages.forEach(function (s, k) { s.classList.toggle("live", k === i); });
-    if (i === 1) type();
+  if (mb && mn) {
+    mb.addEventListener("click", function () { var open = mn.classList.toggle("open"); mb.setAttribute("aria-expanded", String(open)); });
+    mn.addEventListener("click", function (e) { if (e.target.tagName === "A") { mn.classList.remove("open"); mb.setAttribute("aria-expanded", "false"); } });
   }
-  function spy() {
-    var mid = innerHeight / 2, best = 0, bd = 1e9;
-    stages.forEach(function (s, k) { var r = s.getBoundingClientRect(); var d = Math.abs(r.top + r.height / 2 - mid); if (d < bd) { bd = d; best = k; } });
-    set(best);
-  }
-  steps.forEach(function (s, k) { s.addEventListener("click", function () { stages[k].scrollIntoView({ behavior: "smooth", block: "center" }); }); });
-  addEventListener("scroll", spy, { passive: true }); addEventListener("resize", spy); spy();
-  if (still) { stages.forEach(function (s) { s.classList.add("live"); }); typed.textContent = text; }
+  addEventListener("scroll", function () { document.getElementById("top").classList.toggle("scrolled", scrollY > 8); }, { passive: true });
 })();
 
-// Orbit: place chips evenly on each ring.
-document.querySelectorAll(".orb .spin").forEach(function (s) {
-  var items = s.getAttribute("data-items").split("|"), r = +s.getAttribute("data-r");
-  var small = innerWidth < 760; if (small) r = r < 200 ? 90 : 160;
-  items.forEach(function (t, k) {
-    var a = (k / items.length) * Math.PI * 2 + (r % 7);
-    var n = document.createElement("div"); n.className = "node";
-    n.style.left = "calc(50% + " + (Math.cos(a) * r).toFixed(1) + "px)"; n.style.top = "calc(50% + " + (Math.sin(a) * r).toFixed(1) + "px)";
-    n.innerHTML = "<span>" + t + "</span>"; s.appendChild(n);
-  });
-});
-
-// Count-up numbers.
+// The stone field of dots beside Trust: a hill of circles with a few in the stripe colours.
 (function () {
-  var nums = document.querySelectorAll("[data-count]");
-  function run(el) { var to = +el.getAttribute("data-count"); if (still) { el.textContent = to; return; } var t0 = performance.now(); (function f(t) { var p = Math.min(1, (t - t0) / 1400); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); })(t0); }
-  if (!("IntersectionObserver" in window) || still) { nums.forEach(run); return; }
-  var o = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { run(e.target); o.unobserve(e.target); } }); }, { threshold: .6 });
-  nums.forEach(function (n) { o.observe(n); });
+  var d = document.getElementById("dots"), cols = 12, rows = 9, h = "";
+  for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+    var top = Math.round(4 - 3.6 * Math.sin((c + .5) / cols * Math.PI));
+    var cls = r < top ? "x" : "";
+    if (!cls && (r * 7 + c * 5) % 23 === 0) cls = ["o", "y", "b", "p"][(r + c) % 4];
+    h += '<i class="' + cls + '" style="transition-delay:' + ((c + r) * 35) + 'ms"></i>';
+  }
+  d.innerHTML = h;
 })();
 
-// Dot field: a grid of dots that light up as visits move from review to signed to sent.
+// Typing the drafted note once its row arrives.
+var typed = document.getElementById("typed"), text = "Kevin followed his morning routine with one verbal prompt, finished breakfast and fluids, and took his 8:30 Lisinopril. No incidents.";
+function typeNote() {
+  if (still) { typed.textContent = text; return; }
+  var i = 0; (function go() { i++; typed.innerHTML = text.slice(0, i) + '<span class="caret"></span>'; if (i < text.length) setTimeout(go, 20); })();
+}
+
+// Count-up on the result numbers.
+function countUp(el) {
+  var to = +el.getAttribute("data-count"); if (still) { el.textContent = to; return; }
+  var t0 = performance.now(); (function f(t) { var p = Math.min(1, (t - t0) / 1300); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); })(t0);
+}
+
+// Entrances: everything marked .rv arrives once; some carry a scene that plays as they do.
+function arrive(el) {
+  el.classList.add("in");
+  if (el.id === "row-note") typeNote();
+  var n = el.querySelector && el.querySelector("[data-count]"); if (n) countUp(n);
+}
+if (still || !("IntersectionObserver" in window)) document.querySelectorAll(".rv").forEach(arrive);
+else {
+  document.querySelectorAll("[data-count]").forEach(function (n) { n.textContent = "0"; });
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { arrive(e.target); io.unobserve(e.target); } }); }, { rootMargin: "0px 0px -12% 0px" });
+  document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
+}
+
+// Hero: the side bars slide in; the steps under the product light one after another.
 (function () {
-  var c = document.getElementById("dots"); if (!c) return;
-  var x = c.getContext("2d"), dots = [], W, H, dpr = Math.min(2, devicePixelRatio || 1);
-  var cols = ["#e8743b", "#3b6fe8", "#22a06b"];
-  function size() {
-    W = c.clientWidth; H = c.clientHeight; c.width = W * dpr; c.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dots = []; var g = 12;
-    for (var yy = 10; yy < H; yy += g) for (var xx = 10; xx < W; xx += g) {
-      var nx = xx / W - .5, ny = yy / H - .5, v = Math.sin(nx * 9) * Math.cos(ny * 7) + Math.sin(nx * 3 + ny * 5);
-      if (v > -0.9) dots.push({ x: xx, y: yy, s: 0, t: Math.random() * 400 });
-    }
-    draw(0);
+  var hero = document.getElementById("hero");
+  requestAnimationFrame(function () { setTimeout(function () { hero.classList.add("go"); }, still ? 0 : 150); });
+  var ch = document.querySelectorAll(".m-chap span"), k = 0;
+  if (!still) setInterval(function () { ch[k].classList.remove("on"); k = (k + 1) % ch.length; ch[k].classList.add("on"); }, 1700);
+})();
+
+// Scroll-driven: the coloured shadow under the big line grows, and the rails run down beside the steps.
+(function () {
+  var big = document.getElementById("big"), diff = document.getElementById("how"), rails = document.querySelectorAll(".m-rails i");
+  function clamp(x) { return Math.max(0, Math.min(1, x)); }
+  function tick() {
+    var vh = innerHeight;
+    var r = big.getBoundingClientRect(), p = still ? 1 : clamp((vh - r.top) / (vh * .55));
+    big.style.setProperty("--d", (parseFloat(getComputedStyle(big).fontSize) * .065 * p).toFixed(2) + "px");
+    var d = diff.getBoundingClientRect(), dp = still ? 1 : clamp((vh * .7 - d.top) / d.height);
+    rails.forEach(function (i, n) { i.style.setProperty("--k", clamp(dp * 1.25 - n * .05).toFixed(3)); });
   }
-  function draw(t) {
-    x.clearRect(0, 0, W, H);
-    for (var i = 0; i < dots.length; i++) {
-      var d = dots[i], ph = ((t / 40 + d.t) % 400);
-      var col = "rgba(11,12,14,.14)", r = 1.3;
-      if (ph < 6) { col = cols[0]; r = 2.4; } else if (ph < 12) { col = cols[1]; r = 2.2; } else if (ph < 20) { col = cols[2]; r = 2; }
-      x.fillStyle = col; x.beginPath(); x.arc(d.x, d.y, r, 0, 6.283); x.fill();
-    }
-  }
-  size(); addEventListener("resize", size);
-  if (!still) (function loop(t) { draw(t); requestAnimationFrame(loop); })(0);
+  addEventListener("scroll", tick, { passive: true }); addEventListener("resize", tick); tick();
 })();
 </script>
 <script src="/site/book.js?v=2"></script>
