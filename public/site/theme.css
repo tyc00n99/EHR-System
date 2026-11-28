@@ -83,8 +83,6 @@ footer .f2base { display: flex; justify-content: space-between; gap: 16px; flex-
 /* ============ Home page ============ */
 .m-hero { position: relative; padding: 64px 0 0; text-align: center; overflow: hidden; }
 .m-hero .wrap { position: relative; z-index: 2; }
-.m-badge { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 6px; border-radius: 600px; background: #fff; font-size: 14px; font-weight: 500; letter-spacing: .01em; box-shadow: 0 1px 2px rgba(15,12,10,.06), 0 0 0 1px rgba(15,12,10,.04); }
-.m-badge i { font: 700 11.5px/1 var(--mono); font-style: normal; letter-spacing: .06em; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--o); color: var(--ink); }
 .m-hero h1 { margin: 30px auto 0; max-width: 1000px; }
 .m-hero .lead { max-width: 680px; margin: 26px auto 0; }
 .m-ctas { display: flex; justify-content: center; gap: 10px; margin-top: 42px; flex-wrap: wrap; }
